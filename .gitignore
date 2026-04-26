@@ -1,0 +1,16 @@
+# 내부 기획·작업 자료 (외부 공개 금지)
+기획/
+design claude/
+
+# 백업/업로드 변형
+*.upload.html
+
+# OS·에디터 잔여물
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

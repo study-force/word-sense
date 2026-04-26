@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>훈탐구 — 콘텐츠 검증</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#FAFAF7; --card:#FFFFFF; --border:#EAE6E0;
+  --text:#2A2420; --mid:#7A6E68; --light:#B4AEA8;
+  --green:#5BAA5B; --green-l:#D4EDDA;
+  --rose:#D07070;  --rose-l:#FDE8E8;
+  --yel:#D8A840;   --yel-l:#FDF4D0;
+  --sky:#5AABC8;   --sky-l:#D6EEF8;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text)}
+body{padding:24px;min-height:100vh;display:flex;flex-direction:column;gap:16px;max-width:1100px;margin:0 auto}
+
+h1{font-size:22px;font-weight:700}
+h1 em{color:var(--green);font-style:normal}
+.lead{font-size:13px;color:var(--mid);line-height:1.6}
+.lead code{background:var(--card);padding:1px 6px;border-radius:4px;font-size:12px;border:1px solid var(--border)}
+
+.row{display:flex;gap:16px;align-items:stretch}
+.col{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+
+label{font-size:12px;font-weight:700;color:var(--mid);letter-spacing:.05em}
+textarea{
+  width:100%;min-height:380px;padding:14px;border-radius:8px;
+  border:1.5px solid var(--border);background:var(--card);
+  font-family:'Consolas','Monaco',monospace;font-size:12px;line-height:1.5;
+  color:var(--text);resize:vertical;outline:none;
+}
+textarea:focus{border-color:var(--green)}
+
+.btn-row{display:flex;gap:8px}
+button{
+  padding:10px 22px;border:none;border-radius:20px;
+  font-size:13px;font-weight:700;color:#fff;cursor:pointer;
+  font-family:'Noto Sans KR',sans-serif;transition:opacity .15s,transform .1s;
+}
+button:hover{opacity:.85;transform:translateY(-1px)}
+.btn-primary{background:var(--green)}
+.btn-ghost{background:var(--mid)}
+.btn-sky{background:var(--sky)}
+
+.result{
+  background:var(--card);border:1.5px solid var(--border);
+  border-radius:8px;padding:16px;min-height:380px;overflow:auto;
+}
+.result-empty{color:var(--light);font-size:13px;text-align:center;padding:80px 0}
+.summary{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;border-radius:8px;margin-bottom:14px;font-weight:700;font-size:14px;
+}
+.summary.pass{background:var(--green-l);color:#1A4A1A}
+.summary.fail{background:var(--rose-l);color:#5A1A1A}
+.summary.warn{background:var(--yel-l);color:#5A3A00}
+
+.section{margin-bottom:14px}
+.section-title{font-size:11px;font-weight:700;color:var(--mid);letter-spacing:.1em;margin-bottom:6px}
+.issue{
+  font-size:12px;padding:6px 10px;border-radius:6px;margin-bottom:4px;
+  line-height:1.5;display:flex;gap:8px;align-items:flex-start;
+}
+.issue.err  {background:var(--rose-l);color:#5A1A1A}
+.issue.warn {background:var(--yel-l); color:#5A3A00}
+.issue-tag{flex-shrink:0;font-weight:700;min-width:60px}
+
+.stats{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;
+}
+.stat{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:6px;padding:8px 10px;text-align:center;
+}
+.stat-val{font-size:18px;font-weight:700;color:var(--text);font-family:'Noto Serif KR',serif}
+.stat-lbl{font-size:10px;color:var(--light);margin-top:2px}
+.stat.bad .stat-val{color:var(--rose)}
+.stat.ok  .stat-val{color:var(--green)}
+
+footer{
+  text-align:center;font-size:11px;color:var(--light);
+  padding:16px 0;border-top:1px solid var(--border);margin-top:8px;
+}
+footer a{color:var(--sky);text-decoration:none}
+</style>
+</head>
+<body>
+
+<h1>훈탐구 <em>콘텐츠 검증</em></h1>
+<p class="lead">
+  웹 클로드가 생성한 회차 데이터를 붙여넣고 [검증] 버튼을 누르세요.
+  <code>SESSION = {...}</code> 또는 <code>{...}</code> JSON/객체 모두 받습니다.
+  ❌ <strong>오류</strong>가 하나라도 있으면 <code>data.js</code>에 반영하지 마세요.
+  ⚠️ <strong>경고</strong>는 학습 의도와 어긋날 수 있는 부분이니 확인해 주세요.
+</p>
+
+<div class="row">
+  <div class="col">
+    <label>회차 데이터 (JS 객체 또는 JSON)</label>
+    <textarea id="src" placeholder='{
+  id: 1,
+  area: "환경과 생물",
+  mainChar: "生",
+  ...
+}'></textarea>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="run()">검증</button>
+      <button class="btn-ghost" onclick="clearAll()">지우기</button>
+      <button class="btn-sky" onclick="loadSample()">生 회차 불러오기</button>
+    </div>
+  </div>
+
+  <div class="col">
+    <label>결과</label>
+    <div class="result" id="out">
+      <div class="result-empty">왼쪽에 데이터를 붙여 넣고 [검증] 버튼을 누르세요</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  통과한 데이터는 <code>data.js</code>의 <code>var SESSION = ...</code>에 반영합니다.
+  | <a href="word-sense.html">← 학습 앱으로</a> | <a href="index.html">홈으로</a>
+</footer>
+
+<script src="data.js"></script>
+<script>
+function parseInput(text){
+  text = text.trim();
+  if(!text) throw new Error('비어 있습니다');
+  // "var SESSION = {...}" / "SESSION = {...}" / "{...}" / "[{...}]" 모두 지원
+  text = text.replace(/^\s*(?:var|let|const)\s+\w+\s*=\s*/, '');
+  text = text.replace(/^\s*\w+\s*=\s*/, '');
+  text = text.replace(/;?\s*$/, '');
+  return Function('"use strict"; return (' + text + ')')();
+}
+
+function validate(s){
+  var errors = [], warnings = [];
+  function E(m){errors.push(m)} function W(m){warnings.push(m)}
+
+  // 최상위 필수 필드
+  ['id','area','mainChar','mainHun','mainHunFull','mainEum','words','wrongAnswers','nextPreview']
+    .forEach(function(k){ if(!(k in s)) E('최상위 필드 누락: ' + k); });
+
+  if(typeof s.mainChar==='string' && s.mainChar.length!==1) E('mainChar는 한자 1자여야 함 (현재: "'+s.mainChar+'")');
+  if(typeof s.mainHunFull==='string' && s.mainHunFull.split(' ').length!==2)
+    E('mainHunFull 형식 오류 — "훈 음"으로 공백 1개 (현재: "'+s.mainHunFull+'")');
+
+  // words
+  if(!Array.isArray(s.words)){
+    E('words가 배열이 아님');
+  } else {
+    if(s.words.length!==38) W('words 개수 '+s.words.length+' (권장: 38)');
+    var infer = s.words.filter(function(w){return w.isInferQuiz===true}).length;
+    if(infer!==14) W('isInferQuiz:true 개수 '+infer+' (권장: 14)');
+
+    var seen = {};
+    s.words.forEach(function(w, i){
+      var tag = '[words['+i+'] '+(w.word||'?')+']';
+
+      if(typeof w.word!=='string' || w.word.length!==2) E(tag+' word는 한글 2자여야 함');
+      if(typeof w.hanja!=='string' || w.hanja.length!==2) E(tag+' hanja는 한자 2자여야 함');
+
+      if(w.word){
+        if(seen[w.word]) E(tag+' 단어 중복: '+w.word);
+        seen[w.word] = true;
+      }
+
+      if(w.hanja && w.char1!==w.hanja[0]) E(tag+' char1("'+w.char1+'") ≠ hanja[0]("'+w.hanja[0]+'")');
+      if(w.hanja && w.char2!==w.hanja[1]) E(tag+' char2("'+w.char2+'") ≠ hanja[1]("'+w.hanja[1]+'")');
+
+      if(s.mainChar && w.char1!==s.mainChar && w.char2!==s.mainChar)
+        E(tag+' 主字("'+s.mainChar+'") 미포함');
+
+      if(!w.hun1 || w.hun1.split(' ').length!==2) E(tag+' hun1 형식 오류 — "훈 음"으로 공백 1개');
+      if(!w.hun2 || w.hun2.split(' ').length!==2) E(tag+' hun2 형식 오류 — "훈 음"으로 공백 1개');
+
+      if(typeof w.meaning!=='string' || !w.meaning) E(tag+' meaning 누락');
+
+      if(!Array.isArray(w.choices) || w.choices.length!==4){
+        E(tag+' choices는 정확히 4개 배열이어야 함');
+      } else {
+        if(w.choices.some(function(c){return !c})) E(tag+' choices에 빈 항목');
+        if(new Set(w.choices).size!==4) E(tag+' choices 중복 항목');
+        if(w.choices[0]===w.meaning) W(tag+' choices[0]이 meaning과 글자 동일 — 같은 의미를 다른 표현으로 쓰는 게 권장됨');
+      }
+
+      if(typeof w.fillSentence!=='string' || w.fillSentence.indexOf('___')<0)
+        E(tag+' fillSentence에 "___" 자리표시자 누락');
+      else if(w.fillSentence.length>55) W(tag+' fillSentence 길이 '+w.fillSentence.length+'자 (권장 25~45자)');
+
+      if(typeof w.isInferQuiz!=='boolean') E(tag+' isInferQuiz는 true/false 여야 함');
+    });
+  }
+
+  // wrongAnswers
+  if(!Array.isArray(s.wrongAnswers)){
+    E('wrongAnswers가 배열이 아님');
+  } else {
+    if(s.wrongAnswers.length!==4) W('wrongAnswers 개수 '+s.wrongAnswers.length+' (권장: 4)');
+    var wordSet = {};
+    (s.words||[]).forEach(function(w){ wordSet[w.word] = true; });
+    s.wrongAnswers.forEach(function(wa, i){
+      if(!wa.word || !wa.feedback) E('wrongAnswers['+i+']: word 또는 feedback 누락');
+      if(wa.word && wordSet[wa.word]) E('wrongAnswers['+i+']: "'+wa.word+'"이 words에도 있음 — 정답이 함정으로 판정됨');
+    });
+  }
+
+  // nextPreview
+  if(s.nextPreview){
+    if(!s.nextPreview.char || s.nextPreview.char.length!==1) E('nextPreview.char는 한자 1자여야 함');
+    if(!s.nextPreview.hunFull || s.nextPreview.hunFull.split(' ').length!==2) E('nextPreview.hunFull 형식 오류 — "훈 음"으로 공백 1개');
+    if(!s.nextPreview.relatedWords) E('nextPreview.relatedWords 누락');
+  }
+
+  return {errors:errors, warnings:warnings};
+}
+
+function stat(actual, target, label){
+  var ok = actual===target;
+  return '<div class="stat '+(ok?'ok':'bad')+'">'
+    +'<div class="stat-val">'+actual+(ok?'':' / '+target)+'</div>'
+    +'<div class="stat-lbl">'+label+'</div></div>';
+}
+
+function esc(s){ return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]}); }
+
+function renderSession(s, v){
+  var html = '';
+  var infer = (s.words||[]).filter(function(w){return w.isInferQuiz}).length;
+  html += '<div class="stats">';
+  html += stat(s.words ? s.words.length : 0, 38, '단어 수');
+  html += stat(infer, 14, '추론 출제');
+  html += stat(s.wrongAnswers ? s.wrongAnswers.length : 0, 4, '함정 단어');
+  html += '</div>';
+  if(v.errors.length===0 && v.warnings.length===0)
+    html += '<div class="summary pass">✅ 통과 — data.js에 반영해도 좋습니다</div>';
+  else if(v.errors.length===0)
+    html += '<div class="summary warn">⚠️ 경고 '+v.warnings.length+'건 — 확인 후 반영</div>';
+  else
+    html += '<div class="summary fail">❌ 오류 '+v.errors.length+'건 — 수정 필요</div>';
+  if(v.errors.length){
+    html += '<div class="section"><div class="section-title">❌ 오류</div>';
+    v.errors.forEach(function(e){ html += '<div class="issue err"><span class="issue-tag">ERR</span><span>'+esc(e)+'</span></div>'; });
+    html += '</div>';
+  }
+  if(v.warnings.length){
+    html += '<div class="section"><div class="section-title">⚠️ 경고</div>';
+    v.warnings.forEach(function(w){ html += '<div class="issue warn"><span class="issue-tag">WARN</span><span>'+esc(w)+'</span></div>'; });
+    html += '</div>';
+  }
+  return html;
+}
+
+function run(){
+  var out = document.getElementById('out');
+  var text = document.getElementById('src').value;
+  try {
+    var data = parseInput(text);
+    var arr = Array.isArray(data) ? data : [data];
+    var html = '';
+    arr.forEach(function(s, i){
+      if(arr.length>1){
+        html += '<div class="section-title" style="margin-top:18px;font-size:13px;color:var(--text)">▼ 회차 #'+(i+1)+(s.id?' (id='+s.id+')':'')+'</div>';
+      }
+      html += renderSession(s, validate(s));
+    });
+    out.innerHTML = html;
+  } catch(e){
+    out.innerHTML = '<div class="summary fail">❌ 파싱 실패</div>'
+      +'<div class="issue err"><span class="issue-tag">PARSE</span><span>'+esc(e.message)+'</span></div>'
+      +'<div class="lead" style="margin-top:10px">JS 객체 형식 또는 JSON으로 붙여넣어 주세요. 따옴표, 쉼표, 중괄호 짝을 확인하세요.</div>';
+  }
+}
+
+function clearAll(){
+  document.getElementById('src').value = '';
+  document.getElementById('out').innerHTML = '<div class="result-empty">왼쪽에 데이터를 붙여 넣고 [검증] 버튼을 누르세요</div>';
+}
+
+function loadSample(){
+  if(typeof SESSION === 'undefined'){
+    alert('data.js를 불러올 수 없습니다');
+    return;
+  }
+  document.getElementById('src').value = 'var SESSION = ' + objToString(SESSION) + ';';
+}
+
+// 객체 → 보기 좋은 JS 리터럴 (JSON.stringify 변형)
+function objToString(o){
+  return JSON.stringify(o, null, 2);
+}
+</script>
+</body>
+</html>
