@@ -1927,9 +1927,9 @@ button { font-family: inherit; color: inherit; }
   position: relative;
   border-radius: 8px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background: rgba(255,255,255,0.035);
+  background: transparent;
   color: var(--light);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid transparent;
   transition: all .25s; min-height: 0;
   gap: 7px;
 }
@@ -1941,84 +1941,52 @@ button { font-family: inherit; color: inherit; }
   font-family: var(--font-han); font-size: 12px; font-weight: 500;
   color: var(--light); opacity: .85; line-height: 1; letter-spacing: 0.05em;
 }
+
+/* ── 잠금: 점선 + 약간 밝은 한자 (배경 없음) ───────────────── */
+.area-cell.locked {
+  background: transparent;
+  border: 1px dashed rgba(255,255,255,0.22);
+}
 .area-cell.locked .cell-hun { display: none; }
-.area-cell.locked { opacity: .35; }
-.area-cell.hard {
-  border-color: var(--border);
-  border-style: dashed;
-}
-.area-cell.hard .cell-char { color: var(--mid); }
-.area-cell.hard .cell-hun  { color: var(--mid); opacity: .9; }
-.area-cell.hard.pass {
-  background: var(--green);
-  border-color: #8BE0B5;
-  border-style: solid;
-  box-shadow: 0 0 16px rgba(69,194,138,0.35);
-}
-.area-cell.hard.pass .cell-char,
-.area-cell.hard.pass .cell-hun { color: #FFFFFF; }
-/* ── 과거 회차 (current 아님) — 통과/미통과 모두 neutral 톤. ✓는 초록 유지 ── */
-.area-cell.partial:not(.current),
+.area-cell.locked .cell-char { color: rgba(200,206,220,0.55); }
+
+/* ── 과거 통과 (반투명 초록) ────────────────────────────── */
 .area-cell.pass:not(.current) {
-  background: rgba(255,255,255,0.04);
-  color: var(--light);
-  border-color: rgba(255,255,255,0.10);
-  box-shadow: none;
+  background: rgba(69,194,138,0.14);
+  border-color: transparent;
 }
-.area-cell.partial:not(.current) .cell-char,
-.area-cell.pass:not(.current) .cell-char { color: #C8CEDC; }
-.area-cell.partial:not(.current) .cell-hun,
-.area-cell.pass:not(.current) .cell-hun { color: var(--light); opacity: 0.85; }
-.area-cell.partial:not(.current) .cell-frac,
-.area-cell.pass:not(.current) .cell-frac { color: var(--light); opacity: 0.6; }
+.area-cell.pass:not(.current) .cell-char { color: rgba(255,255,255,0.92); }
+.area-cell.pass:not(.current) .cell-hun  { color: rgba(255,255,255,0.78); opacity: 1; }
+.area-cell.pass:not(.current) .cell-frac { color: rgba(255,255,255,0.55); }
 
-/* 어려운 한자 변형도 동일하게 neutral, dashed 보더만 유지 */
-.area-cell.hard.partial:not(.current),
-.area-cell.hard.pass:not(.current) {
-  background: rgba(255,255,255,0.04);
-  border-color: rgba(255,255,255,0.16);
-  border-style: dashed;
+/* ── 과거 미통과 (반투명 빨강) — partial 또는 0-found ─────── */
+.area-cell:not(.locked):not(.current):not(.pass) {
+  background: rgba(216,120,120,0.14);
+  border-color: transparent;
 }
-.area-cell.hard.partial:not(.current) .cell-char,
-.area-cell.hard.pass:not(.current) .cell-char { color: #C8CEDC; }
-.area-cell.hard.partial:not(.current) .cell-hun,
-.area-cell.hard.pass:not(.current) .cell-hun { color: var(--light); opacity: 0.9; }
+.area-cell:not(.locked):not(.current):not(.pass) .cell-char { color: rgba(255,255,255,0.92); }
+.area-cell:not(.locked):not(.current):not(.pass) .cell-hun  { color: rgba(255,255,255,0.78); opacity: 1; }
+.area-cell:not(.locked):not(.current):not(.pass) .cell-frac { color: rgba(255,255,255,0.55); }
 
-/* ── 오늘의 회차 (current) — 통과면 초록, 미통과면 빨강 ── */
-/* 통과: 초록 강조 */
-.area-cell.current.pass,
-.area-cell.hard.current.pass {
-  background: rgba(69,194,138,0.22);
-  color: var(--green);
-  border-color: var(--green);
-  border-style: solid;
-  box-shadow: 0 0 0 1px var(--green-line), 0 0 18px rgba(69,194,138,0.42);
+/* ── 오늘 통과 (불투명 초록) ────────────────────────────── */
+.area-cell.current.pass {
+  background: var(--green);
+  border-color: transparent;
+  box-shadow: 0 0 18px rgba(69,194,138,0.55);
 }
-.area-cell.current.pass .cell-char,
-.area-cell.hard.current.pass .cell-char { color: var(--green); }
-.area-cell.current.pass .cell-hun,
-.area-cell.hard.current.pass .cell-hun { color: var(--green); opacity: 0.95; }
-.area-cell.current.pass .cell-frac,
-.area-cell.hard.current.pass .cell-frac { color: var(--green-deep); opacity: 0.9; }
-.area-cell.current.pass .cell-mark,
-.area-cell.hard.current.pass .cell-mark { color: var(--green); }
+.area-cell.current.pass .cell-char { color: #FFFFFF; }
+.area-cell.current.pass .cell-hun  { color: rgba(255,255,255,0.95); opacity: 1; }
+.area-cell.current.pass .cell-frac { color: rgba(255,255,255,0.85); }
 
-/* 미통과: 빨강 강조 (current인데 pass 아닌 모든 케이스 — partial 또는 found=0) */
-.area-cell.current:not(.pass),
-.area-cell.hard.current:not(.pass) {
-  background: rgba(216,120,120,0.18);
-  color: var(--rose);
-  border-color: var(--rose);
-  border-style: solid;
-  box-shadow: 0 0 0 1px rgba(216,120,120,0.32), 0 0 16px rgba(216,120,120,0.32);
+/* ── 오늘 미통과 (불투명 빨강) ──────────────────────────── */
+.area-cell.current:not(.pass) {
+  background: var(--rose);
+  border-color: transparent;
+  box-shadow: 0 0 16px rgba(216,120,120,0.55);
 }
-.area-cell.current:not(.pass) .cell-char,
-.area-cell.hard.current:not(.pass) .cell-char { color: var(--rose); }
-.area-cell.current:not(.pass) .cell-hun,
-.area-cell.hard.current:not(.pass) .cell-hun { color: var(--rose); opacity: 0.95; }
-.area-cell.current:not(.pass) .cell-frac,
-.area-cell.hard.current:not(.pass) .cell-frac { color: var(--rose); opacity: 0.85; }
-.area-cell.current:not(.pass) .cell-mark { color: var(--rose); }
+.area-cell.current:not(.pass) .cell-char { color: #FFFFFF; }
+.area-cell.current:not(.pass) .cell-hun  { color: rgba(255,255,255,0.95); opacity: 1; }
+.area-cell.current:not(.pass) .cell-frac { color: rgba(255,255,255,0.85); }
 
 /* 학습 완료(pass) 셀은 재훈련 가능 — 호버 시 "재훈련" 표시 */
 .area-cell.pass, .area-cell.hard.pass { cursor: pointer; }
@@ -2072,23 +2040,26 @@ button { font-family: inherit; color: inherit; }
   border: 1px solid rgba(255,255,255,0.10);
 }
 .al-swatch.al-today-pass {
-  background: rgba(69,194,138,0.22);
-  border-color: var(--green);
-  box-shadow: 0 0 6px rgba(69,194,138,0.55);
+  background: var(--green);
+  border-color: transparent;
+  box-shadow: 0 0 8px rgba(69,194,138,0.6);
 }
 .al-swatch.al-today-fail {
-  background: rgba(216,120,120,0.18);
-  border-color: var(--rose);
-  box-shadow: 0 0 6px rgba(216,120,120,0.45);
+  background: var(--rose);
+  border-color: transparent;
+  box-shadow: 0 0 8px rgba(216,120,120,0.55);
 }
-.al-swatch.al-past {
-  background: rgba(255,255,255,0.04);
-  border-color: rgba(255,255,255,0.18);
+.al-swatch.al-past-pass {
+  background: rgba(69,194,138,0.14);
+  border-color: transparent;
+}
+.al-swatch.al-past-fail {
+  background: rgba(216,120,120,0.14);
+  border-color: transparent;
 }
 .al-swatch.al-locked {
-  background: rgba(255,255,255,0.035);
-  border-color: rgba(255,255,255,0.08);
-  opacity: 0.35;
+  background: transparent;
+  border: 1px dashed rgba(255,255,255,0.32);
 }
 
 .area-master {
@@ -2451,7 +2422,8 @@ html, body {
       <div class="area-legend">
         <span class="al-item"><span class="al-swatch al-today-pass"></span>오늘 통과</span>
         <span class="al-item"><span class="al-swatch al-today-fail"></span>오늘 미통과</span>
-        <span class="al-item"><span class="al-swatch al-past"></span>과거 회차</span>
+        <span class="al-item"><span class="al-swatch al-past-pass"></span>과거 통과</span>
+        <span class="al-item"><span class="al-swatch al-past-fail"></span>과거 미통과</span>
         <span class="al-item"><span class="al-swatch al-locked"></span>잠금</span>
       </div>
       <div class="area-master" id="area-master">
@@ -3608,8 +3580,7 @@ function goArea(){
     cell.className = 'area-cell'
       + (p.locked ? ' locked' : '')
       + (p.current ? ' current' : '')
-      + (passed ? ' pass' : partial ? ' partial' : '')
-      + (AREA_HARD[p.char] ? ' hard' : '');
+      + (passed ? ' pass' : partial ? ' partial' : '');
     var cc = document.createElement('div'); cc.className = 'cell-char'; cc.textContent = p.char;
     cell.appendChild(cc);
     var ch = document.createElement('div'); ch.className = 'cell-hun';
