@@ -803,6 +803,13 @@ button { font-family: inherit; color: inherit; }
   75%  { transform: var(--gt) scale(0.985) rotate(-0.5deg); }
   100% { transform: var(--gt) scale(1) rotate(0); }
 }
+/* 새로 생성되는 미점등 노드 — 부드러운 fade-in (transform은 기존 nodeIdle/var(--gt)에 양보) */
+.g-node.fade-in { animation: nodeFadeIn .9s ease-out both; }
+@keyframes nodeFadeIn {
+  0%   { opacity: 0; }
+  60%  { opacity: 1; }
+  100% { opacity: 1; }
+}
 
 /* 우측 상단 피드백 영역 — 카운터(2/38) 바로 아래 */
 .fb-zone {
@@ -2793,12 +2800,89 @@ function updateHints(){
   btn.disabled = S.hints <= 0;
 }
 
+// ── 미점등 노드 동적 생성 — 10개 다 점등되면 새 노드가 페이드인으로 등장 ──
+function spawnUnlitNodes(count){
+  var stage = document.getElementById('g-stage');
+  var holder = document.getElementById('g-nodes');
+  if(!stage || !holder) return 0;
+  var W = stage.clientWidth || 1100;
+  var H = stage.clientHeight || 290;
+  var cx = W/2, cy = H/2;
+  var rBase = Math.min(W, H*1.6) * 0.24;
+
+  var center = stage.querySelector('.g-center');
+  var avoidL=-1, avoidR=-1, avoidT=-1, avoidB=-1, hasAvoid=false;
+  if(center){
+    var sRect = stage.getBoundingClientRect();
+    var cRect = center.getBoundingClientRect();
+    avoidL = cRect.left   - sRect.left - 18;
+    avoidR = cRect.right  - sRect.left + 18;
+    avoidT = cRect.top    - sRect.top  - 6;
+    avoidB = cRect.bottom - sRect.top  + 14;
+    hasAvoid = true;
+  }
+
+  var added = 0;
+  for(var i=0;i<count;i++){
+    var tries = 0, x = 0, y = 0, ok = false;
+    while(tries++ < 40 && !ok){
+      var ang = Math.random() * Math.PI * 2;
+      var sc = 0.72 + Math.random() * 0.62;
+      var rx = rBase * sc + (Math.random()-.5)*10;
+      var ry = rBase * sc * 0.78 + (Math.random()-.5)*8;
+      x = cx + Math.cos(ang)*rx;
+      y = cy + Math.sin(ang)*ry;
+      x = Math.max(40, Math.min(W-40, x));
+      y = Math.max(22, Math.min(H-22, y));
+      // 중심 캡슐 회피
+      if(hasAvoid){
+        var hit = (x + 50 > avoidL) && (x - 50 < avoidR)
+               && (y + 16 > avoidT) && (y - 16 < avoidB);
+        if(hit) continue;
+      }
+      // 기존 노드들과 일정 거리 확보 (미점등 ~50, 점등 chip ~70)
+      var tooClose = false;
+      for(var j=0;j<GNODES.length;j++){
+        var dx = x - GNODES[j].baseX, dy = y - GNODES[j].baseY;
+        var minD = GNODES[j].lit ? 80 : 56;
+        if(dx*dx + dy*dy < minD*minD){ tooClose = true; break; }
+      }
+      if(!tooClose) ok = true;
+    }
+    var el = document.createElement('div');
+    el.className = 'g-node fade-in';
+    el.style.left = x+'px';
+    el.style.top  = y+'px';
+    el.style.setProperty('--gt', 'translate(-50%, -50%)');
+    holder.appendChild(el);
+    GNODES.push({
+      el:el, baseX:x, baseY:y, lit:false, word:'',
+      phase: Math.random()*Math.PI*2,
+      ampX: 4 + Math.random()*4,
+      ampY: 3 + Math.random()*3,
+      speedX: .35 + Math.random()*.25,
+      speedY: .30 + Math.random()*.22,
+      lineT: 0
+    });
+    added++;
+  }
+  return added;
+}
+
 function lightUpNode(word){
   // 점등된 노드들로부터 "최소 거리"가 가장 큰 미점등 노드를 선택 — 활성 노드를 최대한 흩어지게
   var unlit = [];
   var lit = [];
   for(var i=0;i<GNODES.length;i++){
     if(GNODES[i].lit) lit.push(GNODES[i]); else unlit.push(GNODES[i]);
+  }
+  // 미점등 노드가 없으면 새로 5개 생성 후 다시 수집
+  if(!unlit.length){
+    spawnUnlitNodes(5);
+    unlit = [];
+    for(var k=0;k<GNODES.length;k++){
+      if(!GNODES[k].lit) unlit.push(GNODES[k]);
+    }
   }
   if(!unlit.length) return;
   var node = null;
