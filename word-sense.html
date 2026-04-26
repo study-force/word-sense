@@ -811,6 +811,101 @@ button { font-family: inherit; color: inherit; }
   100% { opacity: 1; }
 }
 
+/* ── 38/38 완성 폭죽(꽃가루) 효과 ───────────────────────────── */
+.confetti-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  overflow: visible;
+}
+.confetti-piece {
+  position: absolute;
+  left: var(--cx, 50%);
+  top:  var(--cy, 50%);
+  width: var(--cs, 8px);
+  height: var(--cs, 8px);
+  background: var(--cc, #FFD56B);
+  border-radius: var(--cr, 2px);
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  animation: confettiBurst var(--cd, 1.8s) cubic-bezier(.18, .68, .32, 1) var(--cdl, 0s) forwards;
+  box-shadow: 0 0 6px var(--cc, #FFD56B);
+  will-change: transform, opacity;
+}
+.confetti-piece.streak {
+  width: var(--cs, 4px);
+  height: calc(var(--cs, 4px) * 3);
+  border-radius: 1px;
+}
+.confetti-piece.star {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+.confetti-piece.star::before {
+  content: '✦';
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--cc, #FFD56B);
+  font-size: calc(var(--cs, 8px) * 1.6);
+  text-shadow: 0 0 10px var(--cc, #FFD56B), 0 0 18px var(--cc, #FFD56B);
+}
+@keyframes confettiBurst {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(0deg); }
+  6%   { opacity: 1; }
+  35%  { opacity: 1; transform: translate(calc(-50% + var(--tx, 0px) * 0.85), calc(-50% + var(--ty, 0px) * 0.55 - 70px)) scale(1) rotate(calc(var(--rot, 360deg) * 0.5)); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--tx, 0px)), calc(-50% + var(--ty, 0px) + 320px)) scale(0.85) rotate(var(--rot, 720deg)); }
+}
+
+/* 골든 플래시(38/38 도달 순간 한 번 번쩍) */
+.win-flash {
+  position: absolute; inset: 0;
+  pointer-events: none; z-index: 49;
+  background: radial-gradient(circle at 50% 50%, rgba(255,213,107,0.45), rgba(255,143,177,0.18) 40%, transparent 70%);
+  opacity: 0;
+  animation: winFlash 1.4s ease-out forwards;
+}
+@keyframes winFlash {
+  0%   { opacity: 0; transform: scale(0.6); }
+  18%  { opacity: 1; transform: scale(1.05); }
+  60%  { opacity: 0.5; transform: scale(1.15); }
+  100% { opacity: 0; transform: scale(1.25); }
+}
+
+/* 완성 메시지 배너 */
+.win-banner {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%) scale(0.6);
+  z-index: 51;
+  pointer-events: none;
+  text-align: center;
+  opacity: 0;
+  animation: winBanner 2.4s cubic-bezier(.2, 1.4, .4, 1) 0.25s forwards;
+}
+.win-banner .wb-title {
+  font-family: var(--font-han);
+  font-size: 56px; font-weight: 500;
+  color: #FFD56B;
+  text-shadow: 0 0 24px rgba(255,213,107,0.8), 0 0 48px rgba(255,143,177,0.5);
+  letter-spacing: 0.06em;
+}
+.win-banner .wb-sub {
+  margin-top: 8px;
+  font-size: 14px; font-weight: 400;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.18em;
+}
+@keyframes winBanner {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  18%  { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  30%  { transform: translate(-50%, -50%) scale(0.97); }
+  42%  { transform: translate(-50%, -50%) scale(1.02); }
+  78%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05); }
+}
+
 /* 우측 상단 피드백 영역 — 카운터(2/38) 바로 아래 */
 .fb-zone {
   position: absolute;
@@ -2521,6 +2616,7 @@ function goHome(){
   var sess = SESSION;
   S = { found:[], hints:5, okCount:0, hintTargets:[], hintFound:[] };
   capIdx = 0;
+  CONFETTI_FIRED = false;
   if(HINT_NUDGE_TIMER){ clearTimeout(HINT_NUDGE_TIMER); HINT_NUDGE_TIMER = null; }
   document.getElementById('g-nodes').innerHTML = '';
   GNODES = [];
@@ -2876,13 +2972,10 @@ function lightUpNode(word){
   for(var i=0;i<GNODES.length;i++){
     if(GNODES[i].lit) lit.push(GNODES[i]); else unlit.push(GNODES[i]);
   }
-  // 미점등 노드가 없으면 새로 5개 생성 후 다시 수집
+  // 안전망 — 어떤 이유로든 미점등 0이면 1개 보충
   if(!unlit.length){
-    spawnUnlitNodes(5);
-    unlit = [];
-    for(var k=0;k<GNODES.length;k++){
-      if(!GNODES[k].lit) unlit.push(GNODES[k]);
-    }
+    spawnUnlitNodes(1);
+    unlit = GNODES.filter(function(n){ return !n.lit; });
   }
   if(!unlit.length) return;
   var node = null;
@@ -2918,6 +3011,15 @@ function lightUpNode(word){
   node.lenCls = lenCls[idx % lenCls.length] || 'len-m';
   node.chipShown = false;
   // 노드 DOM은 아직 unlit 상태(작은 발광 점) 그대로 유지 — drawGameStage에서 lineT===1 도달 시 chip 등장
+
+  // ── 마지막 미점등이 채워졌고, 아직 찾을 단어가 남아있다면 새 빈 노드를 1개 서서히 추가 ──
+  var totalWords = (typeof WORD_LIST !== 'undefined') ? WORD_LIST.length : 38;
+  var foundNow   = (typeof S !== 'undefined' && S.found) ? S.found.length : 0;
+  var nowUnlit = 0;
+  for(var k=0;k<GNODES.length;k++){ if(!GNODES[k].lit) nowUnlit++; }
+  if(nowUnlit === 0 && foundNow < totalWords){
+    spawnUnlitNodes(1);
+  }
 }
 
 function showNodeChip(node){
@@ -2939,6 +3041,99 @@ function finishWord(word){
     document.getElementById('dbtn').className = 'btn-done on';
   }
   resetHintNudge();
+  // ── 38/38 완성 시 폭죽 효과 ──
+  if(S.found.length >= WORD_LIST.length){
+    triggerConfetti();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// 폭죽(꽃가루) 효과 — 모든 단어 발견 시 1회 발동
+// ─────────────────────────────────────────────────────────────
+var CONFETTI_FIRED = false;
+function triggerConfetti(){
+  if(CONFETTI_FIRED) return;
+  CONFETTI_FIRED = true;
+  var stage = document.getElementById('g-stage');
+  if(!stage) return;
+  var W = stage.clientWidth || 1100;
+  var H = stage.clientHeight || 290;
+
+  // 골든 플래시 한 번
+  var flash = document.createElement('div');
+  flash.className = 'win-flash';
+  stage.appendChild(flash);
+  setTimeout(function(){ if(flash.parentNode) flash.parentNode.removeChild(flash); }, 1500);
+
+  // 완성 메시지 배너
+  var banner = document.createElement('div');
+  banner.className = 'win-banner';
+  banner.innerHTML = '<div class="wb-title">完成 ・ 38/38</div><div class="wb-sub">PERFECT SET</div>';
+  stage.appendChild(banner);
+  setTimeout(function(){ if(banner.parentNode) banner.parentNode.removeChild(banner); }, 2900);
+
+  // 컨테이너
+  var container = document.createElement('div');
+  container.className = 'confetti-container';
+  stage.appendChild(container);
+
+  var COLORS = ['#FFD56B','#FF8FB1','#5DD0A0','#7AB8D4','#B79CE9','#FFA67A','#FFFFFF','#45C28A','#FFC85A'];
+  // 5개의 폭죽 발사 지점 — 캔버스 안쪽 곳곳에서 터지게
+  var BURSTS = [
+    { x: W * 0.50, y: H * 0.55, delay: 0,    count: 90 },
+    { x: W * 0.22, y: H * 0.48, delay: 220,  count: 70 },
+    { x: W * 0.78, y: H * 0.48, delay: 360,  count: 70 },
+    { x: W * 0.36, y: H * 0.30, delay: 580,  count: 60 },
+    { x: W * 0.66, y: H * 0.32, delay: 740,  count: 60 },
+    { x: W * 0.50, y: H * 0.22, delay: 980,  count: 80 }
+  ];
+
+  BURSTS.forEach(function(burst){
+    setTimeout(function(){
+      spawnBurst(container, burst.x, burst.y, burst.count, COLORS);
+    }, burst.delay);
+  });
+
+  // 컨테이너 정리
+  setTimeout(function(){
+    if(container.parentNode) container.parentNode.removeChild(container);
+  }, 5500);
+}
+
+function spawnBurst(container, cx, cy, count, colors){
+  for(var i=0;i<count;i++){
+    var p = document.createElement('div');
+    var shape = Math.random();
+    var cls = 'confetti-piece';
+    if(shape > 0.78) cls += ' streak';
+    else if(shape > 0.92) cls += ' star';
+    p.className = cls;
+
+    var ang = Math.random() * Math.PI * 2;
+    // 폭죽 반경 — 사방으로 거리 분산
+    var dist = 110 + Math.random() * 280;
+    var tx = Math.cos(ang) * dist;
+    var ty = Math.sin(ang) * dist - 30; // 살짝 위쪽 편향
+    var size = 5 + Math.random() * 7;
+    var rot = (Math.random() * 1440 - 720) + 'deg';
+    var dur = (1.4 + Math.random() * 1.3).toFixed(2) + 's';
+    var dly = (Math.random() * 0.18).toFixed(2) + 's';
+    var color = colors[(Math.random() * colors.length) | 0];
+    var radius = Math.random() > 0.5 ? '50%' : '2px';
+
+    p.style.setProperty('--cx', cx + 'px');
+    p.style.setProperty('--cy', cy + 'px');
+    p.style.setProperty('--tx', tx.toFixed(1) + 'px');
+    p.style.setProperty('--ty', ty.toFixed(1) + 'px');
+    p.style.setProperty('--cs', size.toFixed(1) + 'px');
+    p.style.setProperty('--cc', color);
+    p.style.setProperty('--cr', radius);
+    p.style.setProperty('--rot', rot);
+    p.style.setProperty('--cd', dur);
+    p.style.setProperty('--cdl', dly);
+
+    container.appendChild(p);
+  }
 }
 
 function submit(){
