@@ -3080,7 +3080,7 @@ function finishWord(word){
   setFb('ok', '"' + word + '" 찾았어요!');
   sndOk();
   updateGameCounter();
-  if(S.okCount >= 5){
+  if(S.okCount >= 1){
     document.getElementById('dbtn').className = 'btn-done on';
   }
   resetHintNudge();
