@@ -1988,9 +1988,9 @@ button { font-family: inherit; color: inherit; }
 .area-cell.current:not(.pass) .cell-hun  { color: rgba(255,255,255,0.95); opacity: 1; }
 .area-cell.current:not(.pass) .cell-frac { color: rgba(255,255,255,0.85); }
 
-/* 학습 완료(pass) 셀은 재훈련 가능 — 호버 시 "재훈련" 표시 */
-.area-cell.pass, .area-cell.hard.pass { cursor: pointer; }
-.area-cell.pass::after {
+/* 과거 회차(통과·미통과 모두)는 재훈련 가능 — 호버 시 "재훈련" 표시 */
+.area-cell:not(.locked):not(.current) { cursor: pointer; }
+.area-cell:not(.locked):not(.current)::after {
   content: '재훈련';
   position: absolute; left: 50%; bottom: 6px;
   transform: translateX(-50%) translateY(4px);
@@ -2003,15 +2003,21 @@ button { font-family: inherit; color: inherit; }
   transition: opacity .18s, transform .18s;
   white-space: nowrap;
 }
-.area-cell.pass:hover {
+/* 과거 통과 hover — 초록 글로우 */
+.area-cell.pass:not(.current):hover {
   transform: translateY(-2px);
   box-shadow: 0 0 0 1px var(--green), 0 0 18px rgba(69,194,138,0.45), 0 4px 12px rgba(0,0,0,0.35);
 }
-.area-cell.pass:hover::after {
+/* 과거 미통과 hover — 빨강 글로우 */
+.area-cell:not(.locked):not(.current):not(.pass):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 1px var(--rose), 0 0 18px rgba(216,120,120,0.45), 0 4px 12px rgba(0,0,0,0.35);
+}
+.area-cell:not(.locked):not(.current):hover::after {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
-.area-cell.pass:hover .cell-frac { opacity: 0; transition: opacity .18s; }
+.area-cell:not(.locked):not(.current):hover .cell-frac { opacity: 0; transition: opacity .18s; }
 .area-cell .cell-mark {
   position: absolute; top: 3px; right: 5px;
   font-size: 10px; color: var(--green); font-weight: 900;
@@ -3593,8 +3599,8 @@ function goArea(){
       var f = document.createElement('div'); f.className = 'cell-frac';
       f.textContent = p.found + '/' + p.total; cell.appendChild(f);
     }
-    // 학습 완료된(pass) 회차는 재훈련 가능 — 클릭 시 홈으로 돌아가 새로 시작
-    if(passed){
+    // 과거 회차(통과·미통과 모두) 재훈련 가능 — 클릭 시 홈으로 돌아가 새로 시작
+    if(!p.locked && !p.current){
       cell.title = p.char + ' 회차 재훈련';
       cell.addEventListener('click', function(){
         // 현재는 단일 회차 데이터만 존재 — 홈에서 다시 시작
