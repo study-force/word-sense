@@ -1950,23 +1950,23 @@ button { font-family: inherit; color: inherit; }
 .area-cell.locked .cell-hun { display: none; }
 .area-cell.locked .cell-char { color: rgba(200,206,220,0.55); }
 
-/* ── 과거 통과 (반투명 초록) ────────────────────────────── */
+/* ── 과거 통과 — 초록 보더 라인, 배경 거의 없음 ───────────── */
 .area-cell.pass:not(.current) {
-  background: rgba(69,194,138,0.14);
-  border-color: transparent;
+  background: rgba(69,194,138,0.04);
+  border: 1px solid rgba(69,194,138,0.55);
 }
 .area-cell.pass:not(.current) .cell-char { color: rgba(255,255,255,0.92); }
-.area-cell.pass:not(.current) .cell-hun  { color: rgba(255,255,255,0.78); opacity: 1; }
-.area-cell.pass:not(.current) .cell-frac { color: rgba(255,255,255,0.55); }
+.area-cell.pass:not(.current) .cell-hun  { color: rgba(255,255,255,0.72); opacity: 1; }
+.area-cell.pass:not(.current) .cell-frac { color: rgba(69,194,138,0.7); }
 
-/* ── 과거 미통과 (반투명 빨강) — partial 또는 0-found ─────── */
+/* ── 과거 미통과 — 빨강 보더 라인, 배경 거의 없음 ─────────── */
 .area-cell:not(.locked):not(.current):not(.pass) {
-  background: rgba(216,120,120,0.14);
-  border-color: transparent;
+  background: rgba(216,120,120,0.04);
+  border: 1px solid rgba(216,120,120,0.5);
 }
 .area-cell:not(.locked):not(.current):not(.pass) .cell-char { color: rgba(255,255,255,0.92); }
-.area-cell:not(.locked):not(.current):not(.pass) .cell-hun  { color: rgba(255,255,255,0.78); opacity: 1; }
-.area-cell:not(.locked):not(.current):not(.pass) .cell-frac { color: rgba(255,255,255,0.55); }
+.area-cell:not(.locked):not(.current):not(.pass) .cell-hun  { color: rgba(255,255,255,0.72); opacity: 1; }
+.area-cell:not(.locked):not(.current):not(.pass) .cell-frac { color: rgba(216,120,120,0.7); }
 
 /* ── 오늘 통과 (불투명 초록) ────────────────────────────── */
 .area-cell.current.pass {
@@ -1988,20 +1988,32 @@ button { font-family: inherit; color: inherit; }
 .area-cell.current:not(.pass) .cell-hun  { color: rgba(255,255,255,0.95); opacity: 1; }
 .area-cell.current:not(.pass) .cell-frac { color: rgba(255,255,255,0.85); }
 
-/* 과거 회차(통과·미통과 모두)는 재훈련 가능 — 호버 시 "재훈련" 표시 */
+/* 과거 회차(통과·미통과 모두)는 재훈련 가능 — 호버 시 "재훈련" 중앙 표시 */
 .area-cell:not(.locked):not(.current) { cursor: pointer; }
 .area-cell:not(.locked):not(.current)::after {
   content: '재훈련';
-  position: absolute; left: 50%; bottom: 6px;
-  transform: translateX(-50%) translateY(4px);
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%) scale(0.92);
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 9px; font-weight: 600; letter-spacing: 0.06em;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
   color: #FFFFFF;
-  background: rgba(0,0,0,0.45);
-  padding: 2px 8px; border-radius: 100px;
+  background: rgba(20,24,34,0.78);
+  padding: 5px 14px; border-radius: 100px;
   opacity: 0; pointer-events: none;
   transition: opacity .18s, transform .18s;
   white-space: nowrap;
+  z-index: 2;
+}
+/* 셀 내용은 호버 시 페이드 — 라벨이 가운데서 잘 보이게 */
+.area-cell:not(.locked):not(.current) .cell-char,
+.area-cell:not(.locked):not(.current) .cell-hun,
+.area-cell:not(.locked):not(.current) .cell-frac {
+  transition: opacity .18s;
+}
+.area-cell:not(.locked):not(.current):hover .cell-char,
+.area-cell:not(.locked):not(.current):hover .cell-hun,
+.area-cell:not(.locked):not(.current):hover .cell-frac {
+  opacity: 0.18;
 }
 /* 과거 통과 hover — 초록 글로우 */
 .area-cell.pass:not(.current):hover {
@@ -2015,9 +2027,8 @@ button { font-family: inherit; color: inherit; }
 }
 .area-cell:not(.locked):not(.current):hover::after {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: translate(-50%, -50%) scale(1);
 }
-.area-cell:not(.locked):not(.current):hover .cell-frac { opacity: 0; transition: opacity .18s; }
 .area-cell .cell-mark {
   position: absolute; top: 3px; right: 5px;
   font-size: 10px; color: var(--green); font-weight: 900;
@@ -2056,12 +2067,12 @@ button { font-family: inherit; color: inherit; }
   box-shadow: 0 0 8px rgba(216,120,120,0.55);
 }
 .al-swatch.al-past-pass {
-  background: rgba(69,194,138,0.14);
-  border-color: transparent;
+  background: rgba(69,194,138,0.04);
+  border: 1px solid rgba(69,194,138,0.55);
 }
 .al-swatch.al-past-fail {
-  background: rgba(216,120,120,0.14);
-  border-color: transparent;
+  background: rgba(216,120,120,0.04);
+  border: 1px solid rgba(216,120,120,0.5);
 }
 .al-swatch.al-locked {
   background: transparent;
