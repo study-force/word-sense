@@ -210,7 +210,7 @@ button { font-family: inherit; color: inherit; }
 .sn-link::after  { right: -1px; }
 
 /* 활성 단계 — 원 안에 불이 들어온 형태 (라디얼 그라디언트 + inset glow) */
-.stage-nav[data-stage="확인"] .sn-step[data-st="확인"] .sn-dot,
+.stage-nav[data-stage="인출"] .sn-step[data-st="인출"] .sn-dot,
 .stage-nav[data-stage="확장"] .sn-step[data-st="확장"] .sn-dot,
 .stage-nav[data-stage="강화"] .sn-step[data-st="강화"] .sn-dot {
   width: 10px; height: 10px;
@@ -227,7 +227,7 @@ button { font-family: inherit; color: inherit; }
     0 0 10px rgba(69,194,138,0.32);
   animation: snPulse 2.4s ease-in-out infinite;
 }
-.stage-nav[data-stage="확인"] .sn-step[data-st="확인"] .sn-label,
+.stage-nav[data-stage="인출"] .sn-step[data-st="인출"] .sn-label,
 .stage-nav[data-stage="확장"] .sn-step[data-st="확장"] .sn-label,
 .stage-nav[data-stage="강화"] .sn-step[data-st="강화"] .sn-label {
   color: var(--green);
@@ -2344,7 +2344,7 @@ html, body {
   <div class="page" id="game">
     <div class="topbar">
       <div class="logo"><div class="logo-mark"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="14" y1="14" x2="6" y2="6"/><line x1="14" y1="14" x2="22" y2="6"/><line x1="14" y1="14" x2="5" y2="18"/><line x1="14" y1="14" x2="22" y2="20"/><line x1="14" y1="14" x2="14" y2="24"/></g><g fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="22" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="22" cy="20" r="2"/><circle cx="14" cy="24" r="2"/></g><circle cx="14" cy="14" r="3.6" fill="currentColor"/><circle cx="14" cy="14" r="3.6" fill="rgba(255,255,255,0.18)"/></svg></div><span class="logo-ko"><em>훈 감각</em> 익히기</span></div>
-      <div class="stage-nav" data-stage="확인"><span class="sn-meta">나의 어휘 네트워크</span><div class="sn-track"><div class="sn-step" data-st="확인"><span class="sn-dot"></span><span class="sn-label">확인</span></div><span class="sn-link"></span><div class="sn-step" data-st="확장"><span class="sn-dot"></span><span class="sn-label">확장</span></div><span class="sn-link"></span><div class="sn-step" data-st="강화"><span class="sn-dot"></span><span class="sn-label">강화</span></div></div></div>
+      <div class="stage-nav" data-stage="인출"><span class="sn-meta">나의 어휘 네트워크</span><div class="sn-track"><div class="sn-step" data-st="인출"><span class="sn-dot"></span><span class="sn-label">인출</span></div><span class="sn-link"></span><div class="sn-step" data-st="확장"><span class="sn-dot"></span><span class="sn-label">확장</span></div><span class="sn-link"></span><div class="sn-step" data-st="강화"><span class="sn-dot"></span><span class="sn-label">강화</span></div></div></div>
     </div>
     <div class="game-stage" id="g-stage">
       <div class="game-meta">
@@ -2387,7 +2387,7 @@ html, body {
   <div class="page" id="inferq">
     <div class="topbar">
       <div class="logo"><div class="logo-mark"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="14" y1="14" x2="6" y2="6"/><line x1="14" y1="14" x2="22" y2="6"/><line x1="14" y1="14" x2="5" y2="18"/><line x1="14" y1="14" x2="22" y2="20"/><line x1="14" y1="14" x2="14" y2="24"/></g><g fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="22" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="22" cy="20" r="2"/><circle cx="14" cy="24" r="2"/></g><circle cx="14" cy="14" r="3.6" fill="currentColor"/><circle cx="14" cy="14" r="3.6" fill="rgba(255,255,255,0.18)"/></svg></div><span class="logo-ko"><em>훈 감각</em> 익히기</span></div>
-      <div class="stage-nav" data-stage="확장"><span class="sn-meta">나의 어휘 네트워크</span><div class="sn-track"><div class="sn-step" data-st="확인"><span class="sn-dot"></span><span class="sn-label">확인</span></div><span class="sn-link"></span><div class="sn-step" data-st="확장"><span class="sn-dot"></span><span class="sn-label">확장</span></div><span class="sn-link"></span><div class="sn-step" data-st="강화"><span class="sn-dot"></span><span class="sn-label">강화</span></div></div></div>
+      <div class="stage-nav" data-stage="확장"><span class="sn-meta">나의 어휘 네트워크</span><div class="sn-track"><div class="sn-step" data-st="인출"><span class="sn-dot"></span><span class="sn-label">인출</span></div><span class="sn-link"></span><div class="sn-step" data-st="확장"><span class="sn-dot"></span><span class="sn-label">확장</span></div><span class="sn-link"></span><div class="sn-step" data-st="강화"><span class="sn-dot"></span><span class="sn-label">강화</span></div></div></div>
       <div class="cnt-label" id="iq-cnt"></div>
     </div>
     <div class="qpage-body">
@@ -2402,7 +2402,7 @@ html, body {
   <div class="page" id="fillq">
     <div class="topbar">
       <div class="logo"><div class="logo-mark"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="14" y1="14" x2="6" y2="6"/><line x1="14" y1="14" x2="22" y2="6"/><line x1="14" y1="14" x2="5" y2="18"/><line x1="14" y1="14" x2="22" y2="20"/><line x1="14" y1="14" x2="14" y2="24"/></g><g fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="22" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="22" cy="20" r="2"/><circle cx="14" cy="24" r="2"/></g><circle cx="14" cy="14" r="3.6" fill="currentColor"/><circle cx="14" cy="14" r="3.6" fill="rgba(255,255,255,0.18)"/></svg></div><span class="logo-ko"><em>훈 감각</em> 익히기</span></div>
-      <div class="stage-nav" data-stage="강화"><span class="sn-meta">나의 어휘 네트워크</span><div class="sn-track"><div class="sn-step" data-st="확인"><span class="sn-dot"></span><span class="sn-label">확인</span></div><span class="sn-link"></span><div class="sn-step" data-st="확장"><span class="sn-dot"></span><span class="sn-label">확장</span></div><span class="sn-link"></span><div class="sn-step" data-st="강화"><span class="sn-dot"></span><span class="sn-label">강화</span></div></div></div>
+      <div class="stage-nav" data-stage="강화"><span class="sn-meta">나의 어휘 네트워크</span><div class="sn-track"><div class="sn-step" data-st="인출"><span class="sn-dot"></span><span class="sn-label">인출</span></div><span class="sn-link"></span><div class="sn-step" data-st="확장"><span class="sn-dot"></span><span class="sn-label">확장</span></div><span class="sn-link"></span><div class="sn-step" data-st="강화"><span class="sn-dot"></span><span class="sn-label">강화</span></div></div></div>
       <div class="cnt-label" id="fq-cnt"></div>
     </div>
     <div class="qpage-body">
