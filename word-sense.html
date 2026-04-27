@@ -2896,41 +2896,106 @@ function spawnUnlitNodes(count){
     hasAvoid = true;
   }
 
+  // 이웃 노드별 분리 반경 (이웃의 칩 종류에 따라 가변) — 두 중심 간 최소 거리
+  // 미점등(lit=false): 노드끼리 ~62
+  // lit + len-s : ~92,  len-m : ~108,  len-l : ~126  (이웃의 칩 폭 기준)
+  function sepFor(other){
+    if(!other.lit) return { x: 62, y: 38 };
+    var lc = other.lenCls || 'len-m';
+    if(lc === 'len-s') return { x: 92,  y: 42 };
+    if(lc === 'len-l') return { x: 126, y: 46 };
+    return                  { x: 108, y: 44 };
+  }
+
+  // 한 점(x,y)에 대해 모든 이웃과의 "겹침 정도"를 점수로 (0이면 안 겹침, 양수일수록 더 겹침)
+  function overlapScore(x, y){
+    var worst = 0;
+    for(var j=0;j<GNODES.length;j++){
+      var n = GNODES[j];
+      var s = sepFor(n);
+      var dx = (x - n.baseX) / s.x;
+      var dy = (y - n.baseY) / s.y;
+      var d2 = dx*dx + dy*dy;
+      if(d2 < 1){ // 단위 타원 안 — 겹침
+        var overlap = 1 - d2;
+        if(overlap > worst) worst = overlap;
+      }
+    }
+    return worst;
+  }
+
+  function avoidsCenter(x, y){
+    if(!hasAvoid) return true;
+    var hit = (x + 50 > avoidL) && (x - 50 < avoidR)
+           && (y + 16 > avoidT) && (y - 16 < avoidB);
+    return !hit;
+  }
+
+  // 한 점을 이웃에서 멀어지는 방향으로 한 단계 밀어내기 (해당 노드만 이동)
+  function relaxOne(x, y){
+    var moved = false;
+    for(var j=0;j<GNODES.length;j++){
+      var n = GNODES[j];
+      var s = sepFor(n);
+      var dx = (x - n.baseX) / s.x;
+      var dy = (y - n.baseY) / s.y;
+      var d2 = dx*dx + dy*dy;
+      if(d2 < 1){
+        var ang = Math.atan2((y - n.baseY), (x - n.baseX));
+        if(d2 < 1e-4) ang = Math.random() * Math.PI * 2;
+        var d = Math.max(0.05, Math.sqrt(d2));
+        var push = (1 - d) * 0.6;
+        x += Math.cos(ang) * push * s.x;
+        y += Math.sin(ang) * push * s.y;
+        moved = true;
+      }
+    }
+    return { x: x, y: y, moved: moved };
+  }
+
   var added = 0;
   for(var i=0;i<count;i++){
-    var tries = 0, x = 0, y = 0, ok = false;
-    while(tries++ < 40 && !ok){
+    var bestX = 0, bestY = 0, bestScore = Infinity, ok = false;
+    // 1) 후보 샘플링 — 80번 시도, 안 겹치는 점이 나오면 즉시 채택
+    for(var t=0;t<80 && !ok;t++){
       var ang = Math.random() * Math.PI * 2;
       var sc = 0.72 + Math.random() * 0.62;
       var rx = rBase * sc + (Math.random()-.5)*10;
       var ry = rBase * sc * 0.78 + (Math.random()-.5)*8;
-      x = cx + Math.cos(ang)*rx;
-      y = cy + Math.sin(ang)*ry;
+      var x = cx + Math.cos(ang)*rx;
+      var y = cy + Math.sin(ang)*ry;
       x = Math.max(40, Math.min(W-40, x));
       y = Math.max(22, Math.min(H-22, y));
-      // 중심 캡슐 회피
-      if(hasAvoid){
-        var hit = (x + 50 > avoidL) && (x - 50 < avoidR)
-               && (y + 16 > avoidT) && (y - 16 < avoidB);
-        if(hit) continue;
+      if(!avoidsCenter(x, y)) continue;
+      var score = overlapScore(x, y);
+      if(score === 0){ bestX = x; bestY = y; ok = true; break; }
+      if(score < bestScore){ bestScore = score; bestX = x; bestY = y; }
+    }
+    // 2) 안 겹치는 자리를 못 찾았다면 best 후보를 잡고 12회 릴랙세이션
+    if(!ok){
+      var px = bestX, py = bestY;
+      for(var r=0;r<12;r++){
+        var res = relaxOne(px, py);
+        px = Math.max(40, Math.min(W-40, res.x));
+        py = Math.max(22, Math.min(H-22, res.y));
+        // 캡슐 충돌이면 위/아래로 강제 분리
+        if(hasAvoid && !avoidsCenter(px, py)){
+          if(Math.abs(py - avoidT) < Math.abs(py - avoidB)) py = avoidT - 18;
+          else py = avoidB + 18;
+          py = Math.max(22, Math.min(H-22, py));
+        }
+        if(!res.moved) break;
       }
-      // 기존 노드들과 일정 거리 확보 (미점등 ~50, 점등 chip ~70)
-      var tooClose = false;
-      for(var j=0;j<GNODES.length;j++){
-        var dx = x - GNODES[j].baseX, dy = y - GNODES[j].baseY;
-        var minD = GNODES[j].lit ? 80 : 56;
-        if(dx*dx + dy*dy < minD*minD){ tooClose = true; break; }
-      }
-      if(!tooClose) ok = true;
+      bestX = px; bestY = py;
     }
     var el = document.createElement('div');
     el.className = 'g-node fade-in';
-    el.style.left = x+'px';
-    el.style.top  = y+'px';
+    el.style.left = bestX+'px';
+    el.style.top  = bestY+'px';
     el.style.setProperty('--gt', 'translate(-50%, -50%)');
     holder.appendChild(el);
     GNODES.push({
-      el:el, baseX:x, baseY:y, lit:false, word:'',
+      el:el, baseX:bestX, baseY:bestY, lit:false, word:'',
       phase: Math.random()*Math.PI*2,
       ampX: 4 + Math.random()*4,
       ampY: 3 + Math.random()*3,
