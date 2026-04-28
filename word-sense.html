@@ -860,20 +860,21 @@ button { font-family: inherit; color: inherit; }
   position: absolute;
   left: var(--cx, 50%);
   top:  var(--cy, 50%);
-  width: var(--cs, 8px);
-  height: var(--cs, 8px);
-  background: var(--cc, #FFD56B);
+  width: var(--cs, 6px);
+  height: var(--cs, 6px);
+  background: var(--cc, #A8EDC9);
   border-radius: var(--cr, 2px);
   opacity: 0;
   transform: translate(-50%, -50%);
-  animation: confettiBurst var(--cd, 1.8s) cubic-bezier(.18, .68, .32, 1) var(--cdl, 0s) forwards;
-  box-shadow: 0 0 6px var(--cc, #FFD56B);
+  animation: confettiBurst var(--cd, 2.2s) cubic-bezier(.16, .68, .28, 1) var(--cdl, 0s) forwards;
+  box-shadow: 0 0 8px var(--cc, #A8EDC9);
   will-change: transform, opacity;
 }
 .confetti-piece.streak {
-  width: var(--cs, 4px);
-  height: calc(var(--cs, 4px) * 3);
+  width: var(--cs, 3px);
+  height: calc(var(--cs, 3px) * 4);
   border-radius: 1px;
+  opacity: 0.85;
 }
 .confetti-piece.star {
   background: transparent;
@@ -884,33 +885,54 @@ button { font-family: inherit; color: inherit; }
   content: '✦';
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
-  color: var(--cc, #FFD56B);
-  font-size: calc(var(--cs, 8px) * 1.6);
-  text-shadow: 0 0 10px var(--cc, #FFD56B), 0 0 18px var(--cc, #FFD56B);
+  color: var(--cc, #FFFFFF);
+  font-size: calc(var(--cs, 8px) * 1.8);
+  text-shadow: 0 0 12px var(--cc, #FFFFFF), 0 0 22px var(--cc, #FFFFFF);
 }
 @keyframes confettiBurst {
   0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(0deg); }
-  6%   { opacity: 1; }
-  35%  { opacity: 1; transform: translate(calc(-50% + var(--tx, 0px) * 0.85), calc(-50% + var(--ty, 0px) * 0.55 - 70px)) scale(1) rotate(calc(var(--rot, 360deg) * 0.5)); }
-  100% { opacity: 0; transform: translate(calc(-50% + var(--tx, 0px)), calc(-50% + var(--ty, 0px) + 320px)) scale(0.85) rotate(var(--rot, 720deg)); }
+  10%  { opacity: 1; }
+  40%  { opacity: 1; transform: translate(calc(-50% + var(--tx, 0px) * 0.78), calc(-50% + var(--ty, 0px) * 0.45 - 50px)) scale(1) rotate(calc(var(--rot, 360deg) * 0.45)); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--tx, 0px) * 1.05), calc(-50% + var(--ty, 0px) + 220px)) scale(0.7) rotate(var(--rot, 540deg)); }
 }
 
-/* 골든 플래시(38/38 도달 순간 한 번 번쩍) */
+/* 차분한 글로우 플래시 — 골든 플래시 대신 화이트+민트 톤 */
 .win-flash {
   position: absolute; inset: 0;
   pointer-events: none; z-index: 49;
-  background: radial-gradient(circle at 50% 50%, rgba(255,213,107,0.45), rgba(255,143,177,0.18) 40%, transparent 70%);
+  background: radial-gradient(circle at 50% 45%,
+    rgba(255,255,255,0.18),
+    rgba(168,237,201,0.14) 35%,
+    rgba(216,184,247,0.08) 55%,
+    transparent 75%);
   opacity: 0;
-  animation: winFlash 1.4s ease-out forwards;
+  animation: winFlash 1.6s cubic-bezier(.2,.6,.3,1) forwards;
 }
 @keyframes winFlash {
-  0%   { opacity: 0; transform: scale(0.6); }
-  18%  { opacity: 1; transform: scale(1.05); }
-  60%  { opacity: 0.5; transform: scale(1.15); }
-  100% { opacity: 0; transform: scale(1.25); }
+  0%   { opacity: 0; transform: scale(0.88); }
+  28%  { opacity: 1; transform: scale(1.0); }
+  100% { opacity: 0; transform: scale(1.18); }
 }
 
-/* 완성 메시지 배너 */
+/* 확장 링 — 우아한 기하 모티프 */
+.win-ring {
+  position: absolute; left: 50%; top: 50%;
+  width: 70px; height: 70px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(168,237,201,0.65);
+  transform: translate(-50%, -50%);
+  pointer-events: none; z-index: 50;
+  animation: winRing 1.7s cubic-bezier(.2,.6,.3,1) forwards;
+}
+.win-ring.r2 { border-color: rgba(216,184,247,0.55); animation-delay: 0.18s; }
+.win-ring.r3 { border-color: rgba(255,255,255,0.55); animation-delay: 0.36s; }
+@keyframes winRing {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.2); border-width: 3px; }
+  20%  { opacity: 0.9; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(8); border-width: 0.5px; }
+}
+
+/* "Perfect!" 배너 — 모던 산세리프 + 그라디언트 텍스트 */
 .win-banner {
   position: absolute;
   left: 50%; top: 50%;
@@ -919,20 +941,38 @@ button { font-family: inherit; color: inherit; }
   pointer-events: none;
   text-align: center;
   opacity: 0;
-  animation: winBanner 2.4s cubic-bezier(.2, 1.4, .4, 1) 0.25s forwards;
+  animation: winBanner 2.6s cubic-bezier(.2, 1.4, .4, 1) 0.30s forwards;
 }
 .win-banner .wb-title {
-  font-family: var(--font-han);
-  font-size: 56px; font-weight: 500;
-  color: #FFD56B;
-  text-shadow: 0 0 24px rgba(255,213,107,0.8), 0 0 48px rgba(255,143,177,0.5);
-  letter-spacing: 0.06em;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 88px;
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  background: linear-gradient(135deg, #FFFFFF 0%, #A8EDC9 45%, #D8B8F8 100%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+          color: transparent;
+  filter:
+    drop-shadow(0 4px 18px rgba(168,237,201,0.55))
+    drop-shadow(0 2px 10px rgba(216,184,247,0.45));
+}
+.win-banner .wb-title::after {
+  content: '';
+  display: block;
+  margin: 14px auto 0;
+  width: 64px; height: 1.5px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
+  opacity: 0.85;
 }
 .win-banner .wb-sub {
-  margin-top: 8px;
-  font-size: 14px; font-weight: 400;
-  color: rgba(255,255,255,0.85);
-  letter-spacing: 0.18em;
+  margin-top: 10px;
+  font-size: 11px; font-weight: 500;
+  color: rgba(255,255,255,0.70);
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
 }
 @keyframes winBanner {
   0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
@@ -3396,6 +3436,7 @@ function renderLearnCard(){
           // 컬렉션 누적
           LEARN.collected.push(LEARN.words[LEARN.idx]);
           updateLearnCounters();
+          checkCelebrate();   // 인출 + 탐구 누적 임계치 체크
           // 카드 슬라이드 아웃 → 다음 카드
           if(LEARN.idx >= LEARN.words.length - 1){
             // 마지막 카드도 발견 덱에 쌓이는 모션 + 효과음 → 환원
@@ -3454,6 +3495,7 @@ function renderCollStack(){
 function goGame(){
   var sess = SESSION;
   resetScore();   // 새 회차 = 점수 초기화
+  CONFETTI_FIRED = false;   // 새 회차 = 마일스톤 다시 발동 가능
   document.getElementById('g-char').textContent   = sess.mainChar;
   document.getElementById('g-hun').textContent    = sess.mainHunFull;
   document.getElementById('g-eum').innerHTML      = eumToPills(sess.mainEum);
@@ -3917,52 +3959,82 @@ function finishWord(word){
     document.getElementById('dbtn').className = 'btn-done on';
   }
   resetHintNudge();
-  // ── 38/38 완성 시 폭죽 효과 ──
-  // [임시] 모션 확인용 — 원복 시 5를 WORD_LIST.length 로 되돌릴 것
-  if(S.found.length >= 5){
+  // ── 마일스톤 축하 (인출 + 탐구 누적) ──
+  checkCelebrate();
+}
+
+// ─────────────────────────────────────────────────────────────
+// 마일스톤 축하 효과 — 인출 + 탐구 누적 발견이 임계치 도달 시 1회
+// ─────────────────────────────────────────────────────────────
+var CONFETTI_FIRED = false;
+var CELEBRATE_THRESHOLD = 5; // [임시] 모션 확인용. 원복 시 WORD_LIST.length 으로 변경
+
+function totalDiscovered(){
+  var s = (typeof S !== 'undefined' && S && S.found) ? S.found.length : 0;
+  var l = (typeof LEARN !== 'undefined' && LEARN && LEARN.collected) ? LEARN.collected.length : 0;
+  return s + l;
+}
+function checkCelebrate(){
+  if(CONFETTI_FIRED) return;
+  if(totalDiscovered() >= CELEBRATE_THRESHOLD){
     triggerConfetti();
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// 폭죽(꽃가루) 효과 — 모든 단어 발견 시 1회 발동
-// ─────────────────────────────────────────────────────────────
-var CONFETTI_FIRED = false;
 function triggerConfetti(){
   if(CONFETTI_FIRED) return;
   CONFETTI_FIRED = true;
-  var stage = document.getElementById('g-stage');
-  if(!stage) return;
-  var W = stage.clientWidth || 1100;
-  var H = stage.clientHeight || 290;
+  // 현재 활성 페이지를 컨테이너로 — 인출/탐구 어디서든 표시
+  var screen = document.getElementById('screen');
+  var active = document.querySelector('.page.active');
+  var host = active || screen;
+  if(!host) return;
+  var W = host.clientWidth  || 1100;
+  var H = host.clientHeight || 800;
 
-  // 골든 플래시 한 번
+  // 차분한 글로우 플래시
   var flash = document.createElement('div');
   flash.className = 'win-flash';
-  stage.appendChild(flash);
-  setTimeout(function(){ if(flash.parentNode) flash.parentNode.removeChild(flash); }, 1500);
+  host.appendChild(flash);
+  setTimeout(function(){ if(flash.parentNode) flash.parentNode.removeChild(flash); }, 1700);
 
-  // 완성 메시지 배너
+  // 확장 링 3겹 (민트 → 라벤더 → 화이트)
+  ['', 'r2', 'r3'].forEach(function(rcls){
+    var ring = document.createElement('div');
+    ring.className = 'win-ring' + (rcls ? ' ' + rcls : '');
+    // 화면 중앙에 위치하도록 host 기준으로 50%
+    ring.style.left = (W/2) + 'px';
+    ring.style.top  = (H/2) + 'px';
+    host.appendChild(ring);
+    setTimeout(function(){ if(ring.parentNode) ring.parentNode.removeChild(ring); }, 2200);
+  });
+
+  // "Perfect!" 배너
   var banner = document.createElement('div');
   banner.className = 'win-banner';
-  banner.innerHTML = '<div class="wb-title">完成 ・ 38/38</div><div class="wb-sub">PERFECT SET</div>';
-  stage.appendChild(banner);
-  setTimeout(function(){ if(banner.parentNode) banner.parentNode.removeChild(banner); }, 2900);
+  banner.style.left = (W/2) + 'px';
+  banner.style.top  = (H/2) + 'px';
+  var n = totalDiscovered();
+  banner.innerHTML =
+      '<div class="wb-title">Perfect!</div>'
+    + '<div class="wb-sub">' + n + ' words discovered</div>';
+  host.appendChild(banner);
+  setTimeout(function(){ if(banner.parentNode) banner.parentNode.removeChild(banner); }, 3100);
 
-  // 컨테이너
+  // 폭죽 컨테이너 — 페이지 전체 덮음
   var container = document.createElement('div');
   container.className = 'confetti-container';
-  stage.appendChild(container);
+  host.appendChild(container);
 
-  var COLORS = ['#FFD56B','#FF8FB1','#5DD0A0','#7AB8D4','#B79CE9','#FFA67A','#FFFFFF','#45C28A','#FFC85A'];
-  // 5개의 폭죽 발사 지점 — 캔버스 안쪽 곳곳에서 터지게
+  // 브랜드 팔레트 — 화이트/민트/라벤더/소프트 골드 (4색 한정)
+  var COLORS = ['#FFFFFF','#A8EDC9','#69D0A0','#D8B8F8','#B79CE9','#FFE3A8'];
+
+  // 4개의 발사 지점 — 좌우 대칭, 차분
   var BURSTS = [
-    { x: W * 0.50, y: H * 0.55, delay: 0,    count: 90 },
-    { x: W * 0.22, y: H * 0.48, delay: 220,  count: 70 },
-    { x: W * 0.78, y: H * 0.48, delay: 360,  count: 70 },
-    { x: W * 0.36, y: H * 0.30, delay: 580,  count: 60 },
-    { x: W * 0.66, y: H * 0.32, delay: 740,  count: 60 },
-    { x: W * 0.50, y: H * 0.22, delay: 980,  count: 80 }
+    { x: W * 0.50, y: H * 0.55, delay: 0,   count: 70 },
+    { x: W * 0.28, y: H * 0.45, delay: 240, count: 50 },
+    { x: W * 0.72, y: H * 0.45, delay: 360, count: 50 },
+    { x: W * 0.50, y: H * 0.30, delay: 720, count: 60 }
   ];
 
   BURSTS.forEach(function(burst){
@@ -3971,10 +4043,9 @@ function triggerConfetti(){
     }, burst.delay);
   });
 
-  // 컨테이너 정리
   setTimeout(function(){
     if(container.parentNode) container.parentNode.removeChild(container);
-  }, 5500);
+  }, 5800);
 }
 
 function spawnBurst(container, cx, cy, count, colors){
