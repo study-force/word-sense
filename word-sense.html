@@ -1192,7 +1192,7 @@ button { font-family: inherit; color: inherit; }
   font-size: 12px; color: var(--green-deep); font-weight: 600;
   letter-spacing: 0.1em;
 }
-.dc-blank-t::before { content: '?  '; opacity: 0.6; }
+.dc-blank-t::before { content: ''; }
 
 .quiz-q { font-size: 13px; font-weight: 500; color: var(--mid); margin-bottom: 12px; letter-spacing: 0.02em; }
 .choices { display: flex; flex-direction: column; gap: 8px; }
@@ -1277,6 +1277,8 @@ button { font-family: inherit; color: inherit; }
   letter-spacing: 0.12em;
 }
 .cnt-label::before { content: '⌖ '; opacity: .6; }
+/* 점수판 도입 후 topbar의 작은 진행 라벨은 카드 내부 카운터로 대체 → 숨김 */
+.cnt-label { display: none !important; }
 
 /* 퀴즈 카드 */
 .qcard {
@@ -1873,6 +1875,96 @@ button { font-family: inherit; color: inherit; }
   cursor: pointer;
 }
 .learn-skip:hover { color: var(--green); }
+
+/* ════════════════════════════
+   점수판 (오늘 점수)
+════════════════════════════ */
+.score-chip {
+  position: absolute;
+  top: 18px; right: 22px;
+  z-index: 50;
+  min-width: 132px;
+  padding: 10px 14px 8px;
+  background: rgba(255,255,255,0.96);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+  font-family: 'Noto Sans KR', sans-serif;
+  pointer-events: none;
+  transition: transform .25s cubic-bezier(.34,1.4,.64,1), box-shadow .25s;
+  display: none;  /* JS에서 페이지 따라 표시 */
+}
+.score-chip.bump {
+  transform: scale(1.06);
+  box-shadow: 0 6px 20px rgba(69,194,138,0.30), 0 0 0 3px rgba(69,194,138,0.18);
+}
+.score-chip .sc-head {
+  display: flex; align-items: baseline; gap: 8px;
+  margin-bottom: 4px;
+}
+.score-chip .sc-label {
+  font-size: 10px; color: var(--mid); letter-spacing: 0.08em;
+}
+.score-chip .sc-num {
+  font-size: 26px; font-weight: 700; color: var(--text);
+  letter-spacing: -0.01em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.score-chip .sc-breakdown {
+  display: flex; gap: 9px;
+  font-size: 10px; color: var(--mid);
+  letter-spacing: 0.02em;
+}
+.score-chip .sc-bd { display: inline-flex; align-items: center; gap: 4px; }
+.score-chip .sc-bd i {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.score-chip .sc-bd-r i { background: var(--green); }
+.score-chip .sc-bd-e i { background: #9B6CD9; }
+.score-chip .sc-bd-f i { background: #F4B860; }
+.score-chip .sc-bd em {
+  font-style: normal; font-weight: 600; color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+/* 떠오르는 +N 표시 */
+.score-chip .sc-pop {
+  position: absolute;
+  top: 6px; right: 12px;
+  font-size: 16px; font-weight: 700;
+  color: var(--green);
+  opacity: 0;
+  pointer-events: none;
+}
+.score-chip .sc-pop.fly {
+  animation: scPop 1.0s cubic-bezier(.2,.7,.3,1) forwards;
+}
+@keyframes scPop {
+  0%   { opacity: 0; transform: translateY(8px) scale(0.7); }
+  18%  { opacity: 1; transform: translateY(0) scale(1.1); }
+  100% { opacity: 0; transform: translateY(-30px) scale(1); }
+}
+.score-chip .sc-pop.fly-explore { color: #7B4FCB; }
+.score-chip .sc-pop.fly-reinforce { color: #C99340; }
+
+/* 다크 캔버스 환경에서 점수판도 다크 글래스로 */
+body.dark-canvas .score-chip,
+.score-chip.on-dark {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.18);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.08);
+  backdrop-filter: blur(8px);
+}
+body.dark-canvas .score-chip .sc-label,
+.score-chip.on-dark .sc-label { color: rgba(255,255,255,0.55); }
+body.dark-canvas .score-chip .sc-num,
+.score-chip.on-dark .sc-num { color: #FFFFFF; }
+body.dark-canvas .score-chip .sc-breakdown,
+.score-chip.on-dark .sc-breakdown { color: rgba(255,255,255,0.55); }
+body.dark-canvas .score-chip .sc-bd em,
+.score-chip.on-dark .sc-bd em { color: #FFFFFF; }
 
 /* 환원 — "강화로 →" 버튼 (게임 화면 위에 떠 있음) */
 .recap-next-btn {
@@ -2674,6 +2766,20 @@ html, body {
 <body>
 <div id="screen">
 
+  <!-- ══ 점수판 (페이지 전환과 무관하게 상단 우측에 떠 있음) ══ -->
+  <div class="score-chip" id="score-chip">
+    <div class="sc-head">
+      <span class="sc-label">점수</span>
+      <span class="sc-num" id="sc-num">0</span>
+    </div>
+    <div class="sc-breakdown">
+      <span class="sc-bd sc-bd-r"><i></i>인출 <em id="sc-r">0</em></span>
+      <span class="sc-bd sc-bd-e"><i></i>탐구 <em id="sc-e">0</em></span>
+      <span class="sc-bd sc-bd-f"><i></i>강화 <em id="sc-f">0</em></span>
+    </div>
+    <div class="sc-pop" id="sc-pop"></div>
+  </div>
+
   <!-- ══ 홈 ══ -->
   <div class="page active" id="home">
     <div class="home-area-tag">
@@ -2909,6 +3015,8 @@ function showPage(id){
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   document.getElementById(id).classList.add('active');
   if (typeof syncDockBand === 'function') syncDockBand();
+  // 점수판 표시/은폐
+  updateScoreVisibility(id);
   // 홈 진입 시 히어로 모션 재시작
   if (id === 'home') {
     var hero = document.getElementById('home-hero');
@@ -2917,6 +3025,74 @@ function showPage(id){
       hero.parentNode.replaceChild(clone, hero);
     }
   }
+}
+
+// ── 점수 시스템 ─────────────────────────────
+// retrieval(인출 정답) +1 · explore(탐구 정답) +1 · reinforce(강화 정답) +0.5
+var SCORE = { retrieval: 0, explore: 0, reinforce: 0 };
+function scoreTotal(){
+  return SCORE.retrieval + SCORE.explore + SCORE.reinforce;
+}
+function fmtScore(n){
+  // 정수면 정수, 아니면 소수 1자리
+  return (n % 1 === 0) ? String(n) : n.toFixed(1);
+}
+function resetScore(){
+  SCORE = { retrieval: 0, explore: 0, reinforce: 0 };
+  refreshScoreUI(false);
+}
+function refreshScoreUI(animate){
+  var n  = document.getElementById('sc-num');
+  var sr = document.getElementById('sc-r');
+  var se = document.getElementById('sc-e');
+  var sf = document.getElementById('sc-f');
+  if(!n) return;
+  n.textContent  = fmtScore(scoreTotal());
+  if(sr) sr.textContent = fmtScore(SCORE.retrieval);
+  if(se) se.textContent = fmtScore(SCORE.explore);
+  if(sf) sf.textContent = fmtScore(SCORE.reinforce);
+  if(animate){
+    var chip = document.getElementById('score-chip');
+    if(chip){
+      chip.classList.remove('bump');
+      // reflow → 애니메이션 재시작
+      void chip.offsetWidth;
+      chip.classList.add('bump');
+      setTimeout(function(){ chip.classList.remove('bump'); }, 280);
+    }
+  }
+}
+function popScoreDelta(type, delta){
+  var pop = document.getElementById('sc-pop');
+  if(!pop) return;
+  pop.className = 'sc-pop';
+  pop.textContent = '+' + fmtScore(delta);
+  if(type === 'explore')   pop.classList.add('fly-explore');
+  if(type === 'reinforce') pop.classList.add('fly-reinforce');
+  // reflow
+  void pop.offsetWidth;
+  pop.classList.add('fly');
+  setTimeout(function(){
+    pop.className = 'sc-pop';
+    pop.textContent = '';
+  }, 1050);
+}
+function addScore(type){
+  var inc = (type === 'reinforce') ? 0.5 : 1;
+  if(!(type in SCORE)) return;
+  SCORE[type] += inc;
+  refreshScoreUI(true);
+  popScoreDelta(type, inc);
+}
+function updateScoreVisibility(pageId){
+  var chip = document.getElementById('score-chip');
+  if(!chip) return;
+  // 홈/영역에서는 숨김. 게임/탐구/inferq/강화/결과에서는 표시
+  var hide = (pageId === 'home' || pageId === 'area');
+  chip.style.display = hide ? 'none' : '';
+  // 다크 캔버스 페이지(게임/탐구/결과/영역)에서는 글래스 톤
+  var dark = (pageId === 'game' || pageId === 'learn' || pageId === 'result' || pageId === 'area');
+  chip.classList.toggle('on-dark', dark);
 }
 
 // ── 사운드 ─────────────────────────────────
@@ -3211,7 +3387,7 @@ function renderLearnCard(){
       if(ok){
         btn.className = 'choice-btn ok';
         cs.querySelectorAll('.choice-btn').forEach(function(b){ b.disabled = true; });
-        LEARN.correct++; sndOk();
+        LEARN.correct++; sndOk(); addScore('explore');   // 탐구 +1
         var bub = document.createElement('div');
         bub.className = 'ans-bubble';
         bub.textContent = '맞아요. 훈으로 의미를 깨웠어요 ✨';
@@ -3277,6 +3453,7 @@ function renderCollStack(){
 
 function goGame(){
   var sess = SESSION;
+  resetScore();   // 새 회차 = 점수 초기화
   document.getElementById('g-char').textContent   = sess.mainChar;
   document.getElementById('g-hun').textContent    = sess.mainHunFull;
   document.getElementById('g-eum').innerHTML      = eumToPills(sess.mainEum);
@@ -3734,6 +3911,7 @@ function finishWord(word){
   lightUpNode(word);
   setFb('ok', '"' + word + '" 찾았어요!');
   sndOk();
+  addScore('retrieval');   // 인출 +1
   updateGameCounter();
   if(S.okCount >= 1){
     document.getElementById('dbtn').className = 'btn-done on';
@@ -4073,7 +4251,7 @@ function renderFQCard(word){
     btn.onclick = function(){
       var ok = (i === ci);
       if(ok){
-        FQ.correct++; sndOk();
+        FQ.correct++; sndOk(); addScore('reinforce');   // 강화 +0.5
         cs.querySelectorAll('.fill-btn').forEach(function(b, bi){
           b.disabled = true;
           if(bi === ci) b.classList.add('ok');
