@@ -3089,7 +3089,7 @@ function updateScoreVisibility(pageId){
   if(!chip) return;
   // 홈/영역에서는 숨김. 게임/탐구/inferq/강화/결과에서는 표시
   var hide = (pageId === 'home' || pageId === 'area');
-  chip.style.display = hide ? 'none' : '';
+  chip.style.display = hide ? 'none' : 'block';
   // 다크 캔버스 페이지(게임/탐구/결과/영역)에서는 글래스 톤
   var dark = (pageId === 'game' || pageId === 'learn' || pageId === 'result' || pageId === 'area');
   chip.classList.toggle('on-dark', dark);
