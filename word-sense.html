@@ -3918,7 +3918,8 @@ function finishWord(word){
   }
   resetHintNudge();
   // ── 38/38 완성 시 폭죽 효과 ──
-  if(S.found.length >= WORD_LIST.length){
+  // [임시] 모션 확인용 — 원복 시 5를 WORD_LIST.length 로 되돌릴 것
+  if(S.found.length >= 5){
     triggerConfetti();
   }
 }
