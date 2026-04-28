@@ -211,6 +211,7 @@ button { font-family: inherit; color: inherit; }
 
 /* 활성 단계 — 원 안에 불이 들어온 형태 (라디얼 그라디언트 + inset glow) */
 .stage-nav[data-stage="인출"] .sn-step[data-st="인출"] .sn-dot,
+.stage-nav[data-stage="탐구"] .sn-step[data-st="탐구"] .sn-dot,
 .stage-nav[data-stage="확장"] .sn-step[data-st="확장"] .sn-dot,
 .stage-nav[data-stage="강화"] .sn-step[data-st="강화"] .sn-dot {
   width: 10px; height: 10px;
@@ -228,6 +229,7 @@ button { font-family: inherit; color: inherit; }
   animation: snPulse 2.4s ease-in-out infinite;
 }
 .stage-nav[data-stage="인출"] .sn-step[data-st="인출"] .sn-label,
+.stage-nav[data-stage="탐구"] .sn-step[data-st="탐구"] .sn-label,
 .stage-nav[data-stage="확장"] .sn-step[data-st="확장"] .sn-label,
 .stage-nav[data-stage="강화"] .sn-step[data-st="강화"] .sn-label {
   color: var(--green);
@@ -821,6 +823,16 @@ button { font-family: inherit; color: inherit; }
 .g-node.lit.len-m { padding: 5px 11px; min-width: 38px; }
 .g-node.lit.len-l { padding: 6px 16px; min-width: 50px; letter-spacing: 0.06em; }
 .g-node.lit::before { display: none; }
+/* 탐구로 깨운 노드: 비비드 바이올렛 — 인출(민트)과 강한 대비 */
+.g-node.lit.from-learn {
+  background: linear-gradient(135deg, rgba(155,108,217,0.22), rgba(216,184,247,0.14));
+  border-color: #9B6CD9;
+  color: #7B4FCB;
+  box-shadow:
+    0 0 0 4px rgba(155,108,217,0.12),
+    0 0 22px rgba(155,108,217,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.10);
+}
 .g-node.pop { animation: nodePop .7s cubic-bezier(.34,1.2,.64,1); }
 @keyframes nodePop {
   0%   { transform: var(--gt) scale(0.6) rotate(-3deg); }
@@ -1268,7 +1280,7 @@ button { font-family: inherit; color: inherit; }
 
 /* 퀴즈 카드 */
 .qcard {
-  width: 100%; max-width: 720px;
+  width: 100%; max-width: 760px;
   background: var(--card);
   border-radius: var(--r); border: 1px solid var(--border);
   padding: 28px 36px;
@@ -1282,14 +1294,12 @@ button { font-family: inherit; color: inherit; }
 .iq-head {
   display: flex; align-items: center; justify-content: center;
   gap: 24px;
-  background:
-    radial-gradient(ellipse at 50% 0%, rgba(93,208,160,0.22) 0%, rgba(69,194,138,0.10) 50%, rgba(46,158,107,0.04) 100%),
-    linear-gradient(180deg, #1F2A35 0%, #1A2430 100%);
-  border: 1px solid var(--green-line);
+  background: linear-gradient(180deg, #1F2A35 0%, #1A2430 100%);
+  border: 1px solid rgba(255,255,255,0.06);
   border-radius: 10px;
-  padding: 14px 18px; margin: 0 0 14px;
+  padding: 24px 18px; margin: 0 0 14px;
   position: relative; overflow: hidden;
-  box-shadow: 0 0 0 1px rgba(69,194,138,0.08), 0 4px 18px rgba(46,158,107,0.18), inset 0 1px 0 rgba(255,255,255,0.04);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.18), 0 6px 14px rgba(0,0,0,0.12);
 }
 .iq-head::after {
   content: ''; position: absolute; top: 0; left: -100%;
@@ -1407,7 +1417,7 @@ button { font-family: inherit; color: inherit; }
   font-weight: 600;
   letter-spacing: 0.01em;
   white-space: nowrap;
-  box-shadow: 0 6px 16px rgba(46,158,107,0.45), 0 0 0 1px rgba(69,194,138,0.35);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.18), 0 8px 18px rgba(0,0,0,0.14);
   animation: bubblePop .35s cubic-bezier(.34,1.5,.64,1);
   z-index: 5;
   pointer-events: none;
@@ -1422,7 +1432,7 @@ button { font-family: inherit; color: inherit; }
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
   border-top: 7px solid #45C28A;
-  filter: drop-shadow(0 2px 2px rgba(46,158,107,0.3));
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.20));
 }
 @keyframes bubblePop {
   0%   { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.82); }
@@ -1547,28 +1557,78 @@ button { font-family: inherit; color: inherit; }
 }
 
 .fill-choices-row {
-  display: flex; gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
   margin-bottom: 4px;
 }
+.fill-choices-row > div { min-width: 0; }
 .fill-btn {
-  padding: 12px 24px; border-radius: 100px;
-  border: 1px solid var(--border); font-size: 17px;
-  font-weight: 600; color: var(--text); background: var(--surface-2);
+  width: 100%; box-sizing: border-box;
+  padding: 22px 18px 22px 22px;
+  border-radius: 4px 16px 16px 16px;          /* E안 — 비대칭 라운딩 (좌상단만 작게) */
+  border: 1px solid var(--border);
+  color: var(--text); background: var(--surface-2);
   cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
-  transition: all .15s;
-  display: inline-flex; align-items: center; gap: 10px;
+  transition: border-color .18s, background .18s, transform .18s, box-shadow .18s;
+  display: flex; flex-direction: row; align-items: center;
+  gap: 14px;
+  text-align: left;
   letter-spacing: 0.02em;
+  position: relative;
+  overflow: hidden;                           /* sweep이 카드 밖으로 새지 않도록 */
 }
-.fill-btn .num-badge { margin-left: -7px; }
+.fill-btn .num-badge { position: absolute; top: 9px; left: 9px; margin: 0; }
+.fill-btn .fb-text {
+  flex: 1 1 auto; min-width: 0;
+  display: flex; flex-direction: row; align-items: center; justify-content: space-between;
+  gap: 12px;
+}
+.fill-btn .fb-word {
+  font-size: 24px; font-weight: 400; line-height: 1.15;
+  letter-spacing: 0.02em;
+  flex: 0 0 auto;
+  margin-left: 30px;
+}
+.fill-btn .fb-hj {
+  display: inline-flex; flex-direction: column; align-items: flex-start; gap: 3px;
+  flex: 0 0 auto;
+}
+.fill-btn .fb-line {
+  display: inline-flex; align-items: baseline; gap: 5px;
+  font-size: 12px; line-height: 1.2;
+  opacity: 0.6;
+  white-space: nowrap;
+}
+.fill-btn .fb-hj-char {
+  font-family: var(--font-han); font-weight: 500;
+  font-size: 13px; letter-spacing: 0.02em;
+}
+.fill-btn .fb-hun {
+  font-size: 11px; opacity: 0.95;
+  font-family: 'Noto Sans KR', sans-serif; letter-spacing: 0;
+}
 .fill-btn:hover {
   border-color: var(--green);
-  background: var(--surface-3);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
 }
-.fill-btn.ok { background: var(--ok-l); border-color: var(--ok); color: var(--ok); }
-.fill-btn.no { background: var(--rose-l); border-color: var(--rose); color: var(--rose); }
+.fill-btn.ok {
+  background: var(--green);
+  border-color: var(--green);
+  color: #FFFFFF;
+  box-shadow: 0 6px 18px rgba(69,194,138,0.32);
+  transform: translateY(-1px);
+}
+.fill-btn.no {
+  background: var(--rose-l);
+  border-color: var(--rose);
+  color: var(--rose);
+}
+.fill-btn.ok .fb-hj { opacity: 0.85; }
+.fill-btn.no .fb-hj { opacity: 0.7; }
+.fill-btn.ok .fb-hun { opacity: 1; }
 
 /* 번호 뱃지 */
 .num-badge {
@@ -1602,6 +1662,251 @@ button { font-family: inherit; color: inherit; }
 .choice-btn.no .num-badge,
 .fill-btn.no .num-badge {
   background: var(--rose); border-color: var(--rose); color: #fff;
+}
+
+/* ════════════════════════════
+   학습 (LEARN) — 카드 펼침 도감
+   퀴즈 페이지(흰 카드 + 4지선다)와 완전히 다른 시각 언어:
+   - 검정 캔버스 위 떠 있는 한 장의 카드
+   - 단계적 reveal (한자 → 분해 → 의미 → 예문)
+   - 좌측 컬렉션 / 우측 덱
+════════════════════════════ */
+#learn { background: var(--bg); }
+.learn-stage {
+  position: absolute;
+  inset: 96px 0 56px 0;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column;
+  gap: 22px;
+}
+.learn-counter {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px; letter-spacing: 0.18em;
+  color: rgba(255,255,255,0.42);
+  font-weight: 500;
+}
+.learn-counter em {
+  font-style: normal;
+  color: var(--green);
+  font-size: 22px; font-weight: 600;
+  margin-right: 4px; letter-spacing: 0;
+}
+.learn-counter .lc-slash { margin: 0 8px; opacity: 0.5; }
+
+/* 메인 카드 — 검정 캔버스 위 떠 있는 흰 카드 (탐구 훈련) */
+.learn-card {
+  position: relative;
+  width: 620px; min-height: 420px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04),
+    0 22px 48px rgba(0,0,0,0.42),
+    0 4px 14px rgba(0,0,0,0.20);
+  padding: 30px 36px 28px;
+  transition: transform .35s cubic-bezier(.2,1,.3,1), opacity .25s;
+  overflow: hidden;
+}
+/* 카드가 컬렉션(좌측)으로 작아지며 빨려 들어가는 모션 */
+.learn-card.flying-out {
+  animation: lcFlyOut .46s cubic-bezier(.5,.05,.7,.4) forwards;
+}
+@keyframes lcFlyOut {
+  0%   { transform: translate(0,0) scale(1) rotate(0); opacity: 1; }
+  60%  { opacity: 1; }
+  100% { transform: translate(-460px, 8px) scale(0.10) rotate(-14deg); opacity: 0; }
+}
+/* 카드가 덱(우측)에서 작게 솟아나 중앙으로 커지며 들어오는 모션 */
+.learn-card.flying-in {
+  animation: lcFlyIn .46s cubic-bezier(.2,.7,.3,1) both;
+}
+@keyframes lcFlyIn {
+  0%   { transform: translate(460px, 6px) scale(0.10) rotate(12deg); opacity: 0; }
+  40%  { opacity: 1; }
+  100% { transform: translate(0,0) scale(1) rotate(0); opacity: 1; }
+}
+
+/* 카드 내부 — 흰 카드(.learn-card) 안의 탐구 퀴즈 콘텐츠
+   inferQ의 .iq-head + .choices-col을 그대로 재활용하고
+   카드 코너에 인덱스/단어 한자만 표기 */
+.lc-corner-r {
+  position: absolute; top: 14px; right: 18px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 11px; letter-spacing: 0.15em;
+  color: var(--light);
+  font-weight: 500;
+}
+/* 카드 안에서 .iq-head 사이즈를 살짝 컴팩트하게 (가로 폭이 inferQ보다 좁음) */
+.learn-card .iq-head { padding: 18px 14px; margin: 6px 0 12px; }
+.learn-card .choices-col { gap: 7px; }
+.learn-card .reveal-msg { min-height: 14px; }
+
+/* 컬렉션 / 덱 (좌·우 측면) — 두 정체성 명확히 구분 */
+.learn-deck, .learn-coll {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; align-items: center;
+  gap: 10px;
+  font-family: 'Noto Sans KR', sans-serif;
+  letter-spacing: 0.12em;
+  font-weight: 500;
+}
+.learn-deck { right: 40px; }
+.learn-coll { left: 40px; }
+.learn-deck .ld-stack, .learn-coll .ld-stack {
+  position: relative;
+  width: 64px; height: 90px;
+}
+.ld-label {
+  font-size: 10px;
+  color: rgba(255,255,255,0.55);
+  text-transform: uppercase;
+}
+.ld-num {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 22px; font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+/* 컬렉션 (왼쪽) — 수집된 카드: 솔리드 민트 글로우 */
+.learn-coll .ld-num { color: var(--green); text-shadow: 0 0 12px rgba(69,194,138,0.55); }
+.learn-coll .ld-label { color: var(--green); }
+.ld-card.is-coll {
+  position: absolute;
+  width: 64px; height: 90px;
+  border-radius: 6px;
+  background: linear-gradient(160deg, rgba(69,194,138,0.92) 0%, rgba(47,160,112,0.85) 100%);
+  border: 1px solid rgba(168,237,201,0.7);
+  box-shadow:
+    0 0 0 1px rgba(69,194,138,0.32),
+    0 8px 18px rgba(0,0,0,0.42),
+    0 0 18px rgba(69,194,138,0.45);
+}
+.ld-card.is-coll::after {
+  content: '✦';
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 22px; color: rgba(255,255,255,0.78);
+  text-shadow: 0 0 8px rgba(255,255,255,0.6);
+}
+/* 카드가 한 장씩 비스듬히 쌓이는 모습 */
+.ld-card.is-coll:nth-child(1) { transform: rotate(-6deg) translate(-3px,2px); z-index: 1; }
+.ld-card.is-coll:nth-child(2) { transform: rotate(2deg)  translate(2px,-1px); z-index: 2; }
+.ld-card.is-coll:nth-child(3) { transform: rotate(-2deg) translate(0px,1px);  z-index: 3; }
+
+/* 덱 (오른쪽) — 남은 카드: 종이 덱(face-down) 톤 */
+.learn-deck .ld-num { color: #FFFFFF; }
+.learn-deck .ld-label { color: rgba(255,255,255,0.62); }
+.ld-card {
+  position: absolute;
+  width: 64px; height: 90px;
+  border-radius: 6px;
+  background:
+    linear-gradient(180deg, #FAFBFE 0%, #E2E6EE 100%);
+  border: 1px solid rgba(255,255,255,0.30);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.18),
+    0 6px 14px rgba(0,0,0,0.42);
+}
+/* 종이 카드 무늬 — 미세한 라인 */
+.ld-card::before {
+  content: '';
+  position: absolute; inset: 6px;
+  border: 1px dashed rgba(31,34,56,0.22);
+  border-radius: 3px;
+}
+.ld-card::after {
+  content: '?';
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-han); font-size: 24px;
+  color: rgba(31,34,56,0.32); font-weight: 500;
+}
+/* 3장 비스듬히 쌓인 모습 — 뒤로 갈수록 옅게 */
+.learn-deck .ld-card:nth-child(1) { transform: rotate(4deg)  translate(2px,1px);  z-index: 3; }
+.learn-deck .ld-card:nth-child(2) { transform: rotate(-2deg) translate(-1px,3px); z-index: 2; opacity: 0.85; }
+.learn-deck .ld-card:nth-child(3) { transform: rotate(2deg)  translate(1px,5px);  z-index: 1; opacity: 0.65; }
+
+/* 컨트롤 */
+.learn-ctrl {
+  display: flex; gap: 14px; align-items: center; justify-content: center;
+}
+.learn-btn {
+  appearance: none; -webkit-appearance: none;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.78);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px; font-weight: 500; letter-spacing: 0.06em;
+  padding: 10px 22px; border-radius: 100px;
+  cursor: pointer;
+  transition: all .18s ease;
+}
+.learn-btn:hover {
+  border-color: rgba(69,194,138,0.5);
+  color: #FFFFFF;
+  background: rgba(69,194,138,0.10);
+}
+.learn-btn.lb-next {
+  background: var(--green);
+  border-color: var(--green);
+  color: #FFFFFF;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(69,194,138,0.32);
+}
+.learn-btn.lb-next:hover {
+  background: var(--green-deep);
+  border-color: var(--green-deep);
+}
+.learn-btn:disabled {
+  opacity: 0.32; cursor: not-allowed;
+}
+.learn-skip {
+  position: absolute;
+  right: 20px; bottom: 18px;
+  background: transparent; border: 0;
+  color: rgba(255,255,255,0.42);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px; letter-spacing: 0.05em;
+  cursor: pointer;
+}
+.learn-skip:hover { color: var(--green); }
+
+/* 환원 — "강화로 →" 버튼 (게임 화면 위에 떠 있음) */
+.recap-next-btn {
+  position: absolute;
+  right: 28px; bottom: 26px;
+  z-index: 10;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 11px 22px;
+  background: linear-gradient(135deg, #9B6CD9, #7B4FCB);
+  border: 1px solid rgba(216,184,247,0.5);
+  border-radius: 100px;
+  color: #FFFFFF;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px; font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  box-shadow:
+    0 0 0 4px rgba(155,108,217,0.18),
+    0 8px 22px rgba(155,108,217,0.45),
+    0 2px 6px rgba(0,0,0,0.30);
+  animation: recapBtnIn .42s cubic-bezier(.2,1,.3,1) both;
+  transition: transform .18s, box-shadow .18s;
+}
+.recap-next-btn:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 0 5px rgba(155,108,217,0.22),
+    0 12px 28px rgba(155,108,217,0.55),
+    0 2px 6px rgba(0,0,0,0.30);
+}
+@keyframes recapBtnIn {
+  0%   { opacity: 0; transform: translateY(12px) scale(0.92); }
+  60%  { opacity: 1; }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* ════════════════════════════
@@ -1975,19 +2280,27 @@ button { font-family: inherit; color: inherit; }
 .area-cell.locked .cell-hun { display: none; }
 .area-cell.locked .cell-char { color: rgba(200,206,220,0.55); }
 
-/* ── 과거 통과 — 초록 보더 라인, 배경 거의 없음 ───────────── */
+/* ── 과거 통과 — 초록 보더 + 부드러운 글로우 ───────────────── */
 .area-cell.pass:not(.current) {
   background: rgba(69,194,138,0.04);
-  border: 1px solid rgba(69,194,138,0.55);
+  border: 1px solid rgba(69,194,138,0.65);
+  box-shadow:
+    0 0 0 1px rgba(69,194,138,0.18),
+    0 0 14px rgba(69,194,138,0.32),
+    inset 0 0 10px rgba(69,194,138,0.10);
 }
 .area-cell.pass:not(.current) .cell-char { color: rgba(255,255,255,0.92); }
 .area-cell.pass:not(.current) .cell-hun  { color: rgba(255,255,255,0.72); opacity: 1; }
 .area-cell.pass:not(.current) .cell-frac { color: rgba(69,194,138,0.7); }
 
-/* ── 과거 미통과 — 빨강 보더 라인, 배경 거의 없음 ─────────── */
+/* ── 과거 미통과 — 빨강 보더 + 부드러운 글로우 ────────────── */
 .area-cell:not(.locked):not(.current):not(.pass) {
   background: rgba(216,120,120,0.04);
-  border: 1px solid rgba(216,120,120,0.5);
+  border: 1px solid rgba(216,120,120,0.6);
+  box-shadow:
+    0 0 0 1px rgba(216,120,120,0.16),
+    0 0 14px rgba(216,120,120,0.28),
+    inset 0 0 10px rgba(216,120,120,0.10);
 }
 .area-cell:not(.locked):not(.current):not(.pass) .cell-char { color: rgba(255,255,255,0.92); }
 .area-cell:not(.locked):not(.current):not(.pass) .cell-hun  { color: rgba(255,255,255,0.72); opacity: 1; }
@@ -2173,12 +2486,12 @@ button { font-family: inherit; color: inherit; }
   overflow: hidden;
 }
 .r-home-btn::before {
-  /* 상단 글로스 하이라이트 띠 — 버튼 길이의 70% */
+  /* 상단 글로스 하이라이트 — 버튼 폭에 비례해 거의 전체 폭으로 */
   content: ''; position: absolute;
-  top: 3px; left: 15%; right: 15%;
-  height: 18px; border-radius: 100px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.32) 35%, rgba(255,255,255,0.12) 70%, rgba(255,255,255,0) 100%);
-  filter: blur(.4px);
+  top: 2px; left: 5%; right: 5%;
+  height: 42%; border-radius: 100px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.24) 40%, rgba(255,255,255,0.08) 75%, rgba(255,255,255,0) 100%);
+  filter: blur(.6px);
   pointer-events: none;
 }
 .r-home-btn:hover {
@@ -2214,7 +2527,7 @@ html, body {
 }
 /* 페이지·프레임·캔버스 모두 투명 — body의 그라디언트가 전체에 비치도록 */
 .frame, .canvas { background: transparent !important; }
-.page, #game, #result, #area, #home { background: transparent !important; }
+.page, #game, #result, #area, #home, #learn { background: transparent !important; }
 /* 캔버스 외곽 보더/라운드/그림자 제거 — 전체 화면이 한 톤으로 이어지게 */
 #screen {
   border-radius: 0 !important;
@@ -2239,6 +2552,16 @@ html, body {
   box-shadow:
     0 0 0 4px rgba(69,194,138,0.10),
     0 0 24px rgba(69,194,138,0.40),
+    0 2px 8px rgba(0,0,0,0.35) !important;
+}
+/* 탐구로 깨운 노드: 비비드 바이올렛 — 다크 캔버스 변형 */
+.g-node.lit.from-learn {
+  background: #FFFFFF !important;
+  color: #7B4FCB !important;
+  border-color: rgba(155,108,217,0.60) !important;
+  box-shadow:
+    0 0 0 4px rgba(155,108,217,0.16),
+    0 0 26px rgba(155,108,217,0.55),
     0 2px 8px rgba(0,0,0,0.35) !important;
 }
 /* 미점등 노드 — 흰 원은 거의 투명, 가운데 초록 점이 빛을 뿜는 형태 */
@@ -2376,6 +2699,43 @@ html, body {
     <button class="btn-start" onclick="goGame()">시작하기</button>
   </div>
 
+  <!-- ══ 학습 (NEW) ══ -->
+  <div class="page" id="learn">
+    <div class="topbar">
+      <div class="logo"><div class="logo-mark"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="14" y1="14" x2="6" y2="6"/><line x1="14" y1="14" x2="22" y2="6"/><line x1="14" y1="14" x2="5" y2="18"/><line x1="14" y1="14" x2="22" y2="20"/><line x1="14" y1="14" x2="14" y2="24"/></g><g fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="22" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="22" cy="20" r="2"/><circle cx="14" cy="24" r="2"/></g><circle cx="14" cy="14" r="3.6" fill="currentColor"/><circle cx="14" cy="14" r="3.6" fill="rgba(255,255,255,0.18)"/></svg></div><span class="logo-ko"><em>훈 감각</em> 익히기</span></div>
+      <div class="stage-nav" data-stage="탐구"><span class="sn-meta">나의 어휘 네트워크</span><div class="sn-track"><div class="sn-step" data-st="인출"><span class="sn-dot"></span><span class="sn-label">인출</span></div><span class="sn-link"></span><div class="sn-step" data-st="탐구"><span class="sn-dot"></span><span class="sn-label">탐구</span></div><span class="sn-link"></span><div class="sn-step" data-st="강화"><span class="sn-dot"></span><span class="sn-label">강화</span></div></div></div>
+    </div>
+    <div class="learn-stage" id="learn-stage">
+      <div class="learn-counter"><em id="lc-idx">1</em><span class="lc-slash">/</span><span id="lc-total">38</span></div>
+
+      <!-- 좌측 컬렉션 — 발견한 어휘 -->
+      <div class="learn-coll">
+        <div class="ld-label">발견</div>
+        <div class="ld-stack" id="lc-coll-stack"></div>
+        <div class="ld-num" id="lc-coll-num">0</div>
+      </div>
+
+      <!-- 메인 흰 카드 — 안에 inferQ 스타일 콘텐츠 -->
+      <div class="learn-card" id="lc-card">
+        <div class="lc-corner-r" id="lc-corner-r"></div>
+        <div id="lc-body"></div>
+      </div>
+
+      <!-- 우측 덱 — 남은 카드 -->
+      <div class="learn-deck">
+        <div class="ld-label">남은</div>
+        <div class="ld-stack" id="lc-deck-stack">
+          <div class="ld-card"></div>
+          <div class="ld-card"></div>
+          <div class="ld-card"></div>
+        </div>
+        <div class="ld-num" id="lc-deck-num">38</div>
+      </div>
+
+    </div>
+    <button class="learn-skip" onclick="goRecap()">탐구 끝내고 강화 →</button>
+  </div>
+
   <!-- ══ 게임 ══ -->
   <div class="page" id="game">
     <div class="topbar">
@@ -2412,7 +2772,7 @@ html, body {
         </div>
         <button class="btn-ok" onclick="submit()">확인</button>
       </div>
-      <button class="btn-done" id="dbtn" onclick="goInferQ()"><span class="bd-label">완료</span><span class="bd-arrow"><svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polyline points="6,1.5 13,9 6,16.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+      <button class="btn-done" id="dbtn" onclick="goLearn()"><span class="bd-label">완료</span><span class="bd-arrow"><svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polyline points="6,1.5 13,9 6,16.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
     </div>
     <div class="quiz-overlay" id="qo">
       <div class="quiz-card" id="qc"></div>
@@ -2561,7 +2921,32 @@ function showPage(id){
 
 // ── 사운드 ─────────────────────────────────
 var AC = null;
-function ac(){ if(!AC) AC = new(window.AudioContext||window.webkitAudioContext)(); return AC; }
+function ac(){
+  if(!AC){
+    try{ AC = new(window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; }
+  }
+  // 브라우저 자동재생 정책으로 suspended일 수 있음 → 매번 resume 시도
+  if(AC && AC.state === 'suspended'){ try{ AC.resume(); }catch(e){} }
+  return AC;
+}
+// 첫 사용자 제스처(클릭/키보드)에서 AudioContext 깨우기 — 미리보기/iframe 환경 대비
+(function(){
+  function unlock(){
+    try{
+      var a = ac();
+      if(!a) return;
+      // 무음 펄스 한 번 — Safari/일부 iframe에서 잠금 해제에 효과적
+      var o = a.createOscillator(), g = a.createGain();
+      g.gain.value = 0.0001;
+      o.connect(g); g.connect(a.destination);
+      o.start(0); o.stop(a.currentTime + 0.02);
+    }catch(e){}
+    window.removeEventListener('pointerdown', unlock, true);
+    window.removeEventListener('keydown', unlock, true);
+  }
+  window.addEventListener('pointerdown', unlock, true);
+  window.addEventListener('keydown', unlock, true);
+})();
 function tone(f,s,d,v,t){
   try{
     var a=ac(), o=a.createOscillator(), g=a.createGain();
@@ -2574,6 +2959,48 @@ function tone(f,s,d,v,t){
 }
 function sndOk(){  tone(659.3,0,.3,.05); tone(784,.12,.3,.04); tone(1046.5,.22,.4,.04); }
 function sndErr(){ tone(220,0,.2,.04,'triangle'); tone(180,.1,.2,.03,'triangle'); }
+// 노이즈 버스트 헬퍼 — 종이/공기 마찰음 (밴드패스로 음역 한정)
+function noiseBurst(start, dur, vol, centerHz, q){
+  try{
+    var a = ac(); if(!a) return;
+    var len = Math.floor(a.sampleRate * dur);
+    var buf = a.createBuffer(1, len, a.sampleRate);
+    var data = buf.getChannelData(0);
+    for(var i=0;i<len;i++){ data[i] = (Math.random()*2-1); }
+    var src = a.createBufferSource(); src.buffer = buf;
+    var bp = a.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=centerHz; bp.Q.value=q||1;
+    var g = a.createGain();
+    var ct = a.currentTime + start;
+    // 타악기형 envelope: 빠른 attack(5ms) + 자연 감쇠
+    g.gain.setValueAtTime(0, ct);
+    g.gain.linearRampToValueAtTime(vol, ct + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, ct + dur);
+    src.connect(bp); bp.connect(g); g.connect(a.destination);
+    src.start(ct); src.stop(ct + dur + 0.02);
+  }catch(e){}
+}
+// 짧은 임팩트 클릭 — 사인파 fast-decay (tone()의 80ms hold 우회)
+function clickTone(start, freq, dur, vol, type){
+  try{
+    var a = ac(); if(!a) return;
+    var o = a.createOscillator(), g = a.createGain();
+    o.type = type || 'sine'; o.frequency.value = freq;
+    var ct = a.currentTime + start;
+    g.gain.setValueAtTime(0, ct);
+    g.gain.linearRampToValueAtTime(vol, ct + 0.003);
+    g.gain.exponentialRampToValueAtTime(0.0001, ct + dur);
+    o.connect(g); g.connect(a.destination);
+    o.start(ct); o.stop(ct + dur + 0.02);
+  }catch(e){}
+}
+function sndCardStack(){
+  // 카드 쌓이는 소리 = 종이 *훅* 스치는 노이즈 + *탁* 임팩트 + 살짝 *톡* 후속음
+  noiseBurst(0,    0.07, 0.35, 2400, 1.2); // 종이 슬라이드 하이프릭
+  noiseBurst(0.02, 0.10, 0.25, 800,  1.0); // 종이 본체 마찰
+  clickTone(0.03, 110, 0.12, 0.28, 'triangle'); // 묵직한 thud
+  clickTone(0.05, 220, 0.08, 0.18, 'sine');     // mid bounce
+  clickTone(0.09, 90,  0.18, 0.20, 'sine');     // 저음 잔향
+}
 
 // ── 피드백 ──────────────────────────────────
 function setFb(type, msg){
@@ -2656,6 +3083,196 @@ function updateGameCounter(){
   var tEl = document.getElementById('g-total');
   if(fEl) fEl.textContent = S.found.length;
   if(tEl) tEl.textContent = (SESSION && SESSION.words) ? SESSION.words.length : 0;
+}
+
+// ════════════════════════════
+// 탐구 (TAMGU) — 카드덱 + 4지선다 의미 추론
+// 흰 카드 한 장씩, 인출에서 못 찾은 단어를 두 훈으로 추론
+// 정답 시 카드가 좌측으로 슬라이드 아웃 → 컬렉션 누적
+// ════════════════════════════
+var LEARN = { idx: 0, words: [], collected: [], correct: 0 };
+
+// ── 환원: 탐구 종료 → 게임 화면으로 돌아가 깨운 어휘를 보라색 노드로 합류시킴 ──
+function goRecap(){
+  if(!LEARN.collected || !LEARN.collected.length){ goFillQ(); return; }
+  showPage('game');
+  // 하단 입력/완료 잠금 (이미 인출 끝난 상태)
+  var input = document.getElementById('wi'); if(input){ input.disabled = true; input.blur(); }
+  var dbtn  = document.getElementById('dbtn'); if(dbtn) dbtn.style.visibility = 'hidden';
+  var hbtn  = document.getElementById('hbtn'); if(hbtn) hbtn.disabled = true;
+  // 기존 환원 버튼 있으면 제거
+  var prev = document.getElementById('recap-next'); if(prev) prev.remove();
+  // 안내 메시지
+  var fb = document.getElementById('fb');
+  if(fb){
+    fb.innerHTML = '';
+    var msg = document.createElement('div');
+    msg.style.cssText = 'color:#9B6CD9;font-weight:600;font-size:13px;letter-spacing:0.02em;animation:fadeUp .35s ease';
+    msg.textContent = '✦ 탐구로 깨운 어휘가 어휘망에 합류합니다';
+    fb.appendChild(msg);
+  }
+
+  var baseFound = (S && S.found) ? S.found.length : 0;
+  var collected = LEARN.collected.slice();
+  var startDelay = 700;
+  var stepDelay  = 520;
+
+  collected.forEach(function(w, i){
+    setTimeout(function(){
+      lightUpNode(w, true);   // fromLearn = true → 보라색
+      try{ sndOk(); }catch(e){}
+      var fEl = document.getElementById('g-found');
+      if(fEl) fEl.textContent = baseFound + (i + 1);
+    }, startDelay + i * stepDelay);
+  });
+
+  // 마지막 점등 + 라인 도착 여유 후 "다음 →" 버튼 등장 (자동 진행 X)
+  var btnT = startDelay + collected.length * stepDelay + 900;
+  setTimeout(function(){ showRecapNext(); }, btnT);
+}
+
+function showRecapNext(){
+  if(document.getElementById('recap-next')) return;
+  var btn = document.createElement('button');
+  btn.id = 'recap-next';
+  btn.className = 'recap-next-btn';
+  btn.innerHTML = '<span>강화로 →</span>';
+  btn.onclick = function(){
+    var input = document.getElementById('wi'); if(input) input.disabled = false;
+    var dbtn  = document.getElementById('dbtn'); if(dbtn) dbtn.style.visibility = '';
+    var hbtn  = document.getElementById('hbtn'); if(hbtn) hbtn.disabled = false;
+    var b = document.getElementById('recap-next'); if(b) b.remove();
+    goFillQ();
+  };
+  document.getElementById('game').appendChild(btn);
+}
+
+function goLearn(){
+  var sess = SESSION;
+  if(!sess) return;
+  // 인출(게임)에서 이미 찾은 단어를 제외하고 탐구 대상으로
+  // 첫 진입(게임 안 거친 경우)에는 isInferQuiz 단어만, 게임 후엔 못 찾은 단어 전체
+  var pool;
+  if(S && S.found && S.found.length > 0){
+    pool = WORD_LIST.filter(function(w){ return S.found.indexOf(w) === -1; });
+  } else {
+    pool = WORD_LIST.filter(function(w){ return WORD_MAP[w].isInferQuiz; });
+  }
+  LEARN.words  = shuffle(pool.slice());
+  LEARN.idx = 0;
+  LEARN.collected = [];
+  LEARN.correct = 0;
+  showPage('learn');
+  document.getElementById('lc-total').textContent = LEARN.words.length;
+  if(LEARN.words.length === 0){ goFillQ(); return; }
+  renderLearnCard();
+}
+
+function renderLearnCard(){
+  var w = WORD_MAP[LEARN.words[LEARN.idx]];
+  if(!w) return;
+  var card = document.getElementById('lc-card');
+  card.classList.remove('flying-out');
+  card.classList.add('flying-in');
+  setTimeout(function(){ card.classList.remove('flying-in'); }, 460);
+
+  // 카드 우상단 인덱스
+  document.getElementById('lc-corner-r').textContent =
+    (LEARN.idx+1).toString().padStart(2,'0') + ' / ' + LEARN.words.length.toString().padStart(2,'0');
+  document.getElementById('lc-idx').textContent = LEARN.idx + 1;
+
+  // 4지선다 셔플
+  var correct = w.choices[0];
+  var shuf = shuffle(w.choices.slice());
+  var ci = shuf.indexOf(correct);
+
+  // 카드 본문 = inferQ 스타일 (한자 분해 + 4지선다)
+  var body = document.getElementById('lc-body');
+  body.innerHTML =
+      '<div class="iq-head">'
+    +   '<span class="iq-word">'+w.word+'</span>'
+    +   '<span class="iq-divider"></span>'
+    +   '<div class="iq-decomp">'
+    +     '<div class="db-block"><div class="db-char">'+w.char1+'</div><div class="db-hun">'+w.hun1+'</div></div>'
+    +     '<div class="db-sep">+</div>'
+    +     '<div class="db-block"><div class="db-char">'+w.char2+'</div><div class="db-hun">'+w.hun2+'</div></div>'
+    +   '</div>'
+    + '</div>'
+    + '<div class="choices-col" id="lc-ch"></div>'
+    + '<div class="reveal-msg" id="lc-rev"></div>';
+
+  var cs = document.getElementById('lc-ch');
+  shuf.forEach(function(ch, i){
+    var wrap = document.createElement('div'); wrap.style.position = 'relative';
+    var btn = document.createElement('button'); btn.className = 'choice-btn';
+    btn.innerHTML = '<span class="num-badge">'+(i+1)+'</span>' + ch;
+    btn.onclick = function(){
+      var ok = (i === ci);
+      if(ok){
+        btn.className = 'choice-btn ok';
+        cs.querySelectorAll('.choice-btn').forEach(function(b){ b.disabled = true; });
+        LEARN.correct++; sndOk();
+        var bub = document.createElement('div');
+        bub.className = 'ans-bubble';
+        bub.textContent = '맞아요. 훈으로 의미를 깨웠어요 ✨';
+        wrap.appendChild(bub);
+        setTimeout(function(){
+          // 컬렉션 누적
+          LEARN.collected.push(LEARN.words[LEARN.idx]);
+          updateLearnCounters();
+          // 카드 슬라이드 아웃 → 다음 카드
+          if(LEARN.idx >= LEARN.words.length - 1){
+            // 마지막 카드도 발견 덱에 쌓이는 모션 + 효과음 → 환원
+            card.classList.add('flying-out');
+            setTimeout(function(){ sndCardStack(); }, 340);
+            setTimeout(function(){ goRecap(); }, 520);
+          } else {
+            card.classList.add('flying-out');
+            // 카드가 발견 덱에 살짝 늦게 닿을 때 효과음 (애니메이션 후반부)
+            setTimeout(function(){ sndCardStack(); }, 340);
+            setTimeout(function(){
+              LEARN.idx++;
+              renderLearnCard();
+            }, 460);
+          }
+        }, 1100);
+      } else {
+        sndErr();
+        btn.className = 'choice-btn no';
+        cs.querySelectorAll('.choice-btn').forEach(function(b){ b.disabled = true; });
+        var m = document.createElement('div');
+        m.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(208,112,112,0.82);border-radius:10px;color:#fff;font-size:14px;font-weight:700;letter-spacing:0.02em;white-space:nowrap;animation:fadeUp .2s ease;backdrop-filter:blur(1px)';
+        m.textContent = '다시 생각해보세요';
+        wrap.appendChild(m);
+        setTimeout(function(){
+          m.remove();
+          btn.classList.remove('no');
+          btn.classList.add('dim');
+          cs.querySelectorAll('.choice-btn').forEach(function(b, bi){
+            if(bi !== i && !b.classList.contains('dim')) b.disabled = false;
+          });
+        }, 1000);
+      }
+    };
+    wrap.appendChild(btn); cs.appendChild(wrap);
+  });
+
+  updateLearnCounters();
+}
+
+function updateLearnCounters(){
+  document.getElementById('lc-deck-num').textContent =
+    Math.max(0, LEARN.words.length - LEARN.idx - 1);
+  document.getElementById('lc-coll-num').textContent = LEARN.collected.length;
+  renderCollStack();
+}
+
+function renderCollStack(){
+  var stack = document.getElementById('lc-coll-stack');
+  var n = Math.min(LEARN.collected.length, 3);
+  var html = '';
+  for(var i=0;i<n;i++) html += '<div class="ld-card is-coll"></div>';
+  stack.innerHTML = html;
 }
 
 function goGame(){
@@ -2877,12 +3494,13 @@ function drawGameStage(){
     ctx.moveTo(cx, cy);
     ctx.lineTo(ex, ey);
     if(n.lit){
+      var fromLearn = !!n.fromLearn;
       if(n.lineT < 1){
-        ctx.strokeStyle = 'rgba(91,170,91,0.7)';
+        ctx.strokeStyle = fromLearn ? 'rgba(155,108,217,0.82)' : 'rgba(91,170,91,0.7)';
         ctx.lineWidth = 2;
         ctx.setLineDash([]);
       } else {
-        ctx.strokeStyle = 'rgba(91,170,91,0.34)';
+        ctx.strokeStyle = fromLearn ? 'rgba(155,108,217,0.42)' : 'rgba(91,170,91,0.34)';
         ctx.lineWidth = 1.2;
         ctx.setLineDash([]);
       }
@@ -2895,7 +3513,7 @@ function drawGameStage(){
     if(n.lit && n.lineT >= 1){
       ctx.beginPath();
       ctx.arc(x, y, 2.5, 0, Math.PI*2);
-      ctx.fillStyle = 'rgba(91,170,91,0.45)';
+      ctx.fillStyle = n.fromLearn ? 'rgba(155,108,217,0.52)' : 'rgba(91,170,91,0.45)';
       ctx.fill();
     }
   });
@@ -3044,7 +3662,7 @@ function spawnUnlitNodes(count){
   return added;
 }
 
-function lightUpNode(word){
+function lightUpNode(word, fromLearn){
   // 점등된 노드들로부터 "최소 거리"가 가장 큰 미점등 노드를 선택 — 활성 노드를 최대한 흩어지게
   var unlit = [];
   var lit = [];
@@ -3077,6 +3695,7 @@ function lightUpNode(word){
   node.lit = true;
   node.word = word;
   node.lineT = 0;
+  node.fromLearn = !!fromLearn;
   // 캡슐 색 + 길이 변주 클래스를 미리 계산해 node에 저장 — 라인이 도착하면 한 번에 chip으로 변환
   var mainCap = document.querySelector('.g-center .game-cap');
   var capCls = 'c-green';
@@ -3104,7 +3723,7 @@ function lightUpNode(word){
 function showNodeChip(node){
   if(!node || node.chipShown) return;
   node.chipShown = true;
-  node.el.className = 'g-node lit pop ' + (node.capCls || 'c-green') + ' ' + (node.lenCls || 'len-m');
+  node.el.className = 'g-node lit pop ' + (node.capCls || 'c-green') + ' ' + (node.lenCls || 'len-m') + (node.fromLearn ? ' from-learn' : '');
   node.el.textContent = node.word;
 }
 
@@ -3265,8 +3884,8 @@ function showQuiz(){
         } else {
           sndErr();
           var m = document.createElement('div');
-          m.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(208,112,112,0.82);border-radius:10px;color:#fff;font-size:10px;font-weight:700;white-space:nowrap;animation:fadeUp .2s ease;backdrop-filter:blur(1px)';
-          m.textContent = '다시 찾아 보세요';
+          m.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(208,112,112,0.82);border-radius:10px;color:#fff;font-size:14px;font-weight:700;letter-spacing:0.02em;white-space:nowrap;animation:fadeUp .2s ease;backdrop-filter:blur(1px)';
+          m.textContent = '다시 생각해보세요';
           wrap.appendChild(m);
           setTimeout(function(){
             m.remove();
@@ -3342,7 +3961,6 @@ function renderIQCard(word){
    +'<div class="db-block"><div class="db-char">'+d.char2+'</div><div class="db-hun">'+d.hun2+'</div></div>'
    +'</div>'
    +'</div>'
-   +'<div class="q-text">"'+word+'"은 어떤 뜻일까요?</div>'
    +'<div class="choices-col" id="iq-ch"></div>'
    +'<div class="reveal-msg" id="iq-rev"></div>'
    +'<div style="display:flex;justify-content:center">'
@@ -3372,8 +3990,8 @@ function renderIQCard(word){
         btn.className = 'choice-btn no';
         cs.querySelectorAll('.choice-btn').forEach(function(b){ b.disabled = true; });
         var m = document.createElement('div');
-        m.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(208,112,112,0.82);border-radius:10px;color:#fff;font-size:10px;font-weight:700;white-space:nowrap;animation:fadeUp .2s ease;backdrop-filter:blur(1px)';
-        m.textContent = '다시 찾아 보세요';
+        m.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(208,112,112,0.82);border-radius:10px;color:#fff;font-size:14px;font-weight:700;letter-spacing:0.02em;white-space:nowrap;animation:fadeUp .2s ease;backdrop-filter:blur(1px)';
+        m.textContent = '다시 생각해보세요';
         wrap.appendChild(m);
         setTimeout(function(){
           m.remove();
@@ -3398,10 +4016,20 @@ function renderIQCard(word){
 // 빈칸 채우기 (FillQ)
 // ══════════════════════════════════════════════
 function goFillQ(){
-  var found = S.found.filter(function(w){ return WORD_MAP[w] && WORD_MAP[w].fillSentence; });
-  if(found.length === 0){ goResult(); return; }
-  found = shuffle(found);
-  FQ = { words:found, idx:0, correct:0, total:found.length };
+  // 강화 = 인출(S.found) + 탐구(LEARN.collected) 모두
+  var pool = [];
+  if(S && S.found) pool = pool.concat(S.found);
+  if(LEARN && LEARN.collected) pool = pool.concat(LEARN.collected);
+  // 중복 제거 + fillSentence 보유 단어만
+  var seen = {};
+  var all = pool.filter(function(w){
+    if(seen[w]) return false;
+    seen[w] = true;
+    return WORD_MAP[w] && WORD_MAP[w].fillSentence;
+  });
+  if(all.length === 0){ goResult(); return; }
+  all = shuffle(all);
+  FQ = { words:all, idx:0, correct:0, total:all.length };
   showPage('fillq');
   renderFQDots(); renderFQCard(FQ.words[0]);
 }
@@ -3429,7 +4057,19 @@ function renderFQCard(word){
   choices.forEach(function(ch, i){
     var wrap = document.createElement('div'); wrap.style.position = 'relative';
     var btn = document.createElement('button'); btn.className = 'fill-btn';
-    btn.innerHTML = '<span class="num-badge">'+(i+1)+'</span>' + ch;
+    var data = WORD_MAP[ch];
+    var hjLines = '';
+    if(data){
+      hjLines =
+        '<span class="fb-line"><span class="fb-hj-char">'+data.char1+'</span> <span class="fb-hun">'+data.hun1+'</span></span>' +
+        '<span class="fb-line"><span class="fb-hj-char">'+data.char2+'</span> <span class="fb-hun">'+data.hun2+'</span></span>';
+    }
+    btn.innerHTML =
+      '<span class="num-badge">'+(i+1)+'</span>' +
+      '<span class="fb-text">' +
+        '<span class="fb-word">'+ch+'</span>' +
+        '<span class="fb-hj">'+ hjLines +'</span>' +
+      '</span>';
     btn.onclick = function(){
       var ok = (i === ci);
       if(ok){
@@ -3457,8 +4097,8 @@ function renderFQCard(word){
         btn.classList.add('no');
         cs.querySelectorAll('.fill-btn').forEach(function(b){ b.disabled = true; });
         var m = document.createElement('div');
-        m.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(208,112,112,0.82);border-radius:100px;color:#fff;font-size:10px;font-weight:700;white-space:nowrap;animation:fadeUp .2s ease;backdrop-filter:blur(1px)';
-        m.textContent = '다시 찾아 보세요';
+        m.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(208,112,112,0.82);border-radius:4px 16px 16px 16px;color:#fff;font-size:15px;font-weight:700;letter-spacing:0.02em;white-space:nowrap;animation:fadeUp .2s ease;backdrop-filter:blur(1px)';
+        m.textContent = '다시 생각해보세요';
         wrap.appendChild(m);
         setTimeout(function(){
           m.remove();
@@ -3720,7 +4360,7 @@ function goArea(){
     msg.innerHTML = '<strong>'+(SESSION.area||'환경과 생물')+' 어휘 마스터!</strong> 모든 회차를 패스했어요.';
   } else {
     master.className = 'area-master';
-    icon.textContent = '🎯';
+    icon.textContent = '';
     msg.innerHTML = '※ 회차당 가족 어휘 ' + PASS_MIN + '개 이상 수집 시 패스';
   }
   showPage('area');
