@@ -684,9 +684,9 @@ button { font-family: inherit; color: inherit; }
 }
 .game-meta .gm-round { color: var(--green); font-weight: 500; }
 
-/* 우상단 발견 카운터 */
+/* 우상단 발견 카운터 — 점수판(우상단)과 겹치지 않도록 아래로 */
 .game-counter {
-  position: absolute; top: 16px; right: 24px;
+  position: absolute; top: 64px; right: 24px;
   z-index: 4;
   display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
 }
@@ -943,10 +943,10 @@ button { font-family: inherit; color: inherit; }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05); }
 }
 
-/* 우측 상단 피드백 영역 — 카운터(2/38) 바로 아래 */
+/* 우측 피드백 영역 — 카운터(5/38) 바로 아래, 점수판(top)을 비켜 위치 */
 .fb-zone {
   position: absolute;
-  top: 52px; right: 24px;
+  top: 100px; right: 24px;
   text-align: right;
   z-index: 5;
   pointer-events: none;
