@@ -516,53 +516,54 @@ button { font-family: inherit; color: inherit; }
   box-shadow: none;
 }
 
-/* ── 시작하기 — 텍스트 + 굵은 밑줄, 캡슐 모양 제거 ── */
+/* ── 시작하기 — 폰트 + 밑줄만 (모든 박스/외곽선/그림자 제거) ── */
 .btn-start {
   position: absolute;
   right: 44px; bottom: 38px;
   z-index: 4;
-  padding: 6px 4px 10px;
+  margin: 0;
+  padding: 0 0 8px;              /* 밑줄까지의 간격만 */
   border: 0;
+  outline: 0;
   background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
   cursor: pointer;
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 30px; font-weight: 700;
+  font-size: 32px; font-weight: 700;
   color: #FFFFFF;
   letter-spacing: 0.04em;
   line-height: 1.1;
   display: inline-flex; align-items: baseline; gap: 14px;
-  text-shadow: 0 0 18px rgba(69,194,138,0.35);
-  transition: color .25s, text-shadow .25s, transform .25s cubic-bezier(.2,1.5,.4,1);
+  transition: color .25s, transform .25s cubic-bezier(.2,1.5,.4,1);
 }
-/* 굵은 밑줄 */
+.btn-start:focus, .btn-start:focus-visible { outline: 0; box-shadow: none; }
+.btn-start::-moz-focus-inner { border: 0; padding: 0; }
+
+/* 굵은 밑줄 — 텍스트 폭에만 정확히 (화살표 영역 제외) */
 .btn-start::before {
   content: '';
   position: absolute;
-  left: 0; right: 38px;          /* 화살표 영역(오른쪽 38px) 제외 */
+  left: 0; right: 40px;
   bottom: 0;
   height: 4px;
   background: var(--green);
   border-radius: 2px;
-  box-shadow: 0 0 14px rgba(69,194,138,0.6);
-  transition: right .25s, height .25s, box-shadow .25s;
-  filter: none;
+  transition: right .25s, height .25s;
 }
 .btn-start::after {
   content: '→';
-  font-size: 26px; font-weight: 500;
+  font-size: 28px; font-weight: 500;
   color: var(--green);
   transition: transform .25s;
-  text-shadow: 0 0 16px rgba(69,194,138,0.55);
 }
 .btn-start:hover {
   color: var(--green);
-  text-shadow: 0 0 22px rgba(69,194,138,0.6);
   transform: translateY(-2px);
 }
 .btn-start:hover::before {
   height: 5px;
-  right: 32px;
-  box-shadow: 0 0 22px rgba(69,194,138,0.85);
+  right: 34px;
 }
 .btn-start:hover::after { transform: translateX(6px); }
 
