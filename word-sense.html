@@ -516,48 +516,57 @@ button { font-family: inherit; color: inherit; }
   box-shadow: none;
 }
 
+/* ── 시작하기 — 텍스트 + 굵은 밑줄, 캡슐 모양 제거 ── */
 .btn-start {
   position: absolute;
-  right: 38px; bottom: 38px;
+  right: 44px; bottom: 38px;
   z-index: 4;
-  padding: 20px 56px;
-  border-radius: 100px;
-  border: 1px solid rgba(69,194,138,0.45);
+  padding: 6px 4px 10px;
+  border: 0;
+  background: transparent;
   cursor: pointer;
-  font-size: 15px; font-weight: 700;
-  color: #F5F1E8;
-  background: linear-gradient(180deg, #1A1714 0%, #0E0C0A 100%);
-  letter-spacing: 0.08em;
-  box-shadow:
-    0 0 0 8px rgba(69,194,138,0.10),
-    0 0 28px rgba(69,194,138,0.35),
-    0 14px 36px rgba(0,0,0,0.55);
-  transition: all .25s cubic-bezier(.2,1.5,.4,1);
-  display: inline-flex; align-items: center; gap: 12px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 30px; font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  display: inline-flex; align-items: baseline; gap: 14px;
+  text-shadow: 0 0 18px rgba(69,194,138,0.35);
+  transition: color .25s, text-shadow .25s, transform .25s cubic-bezier(.2,1.5,.4,1);
 }
+/* 굵은 밑줄 */
 .btn-start::before {
-  content: ''; position: absolute;
-  top: 6px; left: 26px;
-  width: 32px; height: 9px; border-radius: 50%;
-  background: rgba(255,255,255,0.14);
-  filter: blur(1px);
+  content: '';
+  position: absolute;
+  left: 0; right: 38px;          /* 화살표 영역(오른쪽 38px) 제외 */
+  bottom: 0;
+  height: 4px;
+  background: var(--green);
+  border-radius: 2px;
+  box-shadow: 0 0 14px rgba(69,194,138,0.6);
+  transition: right .25s, height .25s, box-shadow .25s;
+  filter: none;
 }
 .btn-start::after {
-  content: '→'; font-size: 17px;
+  content: '→';
+  font-size: 26px; font-weight: 500;
   color: var(--green);
-  transition: transform .2s;
+  transition: transform .25s;
+  text-shadow: 0 0 16px rgba(69,194,138,0.55);
 }
 .btn-start:hover {
-  transform: translateY(-4px) scale(1.04);
-  box-shadow:
-    0 0 0 10px rgba(69,194,138,0.16),
-    0 0 38px rgba(69,194,138,0.55),
-    0 18px 44px rgba(0,0,0,0.65);
-  border-color: var(--green);
+  color: var(--green);
+  text-shadow: 0 0 22px rgba(69,194,138,0.6);
+  transform: translateY(-2px);
 }
-.btn-start:hover::after { transform: translateX(5px); }
+.btn-start:hover::before {
+  height: 5px;
+  right: 32px;
+  box-shadow: 0 0 22px rgba(69,194,138,0.85);
+}
+.btn-start:hover::after { transform: translateX(6px); }
 
-/* ── 시작 버튼 순차 등장 + 부유 모션 ── */
+/* ── 시작 라벨 순차 등장 + 부유 모션 ── */
 .btn-start { opacity: 0; }
 #home.active .btn-start {
   animation:
@@ -565,13 +574,13 @@ button { font-family: inherit; color: inherit; }
     btnStartFloat 2.6s ease-in-out 3.4s infinite;
 }
 @keyframes btnStartIn {
-  0%   { opacity: 0; transform: translateY(22px) scale(0.92); }
-  55%  { opacity: 1; transform: translateY(-5px) scale(1.05); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
+  0%   { opacity: 0; transform: translateY(20px); }
+  55%  { opacity: 1; transform: translateY(-4px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 @keyframes btnStartFloat {
-  0%, 100% { transform: translateY(0) scale(1); box-shadow: 0 0 0 8px rgba(69,194,138,0.10), 0 0 28px rgba(69,194,138,0.35), 0 14px 36px rgba(0,0,0,0.55); }
-  50%      { transform: translateY(-4px) scale(1.012); box-shadow: 0 0 0 9px rgba(69,194,138,0.14), 0 0 38px rgba(69,194,138,0.5), 0 18px 42px rgba(0,0,0,0.6); }
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
 }
 .btn-start:hover { animation-play-state: paused; }
 
