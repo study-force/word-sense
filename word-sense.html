@@ -2786,6 +2786,8 @@ html, body {
     -300vw 0 0 0 #FFFFFF,
      300vw 0 0 0 #FFFFFF !important;
 }
+/* 환원 모드: 탐구 후 어휘망 점등 화면에서는 하단 흰 도크 숨김 */
+body.recap-mode .game-bottom { display: none !important; }
 
 /* 단어 입력창 — 흰 도크 위에서 진한 회색으로 대비 */
 .word-input {
@@ -3312,6 +3314,7 @@ var LEARN = { idx: 0, words: [], collected: [], correct: 0 };
 function goRecap(){
   if(!LEARN.collected || !LEARN.collected.length){ goFillQ(); return; }
   showPage('game');
+  document.body.classList.add('recap-mode');   // 하단 흰 입력 블록 숨김
   // 하단 입력/완료 잠금 (이미 인출 끝난 상태)
   var input = document.getElementById('wi'); if(input){ input.disabled = true; input.blur(); }
   var dbtn  = document.getElementById('dbtn'); if(dbtn) dbtn.style.visibility = 'hidden';
@@ -3352,8 +3355,9 @@ function showRecapNext(){
   var btn = document.createElement('button');
   btn.id = 'recap-next';
   btn.className = 'recap-next-btn';
-  btn.innerHTML = '<span>강화로 →</span>';
+  btn.innerHTML = '<span>다음 →</span>';
   btn.onclick = function(){
+    document.body.classList.remove('recap-mode');
     var input = document.getElementById('wi'); if(input) input.disabled = false;
     var dbtn  = document.getElementById('dbtn'); if(dbtn) dbtn.style.visibility = '';
     var hbtn  = document.getElementById('hbtn'); if(hbtn) hbtn.disabled = false;
