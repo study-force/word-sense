@@ -116,13 +116,13 @@ button { font-family: inherit; color: inherit; }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── 탑바 ── */
+/* ── 탑바 — 자리만 차지하는 invisible 헤더 제거, stage-nav의 positioning context 역할만 유지 ── */
 .topbar {
-  height: 60px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 32px;
-  background: linear-gradient(to bottom, rgba(255,255,255,0.015), transparent);
+  height: 0; flex-shrink: 0;
+  padding: 0;
+  background: transparent;
   position: relative; z-index: 10;
+  /* 자식 stage-nav은 absolute로 페이지 상단에 자유롭게 배치됨 */
 }
 .logo {
   display: none;                       /* 좌측 네트워크 아이콘 제거 */
@@ -144,11 +144,10 @@ button { font-family: inherit; color: inherit; }
    2줄 구성: 1줄 = "나의 어휘 네트워크" 라벨, 2줄 = "인출-확장-강화" 다이어그램 */
 .stage-nav {
   position: absolute;
-  left: 32px; top: 50%;                  /* 아이콘 제거 후 좌측 패딩에 플러시 */
-  transform: translateY(-50%);
+  left: 32px; top: 30px;                 /* 페이지 상단에서 30px — 충분한 상단 여백 확보 */
   display: flex; flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: 14px;                              /* "나의 어휘 네트워크"와 인출/확장/강화 블록 사이 간격 확보 */
   pointer-events: none;
   white-space: nowrap;
 }
@@ -2950,10 +2949,13 @@ body.dark-canvas .score-chip,
    결과 V3 — 점수판 중앙 이동 + 인출/확장 컬렉션
 ════════════════════════════════════════════ */
 .r-topbar-meta {
+  position: absolute;
+  top: 30px; left: 80px;                 /* snd-toggle(22+36=58) 우측 22px */
   display: flex; align-items: baseline; gap: 8px;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 12px; color: #B6BCCB;
   letter-spacing: 0.04em;
+  z-index: 11;
 }
 .r-topbar-meta .r-tm-area  { font-weight: 600; color: #C8CEDC; }
 .r-topbar-meta .r-tm-round { color: var(--green); font-weight: 600; }
@@ -3403,6 +3405,41 @@ html, body {
 /* 환원 모드: 탐구 후 어휘망 점등 화면에서는 하단 흰 도크 숨김 */
 body.recap-mode .game-bottom { display: none !important; }
 
+/* 음소거 토글 — 좌측 상단 글로벌 플로팅 버튼 */
+.snd-toggle {
+  position: absolute;
+  top: 22px; left: 22px;
+  z-index: 50;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(20,24,34,0.55);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 50%;
+  color: rgba(255,255,255,0.78);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: all .18s ease;
+  padding: 0;
+}
+.snd-toggle:hover {
+  background: rgba(30,36,50,0.78);
+  border-color: rgba(69,194,138,0.50);
+  color: #FFFFFF;
+  box-shadow: 0 0 14px rgba(69,194,138,0.28);
+}
+.snd-toggle svg { width: 18px; height: 18px; display: block; }
+.snd-toggle .ic-on  { display: block; }
+.snd-toggle .ic-off { display: none; }
+.snd-toggle.muted .ic-on  { display: none; }
+.snd-toggle.muted .ic-off { display: block; }
+.snd-toggle.muted {
+  color: rgba(255,255,255,0.42);
+  border-color: rgba(255,255,255,0.06);
+}
+/* 홈 화면에서는 좀 더 안쪽으로 */
+#home .snd-toggle { top: 18px; left: 18px; }
+
 /* 단어 입력창 — 흰 도크 위에서 진한 회색으로 대비 */
 .word-input {
   background: #2C313F !important;
@@ -3434,6 +3471,20 @@ body.recap-mode .game-bottom { display: none !important; }
     <div class="sc-ring" id="sc-ring"></div>
     <div class="sc-pop" id="sc-pop"></div>
   </div>
+
+  <!-- ══ 음소거 토글 (글로벌) ══ -->
+  <button class="snd-toggle" id="snd-toggle" type="button" aria-label="사운드 켜기/끄기" title="사운드 끄기/켜기">
+    <svg class="ic-on" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M11 5L6 9H3v6h3l5 4V5z" fill="currentColor"/>
+      <path d="M15.5 8.5a4.5 4.5 0 010 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M18.5 5.5a8 8 0 010 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+    <svg class="ic-off" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M11 5L6 9H3v6h3l5 4V5z" fill="currentColor"/>
+      <line x1="15" y1="9" x2="21" y2="15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="21" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+  </button>
 
   <!-- ══ 홈 ══ -->
   <div class="page active" id="home">
@@ -3773,6 +3824,41 @@ function ac(){
   if(AC && AC.state === 'suspended'){ try{ AC.resume(); }catch(e){} }
   return AC;
 }
+
+// 마스터 게인 + 음소거 토글 (localStorage 동기화)
+var SND_ON = (function(){
+  try { return localStorage.getItem('sound-on') !== '0'; } catch(e){ return true; }
+})();
+var SND_MASTER_VOL = 0.78;   // 마스터 게인 (compressor 뒤에 위치)
+var SND_MASTER = null;
+function sndDest(){
+  var a = ac(); if(!a) return null;
+  if(!SND_MASTER){
+    // compressor → "글루"로 여러 레이어를 함께 묶어 임팩트를 키움
+    var comp = a.createDynamicsCompressor();
+    comp.threshold.value = -18;   // -18dB 이상부터 누름
+    comp.knee.value      = 12;
+    comp.ratio.value     = 4;
+    comp.attack.value    = 0.003;
+    comp.release.value   = 0.18;
+    SND_MASTER = a.createGain();
+    SND_MASTER.gain.value = SND_ON ? SND_MASTER_VOL : 0;
+    SND_MASTER.connect(comp);
+    comp.connect(a.destination);
+  }
+  return SND_MASTER;
+}
+function setSound(on){
+  SND_ON = !!on;
+  try{ localStorage.setItem('sound-on', SND_ON ? '1' : '0'); }catch(e){}
+  var m = sndDest(); if(!m) return;
+  var a = ac(); var ct = a.currentTime;
+  m.gain.cancelScheduledValues(ct);
+  m.gain.linearRampToValueAtTime(SND_ON ? SND_MASTER_VOL : 0, ct + 0.05);
+}
+window.toggleSound = function(){ setSound(!SND_ON); return SND_ON; };
+window.isSoundOn   = function(){ return SND_ON; };
+
 // 첫 사용자 제스처(클릭/키보드)에서 AudioContext 깨우기 — 미리보기/iframe 환경 대비
 (function(){
   function unlock(){
@@ -3784,6 +3870,8 @@ function ac(){
       g.gain.value = 0.0001;
       o.connect(g); g.connect(a.destination);
       o.start(0); o.stop(a.currentTime + 0.02);
+      // 마스터 게인 노드도 미리 만들어둠
+      sndDest();
     }catch(e){}
     window.removeEventListener('pointerdown', unlock, true);
     window.removeEventListener('keydown', unlock, true);
@@ -3791,22 +3879,24 @@ function ac(){
   window.addEventListener('pointerdown', unlock, true);
   window.addEventListener('keydown', unlock, true);
 })();
+
+// 톤 헬퍼 — 모두 마스터 게인을 통해 출력
 function tone(f,s,d,v,t){
   try{
     var a=ac(), o=a.createOscillator(), g=a.createGain();
-    o.type=t||'sine'; o.frequency.value=f; o.connect(g); g.connect(a.destination);
+    var dest = sndDest() || a.destination;
+    o.type=t||'sine'; o.frequency.value=f; o.connect(g); g.connect(dest);
     var ct=a.currentTime+s;
     g.gain.setValueAtTime(0,ct); g.gain.linearRampToValueAtTime(v,ct+.06);
     g.gain.setValueAtTime(v,ct+d-.08); g.gain.linearRampToValueAtTime(0,ct+d);
     o.start(ct); o.stop(ct+d+.05);
   }catch(e){}
 }
-function sndOk(){  tone(659.3,0,.3,.05); tone(784,.12,.3,.04); tone(1046.5,.22,.4,.04); }
-function sndErr(){ tone(220,0,.2,.04,'triangle'); tone(180,.1,.2,.03,'triangle'); }
-// 노이즈 버스트 헬퍼 — 종이/공기 마찰음 (밴드패스로 음역 한정)
+// 노이즈 버스트 — 종이/공기 마찰음 (밴드패스로 음역 한정)
 function noiseBurst(start, dur, vol, centerHz, q){
   try{
     var a = ac(); if(!a) return;
+    var dest = sndDest() || a.destination;
     var len = Math.floor(a.sampleRate * dur);
     var buf = a.createBuffer(1, len, a.sampleRate);
     var data = buf.getChannelData(0);
@@ -3815,36 +3905,244 @@ function noiseBurst(start, dur, vol, centerHz, q){
     var bp = a.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=centerHz; bp.Q.value=q||1;
     var g = a.createGain();
     var ct = a.currentTime + start;
-    // 타악기형 envelope: 빠른 attack(5ms) + 자연 감쇠
     g.gain.setValueAtTime(0, ct);
     g.gain.linearRampToValueAtTime(vol, ct + 0.005);
     g.gain.exponentialRampToValueAtTime(0.0001, ct + dur);
-    src.connect(bp); bp.connect(g); g.connect(a.destination);
+    src.connect(bp); bp.connect(g); g.connect(dest);
     src.start(ct); src.stop(ct + dur + 0.02);
   }catch(e){}
 }
-// 짧은 임팩트 클릭 — 사인파 fast-decay (tone()의 80ms hold 우회)
+// 짧은 임팩트 클릭
 function clickTone(start, freq, dur, vol, type){
   try{
     var a = ac(); if(!a) return;
+    var dest = sndDest() || a.destination;
     var o = a.createOscillator(), g = a.createGain();
     o.type = type || 'sine'; o.frequency.value = freq;
     var ct = a.currentTime + start;
     g.gain.setValueAtTime(0, ct);
     g.gain.linearRampToValueAtTime(vol, ct + 0.003);
     g.gain.exponentialRampToValueAtTime(0.0001, ct + dur);
-    o.connect(g); g.connect(a.destination);
+    o.connect(g); g.connect(dest);
     o.start(ct); o.stop(ct + dur + 0.02);
   }catch(e){}
 }
-function sndCardStack(){
-  // 카드 쌓이는 소리 = 종이 *훅* 스치는 노이즈 + *탁* 임팩트 + 살짝 *톡* 후속음
-  noiseBurst(0,    0.07, 0.35, 2400, 1.2); // 종이 슬라이드 하이프릭
-  noiseBurst(0.02, 0.10, 0.25, 800,  1.0); // 종이 본체 마찰
-  clickTone(0.03, 110, 0.12, 0.28, 'triangle'); // 묵직한 thud
-  clickTone(0.05, 220, 0.08, 0.18, 'sine');     // mid bounce
-  clickTone(0.09, 90,  0.18, 0.20, 'sine');     // 저음 잔향
+// 종(bell) 톤 — 사인 fundamental + 2.76× inharmonic partial로 따뜻한 종소리
+function bellTone(freq, start, dur, vol){
+  try{
+    var a = ac(); if(!a) return;
+    var dest = sndDest() || a.destination;
+    var ct = a.currentTime + start;
+    var o1 = a.createOscillator(); o1.type='sine'; o1.frequency.value=freq;
+    var g1 = a.createGain();
+    o1.connect(g1); g1.connect(dest);
+    g1.gain.setValueAtTime(0, ct);
+    g1.gain.linearRampToValueAtTime(vol, ct + 0.005);
+    g1.gain.exponentialRampToValueAtTime(0.0001, ct + dur);
+    o1.start(ct); o1.stop(ct + dur + 0.05);
+    // 2.76 partial — 자연스러운 종 음색 (비조화 배음)
+    var o2 = a.createOscillator(); o2.type='sine'; o2.frequency.value=freq * 2.76;
+    var g2 = a.createGain();
+    o2.connect(g2); g2.connect(dest);
+    g2.gain.setValueAtTime(0, ct);
+    g2.gain.linearRampToValueAtTime(vol*0.32, ct + 0.005);
+    g2.gain.exponentialRampToValueAtTime(0.0001, ct + dur*0.55);
+    o2.start(ct); o2.stop(ct + dur + 0.05);
+  }catch(e){}
 }
+// ── 스테레오 헬퍼 (StereoPanner 미지원 시 폴백) ──
+function _pannerOrDest(pan){
+  var a = ac(); if(!a) return null;
+  var dest = sndDest() || a.destination;
+  if(!a.createStereoPanner) return { node: dest, end: dest };
+  var p = a.createStereoPanner();
+  p.pan.value = Math.max(-1, Math.min(1, pan || 0));
+  p.connect(dest);
+  return { node: p, end: p };
+}
+// 스테레오 종 — bellTone과 동일하지만 좌/우 패닝
+function bellToneStereo(freq, start, dur, vol, pan){
+  try{
+    var a = ac(); if(!a) return;
+    var ct = a.currentTime + start;
+    var pp = _pannerOrDest(pan); if(!pp) return;
+    // 1차: fundamental sine + 작은 attack 피치 슬라이드 (생기 추가)
+    var o1 = a.createOscillator(); o1.type='sine';
+    o1.frequency.setValueAtTime(freq*0.985, ct);
+    o1.frequency.exponentialRampToValueAtTime(freq, ct + 0.04);
+    var g1 = a.createGain();
+    o1.connect(g1); g1.connect(pp.node);
+    g1.gain.setValueAtTime(0, ct);
+    g1.gain.linearRampToValueAtTime(vol, ct + 0.005);
+    g1.gain.exponentialRampToValueAtTime(0.0001, ct + dur);
+    o1.start(ct); o1.stop(ct + dur + 0.05);
+    // 2차: 2.76× 비조화 배음 — 종 음색
+    var o2 = a.createOscillator(); o2.type='sine'; o2.frequency.value=freq * 2.76;
+    var g2 = a.createGain();
+    o2.connect(g2); g2.connect(pp.node);
+    g2.gain.setValueAtTime(0, ct);
+    g2.gain.linearRampToValueAtTime(vol*0.32, ct + 0.005);
+    g2.gain.exponentialRampToValueAtTime(0.0001, ct + dur*0.55);
+    o2.start(ct); o2.stop(ct + dur + 0.05);
+    // 3차: 5도 부드러운 sustain — 화음감
+    var o3 = a.createOscillator(); o3.type='sine'; o3.frequency.value=freq * 1.5;
+    var g3 = a.createGain();
+    o3.connect(g3); g3.connect(pp.node);
+    g3.gain.setValueAtTime(0, ct);
+    g3.gain.linearRampToValueAtTime(vol*0.12, ct + 0.04);
+    g3.gain.exponentialRampToValueAtTime(0.0001, ct + dur*0.7);
+    o3.start(ct); o3.stop(ct + dur + 0.05);
+  }catch(e){}
+}
+// 스테레오 핑(sparkle) — 짧고 밝은 high sine
+function pingStereo(freq, start, dur, vol, pan){
+  try{
+    var a = ac(); if(!a) return;
+    var pp = _pannerOrDest(pan); if(!pp) return;
+    var o = a.createOscillator(); o.type='sine'; o.frequency.value=freq;
+    var g = a.createGain();
+    o.connect(g); g.connect(pp.node);
+    var ct = a.currentTime + start;
+    g.gain.setValueAtTime(0, ct);
+    g.gain.linearRampToValueAtTime(vol, ct + 0.003);
+    g.gain.exponentialRampToValueAtTime(0.0001, ct + dur);
+    o.start(ct); o.stop(ct + dur + 0.05);
+  }catch(e){}
+}
+// 스테레오 에어 와시 — 하이패스 노이즈 (공기감/잔향 느낌)
+function airWashStereo(start, dur, vol, hp, pan){
+  try{
+    var a = ac(); if(!a) return;
+    var pp = _pannerOrDest(pan); if(!pp) return;
+    var len = Math.floor(a.sampleRate * dur);
+    var buf = a.createBuffer(1, len, a.sampleRate);
+    var data = buf.getChannelData(0);
+    for(var i=0;i<len;i++){ data[i] = (Math.random()*2-1); }
+    var src = a.createBufferSource(); src.buffer = buf;
+    var hpf = a.createBiquadFilter(); hpf.type='highpass'; hpf.frequency.value = hp || 4000;
+    var g = a.createGain();
+    var ct = a.currentTime + start;
+    // 부드러운 양쪽 페이드 (와시는 attack/decay 둘 다 부드럽게)
+    g.gain.setValueAtTime(0, ct);
+    g.gain.linearRampToValueAtTime(vol, ct + Math.min(0.06, dur*0.3));
+    g.gain.linearRampToValueAtTime(vol*0.7, ct + dur*0.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, ct + dur);
+    src.connect(hpf); hpf.connect(g); g.connect(pp.node);
+    src.start(ct); src.stop(ct + dur + 0.02);
+  }catch(e){}
+}
+// 부드러운 하강 톤 — 음정이 천천히 떨어지는 "어..." 느낌
+function softFallTone(f1, f2, dur, vol, type){
+  try{
+    var a = ac(); if(!a) return;
+    var dest = sndDest() || a.destination;
+    var ct = a.currentTime;
+    var o = a.createOscillator(); o.type = type || 'sine';
+    o.frequency.setValueAtTime(f1, ct);
+    o.frequency.exponentialRampToValueAtTime(Math.max(f2,1), ct + dur);
+    var g = a.createGain();
+    o.connect(g); g.connect(dest);
+    g.gain.setValueAtTime(0, ct);
+    g.gain.linearRampToValueAtTime(vol, ct + 0.025);
+    g.gain.linearRampToValueAtTime(vol*0.65, ct + dur*0.55);
+    g.gain.exponentialRampToValueAtTime(0.0001, ct + dur);
+    o.start(ct); o.stop(ct + dur + 0.05);
+  }catch(e){}
+}
+
+// ── SFX 보이스 ────────────────────────────
+// 정답: 짧고 강력한 코드 블룸 (~0.7s)
+//   PUNCH(0~80ms) → CHORD BLOOM(20~350ms) → SPARKLE BURST(180~550ms) → 짧은 꼬리
+function sndOk(){
+  // ── PUNCH — 서브 베이스 + 양쪽 공기 폭발 ──
+  clickTone(0, 65.41,  0.18, 0.10, 'sine');      // C2 sub bass
+  clickTone(0, 130.81, 0.14, 0.08, 'triangle');  // C3
+  airWashStereo(0,     0.16, 0.040, 4500, -0.7); // 좌
+  airWashStereo(0,     0.16, 0.040, 4500,  0.7); // 우
+  airWashStereo(0,     0.10, 0.028, 9000,  0);   // 중앙 하이 sparkle dust
+  clickTone(0, 880, 0.05, 0.040, 'sine');        // 임팩트 클릭
+
+  // ── CHORD BLOOM — 메이저 코드 (C-E-G-C-E), 옥타브 더블링 ──
+  bellToneStereo(523.25,  0.02, 0.45, 0.10, -0.55); // C5 좌
+  bellToneStereo(659.25,  0.04, 0.45, 0.09,  0.00); // E5 중
+  bellToneStereo(783.99,  0.06, 0.50, 0.10,  0.55); // G5 우
+  bellToneStereo(1046.50, 0.10, 0.50, 0.075, 0.25); // C6 우중
+  bellToneStereo(1318.51, 0.14, 0.45, 0.055,-0.25); // E6 좌중
+
+  // ── SPARKLE BURST — 빠른 클러스터, 좌우 교차 ──
+  pingStereo(1975.53, 0.18, 0.12, 0.050,  0.70);   // B6
+  pingStereo(2349.32, 0.24, 0.11, 0.045, -0.70);   // D7
+  pingStereo(2793.83, 0.31, 0.10, 0.040,  0.50);   // F7
+  pingStereo(3135.96, 0.38, 0.09, 0.034, -0.50);   // G7
+  pingStereo(2637.02, 0.46, 0.09, 0.028,  0.40);   // E7
+
+  // ── 짧은 꼬리 와시 ──
+  airWashStereo(0.25, 0.28, 0.014, 7000, 0);
+}
+// 오답: 부드러운 단3도 하강 (F4→Eb4 + 옥타브 아래) — 거슬리지 않게
+function sndErr(){
+  softFallTone(349.23, 311.13, 0.30, 0.055);
+  softFallTone(174.61, 155.56, 0.30, 0.030, 'triangle');
+}
+// 버튼 클릭: 짧은 임팩트 + 미세 노이즈 sparkle
+function sndClick(){
+  clickTone(0, 1200, 0.04, 0.025);
+  noiseBurst(0, 0.025, 0.010, 5500, 1.5);
+}
+// 힌트 사용: 마법 같은 상승 종 (A5-C#6-E6-A6) + 위스프 노이즈
+function sndHint(){
+  bellTone(880,    0.00, 0.20, 0.045);
+  bellTone(1108.7, 0.05, 0.20, 0.045);
+  bellTone(1318.5, 0.10, 0.22, 0.050);
+  bellTone(1760,   0.15, 0.30, 0.040);
+  noiseBurst(0, 0.18, 0.014, 3500, 0.7);
+}
+// 이미 찾은 단어: 부드러운 단음 펄스 ("어, 이미 있어요" 느낌)
+function sndDup(){
+  bellTone(392, 0, 0.20, 0.05);   // G4
+}
+// 모르는 단어: 가벼운 하강 위스프 (sndErr보다 더 가볍게)
+function sndUnknown(){
+  softFallTone(440, 392, 0.22, 0.045);
+}
+
+// 카드 쌓이는 SFX (기존)
+function sndCardStack(){
+  noiseBurst(0,    0.07, 0.35, 2400, 1.2);
+  noiseBurst(0.02, 0.10, 0.25, 800,  1.0);
+  clickTone(0.03, 110, 0.12, 0.28, 'triangle');
+  clickTone(0.05, 220, 0.08, 0.18, 'sine');
+  clickTone(0.09, 90,  0.18, 0.20, 'sine');
+}
+
+// 모든 버튼/스킵 링크 클릭에 가벼운 클릭음 — 자체 SFX 가진 요소는 제외
+document.addEventListener('click', function(e){
+  var btn = e.target.closest('button, .skip-link');
+  if(!btn) return;
+  if(btn.id === 'snd-toggle')              return;   // 음소거 토글은 자체 음
+  if(btn.classList.contains('choice-btn')) return;   // 정/오답 자체음
+  if(btn.classList.contains('hint-btn'))   return;   // sndHint 별도
+  if(btn.id === 'hbtn')                    return;
+  if(btn.classList.contains('btn-ok'))     return;   // submit() 결과음
+  if(btn.classList.contains('sc-bulb'))    return;   // 점수칩 장식
+  sndClick();
+}, true);
+
+// ── 음소거 토글 UI 바인딩 ───────────────────
+(function(){
+  var btn = document.getElementById('snd-toggle');
+  if(!btn) return;
+  function reflect(){
+    if(SND_ON){ btn.classList.remove('muted'); btn.setAttribute('aria-pressed','false'); }
+    else      { btn.classList.add('muted');    btn.setAttribute('aria-pressed','true');  }
+  }
+  reflect();
+  btn.addEventListener('click', function(){
+    setSound(!SND_ON);
+    reflect();
+    if(SND_ON) sndClick();   // 켜는 순간만 짧은 피드백
+  });
+})();
 
 // ── 피드백 ──────────────────────────────────
 var FB_TIMER = null;
@@ -4955,12 +5253,12 @@ function submit(){
   document.getElementById('wi').value = '';
   document.getElementById('wi').focus();
   resetHintNudge();
-  if(S.found.indexOf(val) > -1){ setFb('miss', '"'+val+'" 은(는) 이미 찾았어요!'); return; }
+  if(S.found.indexOf(val) > -1){ setFb('miss', '"'+val+'" 은(는) 이미 찾았어요!'); sndDup(); return; }
   var w = WORD_MAP[val];
   var wr = WRONG_MAP[val];
   if(wr){ setFb('no', wr); sndErr(); return; }
   if(w){ S.solving = val; showQuiz(); }
-  else { setFb('unknown', '"'+val+'" 은(는) 모르는 단어예요'); sndErr(); }
+  else { setFb('unknown', '"'+val+'" 은(는) 모르는 단어예요'); sndUnknown(); }
 }
 
 function showQuiz(){
@@ -5029,6 +5327,7 @@ function showQuiz(){
 function useHint(){
   if(S.hints <= 0) return;
   S.hints--; updateHints();
+  sndHint();
   var hb = document.getElementById('hbtn'); if(hb) hb.classList.remove('shake');
   var remaining = WORD_LIST.filter(function(w){
     return !WORD_MAP[w].isInferQuiz && S.found.indexOf(w) === -1 && S.hintTargets.indexOf(w) === -1;
