@@ -67,6 +67,29 @@
 /* 한자 명조 적용 — utility class */
 .han { font-family: var(--font-han); }
 
+/* ─── 페이지 단위 컨셉 색상 ─────────────────────
+   각 단계 페이지가 --stage-accent 변수를 정의하면, 그 페이지 안의 모든 요소가
+   var(--stage-accent, var(--green))로 자동 매핑됨. 홈/영역/결과는 변수 미정의 → 기본 녹색 유지. */
+#game,
+#area, #result, #home {
+  --stage-accent:      #45C28A;
+  --stage-accent-deep: #2E9E6B;
+  --stage-accent-light:#5BD8A2;
+  --stage-accent-rgb:  69,194,138;
+}
+#learn, #inferq {       /* 확장 — 보라 */
+  --stage-accent:      #9B6CD9;
+  --stage-accent-deep: #7C4FB8;
+  --stage-accent-light:#C9A6F0;
+  --stage-accent-rgb:  155,108,217;
+}
+#fillq {                /* 강화 — 파랑 */
+  --stage-accent:      #4FA3F0;
+  --stage-accent-deep: #2E7DC4;
+  --stage-accent-light:#8FC4F8;
+  --stage-accent-rgb:  79,163,240;
+}
+
 /* ── 리셋 & 기본 ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
@@ -192,40 +215,62 @@ button { font-family: inherit; color: inherit; }
   align-self: center;
 }
 
-/* 활성 단계 — 배지 전체가 "불이 들어온" 상태 */
+/* 활성 단계 — 배지 전체가 "불이 들어온" 상태
+   단계별 컨셉 색상: 인출=녹색 / 확장=보라 / 강화=파랑 */
+.stage-nav .sn-step.is-active {
+  background: linear-gradient(180deg, rgba(var(--sn-rgb), 0.20) 0%, rgba(var(--sn-rgb), 0.12) 100%);
+  border-color: var(--sn-color);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.18),
+    0 0 10px rgba(var(--sn-rgb), 0.30),
+    0 0 22px rgba(var(--sn-rgb), 0.18);
+  animation: snBadgePulse 2.4s ease-in-out infinite;
+}
+.stage-nav .sn-step.is-active .sn-label {
+  color: var(--sn-color);
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(var(--sn-rgb), 0.45);
+}
+/* data-stage(active stage)에 따라 컨셉 색상 변수 결정 */
+.stage-nav[data-stage="인출"] { --sn-color: #2FA070; --sn-rgb: 69,194,138; }
+.stage-nav[data-stage="확장"] { --sn-color: #9B6CD9; --sn-rgb: 155,108,217; }
+.stage-nav[data-stage="강화"] { --sn-color: #4FA3F0; --sn-rgb: 79,163,240; }
+/* 위 .is-active 셀렉터를 활성 step에 매핑 */
 .stage-nav[data-stage="인출"] .sn-step[data-st="인출"],
 .stage-nav[data-stage="확장"] .sn-step[data-st="확장"],
 .stage-nav[data-stage="강화"] .sn-step[data-st="강화"] {
-  background: linear-gradient(180deg, rgba(69,194,138,0.20) 0%, rgba(47,160,112,0.12) 100%);
-  border-color: var(--green);
+  /* same as .is-active — 변수는 stage-nav 컨테이너에서 캐스케이드 */
+  background: linear-gradient(180deg, rgba(var(--sn-rgb), 0.20) 0%, rgba(var(--sn-rgb), 0.12) 100%);
+  border-color: var(--sn-color);
   box-shadow:
-    inset 0 0 0 1px rgba(168,237,201,0.18),
+    inset 0 0 0 1px rgba(255,255,255,0.18),
     inset 0 1px 0 rgba(255,255,255,0.18),
-    0 0 10px rgba(69,194,138,0.30),
-    0 0 22px rgba(69,194,138,0.18);
+    0 0 10px rgba(var(--sn-rgb), 0.30),
+    0 0 22px rgba(var(--sn-rgb), 0.18);
   animation: snBadgePulse 2.4s ease-in-out infinite;
 }
 .stage-nav[data-stage="인출"] .sn-step[data-st="인출"] .sn-label,
 .stage-nav[data-stage="확장"] .sn-step[data-st="확장"] .sn-label,
 .stage-nav[data-stage="강화"] .sn-step[data-st="강화"] .sn-label {
-  color: var(--green);
+  color: var(--sn-color);
   font-weight: 700;
-  text-shadow: 0 0 8px rgba(69,194,138,0.45);
+  text-shadow: 0 0 8px rgba(var(--sn-rgb), 0.45);
 }
 @keyframes snBadgePulse {
   0%, 100% {
     box-shadow:
-      inset 0 0 0 1px rgba(168,237,201,0.16),
+      inset 0 0 0 1px rgba(255,255,255,0.16),
       inset 0 1px 0 rgba(255,255,255,0.16),
-      0 0 8px rgba(69,194,138,0.24),
-      0 0 18px rgba(69,194,138,0.14);
+      0 0 8px rgba(var(--sn-rgb), 0.24),
+      0 0 18px rgba(var(--sn-rgb), 0.14);
   }
   50% {
     box-shadow:
-      inset 0 0 0 1px rgba(168,237,201,0.26),
+      inset 0 0 0 1px rgba(255,255,255,0.26),
       inset 0 1px 0 rgba(255,255,255,0.22),
-      0 0 14px rgba(69,194,138,0.40),
-      0 0 28px rgba(69,194,138,0.22);
+      0 0 14px rgba(var(--sn-rgb), 0.40),
+      0 0 28px rgba(var(--sn-rgb), 0.22);
   }
 }
 .logo sub {
@@ -1223,6 +1268,10 @@ button { font-family: inherit; color: inherit; }
 
 /* ── 단계 인트로 — 미션 말풍선 (3단계 공통, 라이트 톤) ── */
 .game-intro .gi-msg.gi-card {
+  /* 단계별 컨셉 색상 변수 — data-stage로 오버라이드 */
+  --gi-accent: #2FA070;
+  --gi-accent-light: #5BD8A2;
+  --gi-accent-rgb: 69,194,138;
   position: relative;
   display: inline-block;
   white-space: normal;
@@ -1233,23 +1282,41 @@ button { font-family: inherit; color: inherit; }
   background:
     radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.95), rgba(244,247,252,0.95) 60%),
     linear-gradient(135deg, #FFFFFF 0%, #F2F5FA 100%);
-  border: 2px solid #2FA070;
+  border: 2px solid var(--gi-accent);
   border-radius: 22px;
   padding: 36px 56px 30px;
   box-shadow:
     0 22px 60px rgba(0,0,0,0.55),
     0 0 0 1px rgba(0,0,0,0.18),
-    0 0 38px rgba(69,194,138,0.32),
+    0 0 38px rgba(var(--gi-accent-rgb), 0.32),
     inset 0 1px 0 rgba(255,255,255,0.9);
   text-shadow: none;
   font-weight: 500;
   animation: missionIn .75s cubic-bezier(.2,1.2,.4,1) .12s both;
 }
+/* 인출 — 녹색 (기본값) */
+.game-intro .gi-msg.gi-card[data-stage="1"] {
+  --gi-accent: #2FA070;
+  --gi-accent-light: #5BD8A2;
+  --gi-accent-rgb: 69,194,138;
+}
+/* 확장 — 보라 */
+.game-intro .gi-msg.gi-card[data-stage="2"] {
+  --gi-accent: #9B6CD9;
+  --gi-accent-light: #C9A6F0;
+  --gi-accent-rgb: 155,108,217;
+}
+/* 강화 — 파랑 */
+.game-intro .gi-msg.gi-card[data-stage="3"] {
+  --gi-accent: #4FA3F0;
+  --gi-accent-light: #8FC4F8;
+  --gi-accent-rgb: 79,163,240;
+}
 .game-intro .gi-msg.gi-card::before {
   content: '✦  M I S S I O N';
   position: absolute;
   top: -14px; left: 50%; transform: translateX(-50%);
-  background: linear-gradient(180deg, #5BD8A2, #2FA070);
+  background: linear-gradient(180deg, var(--gi-accent-light), var(--gi-accent));
   color: #0E1218;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 10px; font-weight: 800;
@@ -1258,7 +1325,7 @@ button { font-family: inherit; color: inherit; }
   border-radius: 100px;
   white-space: nowrap;
   box-shadow:
-    0 4px 14px rgba(69,194,138,0.55),
+    0 4px 14px rgba(var(--gi-accent-rgb), 0.55),
     inset 0 -1px 0 rgba(0,0,0,0.18),
     inset 0 1px 0 rgba(255,255,255,0.5);
   text-shadow: none;
@@ -1271,11 +1338,109 @@ button { font-family: inherit; color: inherit; }
   margin-left: -11px;
   background: #F2F5FA;
   clip-path: polygon(0 0, 100% 0, 50% 100%);
-  border-bottom: 2px solid #2FA070;
-  filter: drop-shadow(0 1px 0 rgba(47,160,112,0.45));
+  border-bottom: 2px solid var(--gi-accent);
+  filter: drop-shadow(0 1px 0 rgba(var(--gi-accent-rgb), 0.45));
 }
 
 /* 진행 게이지 (●━━○──○) */
+/* ─── 오늘의 미션 화면 (게임 인트로 카드 이전 단계 — 시작하기 직후 풀스크린) ─── */
+.game-intro .gi-msg.gi-mission {
+  display: inline-block;
+  text-align: center;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  color: #FFFFFF;
+  white-space: normal;
+  min-width: 0; max-width: none;
+  animation: missionIn .65s cubic-bezier(.2,1.2,.4,1) .12s both;
+}
+.game-intro .gi-msg.gi-mission .gm-eyebrow {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 0.34em;
+  color: var(--green);
+  text-transform: uppercase;
+  margin-bottom: 22px;
+  opacity: 0.92;
+}
+.game-intro .gi-msg.gi-mission .gm-line {
+  font-family: 'S-Core Dream', 'SCoreDream', 'Noto Sans KR', sans-serif;
+  font-size: 26px; font-weight: 500;
+  color: #E8ECF4;
+  letter-spacing: -0.03em;
+  line-height: 1.35;
+  margin-bottom: 14px;
+}
+.game-intro .gi-msg.gi-mission .gm-hun {
+  color: var(--green);
+  font-weight: 700;
+  text-shadow: 0 0 18px rgba(69,194,138,0.55);
+  margin: 0 2px;
+  letter-spacing: -0.01em;
+}
+.game-intro .gi-msg.gi-mission .gm-num {
+  font-family: 'S-Core Dream', 'SCoreDream', 'Noto Sans KR', sans-serif;
+  line-height: 1;
+  margin: 4px 0 14px;
+}
+.game-intro .gi-msg.gi-mission .gm-num em {
+  font-style: normal;
+  font-size: 110px; font-weight: 800;
+  color: var(--green);
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 32px rgba(69,194,138,0.45);
+  display: inline-block;
+  animation: gmNumPop .8s cubic-bezier(.2,1.4,.4,1) .35s both;
+}
+.game-intro .gi-msg.gi-mission .gm-unit {
+  font-size: 36px; font-weight: 600;
+  color: rgba(255,255,255,0.78);
+  margin-left: 8px;
+  vertical-align: 14px;
+  text-shadow: none;
+  letter-spacing: -0.02em;
+}
+.game-intro .gi-msg.gi-mission .gm-foot {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 16px; font-weight: 400;
+  color: rgba(255,255,255,0.62);
+  letter-spacing: -0.01em;
+  margin-top: 10px;
+}
+.game-intro .gi-msg.gi-mission .gm-confirm {
+  margin-top: 26px;
+  padding: 13px 44px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 16px; font-weight: 700;
+  color: #1F2238;
+  background: var(--green);
+  border: none;
+  border-radius: 100px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  box-shadow: 0 6px 22px rgba(69,194,138,0.42), inset 0 1px 0 rgba(255,255,255,0.32);
+  transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
+  animation: gmConfirmIn .4s cubic-bezier(.2,1.2,.4,1) .85s both;
+}
+.game-intro .gi-msg.gi-mission .gm-confirm:hover {
+  transform: translateY(-1px);
+  background: #5BD8A2;
+  box-shadow: 0 8px 28px rgba(69,194,138,0.55), inset 0 1px 0 rgba(255,255,255,0.32);
+}
+.game-intro .gi-msg.gi-mission .gm-confirm:active { transform: translateY(0); }
+@keyframes gmConfirmIn {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes gmNumPop {
+  0%   { transform: scale(.4); opacity: 0; }
+  60%  { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 .gi-progress {
   display: flex; align-items: center; justify-content: center;
   gap: 0;
@@ -1290,17 +1455,17 @@ button { font-family: inherit; color: inherit; }
   transition: all .3s ease;
 }
 .gi-dot.done {
-  background: #2FA070;
-  border-color: #2FA070;
-  box-shadow: 0 0 8px rgba(47,160,112,0.45);
+  background: var(--gi-accent, #2FA070);
+  border-color: var(--gi-accent, #2FA070);
+  box-shadow: 0 0 8px rgba(var(--gi-accent-rgb, 69,194,138), 0.45);
 }
 .gi-dot.now {
-  background: #5BD8A2;
-  border-color: #2FA070;
+  background: var(--gi-accent-light, #5BD8A2);
+  border-color: var(--gi-accent, #2FA070);
   width: 13px; height: 13px;
   box-shadow:
-    0 0 0 4px rgba(69,194,138,0.20),
-    0 0 14px rgba(69,194,138,0.65);
+    0 0 0 4px rgba(var(--gi-accent-rgb, 69,194,138), 0.20),
+    0 0 14px rgba(var(--gi-accent-rgb, 69,194,138), 0.65);
   animation: giDotPulse 1.6s ease-in-out infinite;
 }
 .gi-line {
@@ -1313,15 +1478,15 @@ button { font-family: inherit; color: inherit; }
   overflow: hidden;
 }
 .gi-line.done {
-  background: linear-gradient(90deg, #2FA070, #5BD8A2);
-  box-shadow: 0 0 6px rgba(47,160,112,0.40);
+  background: linear-gradient(90deg, var(--gi-accent, #2FA070), var(--gi-accent-light, #5BD8A2));
+  box-shadow: 0 0 6px rgba(var(--gi-accent-rgb, 69,194,138), 0.40);
 }
 .gi-line.now::after {
   /* 다음 단계로 흐르는 빛 */
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(69,194,138,0.55), transparent);
+  background: linear-gradient(90deg, transparent, rgba(var(--gi-accent-rgb, 69,194,138), 0.55), transparent);
   animation: giLineFlow 1.4s linear infinite;
 }
 @keyframes giDotPulse {
@@ -1338,7 +1503,7 @@ button { font-family: inherit; color: inherit; }
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 11px; font-weight: 800;
   letter-spacing: 0.36em;
-  color: #2FA070;
+  color: var(--gi-accent, #2FA070);
   margin-bottom: 6px;
   font-variant-numeric: tabular-nums;
 }
@@ -1528,7 +1693,7 @@ button { font-family: inherit; color: inherit; }
   position: relative;
 }
 .intro-banner::before { content: none; }
-.intro-banner strong { color: var(--green-deep); font-weight: 700; }
+.intro-banner strong { color: var(--stage-accent-deep, var(--green-deep)); font-weight: 700; }
 .ib-sky { /* 호환 클래스 (기존 HTML 유지) */ }
 
 /* 진행 막대 (dot bar) */
@@ -1542,17 +1707,17 @@ button { font-family: inherit; color: inherit; }
   background: var(--border); transition: all .3s;
 }
 .dot.done {
-  background: var(--green);
-  box-shadow: 0 0 6px var(--green-glow);
+  background: var(--stage-accent, var(--green));
+  box-shadow: 0 0 6px rgba(var(--stage-accent-rgb), 0.30);
 }
 .dot.curr {
-  background: var(--green);
+  background: var(--stage-accent, var(--green));
   width: 32px;
   animation: pulseBar 1.2s ease-in-out infinite;
 }
 @keyframes pulseBar {
-  0%, 100% { box-shadow: 0 0 6px var(--green-glow); opacity: 0.7; }
-  50%      { box-shadow: 0 0 14px var(--green-glow); opacity: 1; }
+  0%, 100% { box-shadow: 0 0 6px rgba(var(--stage-accent-rgb), 0.30); opacity: 0.7; }
+  50%      { box-shadow: 0 0 14px rgba(var(--stage-accent-rgb), 0.30); opacity: 1; }
 }
 
 .cnt-label {
@@ -1607,7 +1772,7 @@ button { font-family: inherit; color: inherit; }
 }
 .iq-divider {
   width: 1px; height: 72px;                                   /* 42 → 72 */
-  background: rgba(69,194,138,0.32);
+  background: rgba(var(--stage-accent-rgb), 0.32);
   position: relative; z-index: 1;
 }
 .iq-decomp {
@@ -1628,12 +1793,11 @@ button { font-family: inherit; color: inherit; }
   line-height: 1;
   display: inline-flex; align-items: baseline; gap: 6px;
 }
-.db-hun .hun-han { color: var(--green); text-shadow: 0 0 10px rgba(69,194,138,0.55); }   /* 훈 — 초록 */
-.db-hun .hun-eum { color: #F2FBF6; }                                                      /* 음 — 흰색 */
-/* + 구분자 — 강조 (큰 사이즈, 풀 컬러, 살짝 글로우) */
+.db-hun .hun-han { color: var(--stage-accent, var(--green)); text-shadow: 0 0 10px rgba(var(--stage-accent-rgb), 0.55); }
+.db-hun .hun-eum { color: #F2FBF6; }
 .db-sep   {
-  font-size: 34px; color: var(--green); font-weight: 500; opacity: 1;   /* 26 → 34 */
-  text-shadow: 0 0 10px rgba(69,194,138,0.55);
+  font-size: 34px; color: var(--stage-accent, var(--green)); font-weight: 500; opacity: 1;
+  text-shadow: 0 0 10px rgba(var(--stage-accent-rgb), 0.55);
   line-height: 1;
 }
 
@@ -1653,7 +1817,7 @@ button { font-family: inherit; color: inherit; }
   text-align: center; margin-bottom: 12px;
   letter-spacing: 0.02em;
 }
-.q-text em { font-style: normal; color: var(--green-deep); font-weight: 600; }
+.q-text em { font-style: normal; color: var(--stage-accent-deep, var(--green-deep)); font-weight: 600; }
 
 .choices-col { display: flex; flex-direction: column; gap: 8px; width: 100%; }
 .choice-btn {
@@ -1665,7 +1829,7 @@ button { font-family: inherit; color: inherit; }
   letter-spacing: 0.02em;
 }
 .choice-btn:hover {
-  border-color: var(--green);
+  border-color: var(--stage-accent, var(--green));
   background: var(--surface-3);
   transform: translateX(2px);
 }
@@ -1734,14 +1898,14 @@ button { font-family: inherit; color: inherit; }
 }
 .next-btn {
   padding: 11px 30px; border-radius: 100px;
-  border: 1px solid var(--green); background: rgba(69,194,138,0.06);
-  color: var(--green-deep); font-size: 12px; font-weight: 700;
+  border: 1px solid var(--stage-accent, var(--green)); background: rgba(var(--stage-accent-rgb), 0.06);
+  color: var(--stage-accent-deep, var(--green-deep)); font-size: 12px; font-weight: 700;
   cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
   display: none; margin-top: 10px;
   letter-spacing: 0.05em;
   transition: all .2s;
 }
-.next-btn:hover { background: rgba(69,194,138,0.14); }
+.next-btn:hover { background: rgba(var(--stage-accent-rgb), 0.14); }
 
 .skip-link {
   position: absolute;
@@ -1754,7 +1918,7 @@ button { font-family: inherit; color: inherit; }
   transition: color .2s;
   z-index: 4;
 }
-.skip-link:hover { color: var(--green); }
+.skip-link:hover { color: var(--stage-accent, var(--green)); }
 
 /* ── 문장 속 추론 ── */
 .sent-sentence {
@@ -1763,9 +1927,9 @@ button { font-family: inherit; color: inherit; }
   font-weight: 300;
 }
 .sent-blank {
-  background: rgba(69,194,138,0.06);
-  border-bottom: 2px solid var(--green);
-  color: var(--green-deep); font-weight: 700; padding: 0 6px;
+  background: rgba(var(--stage-accent-rgb), 0.06);
+  border-bottom: 2px solid var(--stage-accent, var(--green));
+  color: var(--stage-accent-deep, var(--green-deep)); font-weight: 700; padding: 0 6px;
   border-radius: 4px 4px 0 0;
 }
 .hun-row {
@@ -1774,8 +1938,8 @@ button { font-family: inherit; color: inherit; }
 }
 .hun-item { text-align: center; }
 .hun-char { font-family: var(--font-han); font-size: 34px; font-weight: 300; color: var(--text); display: block; line-height: 1; }
-.hun-label { font-family: var(--font-han); font-size: 11px; color: var(--green-deep); margin-top: 4px; display: block; font-weight: 600; letter-spacing: 0.12em; }
-.hun-sep   { font-size: 20px; color: var(--green); opacity: 0.6; }
+.hun-label { font-family: var(--font-han); font-size: 11px; color: var(--stage-accent-deep, var(--green-deep)); margin-top: 4px; display: block; font-weight: 600; letter-spacing: 0.12em; }
+.hun-sep   { font-size: 20px; color: var(--stage-accent, var(--green)); opacity: 0.6; }
 
 /* ── 빈칸 채우기 ── */
 .fill-sentence {
@@ -1824,8 +1988,8 @@ button { font-family: inherit; color: inherit; }
 }
 .fq-counter-big em {
   font-style: normal; font-weight: 600;
-  color: var(--green);
-  text-shadow: 0 0 14px rgba(69,194,138,0.45);
+  color: var(--stage-accent, var(--green));
+  text-shadow: 0 0 14px rgba(var(--stage-accent-rgb), 0.45);
 }
 .fq-counter-big .fqc-slash {
   font-weight: 200;
@@ -1834,8 +1998,8 @@ button { font-family: inherit; color: inherit; }
 }
 .fill-blank {
   display: inline-block; min-width: 88px;
-  border-bottom: 2px solid var(--green);
-  background: rgba(69,194,138,0.06);
+  border-bottom: 2px solid var(--stage-accent, var(--green));
+  background: rgba(var(--stage-accent-rgb), 0.06);
   padding: 0 10px;
   border-radius: 4px 4px 0 0;
   vertical-align: middle;
@@ -1844,10 +2008,10 @@ button { font-family: inherit; color: inherit; }
   transition: all .3s;
 }
 .fill-blank.revealed {
-  color: var(--green-deep);
-  background: rgba(69,194,138,0.14);
-  box-shadow: 0 0 16px rgba(69,194,138,0.3);
-  font-size: 22px;   /* 빈칸 채워질 때 +4px (기본 18 → 22) */
+  color: var(--stage-accent-deep, var(--green-deep));
+  background: rgba(var(--stage-accent-rgb), 0.14);
+  box-shadow: 0 0 16px rgba(var(--stage-accent-rgb), 0.3);
+  font-size: 22px;
 }
 
 .fill-choices-row {
@@ -1904,15 +2068,15 @@ button { font-family: inherit; color: inherit; }
   font-family: 'Noto Sans KR', sans-serif; letter-spacing: 0;
 }
 .fill-btn:hover {
-  border-color: var(--green);
+  border-color: var(--stage-accent, var(--green));
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.06);
 }
 .fill-btn.ok {
-  background: var(--green);
-  border-color: var(--green);
+  background: var(--stage-accent, var(--green));
+  border-color: var(--stage-accent, var(--green));
   color: #FFFFFF;
-  box-shadow: 0 6px 18px rgba(69,194,138,0.32);
+  box-shadow: 0 6px 18px rgba(var(--stage-accent-rgb), 0.32);
   transform: translateY(-1px);
 }
 .fill-btn.no {
@@ -1948,10 +2112,9 @@ button { font-family: inherit; color: inherit; }
   padding-bottom: 3px;
 }
 .choice:hover .num-badge,
-.choice-btn:hover .num-badge,
-.fill-btn:hover .num-badge {
-  background: var(--green);
-  border-color: var(--green);
+.choice-btn:hover .num-badge {
+  background: var(--stage-accent, var(--green));
+  border-color: var(--stage-accent, var(--green));
   color: #fff;
 }
 .choice.c-ok .num-badge,
@@ -1963,6 +2126,21 @@ button { font-family: inherit; color: inherit; }
 .choice-btn.no .num-badge,
 .fill-btn.no .num-badge {
   background: var(--rose); border-color: var(--rose); color: #fff;
+}
+
+/* ── 강화(fillq) 선지 번호 — 기본: 솔리드 파랑 + 흰 번호 / 호버: 확대 + 글로우 ── */
+.fill-btn .num-badge {
+  background: var(--stage-accent, var(--green));
+  color: #FFFFFF;
+  border: 1.5px solid var(--stage-accent, var(--green));
+  box-shadow: 0 0 0 0 rgba(var(--stage-accent-rgb), 0);
+  transition: transform .22s cubic-bezier(.2,1.4,.4,1), box-shadow .22s ease;
+}
+.fill-btn:hover .num-badge {
+  transform: translateY(-1px) scale(1.18);
+  box-shadow:
+    0 0 0 4px rgba(var(--stage-accent-rgb), 0.18),
+    0 4px 14px rgba(var(--stage-accent-rgb), 0.55);
 }
 
 /* ════════════════════════════
@@ -2056,11 +2234,11 @@ button { font-family: inherit; color: inherit; }
   pointer-events: none;
 }
 .learn-coll .ld-stack:empty::before {
-  border-color: rgba(69,194,138,0.45);
-  background: rgba(69,194,138,0.08);
+  border-color: rgba(var(--stage-accent-rgb), 0.45);
+  background: rgba(var(--stage-accent-rgb), 0.08);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.06),
-    0 0 14px rgba(69,194,138,0.18),
+    0 0 14px rgba(var(--stage-accent-rgb), 0.18),
     0 2px 10px rgba(0,0,0,0.25);
 }
 .ld-label {
@@ -2076,18 +2254,18 @@ button { font-family: inherit; color: inherit; }
 }
 
 /* 컬렉션 (왼쪽) — 수집된 카드: 솔리드 민트 글로우 */
-.learn-coll .ld-num { color: var(--green); text-shadow: 0 0 12px rgba(69,194,138,0.55); }
-.learn-coll .ld-label { color: var(--green); }
+.learn-coll .ld-num { color: var(--stage-accent, var(--green)); text-shadow: 0 0 12px rgba(var(--stage-accent-rgb), 0.55); }
+.learn-coll .ld-label { color: var(--stage-accent, var(--green)); }
 .ld-card.is-coll {
   position: absolute;
   width: 64px; height: 90px;
   border-radius: 6px;
-  background: linear-gradient(160deg, rgba(69,194,138,0.92) 0%, rgba(47,160,112,0.85) 100%);
-  border: 1px solid rgba(168,237,201,0.7);
+  background: linear-gradient(160deg, rgba(var(--stage-accent-rgb), 0.92) 0%, rgba(var(--stage-accent-rgb), 0.78) 100%);
+  border: 1px solid rgba(255,255,255,0.55);
   box-shadow:
-    0 0 0 1px rgba(69,194,138,0.32),
+    0 0 0 1px rgba(var(--stage-accent-rgb), 0.32),
     0 8px 18px rgba(0,0,0,0.42),
-    0 0 18px rgba(69,194,138,0.45);
+    0 0 18px rgba(var(--stage-accent-rgb), 0.45);
 }
 .ld-card.is-coll::after {
   content: '✦';
@@ -2150,20 +2328,20 @@ button { font-family: inherit; color: inherit; }
   transition: all .18s ease;
 }
 .learn-btn:hover {
-  border-color: rgba(69,194,138,0.5);
+  border-color: rgba(var(--stage-accent-rgb), 0.5);
   color: #FFFFFF;
-  background: rgba(69,194,138,0.10);
+  background: rgba(var(--stage-accent-rgb), 0.10);
 }
 .learn-btn.lb-next {
-  background: var(--green);
-  border-color: var(--green);
+  background: var(--stage-accent, var(--green));
+  border-color: var(--stage-accent, var(--green));
   color: #FFFFFF;
   font-weight: 600;
-  box-shadow: 0 4px 14px rgba(69,194,138,0.32);
+  box-shadow: 0 4px 14px rgba(var(--stage-accent-rgb), 0.32);
 }
 .learn-btn.lb-next:hover {
-  background: var(--green-deep);
-  border-color: var(--green-deep);
+  background: var(--stage-accent-deep, var(--green-deep));
+  border-color: var(--stage-accent-deep, var(--green-deep));
 }
 .learn-btn:disabled {
   opacity: 0.32; cursor: not-allowed;
@@ -2177,38 +2355,43 @@ button { font-family: inherit; color: inherit; }
   font-size: 12px; letter-spacing: 0.05em;
   cursor: pointer;
 }
-.learn-skip:hover { color: var(--green); }
+.learn-skip:hover { color: var(--stage-accent, var(--green)); }
 
 /* ════════════════════════════
    점수판 (오늘 점수)
 ════════════════════════════ */
 .score-chip {
+  /* 단계별 컨셉 색상 변수 — data-stage가 갱신하면 보더/글로우 자동 반영 */
+  --sc-rgb: 69,194,138;        /* 기본 녹색 (인출/홈/영역/결과) */
+  --sc-rgb-tint: 155,108,217;  /* 보조 그라디언트 색 */
   position: absolute;
   top: 18px; right: 22px;
   z-index: 50;
-  /* 자릿수와 무관하게 고정 크기 */
   width: 92px; height: 92px;
   box-sizing: border-box;
   padding: 0;
-  /* 진한 배경 — 깊은 미드나잇 + 살짝 자줏빛으로 따뜻함 */
   background:
-    radial-gradient(ellipse at 30% 20%, rgba(155,108,217,0.18), transparent 60%),
-    radial-gradient(ellipse at 70% 80%, rgba(69,194,138,0.16), transparent 60%),
+    radial-gradient(ellipse at 30% 20%, rgba(var(--sc-rgb-tint), 0.18), transparent 60%),
+    radial-gradient(ellipse at 70% 80%, rgba(var(--sc-rgb), 0.16), transparent 60%),
     linear-gradient(135deg, #1A1F2E 0%, #261D34 100%);
-  /* 두꺼운 초록 프레임 — 항상 표시 */
-  border: 6px solid rgba(69,194,138,0.60);
+  border: 6px solid rgba(var(--sc-rgb), 0.60);
   border-radius: 20px;
   box-shadow:
     0 6px 22px rgba(0,0,0,0.40),
     0 0 0 1px rgba(0,0,0,0.5),
-    0 0 14px rgba(69,194,138,0.20),       /* 잔잔한 초록 외곽 글로우 — 항상 */
+    0 0 14px rgba(var(--sc-rgb), 0.20),
     inset 0 0 0 1px rgba(255,214,107,0.18),
     inset 0 1px 0 rgba(255,255,255,0.06);
   font-family: 'Noto Sans KR', sans-serif;
   pointer-events: none;
-  display: none;  /* JS에서 페이지 따라 표시 */
+  display: none;
   align-items: center; justify-content: center;
+  transition: border-color .35s ease, box-shadow .35s ease;
 }
+/* 단계 컨셉 컬러 매핑 */
+.score-chip[data-stage="1"] { --sc-rgb: 69,194,138;  --sc-rgb-tint: 155,108,217; }  /* 인출 — 녹색 */
+.score-chip[data-stage="2"] { --sc-rgb: 155,108,217; --sc-rgb-tint: 79,163,240;  }  /* 확장 — 보라 */
+.score-chip[data-stage="3"] { --sc-rgb: 79,163,240;  --sc-rgb-tint: 69,194,138;  }  /* 강화 — 파랑 */
 .score-chip.show { display: flex; }
 /* .bump = 전구만 반응 (칩 자체 모션은 없음) */
 .score-chip .sc-num {
@@ -2246,13 +2429,14 @@ button { font-family: inherit; color: inherit; }
   background: #5A4A2A;
   box-shadow:
     inset 0 0 1px rgba(0,0,0,0.6),
-    0 0 0 0.5px rgba(0,0,0,0.7);   /* 소켓 테두리 */
+    0 0 0 0.5px rgba(0,0,0,0.7);
   opacity: 0.85;
   transition: none;
-  will-change: opacity, box-shadow, transform, background;
+  /* will-change 제거: bump 시에만 GPU 레이어 활성화 → 평소엔 24개 레이어 미할당 */
 }
 /* 점수 오를 때 — 전구들이 둘레를 따라 순차로 더 오래 반짝반짝 (3회 트윙클) */
 .score-chip.bump .sc-bulb {
+  will-change: transform, box-shadow, background;
   animation: bulbFlash 1.5s cubic-bezier(.2,.7,.3,1);
   animation-iteration-count: 2;
 }
@@ -3588,8 +3772,8 @@ body.recap-mode .game-bottom { display: none !important; }
       <div class="fb-zone"><div id="fb"></div></div>
     </div>
     <!-- 인출 진입 인트로 — 화면 전체 블러 + 한 줄 메시지 -->
-    <div class="game-intro" id="game-intro" onclick="hideGameIntro()">
-      <div class="gi-msg gi-card" id="gi-msg"></div>
+    <div class="game-intro" id="game-intro" onclick="gameIntroOverlayClick()">
+      <div class="gi-msg" id="gi-msg"></div>
     </div>
     <div class="game-bottom">
       <div class="input-row">
@@ -3758,8 +3942,21 @@ function showPage(id){
     var chipBack = document.getElementById('score-chip');
     if(chipBack) chipBack.classList.remove('center-result', 'landed');
   }
-  // 점수판 표시/은폐
+  // 점수판 표시/은폐 + 컨셉 컬러 동기화
   updateScoreVisibility(id);
+  var chipForColor = document.getElementById('score-chip');
+  if(chipForColor){
+    var stageVal = (id === 'learn' || id === 'inferq') ? '2'
+                 : (id === 'fillq') ? '3'
+                 : '1';   // game / home / area / result → 녹색
+    chipForColor.dataset.stage = stageVal;
+  }
+  // 게임 페이지를 떠날 때는 캔버스 RAF 정지 — 보이지 않는 캔버스에 60fps로
+  // 그리며 CPU/GPU 갉아먹는 것을 방지 (preview/백그라운드 탭에서도 활성)
+  if (id !== 'game' && typeof GANIM !== 'undefined' && GANIM){
+    cancelAnimationFrame(GANIM);
+    GANIM = null;
+  }
   // 홈 진입 시 히어로 모션 재시작
   if (id === 'home') {
     var hero = document.getElementById('home-hero');
@@ -3901,6 +4098,14 @@ window.isSoundOn   = function(){ return SND_ON; };
   window.addEventListener('keydown', unlock, true);
 })();
 
+// 사운드 노드 자동 disconnect — 재생 종료 시 그래프에서 즉시 제거 (메모리 누적 방지)
+function _autoCleanup(srcNode /* oscillator | bufferSource */, nodes){
+  if(!srcNode) return;
+  srcNode.onended = function(){
+    try{ srcNode.disconnect(); }catch(e){}
+    if(nodes){ for(var i=0;i<nodes.length;i++){ try{ nodes[i].disconnect(); }catch(e){} } }
+  };
+}
 // 톤 헬퍼 — 모두 마스터 게인을 통해 출력
 function tone(f,s,d,v,t){
   try{
@@ -3911,6 +4116,7 @@ function tone(f,s,d,v,t){
     g.gain.setValueAtTime(0,ct); g.gain.linearRampToValueAtTime(v,ct+.06);
     g.gain.setValueAtTime(v,ct+d-.08); g.gain.linearRampToValueAtTime(0,ct+d);
     o.start(ct); o.stop(ct+d+.05);
+    _autoCleanup(o, [g]);
   }catch(e){}
 }
 // 노이즈 버스트 — 종이/공기 마찰음 (밴드패스로 음역 한정)
@@ -3931,6 +4137,7 @@ function noiseBurst(start, dur, vol, centerHz, q){
     g.gain.exponentialRampToValueAtTime(0.0001, ct + dur);
     src.connect(bp); bp.connect(g); g.connect(dest);
     src.start(ct); src.stop(ct + dur + 0.02);
+    _autoCleanup(src, [bp, g]);
   }catch(e){}
 }
 // 짧은 임팩트 클릭
@@ -3946,6 +4153,7 @@ function clickTone(start, freq, dur, vol, type){
     g.gain.exponentialRampToValueAtTime(0.0001, ct + dur);
     o.connect(g); g.connect(dest);
     o.start(ct); o.stop(ct + dur + 0.02);
+    _autoCleanup(o, [g]);
   }catch(e){}
 }
 // 종(bell) 톤 — 사인 fundamental + 2.76× inharmonic partial로 따뜻한 종소리
@@ -3969,6 +4177,8 @@ function bellTone(freq, start, dur, vol){
     g2.gain.linearRampToValueAtTime(vol*0.32, ct + 0.005);
     g2.gain.exponentialRampToValueAtTime(0.0001, ct + dur*0.55);
     o2.start(ct); o2.stop(ct + dur + 0.05);
+    _autoCleanup(o1, [g1]);
+    _autoCleanup(o2, [g2]);
   }catch(e){}
 }
 // ── 스테레오 헬퍼 (StereoPanner 미지원 시 폴백) ──
@@ -3987,7 +4197,6 @@ function bellToneStereo(freq, start, dur, vol, pan){
     var a = ac(); if(!a) return;
     var ct = a.currentTime + start;
     var pp = _pannerOrDest(pan); if(!pp) return;
-    // 1차: fundamental sine + 작은 attack 피치 슬라이드 (생기 추가)
     var o1 = a.createOscillator(); o1.type='sine';
     o1.frequency.setValueAtTime(freq*0.985, ct);
     o1.frequency.exponentialRampToValueAtTime(freq, ct + 0.04);
@@ -3997,7 +4206,6 @@ function bellToneStereo(freq, start, dur, vol, pan){
     g1.gain.linearRampToValueAtTime(vol, ct + 0.005);
     g1.gain.exponentialRampToValueAtTime(0.0001, ct + dur);
     o1.start(ct); o1.stop(ct + dur + 0.05);
-    // 2차: 2.76× 비조화 배음 — 종 음색
     var o2 = a.createOscillator(); o2.type='sine'; o2.frequency.value=freq * 2.76;
     var g2 = a.createGain();
     o2.connect(g2); g2.connect(pp.node);
@@ -4005,7 +4213,6 @@ function bellToneStereo(freq, start, dur, vol, pan){
     g2.gain.linearRampToValueAtTime(vol*0.32, ct + 0.005);
     g2.gain.exponentialRampToValueAtTime(0.0001, ct + dur*0.55);
     o2.start(ct); o2.stop(ct + dur + 0.05);
-    // 3차: 5도 부드러운 sustain — 화음감
     var o3 = a.createOscillator(); o3.type='sine'; o3.frequency.value=freq * 1.5;
     var g3 = a.createGain();
     o3.connect(g3); g3.connect(pp.node);
@@ -4013,6 +4220,10 @@ function bellToneStereo(freq, start, dur, vol, pan){
     g3.gain.linearRampToValueAtTime(vol*0.12, ct + 0.04);
     g3.gain.exponentialRampToValueAtTime(0.0001, ct + dur*0.7);
     o3.start(ct); o3.stop(ct + dur + 0.05);
+    // 가장 긴 o3가 끝날 때 panner까지 모두 disconnect
+    _autoCleanup(o3, [g3, g2, g1, pp.node]);
+    _autoCleanup(o1, [g1]);
+    _autoCleanup(o2, [g2]);
   }catch(e){}
 }
 // 스테레오 핑(sparkle) — 짧고 밝은 high sine
@@ -4028,6 +4239,7 @@ function pingStereo(freq, start, dur, vol, pan){
     g.gain.linearRampToValueAtTime(vol, ct + 0.003);
     g.gain.exponentialRampToValueAtTime(0.0001, ct + dur);
     o.start(ct); o.stop(ct + dur + 0.05);
+    _autoCleanup(o, [g, pp.node]);
   }catch(e){}
 }
 // 스테레오 에어 와시 — 하이패스 노이즈 (공기감/잔향 느낌)
@@ -4043,13 +4255,13 @@ function airWashStereo(start, dur, vol, hp, pan){
     var hpf = a.createBiquadFilter(); hpf.type='highpass'; hpf.frequency.value = hp || 4000;
     var g = a.createGain();
     var ct = a.currentTime + start;
-    // 부드러운 양쪽 페이드 (와시는 attack/decay 둘 다 부드럽게)
     g.gain.setValueAtTime(0, ct);
     g.gain.linearRampToValueAtTime(vol, ct + Math.min(0.06, dur*0.3));
     g.gain.linearRampToValueAtTime(vol*0.7, ct + dur*0.6);
     g.gain.exponentialRampToValueAtTime(0.0001, ct + dur);
     src.connect(hpf); hpf.connect(g); g.connect(pp.node);
     src.start(ct); src.stop(ct + dur + 0.02);
+    _autoCleanup(src, [hpf, g, pp.node]);
   }catch(e){}
 }
 // 부드러운 하강 톤 — 음정이 천천히 떨어지는 "어..." 느낌
@@ -4068,6 +4280,7 @@ function softFallTone(f1, f2, dur, vol, type){
     g.gain.linearRampToValueAtTime(vol*0.65, ct + dur*0.55);
     g.gain.exponentialRampToValueAtTime(0.0001, ct + dur);
     o.start(ct); o.stop(ct + dur + 0.05);
+    _autoCleanup(o, [g]);
   }catch(e){}
 }
 
@@ -4137,17 +4350,22 @@ function sndCardStack(){
 }
 
 // 모든 버튼/스킵 링크 클릭에 가벼운 클릭음 — 자체 SFX 가진 요소는 제외
+// 디바운스 60ms: 빠른 연타로 노드가 폭주하는 것을 방지
+var _LAST_CLICK_SND = 0;
 document.addEventListener('click', function(e){
   var btn = e.target.closest('button, .skip-link');
   if(!btn) return;
-  if(btn.id === 'snd-toggle')              return;   // 음소거 토글은 자체 음
-  if(btn.classList.contains('choice-btn')) return;   // 정/오답 자체음
-  if(btn.classList.contains('hint-btn'))   return;   // sndHint 별도
+  if(btn.id === 'snd-toggle')              return;
+  if(btn.classList.contains('choice-btn')) return;
+  if(btn.classList.contains('hint-btn'))   return;
   if(btn.id === 'hbtn')                    return;
-  if(btn.classList.contains('btn-ok'))     return;   // submit() 결과음
-  if(btn.classList.contains('sc-bulb'))    return;   // 점수칩 장식
+  if(btn.classList.contains('btn-ok'))     return;
+  if(btn.classList.contains('sc-bulb'))    return;
+  var now = Date.now();
+  if(now - _LAST_CLICK_SND < 60) return;
+  _LAST_CLICK_SND = now;
   sndClick();
-}, true);
+});  // capture: false (기본) — 평범한 bubbling 페이즈로 충분
 
 // ── 음소거 토글 UI 바인딩 ───────────────────
 (function(){
@@ -4357,7 +4575,9 @@ function goLearn(){
   LEARN.correct = 0;
   showPage('learn');
   if(LEARN.words.length === 0){ goFillQ(); return; }
-  renderLearnCard();
+  // 카드 본문 비우기 — 인트로 말풍선이 사라진 직후에 첫 카드 등장
+  var lcBody = document.getElementById('lc-body');
+  if(lcBody) lcBody.innerHTML = '';
   showLearnIntro();
 }
 
@@ -4393,12 +4613,49 @@ function buildIntroHTML(stage){
     + '<div class="gi-quote">"'+meta.quote+'"</div>';
 }
 
+// ── 오늘의 미션 화면 (인출 진입 직전, 카드 인트로 이전 단계) ──
+function buildMissionHTML(){
+  var hun = (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.mainHunFull || SESSION.mainHun || '') : '';
+  var total = (typeof WORD_LIST !== 'undefined' && WORD_LIST) ? WORD_LIST.length : 0;
+  return ''
+    + '<div class="gm-eyebrow">오늘의 미션</div>'
+    + '<div class="gm-line">오늘 알아야 할 <span class="gm-hun">‘'+hun+'’</span>의 가족 어휘는</div>'
+    + '<div class="gm-num"><em>'+total+'</em><span class="gm-unit">개</span></div>'
+    + '<div class="gm-foot">모두 찾아볼까요?</div>'
+    + '<button class="gm-confirm" type="button" onclick="confirmMission(event)">확인</button>';
+}
+// 확인 버튼 → 인출 스테이지 카드로 스왑 (STAGE 01 / 인출하기 / 인용구)
+function confirmMission(e){
+  // 부모 #game-intro의 onclick으로 버블링되어 카드가 즉시 닫히는 것을 방지
+  if(e){ e.stopPropagation(); }
+  var msg = document.getElementById('gi-msg');
+  if(!msg) return;
+  msg.classList.remove('gi-mission');
+  msg.classList.add('gi-card');
+  msg.dataset.stage = '1';   // 인출 — 녹색
+  msg.innerHTML = buildIntroHTML(1);
+  GAME_INTRO_CARD_AT = Date.now();
+  if(GAME_INTRO_TIMER) clearTimeout(GAME_INTRO_TIMER);
+  GAME_INTRO_TIMER = setTimeout(hideGameIntro, 3600);
+}
+// 오버레이 클릭: 미션 단계에서는 무시(확인 버튼만), 카드 단계에서는 닫기
+// 단, 카드로 막 전환된 직후 600ms 동안은 무시 (확인 버튼 클릭의 잔여 효과 방지)
+var GAME_INTRO_CARD_AT = 0;
+function gameIntroOverlayClick(){
+  var msg = document.getElementById('gi-msg');
+  if(!msg) return;
+  if(!msg.classList.contains('gi-card')) return;   // 미션 단계는 무시
+  if(Date.now() - GAME_INTRO_CARD_AT < 600) return;  // 카드 등장 직후 그레이스
+  hideGameIntro();
+}
+
 // ── 확장 진입 인트로 ──────────────────────────
 var LEARN_INTRO_TIMER = null;
 function showLearnIntro(){
   var intro = document.getElementById('learn-intro');
   var msg   = document.getElementById('li-msg');
   if(!intro || !msg) return;
+  msg.dataset.stage = '2';   // 확장 — 보라
   msg.innerHTML = buildIntroHTML(2);
   intro.classList.remove('fade-out');
   intro.classList.add('on');
@@ -4413,6 +4670,11 @@ function hideLearnIntro(){
   setTimeout(function(){
     intro.classList.remove('on');
     intro.classList.remove('fade-out');
+    // 인트로 페이드아웃 완료 직후 — 첫 카드 등장 (애니메이션 타이밍이 사용자 시야에 정확히 동기)
+    var lcBody = document.getElementById('lc-body');
+    if(lcBody && lcBody.innerHTML === '' && typeof renderLearnCard === 'function'){
+      renderLearnCard();
+    }
   }, 540);
 }
 
@@ -4422,6 +4684,7 @@ function showFillIntro(){
   var intro = document.getElementById('fillq-intro');
   var msg   = document.getElementById('fi-msg');
   if(!intro || !msg) return;
+  msg.dataset.stage = '3';   // 강화 — 파랑
   msg.innerHTML = buildIntroHTML(3);
   intro.classList.remove('fade-out');
   intro.classList.add('on');
@@ -4436,6 +4699,11 @@ function hideFillIntro(){
   setTimeout(function(){
     intro.classList.remove('on');
     intro.classList.remove('fade-out');
+    // 인트로 페이드아웃 완료 직후 — 첫 카드 등장
+    var fqCard = document.getElementById('fq-card');
+    if(fqCard && fqCard.innerHTML === '' && typeof FQ !== 'undefined' && FQ && FQ.words && FQ.words.length){
+      renderFQCard(FQ.words[FQ.idx]);
+    }
   }, 540);
 }
 
@@ -4594,17 +4862,20 @@ function goGame(){
 
 // ── 인출 진입 인트로 ──────────────────────────
 var GAME_INTRO_TIMER = null;
+
+// 시작하기 → 오늘의 미션 화면 (확인 버튼을 눌러야 게임으로 진입)
 function showGameIntro(){
   var intro = document.getElementById('game-intro');
   var msg   = document.getElementById('gi-msg');
   if(!intro || !msg) return;
-  msg.innerHTML = buildIntroHTML(1);
+  msg.classList.remove('gi-card');
+  msg.classList.add('gi-mission');
+  msg.innerHTML = buildMissionHTML();
   intro.classList.remove('fade-out');
   intro.classList.add('on');
-  // 입력 포커스는 인트로가 닫힌 뒤
-  if(GAME_INTRO_TIMER) clearTimeout(GAME_INTRO_TIMER);
-  GAME_INTRO_TIMER = setTimeout(hideGameIntro, 2600);
+  // 자동 타이머 제거 — 사용자가 확인 버튼을 눌러야 진행됨
 }
+
 function hideGameIntro(){
   var intro = document.getElementById('game-intro');
   if(!intro || !intro.classList.contains('on')) return;
@@ -4613,6 +4884,8 @@ function hideGameIntro(){
   setTimeout(function(){
     intro.classList.remove('on');
     intro.classList.remove('fade-out');
+    var msg = document.getElementById('gi-msg');
+    if(msg){ msg.classList.remove('gi-mission'); msg.classList.remove('gi-card'); }
     var wi = document.getElementById('wi');
     if(wi) wi.focus();
   }, 540);
@@ -5474,7 +5747,10 @@ function goFillQ(){
   all = shuffle(all);
   FQ = { words:all, idx:0, correct:0, total:all.length };
   showPage('fillq');
-  renderFQDots(); renderFQCard(FQ.words[0]);
+  // 카드 본문 비우기 — 인트로 말풍선이 사라진 직후 첫 카드 등장
+  var fqCard = document.getElementById('fq-card');
+  if(fqCard) fqCard.innerHTML = '';
+  renderFQDots();   // 카운터만 갱신
   showFillIntro();
 }
 
