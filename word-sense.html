@@ -3124,10 +3124,10 @@ body.dark-canvas .score-chip,
   color: rgba(255,255,255,0.62);
   letter-spacing: 0.10em;
 }
-/* 두 컬럼(오늘 / 누적) 나란히 배치 */
+/* 3열(인출 / 인출+확장 오늘 / 인출+확장 누적) 나란히 배치 */
 .r-rank-pair {
   display: flex;
-  gap: 26px;
+  gap: 20px;
   align-items: stretch;
 }
 .r-rank-col {
@@ -3135,26 +3135,33 @@ body.dark-canvas .score-chip,
   display: flex; flex-direction: column;
 }
 .r-rank-col + .r-rank-col {
-  padding-left: 26px;
+  padding-left: 20px;
   border-left: 1px dashed rgba(255,255,255,0.10);
   margin-left: 0;
 }
 .r-rank-col-head {
   display: flex; align-items: baseline; justify-content: space-between;
   margin-bottom: 6px;
+  gap: 6px;
 }
 .r-rank-col-tag {
   display: inline-flex; align-items: center;
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 11px; font-weight: 700;
-  letter-spacing: 0.14em;
-  padding: 3px 10px;
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.10em;
+  padding: 3px 9px;
   border-radius: 100px;
+  white-space: nowrap;
 }
-.r-rank-col-tag.tag-today {
+.r-rank-col-tag.tag-retr {
   color: var(--green);
   background: rgba(69,194,138,0.14);
   border: 1px solid rgba(69,194,138,0.42);
+}
+.r-rank-col-tag.tag-combo {
+  color: #C9A6F0;
+  background: rgba(155,108,217,0.14);
+  border: 1px solid rgba(155,108,217,0.45);
 }
 .r-rank-col-tag.tag-cumul {
   color: #FFD659;
@@ -3166,6 +3173,16 @@ body.dark-canvas .score-chip,
   font-size: 10px;
   color: rgba(255,255,255,0.38);
   letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+/* 내 랭킹이 멀리 떨어져 있을 때 사이의 ⋯ 구분자 */
+.r-rank-block .r-rank-ellipsis {
+  text-align: center;
+  font-size: 14px; line-height: 1;
+  color: rgba(255,255,255,0.28);
+  padding: 6px 0 4px;
+  letter-spacing: 0.5em;
+  user-select: none;
 }
 .r-rank-block .r-rank-list {
   display: flex; flex-direction: column;
@@ -3691,11 +3708,15 @@ body.recap-mode .game-bottom { display: none !important; }
         </div>
         <div class="r-rank-pair">
           <div class="r-rank-col">
-            <div class="r-rank-col-head"><span class="r-rank-col-tag tag-today">오늘</span></div>
-            <div class="r-rank-list" id="r-rank-list-today"></div>
+            <div class="r-rank-col-head"><span class="r-rank-col-tag tag-retr">인출</span><span class="r-rank-col-sub">오늘</span></div>
+            <div class="r-rank-list" id="r-rank-list-retr"></div>
           </div>
           <div class="r-rank-col">
-            <div class="r-rank-col-head"><span class="r-rank-col-tag tag-cumul">누적</span><span class="r-rank-col-sub" id="r-rank-area">환경과 생물</span></div>
+            <div class="r-rank-col-head"><span class="r-rank-col-tag tag-combo">인출+확장</span><span class="r-rank-col-sub">오늘</span></div>
+            <div class="r-rank-list" id="r-rank-list-combo"></div>
+          </div>
+          <div class="r-rank-col">
+            <div class="r-rank-col-head"><span class="r-rank-col-tag tag-cumul">인출+확장</span><span class="r-rank-col-sub" id="r-rank-area">누적</span></div>
             <div class="r-rank-list" id="r-rank-list-cumul"></div>
           </div>
         </div>
@@ -5545,99 +5566,135 @@ function renderFQCard(word){
 // ══════════════════════════════════════════════
 // 결과
 // ══════════════════════════════════════════════
-var ELEM_WORDS = [], HARD_WORDS = [], TODAY_RANK = [], CUMUL_RANK = [];
-var rankMode = 'today';
-var MOCK_NAMES = ['김민준','이서연','박지호','최예은','정도윤','한수아','윤시우','강나윤','오하준'];
+var ELEM_WORDS = [], HARD_WORDS = [];
+var RANK_RETR = [], RANK_COMBO = [], RANK_CUMUL = [];
+var MOCK_NAMES = ['김민준','이서연','박지호','최예은','정도윤','한수아','윤시우','강나윤','오하준','임도현','서지안','홍채린','노건우'];
 
 function buildPools(){
   ELEM_WORDS = WORD_LIST.filter(function(w){ return !WORD_MAP[w].isInferQuiz; });
   HARD_WORDS = WORD_LIST.filter(function(w){ return WORD_MAP[w].isInferQuiz; });
 }
-function buildTodayRank(){
-  var others = MOCK_NAMES.map(function(name){
-    var c = 4 + Math.floor(Math.random() * 18);
-    return { name:name, words: shuffle(WORD_LIST).slice(0, c), me:false };
-  });
-  var me = { name:'나', words: S.found.slice(), me:true };
-  var all = others.concat([me]);
-  all.sort(function(a,b){
-    if(b.words.length !== a.words.length) return b.words.length - a.words.length;
-    return b.me ? 1 : -1;
-  });
-  return all;
-}
-function buildCumulRank(myToday){
-  // 회차 누적 (영역 내) — 모의: 이전 회차 누적 + 오늘
-  var others = MOCK_NAMES.map(function(name){
-    return { name:name, count: 30 + Math.floor(Math.random() * 80), me:false };
-  });
-  var me = { name:'나', count: 25 + Math.floor(Math.random() * 50) + myToday, me:true };
-  var all = others.concat([me]);
-  all.sort(function(a,b){
+function _sortRank(list){
+  list.sort(function(a,b){
     if(b.count !== a.count) return b.count - a.count;
     return b.me ? 1 : -1;
   });
-  return all;
+  return list;
+}
+// 인출어휘 랭킹 (오늘) — game 단계에서 발견한 가족 어휘
+function buildRetrieveRank(){
+  var others = MOCK_NAMES.map(function(name){
+    return { name:name, count: 4 + Math.floor(Math.random() * 18), me:false };
+  });
+  var me = { name:'나', count: (S && S.found) ? S.found.length : 0, me:true };
+  return _sortRank(others.concat([me]));
+}
+// 인출+확장어휘 랭킹 (오늘) — 인출 + 학습/탐구 단계에서 깨운 어휘 합산
+function buildComboRank(){
+  var others = MOCK_NAMES.map(function(name){
+    var retr = 4 + Math.floor(Math.random() * 18);
+    var exp  = Math.floor(Math.random() * 9);
+    return { name:name, count: retr + exp, me:false };
+  });
+  var myRetr = (S && S.found) ? S.found.length : 0;
+  var myExp  = (typeof LEARN !== 'undefined' && LEARN && LEARN.collected) ? LEARN.collected.length : 0;
+  var me = { name:'나', count: myRetr + myExp, me:true };
+  return _sortRank(others.concat([me]));
+}
+// 인출+확장 누적 랭킹 (회차 누적, 영역 내)
+function buildCumulRank(myTodayCombo){
+  var others = MOCK_NAMES.map(function(name){
+    return { name:name, count: 30 + Math.floor(Math.random() * 80), me:false };
+  });
+  var me = { name:'나', count: 25 + Math.floor(Math.random() * 50) + (myTodayCombo||0), me:true };
+  return _sortRank(others.concat([me]));
+}
+
+// ── 표시 정책: top N 표시. 내가 top N 안에 있으면 그대로,
+//    밖이면 ⋯ + 내 주변 (위 1명, 나, 아래 1명)을 추가로 보여줌
+function buildRankView(list, topN, contextN){
+  topN = topN || 5;
+  contextN = (contextN == null) ? 1 : contextN;
+  var meIdx = -1;
+  for(var i=0;i<list.length;i++){ if(list[i].me){ meIdx = i; break; } }
+  var withRank = list.map(function(s, i){
+    return { name:s.name, count:s.count, me:s.me, rank:i+1 };
+  });
+  if(meIdx < topN){
+    // 내가 top 안 → top N만
+    return withRank.slice(0, topN);
+  }
+  var top = withRank.slice(0, topN);
+  var ctxStart = Math.max(topN, meIdx - contextN);
+  var ctxEnd   = Math.min(withRank.length, meIdx + contextN + 1);
+  var ctx = withRank.slice(ctxStart, ctxEnd);
+  // top과 ctx 사이가 떨어져 있으면 ellipsis 삽입
+  var view = top.slice();
+  if(ctxStart > topN) view.push({ __ellipsis: true });
+  view = view.concat(ctx);
+  return view;
 }
 
 function highlightStudent(student){
   // V3에서는 어휘 그리드가 사라져 학생별 단어 강조는 행 표시만 유지
-  document.querySelectorAll('#r-rank-list-today .r-rank-row').forEach(function(r){
+  document.querySelectorAll('.r-rank-block .r-rank-row').forEach(function(r){
     r.classList.toggle('active', r.dataset.name === student.name);
   });
 }
 
-function renderRankList(){
+function _renderRankCol(listId, view, extraRowClass){
+  var rl = document.getElementById(listId);
+  if(!rl) return;
+  rl.innerHTML = '';
   var medals = ['gold','silver','bronze'];
-  var medalIcons = ['🥇', '🥈', '🥉'];
+  var medalIcons = ['🥇','🥈','🥉'];
+  view.forEach(function(s){
+    if(s.__ellipsis){
+      var sep = document.createElement('div');
+      sep.className = 'r-rank-ellipsis';
+      sep.textContent = '⋯';
+      rl.appendChild(sep);
+      return;
+    }
+    var rank = s.rank;
+    var medalCls = medals[rank-1] || '';
+    var icon = medalIcons[rank-1];
+    var row = document.createElement('div');
+    row.className = 'r-rank-row' + (extraRowClass ? ' '+extraRowClass : '')
+      + (s.me ? ' me' : '') + (medalCls ? ' '+medalCls : '');
+    row.dataset.name = s.name;
+    var numHtml = icon
+      ? '<span class="r-rank-num medal">'+icon+'</span>'
+      : '<span class="r-rank-num">'+rank+'</span>';
+    row.innerHTML = numHtml
+      +'<span class="r-rank-name">'+s.name+(s.me?' (나)':'')+'</span>'
+      +'<span class="r-rank-cnt">'+s.count+'</span>';
+    rl.appendChild(row);
+  });
+}
 
-  // 영역명 서브라벨
+function renderRankList(){
+  // 영역명 서브라벨 (누적 컬럼)
   var areaSub = document.getElementById('r-rank-area');
-  if(areaSub) areaSub.textContent = SESSION.area || '';
+  if(areaSub) areaSub.textContent = (SESSION.area || '') + ' · 누적';
 
-  // ── 오늘 ──
-  var rlT = document.getElementById('r-rank-list-today');
-  if(rlT){
-    rlT.innerHTML = '';
-    TODAY_RANK.forEach(function(s, i){
-      var row = document.createElement('div');
-      row.className = 'r-rank-row' + (s.me ? ' me' : '') + (medals[i] ? ' '+medals[i] : '');
-      row.dataset.name = s.name;
-      var numHtml = medalIcons[i]
-        ? '<span class="r-rank-num medal">'+medalIcons[i]+'</span>'
-        : '<span class="r-rank-num">'+(i+1)+'</span>';
-      row.innerHTML = numHtml
-        +'<span class="r-rank-name">'+s.name+(s.me?' (나)':'')+'</span>'
-        +'<span class="r-rank-cnt">'+s.words.length+'</span>';
-      row.onclick = function(){ highlightStudent(s); };
-      rlT.appendChild(row);
-    });
-    var me = TODAY_RANK.filter(function(s){ return s.me; })[0];
-    if(me) highlightStudent(me);
-  }
+  // ── 표시 정책: top 5 + 내 주변(필요시) ──
+  var TOP_N = 5;
+  var viewRetr  = buildRankView(RANK_RETR,  TOP_N, 1);
+  var viewCombo = buildRankView(RANK_COMBO, TOP_N, 1);
+  var viewCumul = buildRankView(RANK_CUMUL, TOP_N, 1);
 
-  // ── 누적 ──
-  var rlC = document.getElementById('r-rank-list-cumul');
-  if(rlC){
-    rlC.innerHTML = '';
-    CUMUL_RANK.forEach(function(s, i){
-      var row = document.createElement('div');
-      row.className = 'r-rank-row cumul' + (s.me ? ' me' : '') + (medals[i] ? ' '+medals[i] : '');
-      row.dataset.name = s.name;
-      var numHtml = medalIcons[i]
-        ? '<span class="r-rank-num medal">'+medalIcons[i]+'</span>'
-        : '<span class="r-rank-num">'+(i+1)+'</span>';
-      row.innerHTML = numHtml
-        +'<span class="r-rank-name">'+s.name+(s.me?' (나)':'')+'</span>'
-        +'<span class="r-rank-cnt">'+s.count+'</span>';
-      rlC.appendChild(row);
-    });
-  }
+  _renderRankCol('r-rank-list-retr',  viewRetr);
+  _renderRankCol('r-rank-list-combo', viewCombo);
+  _renderRankCol('r-rank-list-cumul', viewCumul, 'cumul');
+
+  // 오늘(인출) 컬럼에서 "나" 행 강조 (그리드 연동은 V2 잔존 — 현재는 클래스 토글만)
+  var me = RANK_RETR.filter(function(s){ return s.me; })[0];
+  if(me) highlightStudent(me);
 }
 
 function setRankMode(mode){
-  // V3 — 두 컬럼 동시 표시. 호환을 위해 stub 유지.
-  rankMode = mode;
+  // V3 — 3컬럼 동시 표시. 호환을 위해 stub 유지.
 }
 
 function goResult(){
@@ -5676,10 +5733,12 @@ function goResult(){
   });
   document.getElementById('r-exp-cnt').textContent = exp.length;
 
-  // ── 랭킹 ──
-  TODAY_RANK = buildTodayRank();
-  CUMUL_RANK = buildCumulRank(S.found.length);
-  rankMode = 'today';
+  // ── 랭킹 (3종: 인출 / 인출+확장 / 인출+확장 누적) ──
+  RANK_RETR  = buildRetrieveRank();
+  RANK_COMBO = buildComboRank();
+  var myComboToday = (S.found ? S.found.length : 0)
+                   + ((typeof LEARN !== 'undefined' && LEARN && LEARN.collected) ? LEARN.collected.length : 0);
+  RANK_CUMUL = buildCumulRank(myComboToday);
   renderRankList();
 
   buildAreaProgress();
