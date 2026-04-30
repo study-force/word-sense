@@ -71,7 +71,7 @@
    각 단계 페이지가 --stage-accent 변수를 정의하면, 그 페이지 안의 모든 요소가
    var(--stage-accent, var(--green))로 자동 매핑됨. 홈/영역/결과는 변수 미정의 → 기본 녹색 유지. */
 #game,
-#area, #result, #home {
+#area, #home {
   --stage-accent:      #45C28A;
   --stage-accent-deep: #2E9E6B;
   --stage-accent-light:#5BD8A2;
@@ -83,7 +83,7 @@
   --stage-accent-light:#C9A6F0;
   --stage-accent-rgb:  155,108,217;
 }
-#fillq {                /* 강화 — 파랑 */
+#fillq, #result {       /* 강화 + 결과 — 파랑 (결과는 강화 단계의 마무리 화면) */
   --stage-accent:      #4FA3F0;
   --stage-accent-deep: #2E7DC4;
   --stage-accent-light:#8FC4F8;
@@ -746,7 +746,7 @@ button { font-family: inherit; color: inherit; }
 }
 .g-canvas {
   position: absolute; inset: 0; width: 100%; height: 100%;
-  pointer-events: none; z-index: 1;
+  pointer-events: none; z-index: 1;   /* g-center(3) 아래 — 캡슐의 불투명 배경이 안쪽 라인을 가려 깔끔하게 */
 }
 .g-prompt-line {
   font-size: 13px; color: var(--light); text-align: center;
@@ -759,7 +759,7 @@ button { font-family: inherit; color: inherit; }
 
 .g-center {
   position: absolute; left: 50%; top: 50%;
-  transform: translate(-50%, calc(-50% - 30px));   /* 버블 네트워크 30px 위로 */
+  transform: translate(-50%, calc(-50% + 20px));   /* 버블 네트워크 20px 아래로 — 무게중심 균형 */
   display: flex; flex-direction: column; align-items: center; gap: 12px;
   z-index: 3; pointer-events: none;
 }
@@ -1343,9 +1343,32 @@ button { font-family: inherit; color: inherit; }
 }
 
 /* 진행 게이지 (●━━○──○) */
-/* ─── 오늘의 미션 화면 (게임 인트로 카드 이전 단계 — 시작하기 직후 풀스크린) ─── */
+/* ─── 오늘의 미션 화면 — 검정 솔리드 배경, 미니멀 ─── */
+body.mission-mode .game-intro {
+  background: #050810 !important;     /* 거의 완전 검정 */
+}
+/* 미션 화면에서는 사운드 토글 숨김 + 게임 콘텐츠 보이지 않음 (페이지 전환 깜빡임 제거) */
+body.mission-mode .snd-toggle { display: none !important; }
+body.mission-mode #g-stage,
+body.mission-mode .game-bottom,
+body.mission-mode #game .stage-nav {
+  visibility: hidden !important;
+}
+/* 점수칩이 미션 화면 중앙으로 이동(center-mission). 확인 클릭 시 클래스 제거 → 우상단 복귀 (transition으로 자연 애니메이션) */
+.score-chip.center-mission {
+  /* 칩 시작 center=(1032,64). 목표: gi-mission 내 placeholder 중심 (550, 244)
+     gi-msg 총 높이 ≈ 200(chip)+56(gap)+~140(text+btn) = 396, 800에서 중앙 → top 202
+     placeholder 중심 = 202+100 = 302. translate y = 302-64 = 238 */
+  transform: translate(-482px, 238px) scale(2.0);
+  box-shadow:
+    0 8px 22px rgba(0,0,0,0.32),
+    0 0 0 1px rgba(0,0,0,0.4),
+    0 0 14px rgba(var(--sc-rgb), 0.30),
+    inset 0 0 0 1px rgba(255,214,107,0.28),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+}
 .game-intro .gi-msg.gi-mission {
-  display: inline-block;
+  display: flex; flex-direction: column; align-items: center;
   text-align: center;
   background: transparent;
   border: none;
@@ -1354,74 +1377,94 @@ button { font-family: inherit; color: inherit; }
   color: #FFFFFF;
   white-space: normal;
   min-width: 0; max-width: none;
-  animation: missionIn .65s cubic-bezier(.2,1.2,.4,1) .12s both;
+  /* missionPop: translate 없이 scale+opacity만 — backwards fill 종료 후에도 점프 없음 */
+  animation: missionPop .65s cubic-bezier(.2,1.2,.4,1) .12s backwards;
 }
-.game-intro .gi-msg.gi-mission .gm-eyebrow {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 12px; font-weight: 700;
-  letter-spacing: 0.34em;
-  color: var(--green);
-  text-transform: uppercase;
-  margin-bottom: 22px;
-  opacity: 0.92;
+@keyframes missionPop {
+  0%   { opacity: 0; transform: scale(.92); }
+  60%  { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 1; transform: scale(1); }
 }
+/* 칩 자리 — 점수칩이 시각적으로 여기로 옮겨와 표시됨 */
+.game-intro .gi-msg.gi-mission::before {
+  content: '';
+  display: block;
+  width: 200px; height: 200px;     /* scale 2.0 칩 공간 (실제 칩은 absolute로 떠 있음) */
+  margin-bottom: 56px;             /* 칩과 문구 사이 간격 — 시각적 호흡 확보 */
+}
+/* 박스 위 라인: "오늘 만날 날 생 生의 가족 어휘" — 박스 없이 단순 텍스트 */
 .game-intro .gi-msg.gi-mission .gm-line {
   font-family: 'S-Core Dream', 'SCoreDream', 'Noto Sans KR', sans-serif;
-  font-size: 26px; font-weight: 500;
+  font-size: 22px; font-weight: 500;
   color: #E8ECF4;
-  letter-spacing: -0.03em;
-  line-height: 1.35;
-  margin-bottom: 14px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: 18px;
+  white-space: nowrap;
 }
 .game-intro .gi-msg.gi-mission .gm-hun {
   color: var(--green);
   font-weight: 700;
-  text-shadow: 0 0 18px rgba(69,194,138,0.55);
+  text-shadow: 0 0 14px rgba(69,194,138,0.45);
   margin: 0 2px;
   letter-spacing: -0.01em;
 }
+.game-intro .gi-msg.gi-mission .gm-han {
+  font-family: var(--font-han);
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--green);
+  margin: 0 4px;
+  text-shadow: 0 0 14px rgba(69,194,138,0.55);
+}
+/* 숫자 박스: "38 개" — 미션 화면의 시각 중심 */
 .game-intro .gi-msg.gi-mission .gm-num {
+  width: 460px;
+  padding: 36px 28px;
+  border: 2px solid rgba(69,194,138,0.55);
+  border-radius: 14px;
+  background: rgba(69,194,138,0.04);
+  box-sizing: border-box;
+  display: flex; align-items: baseline; justify-content: center; gap: 10px;
   font-family: 'S-Core Dream', 'SCoreDream', 'Noto Sans KR', sans-serif;
   line-height: 1;
-  margin: 4px 0 14px;
+  margin-bottom: 16px;
 }
 .game-intro .gi-msg.gi-mission .gm-num em {
   font-style: normal;
-  font-size: 110px; font-weight: 800;
+  font-size: 92px; font-weight: 800;
   color: var(--green);
   letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
-  text-shadow: 0 0 32px rgba(69,194,138,0.45);
+  text-shadow: 0 0 24px rgba(69,194,138,0.45);
   display: inline-block;
   animation: gmNumPop .8s cubic-bezier(.2,1.4,.4,1) .35s both;
 }
 .game-intro .gi-msg.gi-mission .gm-unit {
-  font-size: 36px; font-weight: 600;
-  color: rgba(255,255,255,0.78);
-  margin-left: 8px;
-  vertical-align: 14px;
+  font-size: 30px; font-weight: 600;
+  color: rgba(255,255,255,0.72);
   text-shadow: none;
   letter-spacing: -0.02em;
 }
 .game-intro .gi-msg.gi-mission .gm-foot {
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 16px; font-weight: 400;
-  color: rgba(255,255,255,0.62);
+  font-size: 18px; font-weight: 500;
+  color: rgba(255,255,255,0.78);
   letter-spacing: -0.01em;
-  margin-top: 10px;
+  margin-bottom: 22px;
 }
 .game-intro .gi-msg.gi-mission .gm-confirm {
-  margin-top: 26px;
-  padding: 13px 44px;
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 16px; font-weight: 700;
+  margin-top: 4px;
+  padding: 14px 56px;
+  font-family: 'Inter', 'Noto Sans KR', sans-serif;
+  font-size: 20px; font-weight: 800;
   color: #1F2238;
   background: var(--green);
   border: none;
   border-radius: 100px;
   cursor: pointer;
-  letter-spacing: 0.04em;
-  box-shadow: 0 6px 22px rgba(69,194,138,0.42), inset 0 1px 0 rgba(255,255,255,0.32);
+  letter-spacing: 0.06em;
+  box-shadow: 0 8px 26px rgba(69,194,138,0.50), inset 0 1px 0 rgba(255,255,255,0.32);
   transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
   animation: gmConfirmIn .4s cubic-bezier(.2,1.2,.4,1) .85s both;
 }
@@ -1449,23 +1492,30 @@ button { font-family: inherit; color: inherit; }
 }
 .gi-dot {
   width: 11px; height: 11px; border-radius: 50%;
-  background: rgba(0,0,0,0.10);
-  border: 1.5px solid rgba(0,0,0,0.20);
   flex-shrink: 0;
   transition: all .3s ease;
+  /* 각 dot은 자기 단계의 색상을 가짐 — data-stage로 매핑 */
+  --dot-c:       #2FA070;
+  --dot-c-light: #5BD8A2;
+  --dot-rgb:     69,194,138;
+  background: rgba(var(--dot-rgb), 0.10);
+  border: 1.5px solid rgba(var(--dot-rgb), 0.30);
 }
+.gi-dot[data-stage="1"] { --dot-c: #2FA070; --dot-c-light: #5BD8A2; --dot-rgb: 69,194,138;  }   /* 인출 — 녹색 */
+.gi-dot[data-stage="2"] { --dot-c: #9B6CD9; --dot-c-light: #C9A6F0; --dot-rgb: 155,108,217; }   /* 확장 — 보라 */
+.gi-dot[data-stage="3"] { --dot-c: #4FA3F0; --dot-c-light: #8FC4F8; --dot-rgb: 79,163,240;  }   /* 강화 — 하늘 */
 .gi-dot.done {
-  background: var(--gi-accent, #2FA070);
-  border-color: var(--gi-accent, #2FA070);
-  box-shadow: 0 0 8px rgba(var(--gi-accent-rgb, 69,194,138), 0.45);
+  background: var(--dot-c);
+  border-color: var(--dot-c);
+  box-shadow: 0 0 8px rgba(var(--dot-rgb), 0.45);
 }
 .gi-dot.now {
-  background: var(--gi-accent-light, #5BD8A2);
-  border-color: var(--gi-accent, #2FA070);
+  background: var(--dot-c-light);
+  border-color: var(--dot-c);
   width: 13px; height: 13px;
   box-shadow:
-    0 0 0 4px rgba(var(--gi-accent-rgb, 69,194,138), 0.20),
-    0 0 14px rgba(var(--gi-accent-rgb, 69,194,138), 0.65);
+    0 0 0 4px rgba(var(--dot-rgb), 0.20),
+    0 0 14px rgba(var(--dot-rgb), 0.65);
   animation: giDotPulse 1.6s ease-in-out infinite;
 }
 .gi-line {
@@ -1476,17 +1526,22 @@ button { font-family: inherit; color: inherit; }
   margin: 0 6px;
   position: relative;
   overflow: hidden;
+  /* 각 라인은 두 단계 사이 — data-from/data-to 로 그라디언트 색 결정 */
+  --line-from-rgb: 69,194,138;
+  --line-to-rgb:   155,108,217;
 }
+.gi-line[data-from="1"][data-to="2"] { --line-from-rgb: 69,194,138;  --line-to-rgb: 155,108,217; }   /* 녹색 → 보라 */
+.gi-line[data-from="2"][data-to="3"] { --line-from-rgb: 155,108,217; --line-to-rgb: 79,163,240;  }   /* 보라 → 하늘 */
 .gi-line.done {
-  background: linear-gradient(90deg, var(--gi-accent, #2FA070), var(--gi-accent-light, #5BD8A2));
-  box-shadow: 0 0 6px rgba(var(--gi-accent-rgb, 69,194,138), 0.40);
+  background: linear-gradient(90deg, rgb(var(--line-from-rgb)), rgb(var(--line-to-rgb)));
+  box-shadow: 0 0 6px rgba(var(--line-from-rgb), 0.40);
 }
 .gi-line.now::after {
-  /* 다음 단계로 흐르는 빛 */
+  /* 다음 단계로 흐르는 빛 — 도착 색 톤으로 */
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(var(--gi-accent-rgb, 69,194,138), 0.55), transparent);
+  background: linear-gradient(90deg, transparent, rgba(var(--line-to-rgb), 0.55), transparent);
   animation: giLineFlow 1.4s linear infinite;
 }
 @keyframes giDotPulse {
@@ -2118,9 +2173,14 @@ button { font-family: inherit; color: inherit; }
   color: #fff;
 }
 .choice.c-ok .num-badge,
-.choice-btn.ok .num-badge,
-.fill-btn.ok .num-badge {
+.choice-btn.ok .num-badge {
   background: var(--ok); border-color: var(--ok); color: #fff;
+}
+/* 강화 정답 — 흰 배경 + 파랑 번호 (반전) */
+.fill-btn.ok .num-badge {
+  background: #FFFFFF;
+  border-color: var(--stage-accent, var(--green));
+  color: var(--stage-accent, var(--green));
 }
 .choice.c-no .num-badge,
 .choice-btn.no .num-badge,
@@ -2172,8 +2232,13 @@ button { font-family: inherit; color: inherit; }
     0 22px 48px rgba(0,0,0,0.42),
     0 4px 14px rgba(0,0,0,0.20);
   padding: 30px 36px 28px;
-  transition: transform .35s cubic-bezier(.2,1,.3,1), opacity .25s;
+  transition: transform .35s cubic-bezier(.2,1,.3,1), opacity .35s ease;
   overflow: hidden;
+}
+/* 인트로 말풍선 표시 중에는 카드 프레임 숨김 — 페이드 인은 인트로 닫힌 직후 */
+.learn-card.is-pending {
+  opacity: 0;
+  pointer-events: none;
 }
 /* 카드가 컬렉션(좌측)으로 작아지며 빨려 들어가는 모션 */
 .learn-card.flying-out {
@@ -3090,7 +3155,7 @@ body.dark-canvas .score-chip,
   letter-spacing: 0.04em;
   transition: transform .15s, box-shadow .2s;
   /* 그라디언트 — 위쪽이 어둡고 아래쪽이 밝게 (들어가 보이는 효과) */
-  background: linear-gradient(180deg, #2FA070 0%, var(--green) 55%, #5AD49B 100%);
+  background: linear-gradient(180deg, var(--stage-accent-deep, #2FA070) 0%, var(--stage-accent, var(--green)) 55%, var(--stage-accent-light, #5AD49B) 100%);
   color: #fff;
   position: relative;
   /* 슬롯 안에 덮개가 얹힌 느낌 */
@@ -3134,25 +3199,25 @@ body.dark-canvas .score-chip,
 ════════════════════════════════════════════ */
 .r-topbar-meta {
   position: absolute;
-  top: 30px; left: 80px;                 /* snd-toggle(22+36=58) 우측 22px */
+  top: 30px; left: 80px;
   display: flex; align-items: baseline; gap: 8px;
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 12px; color: #B6BCCB;
+  font-size: 12px; color: #5A6178;
   letter-spacing: 0.04em;
   z-index: 11;
 }
-.r-topbar-meta .r-tm-area  { font-weight: 600; color: #C8CEDC; }
-.r-topbar-meta .r-tm-round { color: var(--green); font-weight: 600; }
-.r-topbar-meta .r-tm-sep   { color: rgba(255,255,255,0.20); margin: 0 2px; }
+.r-topbar-meta .r-tm-area  { font-weight: 600; color: #2A3050; }
+.r-topbar-meta .r-tm-round { color: var(--stage-accent, var(--green)); font-weight: 600; }
+.r-topbar-meta .r-tm-sep   { color: rgba(0,0,0,0.20); margin: 0 2px; }
 .r-topbar-meta .r-tm-han {
   font-family: var(--font-han);
-  font-size: 18px; font-weight: 400; color: var(--green);
-  text-shadow: 0 0 12px rgba(69,194,138,0.35);
+  font-size: 18px; font-weight: 400; color: var(--stage-accent, var(--green));
+  text-shadow: 0 0 12px rgba(var(--stage-accent-rgb), 0.30);
   margin-left: 4px;
 }
 .r-topbar-meta .r-tm-hun {
   font-family: var(--font-han);
-  font-size: 12px; color: rgba(255,255,255,0.55);
+  font-size: 12px; color: rgba(0,0,0,0.50);
   letter-spacing: 0.06em;
 }
 
@@ -3160,19 +3225,23 @@ body.dark-canvas .score-chip,
   position: absolute; inset: 56px 0 0 0;
   display: flex; flex-direction: column;
   align-items: center;
-  padding: 0 56px 18px;
+  padding: 46px 56px 18px;     /* 어휘판 10px 위로 (이전 56) */
   gap: 12px;
   overflow: hidden;
   z-index: 1;
 }
 
-/* 점수판이 중앙으로 이동해 오는 자리 — 빈 슬롯 + 라벨 */
+/* 점수판 슬롯 — 트리오 행 가운데 (점수판 scale에 맞춰 셀 너비) */
+.r-score-cell {
+  flex: 0 0 220px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  height: 100%;
+}
 .r-score-anchor {
   position: relative;
-  width: 100%;
-  height: 180px;
-  display: flex; align-items: flex-end; justify-content: center;
-  margin-top: 0;
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
 }
 .r-score-label {
   font-family: 'Noto Sans KR', sans-serif;
@@ -3186,28 +3255,30 @@ body.dark-canvas .score-chip,
 }
 .r-score-label.on { opacity: 1; }
 
-/* ── 인출 / 확장 두 컬럼 ── */
-.r-collect-row {
+/* ── 트리오 행: 인출 어휘 / 점수판 / 확장 어휘 — 모두 같은 높이 ── */
+.r-trio-row {
   display: flex; gap: 18px;
   width: 100%; max-width: 940px;
+  height: 200px;        /* 컴팩트 — 점수판과 어휘판 모두 이 높이 */
+  align-items: stretch;
   opacity: 0;
   transform: translateY(14px);
   transition: opacity .55s ease .95s, transform .55s cubic-bezier(.2,.8,.3,1) .95s;
 }
-.r-collect-row.on {
+.r-trio-row.on {
   opacity: 1; transform: translateY(0);
 }
 .r-collect-col {
   flex: 1; min-width: 0;
-  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015));
-  border: 1px solid rgba(255,255,255,0.10);
+  background: linear-gradient(180deg, #1F2638 0%, #181E2C 100%);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 14px;
   padding: 12px 16px 10px;
   box-shadow:
-    0 6px 22px rgba(0,0,0,0.32),
-    inset 0 1px 0 rgba(255,255,255,0.05);
+    0 2px 6px rgba(20,25,40,0.10),
+    inset 0 1px 0 rgba(255,255,255,0.06);
   display: flex; flex-direction: column;
-  min-height: 110px;
+  height: 100%;          /* 트리오 행 높이 충실 */
 }
 .r-collect-head {
   display: flex; align-items: center; justify-content: space-between;
@@ -3227,13 +3298,11 @@ body.dark-canvas .score-chip,
   color: #45C28A;
   background: rgba(69,194,138,0.12);
   border: 1px solid rgba(69,194,138,0.42);
-  box-shadow: 0 0 10px rgba(69,194,138,0.18);
 }
 .r-collect-tag.tag-exp {
   color: #C9A6F0;
   background: rgba(155,108,217,0.14);
   border: 1px solid rgba(155,108,217,0.45);
-  box-shadow: 0 0 10px rgba(155,108,217,0.20);
 }
 .r-collect-cnt {
   font-family: 'Noto Sans KR', sans-serif;
@@ -3243,13 +3312,26 @@ body.dark-canvas .score-chip,
 .r-collect-cnt em {
   font-style: normal; font-size: 18px; font-weight: 700;
   color: #FFD659;
-  text-shadow: 0 0 10px rgba(255,214,89,0.4);
   margin-right: 2px;
 }
 .r-collect-list {
   display: flex; flex-wrap: wrap; gap: 6px;
   align-content: flex-start;
-  flex: 1;
+  flex: 1;                  /* 컬럼 안에서 헤드를 제외한 모든 공간 차지 */
+  min-height: 0;            /* flex 자식이 overflow 가능하도록 */
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.18) transparent;
+}
+.r-collect-list::-webkit-scrollbar { width: 6px; }
+.r-collect-list::-webkit-scrollbar-track { background: transparent; }
+.r-collect-list::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.16);
+  border-radius: 3px;
+}
+.r-collect-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.28);
 }
 .r-collect-word {
   font-family: 'Noto Sans KR', sans-serif;
@@ -3289,10 +3371,13 @@ body.dark-canvas .score-chip,
 /* ── 랭킹 블록 ── */
 .r-rank-block {
   width: 100%; max-width: 940px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  background: linear-gradient(180deg, #1F2638 0%, #181E2C 100%);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 14px;
   padding: 14px 22px 14px;
+  box-shadow:
+    0 2px 6px rgba(20,25,40,0.10),
+    inset 0 1px 0 rgba(255,255,255,0.06);
   opacity: 0;
   transform: translateY(14px);
   transition: opacity .55s ease 1.15s, transform .55s cubic-bezier(.2,.8,.3,1) 1.15s;
@@ -3371,6 +3456,20 @@ body.dark-canvas .score-chip,
 .r-rank-block .r-rank-list {
   display: flex; flex-direction: column;
   gap: 0;
+  /* 100명까지 스크롤로 볼 수 있게 — 한 행 ~22px × 약 15행 ≈ 330 */
+  max-height: 330px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.18) transparent;
+}
+.r-rank-block .r-rank-list::-webkit-scrollbar { width: 6px; }
+.r-rank-block .r-rank-list::-webkit-scrollbar-track { background: transparent; }
+.r-rank-block .r-rank-list::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.16);
+  border-radius: 3px;
+}
+.r-rank-block .r-rank-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.28);
 }
 .r-rank-block .r-rank-row {
   display: flex; align-items: center; gap: 10px;
@@ -3383,9 +3482,9 @@ body.dark-canvas .score-chip,
 .r-rank-block .r-rank-row.cumul { cursor: default; }
 .r-rank-block .r-rank-row:hover { background: rgba(255,255,255,0.04); }
 .r-rank-block .r-rank-row.me {
-  background: rgba(69,194,138,0.14);
+  background: rgba(var(--stage-accent-rgb), 0.14);
 }
-.r-rank-block .r-rank-row.me:hover { background: rgba(69,194,138,0.22); }
+.r-rank-block .r-rank-row.me:hover { background: rgba(var(--stage-accent-rgb), 0.22); }
 .r-rank-block .r-rank-num {
   width: 22px; flex-shrink: 0;
   font-size: 11px; font-weight: 700;
@@ -3410,7 +3509,7 @@ body.dark-canvas .score-chip,
 }
 .r-rank-block .r-rank-cnt {
   font-size: 11px; font-weight: 700;
-  color: var(--green);
+  color: var(--stage-accent, var(--green));
   font-variant-numeric: tabular-nums;
 }
 
@@ -3435,12 +3534,13 @@ body.dark-canvas .score-chip,
   transform-origin: center;
 }
 .score-chip.center-result {
-  transform: translate(-482px, 80px) scale(1.55);
+  /* 칩 시작 center = (1032, 64). translate y 148 → 120 (점수칩 28px 위로) */
+  transform: translate(-482px, 120px) scale(2.0);
   box-shadow:
-    0 14px 40px rgba(0,0,0,0.55),
-    0 0 0 1px rgba(0,0,0,0.5),
-    0 0 28px rgba(69,194,138,0.42),
-    inset 0 0 0 1px rgba(255,214,107,0.32),
+    0 8px 22px rgba(0,0,0,0.32),
+    0 0 0 1px rgba(0,0,0,0.4),
+    0 0 14px rgba(var(--sc-rgb), 0.28),
+    inset 0 0 0 1px rgba(255,214,107,0.28),
     inset 0 1px 0 rgba(255,255,255,0.08);
 }
 .score-chip.center-result .sc-num {
@@ -3449,11 +3549,11 @@ body.dark-canvas .score-chip,
     0 0 24px rgba(255,194,80,0.5),
     0 1px 2px rgba(0,0,0,0.55);
 }
-/* 도착 후 잔잔한 글로우 펄스 */
+/* 도착 후 잔잔한 글로우 펄스 — 단계 컨셉 컬러 따라감 (그림자 축소) */
 @keyframes chipLanded {
-  0%   { box-shadow: 0 14px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.5), 0 0 28px rgba(69,194,138,0.42), inset 0 0 0 1px rgba(255,214,107,0.32), inset 0 1px 0 rgba(255,255,255,0.08); }
-  50%  { box-shadow: 0 18px 52px rgba(0,0,0,0.6),  0 0 0 1px rgba(0,0,0,0.5), 0 0 44px rgba(69,194,138,0.6),  inset 0 0 0 1px rgba(255,214,107,0.45), inset 0 1px 0 rgba(255,255,255,0.10); }
-  100% { box-shadow: 0 14px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.5), 0 0 28px rgba(69,194,138,0.42), inset 0 0 0 1px rgba(255,214,107,0.32), inset 0 1px 0 rgba(255,255,255,0.08); }
+  0%   { box-shadow: 0 8px 22px rgba(0,0,0,0.32), 0 0 0 1px rgba(0,0,0,0.4), 0 0 14px rgba(var(--sc-rgb), 0.28), inset 0 0 0 1px rgba(255,214,107,0.28), inset 0 1px 0 rgba(255,255,255,0.08); }
+  50%  { box-shadow: 0 10px 26px rgba(0,0,0,0.36), 0 0 0 1px rgba(0,0,0,0.4), 0 0 22px rgba(var(--sc-rgb), 0.42), inset 0 0 0 1px rgba(255,214,107,0.38), inset 0 1px 0 rgba(255,255,255,0.10); }
+  100% { box-shadow: 0 8px 22px rgba(0,0,0,0.32), 0 0 0 1px rgba(0,0,0,0.4), 0 0 14px rgba(var(--sc-rgb), 0.28), inset 0 0 0 1px rgba(255,214,107,0.28), inset 0 1px 0 rgba(255,255,255,0.08); }
 }
 .score-chip.center-result.landed {
   animation: chipLanded 2.4s ease-in-out infinite;
@@ -3475,7 +3575,12 @@ html, body {
 }
 /* 페이지·프레임·캔버스 모두 투명 — body의 그라디언트가 전체에 비치도록 */
 .frame, .canvas { background: transparent !important; }
-.page, #game, #result, #area, #home, #learn { background: transparent !important; }
+.page, #game, #area, #home, #learn { background: transparent !important; }
+/* 결과 페이지는 화이트 캔버스 — 패널이 다크로 부각되도록 */
+#result.page {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 35%, #FFFFFF 0%, #F4F6FB 60%, #E8ECF4 100%) !important;
+}
 /* 캔버스 외곽 보더/라운드/그림자 제거 — 전체 화면이 한 톤으로 이어지게 */
 #screen {
   border-radius: 0 !important;
@@ -3605,6 +3710,73 @@ html, body {
 }
 /* 환원 모드: 탐구 후 어휘망 점등 화면에서는 하단 흰 도크 숨김 */
 body.recap-mode .game-bottom { display: none !important; }
+/* 환원 모드에서는 stage가 100px 더 커지므로 (top:50%가 50px 아래로 이동),
+   캡슐 위치를 인출 모드와 동일하게 유지하려면 추가 -50px 보정 */
+body.recap-mode .g-center {
+  transform: translate(-50%, calc(-50% + 20px - 50px)) !important;   /* 인출과 동일한 시각적 위치 */
+}
+
+/* ─── 환원 모드 컨셉 컬러 — 확장(보라)으로 ─────────────────
+   인출에서 맞힌 노드는 .from-learn 없이 그대로 녹색 유지.
+   미점등 노드 / 중앙 캡슐 / 점수칩 / 프롬프트는 모두 보라로 전환. */
+body.recap-mode .score-chip {
+  --sc-rgb: 155,108,217;
+  --sc-rgb-tint: 79,163,240;
+}
+/* 미점등 노드 — 보라 글로우 */
+body.recap-mode .g-node:not(.lit) {
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.20),
+    0 0 8px  rgba(155,108,217,0.45),
+    0 0 18px rgba(155,108,217,0.22) !important;
+  animation: nodeGlowViolet 2.6s ease-in-out infinite !important;
+}
+body.recap-mode .g-node:not(.lit)::before {
+  background: #C9A6F0 !important;
+  box-shadow:
+    0 0 4px  rgba(201,166,240,0.95),
+    0 0 10px rgba(155,108,217,0.85),
+    0 0 18px rgba(155,108,217,0.45) !important;
+}
+@keyframes nodeGlowViolet {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.20),
+      0 0 8px  rgba(155,108,217,0.40),
+      0 0 18px rgba(155,108,217,0.20);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.28),
+      0 0 12px rgba(155,108,217,0.60),
+      0 0 24px rgba(155,108,217,0.32);
+  }
+}
+/* 중앙 캡슐 — 보라 변형
+   베이스(#1B2230)는 캔버스 배경과 동일 → 캡슐 안쪽으로 들어온 점선이 가려져 깔끔.
+   위에 보라톤 그라디언트만 얹어 색상 정체성 표현. */
+body.recap-mode .game-cap.c-green {
+  background:
+    radial-gradient(circle at 32% 28%,
+      rgba(232, 212, 251, 0.30) 0%,
+      rgba(155, 108, 217, 0.15) 55%,
+      rgba(124, 79, 184, 0.06) 100%),
+    #1B2230 !important;
+  border: 1px solid rgba(232, 212, 251, 0.45) !important;
+  box-shadow:
+    inset 0 0 40px rgba(232, 212, 251, 0.18),
+    inset 0 -12px 24px rgba(124, 79, 184, 0.10),
+    0 0 50px rgba(155, 108, 217, 0.40),
+    0 0 100px rgba(155, 108, 217, 0.20) !important;
+}
+body.recap-mode .game-cap.c-green::before {
+  background: radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.50), rgba(255,255,255,0) 60%) !important;
+}
+/* 캡슐 안 음훈도 보라로 */
+body.recap-mode .game-cap .hun-text { color: #E0CDF5 !important; }
+/* 캔버스 위 프롬프트 한자(em) 보라로 */
+body.recap-mode .g-prompt-top em,
+body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
 
 /* 음소거 토글 — 좌측 상단 글로벌 플로팅 버튼 */
 .snd-toggle {
@@ -3869,16 +4041,18 @@ body.recap-mode .game-bottom { display: none !important; }
       </div>
     </div>
     <div class="result-body-v3">
-      <div class="r-score-anchor"></div>
-      <div class="r-collect-row" id="r-collect-row">
-        <div class="r-collect-col">
+      <div class="r-trio-row" id="r-collect-row">
+        <div class="r-collect-col r-col-retr">
           <div class="r-collect-head">
             <span class="r-collect-tag tag-retr">인출 어휘</span>
             <span class="r-collect-cnt"><em id="r-retr-cnt">0</em>개</span>
           </div>
           <div class="r-collect-list" id="r-retr-list"></div>
         </div>
-        <div class="r-collect-col">
+        <div class="r-score-cell">
+          <div class="r-score-anchor"></div>
+        </div>
+        <div class="r-collect-col r-col-exp">
           <div class="r-collect-head">
             <span class="r-collect-tag tag-exp">확장 어휘</span>
             <span class="r-collect-cnt"><em id="r-exp-cnt">0</em>개</span>
@@ -3947,8 +4121,8 @@ function showPage(id){
   var chipForColor = document.getElementById('score-chip');
   if(chipForColor){
     var stageVal = (id === 'learn' || id === 'inferq') ? '2'
-                 : (id === 'fillq') ? '3'
-                 : '1';   // game / home / area / result → 녹색
+                 : (id === 'fillq' || id === 'result') ? '3'
+                 : '1';   // game / home / area → 녹색, result는 강화에 이어 파랑
     chipForColor.dataset.stage = stageVal;
   }
   // 게임 페이지를 떠날 때는 캔버스 RAF 정지 — 보이지 않는 캔버스에 60fps로
@@ -3956,6 +4130,10 @@ function showPage(id){
   if (id !== 'game' && typeof GANIM !== 'undefined' && GANIM){
     cancelAnimationFrame(GANIM);
     GANIM = null;
+  }
+  // 게임 페이지로 다시 들어올 때(예: 학습 → 환원) RAF가 죽어 있으면 재시작
+  if (id === 'game' && (typeof GANIM === 'undefined' || !GANIM) && typeof drawGameStage === 'function'){
+    GANIM = requestAnimationFrame(drawGameStage);
   }
   // 홈 진입 시 히어로 모션 재시작
   if (id === 'home') {
@@ -4014,8 +4192,8 @@ function popScoreDelta(type, delta){
   }, 1050);
 }
 function addScore(type){
-  var inc = 0.5;   // 모든 단계 동일 — 한 어휘 = 두 단계 통과 = 1점
   if(!(type in SCORE)) return;
+  var inc = 0.5;   // 모든 단계 동일 — 한 어휘 = 두 단계 통과 = 1점
   SCORE[type] += inc;
   refreshScoreUI(true);
   popScoreDelta(type, inc);
@@ -4496,10 +4674,40 @@ function updateGameCounter(){
 var LEARN = { idx: 0, words: [], collected: [], correct: 0 };
 
 // ── 환원: 탐구 종료 → 게임 화면으로 돌아가 깨운 어휘를 보라색 노드로 합류시킴 ──
+// 캡슐 중심이 이동했을 때 (예: recap 모드 진입 — game-bottom 숨겨져 stage 확장),
+// 노드들을 새 캡슐 중심 기준으로 재배치
+function rebalanceNodesToCap(){
+  var stage = document.getElementById('g-stage');
+  if(!stage || !GNODES || !GNODES.length) return;
+  var cap = stage.querySelector('.g-center .game-cap');
+  if(!cap) return;
+  var sr = stage.getBoundingClientRect();
+  if(!(sr.width > 0)) return;
+  var W = stage.clientWidth;
+  var scale = sr.width / W;
+  var cr = cap.getBoundingClientRect();
+  var newCx = (cr.left - sr.left + cr.width/2) / scale;
+  var newCy = (cr.top  - sr.top  + cr.height/2) / scale;
+  // 기존 노드들의 평균 위치 = 옛 캡슐 중심 (원형 배치이므로)
+  var avgX = 0, avgY = 0;
+  GNODES.forEach(function(n){ avgX += n.baseX; avgY += n.baseY; });
+  avgX /= GNODES.length; avgY /= GNODES.length;
+  var dx = newCx - avgX, dy = newCy - avgY;
+  if(Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;   // 변화 미미하면 스킵
+  GNODES.forEach(function(n){
+    n.baseX += dx;
+    n.baseY += dy;
+    n.el.style.left = n.baseX + 'px';
+    n.el.style.top  = n.baseY + 'px';
+  });
+}
+
 function goRecap(){
   if(!LEARN.collected || !LEARN.collected.length){ goFillQ(); return; }
   showPage('game');
   document.body.classList.add('recap-mode');   // 하단 흰 입력 블록 숨김
+  // 레이아웃 변경 후(다음 프레임)에 노드 재배치 — 캡슐이 아래로 이동한 만큼 노드도 이동
+  requestAnimationFrame(function(){ rebalanceNodesToCap(); });
   // 환원 화면은 "확장 단계의 결과 합류"를 보여주므로 상단 네비도 확장으로 점등
   var gameNav = document.querySelector('#game .stage-nav');
   if(gameNav) gameNav.setAttribute('data-stage', '확장');
@@ -4575,9 +4783,11 @@ function goLearn(){
   LEARN.correct = 0;
   showPage('learn');
   if(LEARN.words.length === 0){ goFillQ(); return; }
-  // 카드 본문 비우기 — 인트로 말풍선이 사라진 직후에 첫 카드 등장
+  // 카드 본문 비우기 + 카드 프레임도 숨김 — 인트로 말풍선이 사라진 직후에 첫 카드 등장
   var lcBody = document.getElementById('lc-body');
   if(lcBody) lcBody.innerHTML = '';
+  var lcCard = document.getElementById('lc-card');
+  if(lcCard) lcCard.classList.add('is-pending');
   showLearnIntro();
 }
 
@@ -4593,17 +4803,17 @@ function buildIntroHTML(stage){
   var meta = STAGE_META[stage]; if(!meta) return '';
   var num = (stage < 10 ? '0' : '') + stage;
   // 진행 게이지: dot - line - dot - line - dot
+  // 각 dot은 자기 단계의 컨셉 색상으로 점등 (1=녹색, 2=보라, 3=하늘)
   var dots = [];
   for(var i=1; i<=3; i++){
-    if(i < stage)  dots.push('<span class="gi-dot done"></span>');
-    else if(i === stage) dots.push('<span class="gi-dot now"></span>');
-    else dots.push('<span class="gi-dot"></span>');
+    var st = (i < stage) ? 'done' : (i === stage) ? 'now' : '';
+    dots.push('<span class="gi-dot '+st+'" data-stage="'+i+'"></span>');
   }
   var lines = [];
   for(var j=1; j<=2; j++){
-    if(j < stage)  lines.push('<span class="gi-line done"></span>');
-    else if(j === stage) lines.push('<span class="gi-line now"></span>');
-    else lines.push('<span class="gi-line"></span>');
+    var st = (j < stage) ? 'done' : (j === stage) ? 'now' : '';
+    // 라인 j는 단계 j → j+1 연결 — 두 단계 색의 그라디언트
+    lines.push('<span class="gi-line '+st+'" data-from="'+j+'" data-to="'+(j+1)+'"></span>');
   }
   var strip = dots[0] + lines[0] + dots[1] + lines[1] + dots[2];
   return ''
@@ -4615,14 +4825,12 @@ function buildIntroHTML(stage){
 
 // ── 오늘의 미션 화면 (인출 진입 직전, 카드 인트로 이전 단계) ──
 function buildMissionHTML(){
-  var hun = (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.mainHunFull || SESSION.mainHun || '') : '';
-  var total = (typeof WORD_LIST !== 'undefined' && WORD_LIST) ? WORD_LIST.length : 0;
+  var hun  = (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.mainHunFull || SESSION.mainHun || '') : '';
+  var char = (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.mainChar || '') : '';
   return ''
-    + '<div class="gm-eyebrow">오늘의 미션</div>'
-    + '<div class="gm-line">오늘 알아야 할 <span class="gm-hun">‘'+hun+'’</span>의 가족 어휘는</div>'
-    + '<div class="gm-num"><em>'+total+'</em><span class="gm-unit">개</span></div>'
+    + '<div class="gm-line">오늘 만날 <span class="gm-hun">'+hun+'</span> <span class="gm-han">'+char+'</span>의 가족 어휘</div>'
     + '<div class="gm-foot">모두 찾아볼까요?</div>'
-    + '<button class="gm-confirm" type="button" onclick="confirmMission(event)">확인</button>';
+    + '<button class="gm-confirm" type="button" onclick="confirmMission(event)">Go!</button>';
 }
 // 확인 버튼 → 인출 스테이지 카드로 스왑 (STAGE 01 / 인출하기 / 인용구)
 function confirmMission(e){
@@ -4630,13 +4838,42 @@ function confirmMission(e){
   if(e){ e.stopPropagation(); }
   var msg = document.getElementById('gi-msg');
   if(!msg) return;
-  msg.classList.remove('gi-mission');
-  msg.classList.add('gi-card');
-  msg.dataset.stage = '1';   // 인출 — 녹색
-  msg.innerHTML = buildIntroHTML(1);
-  GAME_INTRO_CARD_AT = Date.now();
-  if(GAME_INTRO_TIMER) clearTimeout(GAME_INTRO_TIMER);
-  GAME_INTRO_TIMER = setTimeout(hideGameIntro, 3600);
+  var chip  = document.getElementById('score-chip');
+  var scNum = document.getElementById('sc-num');
+
+  // Phase 1: 점수칩 우상단으로 비행 (920ms) + 텍스트 페이드아웃 + 점수 카운트다운 (38→0)
+  if(chip) chip.classList.remove('center-mission');
+  msg.style.transition = 'opacity .6s ease';
+  msg.style.opacity = '0';
+
+  if(scNum){
+    var fromVal = parseInt(scNum.textContent, 10) || 0;
+    var startTime = Date.now();
+    var duration  = 920;
+    var iv = setInterval(function(){
+      var t = Math.min(1, (Date.now() - startTime) / duration);
+      var eased = 1 - Math.pow(1 - t, 2);   // ease-out
+      scNum.textContent = Math.round(fromVal * (1 - eased));
+      if(t >= 1){
+        scNum.textContent = '0';
+        clearInterval(iv);
+      }
+    }, 30);
+  }
+
+  // Phase 2 (≈ 940ms): 미션 모드 해제 + 스테이지 카드 등장
+  setTimeout(function(){
+    document.body.classList.remove('mission-mode');
+    msg.classList.remove('gi-mission');
+    msg.classList.add('gi-card');
+    msg.dataset.stage = '1';
+    msg.innerHTML = buildIntroHTML(1);
+    msg.style.transition = '';
+    msg.style.opacity = '';
+    GAME_INTRO_CARD_AT = Date.now();
+    if(GAME_INTRO_TIMER) clearTimeout(GAME_INTRO_TIMER);
+    GAME_INTRO_TIMER = setTimeout(hideGameIntro, 3600);
+  }, 940);
 }
 // 오버레이 클릭: 미션 단계에서는 무시(확인 버튼만), 카드 단계에서는 닫기
 // 단, 카드로 막 전환된 직후 600ms 동안은 무시 (확인 버튼 클릭의 잔여 효과 방지)
@@ -4670,11 +4907,13 @@ function hideLearnIntro(){
   setTimeout(function(){
     intro.classList.remove('on');
     intro.classList.remove('fade-out');
-    // 인트로 페이드아웃 완료 직후 — 첫 카드 등장 (애니메이션 타이밍이 사용자 시야에 정확히 동기)
+    // 인트로 페이드아웃 완료 직후 — 첫 카드 등장 + 프레임 페이드인
     var lcBody = document.getElementById('lc-body');
     if(lcBody && lcBody.innerHTML === '' && typeof renderLearnCard === 'function'){
       renderLearnCard();
     }
+    var lcCard = document.getElementById('lc-card');
+    if(lcCard) lcCard.classList.remove('is-pending');
   }, 540);
 }
 
@@ -4751,6 +4990,7 @@ function renderLearnCard(){
     + '<div class="reveal-msg" id="lc-rev"></div>';
 
   var cs = document.getElementById('lc-ch');
+  var wrongAttempted = false;   // 이 카드에서 한 번이라도 오답을 골랐는지
   shuf.forEach(function(ch, i){
     var wrap = document.createElement('div'); wrap.style.position = 'relative';
     var btn = document.createElement('button'); btn.className = 'choice-btn';
@@ -4760,7 +5000,8 @@ function renderLearnCard(){
       if(ok){
         btn.className = 'choice-btn ok';
         cs.querySelectorAll('.choice-btn').forEach(function(b){ b.disabled = true; });
-        LEARN.correct++; sndOk(); addScore('explore');   // 탐구 +1
+        LEARN.correct++; sndOk();
+        if(!wrongAttempted) addScore('explore');   // 첫 시도 정답만 점수 가산
         var bub = document.createElement('div');
         bub.className = 'ans-bubble';
         bub.textContent = '맞아요. 훈으로 의미를 깨웠어요 ✨';
@@ -4788,6 +5029,7 @@ function renderLearnCard(){
         }, 1100);
       } else {
         sndErr();
+        wrongAttempted = true;   // 첫 오답 → 이후 정답 맞혀도 점수 가산 X (확장 카드)
         btn.className = 'choice-btn no';
         cs.querySelectorAll('.choice-btn').forEach(function(b){ b.disabled = true; });
         var m = document.createElement('div');
@@ -4853,6 +5095,8 @@ function goGame(){
   var gRound = document.getElementById('g-round');
   if(gRound) gRound.textContent = 'ROUND ' + pad3(sess.id || 1);
   updateGameCounter();
+  // 미션 모드 활성화 — 게임 캔버스 숨기고 페이지 전환 시 깜빡임 제거
+  document.body.classList.add('mission-mode');
   showPage('game');
   setupGameStage();
   resetHintNudge();
@@ -4873,13 +5117,30 @@ function showGameIntro(){
   msg.innerHTML = buildMissionHTML();
   intro.classList.remove('fade-out');
   intro.classList.add('on');
-  // 자동 타이머 제거 — 사용자가 확인 버튼을 눌러야 진행됨
+  document.body.classList.add('mission-mode');
+  // 점수칩 — 즉시 중앙 등장 (transition 없이) + 38(목표) 표시
+  var chip  = document.getElementById('score-chip');
+  var scNum = document.getElementById('sc-num');
+  if(scNum){
+    var total = (typeof WORD_LIST !== 'undefined' && WORD_LIST) ? WORD_LIST.length : 0;
+    scNum.textContent = total;
+  }
+  if(chip){
+    chip.style.transition = 'none';
+    chip.classList.add('center-mission');
+    void chip.offsetWidth;   // 강제 reflow
+    // 두 RAF 후 default transition 복원 — 다음 OUT 애니메이션을 위해
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){ chip.style.transition = ''; });
+    });
+  }
 }
 
 function hideGameIntro(){
   var intro = document.getElementById('game-intro');
   if(!intro || !intro.classList.contains('on')) return;
   if(GAME_INTRO_TIMER){ clearTimeout(GAME_INTRO_TIMER); GAME_INTRO_TIMER = null; }
+  document.body.classList.remove('mission-mode');   // 안전망 — 미션 단계에서 닫힐 때도 정리
   intro.classList.add('fade-out');
   setTimeout(function(){
     intro.classList.remove('on');
@@ -4916,14 +5177,14 @@ function setupGameStage(){
     cx = (cr.left - sr.left + cr.width/2) / scl;
     cy = (cr.top  - sr.top  + cr.height/2) / scl;
   })();
-  var rBase = Math.min(W, H*1.6) * 0.24;  /* 0.36 * 2/3 — 노드 거리 단축 */
-  // 하나걸러 하나로 들쑥날쑥 — 짧음/긺 교대 패턴 (지그재그 별자리)
+  var rBase = Math.min(W, H*1.6) * 0.24;
+  // 들쑥날쑥 패턴 + 정원(ry=rx) 배치 — 위·아래·좌·우 라인 길이 균형
   var rScale = [0.85, 1.15, 0.85, 1.15, 0.85, 1.15, 0.85, 1.15, 0.85, 1.15];
   for(var i=0;i<NODE_COUNT;i++){
     var ang = (i/NODE_COUNT)*Math.PI*2 - Math.PI/2 + Math.PI/NODE_COUNT + (Math.random()-.5)*0.12;
     var sc = rScale[i % rScale.length];
     var rx = rBase * sc + (Math.random()-.5)*3;
-    var ry = rBase * sc * 0.92 + (Math.random()-.5)*3;   /* 0.78 → 0.92 — 위·아래 라인이 좌·우와 비슷한 길이 */
+    var ry = rBase * sc       + (Math.random()-.5)*3;   /* 0.92 → 1.0 (정원) — 위·아래·좌·우 균등 */
     var x = cx + Math.cos(ang)*rx;
     var y = cy + Math.sin(ang)*ry;
     x = Math.max(28, Math.min(W-28, x));
@@ -5091,14 +5352,13 @@ function drawGameStage(){
   var ctx = cv.getContext('2d');
   ctx.clearRect(0,0,W,H);
   var cx = W/2, cy = H/2;
-  // 라인 출발점을 캡슐(.game-cap)의 시각적 중앙으로 보정
-  // 페이지가 transform: scale()로 비례 조정되므로, getBoundingClientRect는 post-scale 좌표.
-  // 캔버스 드로잉은 pre-scale(stage.clientWidth) 공간이라 scale 보정 필수.
+  // 라인 수렴점 = 원 버블(.game-cap, 232×232 round)의 기하 중심.
+  // X는 캡슐 중심, Y는 캡슐 중심에서 살짝 아래(시각적 중앙 보정).
   var cap = stage.querySelector('.g-center .game-cap');
   if(cap){
     var sr = stage.getBoundingClientRect();
     if(sr.width > 0){
-      var scale = sr.width / W;     // post / pre
+      var scale = sr.width / W;
       var cr = cap.getBoundingClientRect();
       cx = (cr.left - sr.left + cr.width/2)  / scale;
       cy = (cr.top  - sr.top  + cr.height/2) / scale;
@@ -5403,14 +5663,14 @@ function showNodeChip(node){
   node.el.textContent = node.word;
 }
 
-function finishWord(word){
+function finishWord(word, skipScore){
   if(S.found.indexOf(word) > -1) return;
   S.found.push(word); S.okCount++;
   if(S.hintTargets.indexOf(word) > -1){ S.hintFound.push(word); }
   lightUpNode(word);
-  setFb('ok', '"' + word + '" 찾았어요!', 3000);   // 3초 후 자동 페이드아웃
+  setFb('ok', '"' + word + '" 찾았어요!', 3000);
   sndOk();
-  addScore('retrieval');   // 인출 +1
+  if(!skipScore) addScore('retrieval');   // 첫 시도 정답일 때만 점수 +0.5
   updateGameCounter();
   if(S.okCount >= 1){
     document.getElementById('dbtn').className = 'btn-done on';
@@ -5577,6 +5837,7 @@ function showQuiz(){
     + '<div class="choices-col" id="qc-ch"></div>';
   var cs = document.getElementById('qc-ch');
   (function(w, ci, shuf){
+    var wrongAttempted = false;   // 이 퀴즈에서 한 번이라도 오답 클릭했는지
     shuf.forEach(function(ch, i){
       var wrap = document.createElement('div'); wrap.style.position = 'relative';
       var btn = document.createElement('button'); btn.className = 'choice-btn';
@@ -5592,11 +5853,13 @@ function showQuiz(){
           wrap.appendChild(bub);
           setTimeout(function(){
             document.getElementById('qo').className = 'quiz-overlay';
-            finishWord(w);
+            // 첫 시도 정답이 아닐 경우 점수 가산 스킵
+            finishWord(w, wrongAttempted);
             document.getElementById('wi').focus();
           }, 1100);
         } else {
           sndErr();
+          wrongAttempted = true;   // 오답 → 이후 정답 맞혀도 점수 X
           btn.className = 'choice-btn no';
           cs.querySelectorAll('.choice-btn').forEach(function(b){ b.disabled = true; });
           var m = document.createElement('div');
@@ -5774,6 +6037,7 @@ function renderFQCard(word){
    +'<div style="display:flex;justify-content:center">'
    +'<button class="next-btn c-green" id="fq-nb">다음 →</button></div>';
   var cs = document.getElementById('fq-ch');
+  var wrongAttempted = false;   // 이 빈칸 카드에서 한 번이라도 오답 클릭했는지
   choices.forEach(function(ch, i){
     var wrap = document.createElement('div'); wrap.style.position = 'relative';
     var btn = document.createElement('button'); btn.className = 'fill-btn';
@@ -5793,7 +6057,8 @@ function renderFQCard(word){
     btn.onclick = function(){
       var ok = (i === ci);
       if(ok){
-        FQ.correct++; sndOk(); addScore('reinforce');   // 강화 +0.5
+        FQ.correct++; sndOk();
+        if(!wrongAttempted) addScore('reinforce');   // 첫 시도 정답만 점수 +0.5
         cs.querySelectorAll('.fill-btn').forEach(function(b, bi){
           b.disabled = true;
           if(bi === ci) b.classList.add('ok');
@@ -5814,6 +6079,7 @@ function renderFQCard(word){
         }, 1100);
       } else {
         sndErr();
+        wrongAttempted = true;   // 첫 오답 → 이후 정답 맞혀도 점수 X (강화 빈칸)
         btn.classList.add('no');
         cs.querySelectorAll('.fill-btn').forEach(function(b){ b.disabled = true; });
         var m = document.createElement('div');
@@ -5844,7 +6110,18 @@ function renderFQCard(word){
 // ══════════════════════════════════════════════
 var ELEM_WORDS = [], HARD_WORDS = [];
 var RANK_RETR = [], RANK_COMBO = [], RANK_CUMUL = [];
-var MOCK_NAMES = ['김민준','이서연','박지호','최예은','정도윤','한수아','윤시우','강나윤','오하준','임도현','서지안','홍채린','노건우'];
+var MOCK_NAMES = (function(){
+  var family = ['김','이','박','최','정','한','윤','강','오','임','서','홍','노','조','신','장','권','문','양','손','배','백','허','유','남','심','전','고','문','진'];
+  var given  = ['민준','서연','지호','예은','도윤','수아','시우','나윤','하준','도현','지안','채린','건우','하린','우진','서아','준서','지유','연우','시현','은우','지민','다은','윤호','서준','민서','채원','지원','승현','하은'];
+  var out = [], seen = {};
+  for(var i=0;i<family.length && out.length<100;i++){
+    for(var j=0;j<given.length && out.length<100;j++){
+      var n = family[i] + given[j];
+      if(!seen[n]){ seen[n] = true; out.push(n); }
+    }
+  }
+  return out;
+})();
 
 function buildPools(){
   ELEM_WORDS = WORD_LIST.filter(function(w){ return !WORD_MAP[w].isInferQuiz; });
@@ -5949,22 +6226,40 @@ function _renderRankCol(listId, view, extraRowClass){
   });
 }
 
+// 전체 랭킹 — truncation 없이 1~N 모두에 rank 부여
+function buildFullRankView(list){
+  return list.map(function(s, i){
+    return { name:s.name, count:s.count, me:s.me, rank:i+1 };
+  });
+}
+
 function renderRankList(){
   // 영역명 서브라벨 (누적 컬럼)
   var areaSub = document.getElementById('r-rank-area');
   if(areaSub) areaSub.textContent = (SESSION.area || '') + ' · 누적';
 
-  // ── 표시 정책: top 5 + 내 주변(필요시) ──
-  var TOP_N = 5;
-  var viewRetr  = buildRankView(RANK_RETR,  TOP_N, 1);
-  var viewCombo = buildRankView(RANK_COMBO, TOP_N, 1);
-  var viewCumul = buildRankView(RANK_CUMUL, TOP_N, 1);
+  _renderRankCol('r-rank-list-retr',  buildFullRankView(RANK_RETR));
+  _renderRankCol('r-rank-list-combo', buildFullRankView(RANK_COMBO));
+  _renderRankCol('r-rank-list-cumul', buildFullRankView(RANK_CUMUL), 'cumul');
 
-  _renderRankCol('r-rank-list-retr',  viewRetr);
-  _renderRankCol('r-rank-list-combo', viewCombo);
-  _renderRankCol('r-rank-list-cumul', viewCumul, 'cumul');
+  // 각 컬럼에서 "나" 행으로 자동 스크롤 — 학생이 자기 위치를 즉시 볼 수 있게.
+  // renderRankList가 showPage('result') 이전에 호출되어 layout이 아직 안 잡혔을 수 있으므로
+  // 두 번의 RAF 후에 실행 (페이지 활성화 + paint 완료 시점)
+  function scrollToMe(){
+    ['r-rank-list-retr', 'r-rank-list-combo', 'r-rank-list-cumul'].forEach(function(id){
+      var rl = document.getElementById(id);
+      if(!rl) return;
+      var meRow = rl.querySelector('.r-rank-row.me');
+      if(!meRow) return;
+      // offsetTop은 부모(rl) 기준 — display:none이어도 정확
+      var offset = meRow.offsetTop - (rl.clientHeight - meRow.offsetHeight) / 2;
+      rl.scrollTop = Math.max(0, offset);
+    });
+  }
+  requestAnimationFrame(function(){
+    requestAnimationFrame(scrollToMe);
+  });
 
-  // 오늘(인출) 컬럼에서 "나" 행 강조 (그리드 연동은 V2 잔존 — 현재는 클래스 토글만)
   var me = RANK_RETR.filter(function(s){ return s.me; })[0];
   if(me) highlightStudent(me);
 }
