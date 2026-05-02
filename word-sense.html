@@ -627,6 +627,245 @@ button { font-family: inherit; color: inherit; }
 .btn-start:hover { animation-play-state: paused; }
 
 /* ════════════════════════════
+   도입 — 오늘의 한자 (어원·다의 학습)
+════════════════════════════ */
+#charintro {
+  /* 페이지 컨셉 컬러: 따뜻한 골드/앰버 — 학문적·도입적 톤 */
+  --ci-accent: #E8C76B;
+  --ci-accent-rgb: 232, 199, 107;
+  --ci-accent-deep: #B89A45;
+}
+.ci-body {
+  flex: 1;
+  display: flex; flex-direction: column;
+  align-items: center;
+  padding: 28px 60px 24px;
+  gap: 18px;
+  position: relative; z-index: 1;
+  overflow: hidden;
+}
+/* 상단 메타: 영역 · 회차 · 단계 태그 */
+.ci-meta {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.05em;
+  opacity: 0;
+  animation: ciFadeUp .6s ease .15s forwards;
+}
+.ci-meta .ci-area { color: var(--green); font-weight: 600; }
+.ci-meta .ci-round { color: rgba(255,255,255,0.78); font-weight: 500; }
+.ci-meta-sep { color: rgba(255,255,255,0.22); }
+.ci-meta .ci-stage-tag {
+  font-size: 10.5px; font-weight: 700;
+  color: var(--ci-accent);
+  background: rgba(var(--ci-accent-rgb), 0.10);
+  border: 1px solid rgba(var(--ci-accent-rgb), 0.45);
+  padding: 3px 9px;
+  border-radius: 100px;
+  letter-spacing: 0.10em;
+}
+
+/* 히어로: 큰 한자 + 훈음 */
+.ci-hero {
+  position: relative;
+  width: 220px; height: 220px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  margin: 6px 0 4px;
+  opacity: 0;
+  animation: ciHeroIn .9s cubic-bezier(.2,1.2,.4,1) .25s forwards;
+}
+.ci-hero-rings {
+  position: absolute; inset: 0;
+  pointer-events: none;
+}
+.ci-hero-rings::before, .ci-hero-rings::after {
+  content: ''; position: absolute;
+  border-radius: 50%;
+  border: 1px dashed rgba(var(--ci-accent-rgb), 0.30);
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  animation: spinSlow 80s linear infinite;
+}
+.ci-hero-rings::before { width: 100%; height: 100%; }
+.ci-hero-rings::after  { width: 72%; height: 72%; animation-direction: reverse; animation-duration: 56s; }
+.ci-char-big {
+  font-family: var(--font-han);
+  font-size: 158px; font-weight: 300;
+  color: #FFFFFF;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-shadow:
+    0 0 28px rgba(var(--ci-accent-rgb), 0.32),
+    0 0 60px rgba(var(--ci-accent-rgb), 0.18);
+  position: relative; z-index: 1;
+}
+.ci-hun-big {
+  font-family: var(--font-han);
+  font-size: 18px; font-weight: 500;
+  color: var(--ci-accent);
+  letter-spacing: 0.18em;
+  margin-top: 10px;
+  position: relative; z-index: 1;
+  text-shadow: 0 0 12px rgba(var(--ci-accent-rgb), 0.35);
+}
+
+/* 섹션 공통 */
+.ci-section {
+  width: 100%; max-width: 720px;
+  opacity: 0;
+  animation: ciFadeUp .7s cubic-bezier(.2,1,.3,1) forwards;
+}
+.ci-etymology-row { animation-delay: .55s; }
+.ci-meanings-row  { animation-delay: .75s; }
+.ci-preview-row   { animation-delay: .95s; }
+.ci-section-head {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 11px; font-weight: 700;
+  color: rgba(255,255,255,0.62);
+  letter-spacing: 0.18em;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(var(--ci-accent-rgb), 0.18);
+}
+.ci-section-num {
+  font-size: 13px; color: var(--ci-accent); font-weight: 800;
+  letter-spacing: 0;
+}
+.ci-preview-count {
+  margin-left: auto;
+  font-size: 11px; font-weight: 600;
+  color: var(--green);
+  letter-spacing: 0.04em;
+}
+
+/* 어원 본문 */
+.ci-etymology-body {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px; font-weight: 400;
+  color: rgba(255,255,255,0.85);
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+  margin: 0;
+  padding: 4px 6px 0;
+}
+
+/* 다의 정리 */
+.ci-meanings-list {
+  display: flex; flex-direction: column;
+  gap: 6px;
+  padding: 4px 0 0;
+}
+.ci-meaning {
+  display: flex; align-items: center; gap: 14px;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-left: 3px solid rgba(var(--ci-accent-rgb), 0.55);
+  border-radius: 4px;
+}
+.ci-meaning-num {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px; font-weight: 700;
+  color: var(--ci-accent);
+  flex-shrink: 0;
+  width: 18px;
+  letter-spacing: 0;
+}
+.ci-meaning-hun {
+  font-family: var(--font-han);
+  font-size: 14px; font-weight: 500;
+  color: #FFFFFF;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+.ci-meaning-examples {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px; font-weight: 400;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.03em;
+  margin-left: auto;
+}
+
+/* 가족 어휘 미리보기 칩 */
+.ci-preview-chips {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  padding: 6px 4px 0;
+}
+.ci-preview-chip {
+  font-family: var(--font-han);
+  font-size: 14px; font-weight: 500;
+  color: rgba(255,255,255,0.78);
+  background: rgba(69,194,138,0.06);
+  border: 1px solid rgba(69,194,138,0.32);
+  padding: 5px 12px;
+  border-radius: 100px;
+  letter-spacing: 0.04em;
+}
+
+/* 시작 버튼 */
+.ci-start-btn {
+  margin-top: 8px;
+  appearance: none; -webkit-appearance: none;
+  border: 0; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 13px 32px;
+  border-radius: 100px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px; font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #FFFFFF;
+  background: linear-gradient(180deg, var(--green-deep) 0%, var(--green) 55%, #5AD49B 100%);
+  box-shadow:
+    inset 0 2px 5px rgba(0,0,0,0.32),
+    inset 0 -1px 0 rgba(255,255,255,0.32),
+    inset 0 0 0 1px rgba(0,0,0,0.10),
+    0 1px 0 rgba(255,255,255,0.45),
+    0 6px 18px rgba(69,194,138,0.32);
+  text-shadow: 0 -1px 0 rgba(0,0,0,0.22);
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  animation: ciFadeUp .6s ease 1.15s forwards;
+  transition: transform .15s, box-shadow .2s;
+}
+.ci-start-btn::before {
+  content: ''; position: absolute;
+  top: 2px; left: 5%; right: 5%;
+  height: 42%; border-radius: 100px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.40) 0%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.04) 100%);
+  filter: blur(.6px);
+  pointer-events: none;
+}
+.ci-start-btn:hover {
+  box-shadow:
+    inset 0 3px 6px rgba(0,0,0,0.38),
+    inset 0 -1px 0 rgba(255,255,255,0.36),
+    inset 0 0 0 1px rgba(0,0,0,0.12),
+    0 1px 0 rgba(255,255,255,0.55),
+    0 8px 22px rgba(69,194,138,0.42);
+}
+.ci-start-btn:active { transform: translateY(0.5px); }
+.ci-start-arrow {
+  font-size: 16px; font-weight: 600;
+  transition: transform .2s;
+}
+.ci-start-btn:hover .ci-start-arrow { transform: translateX(4px); }
+
+/* 진입 애니메이션 */
+@keyframes ciFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes ciHeroIn {
+  0%   { opacity: 0; transform: scale(0.86); }
+  60%  { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* ════════════════════════════
    게임
 ════════════════════════════ */
 #game { background: var(--bg); }
@@ -3196,7 +3435,7 @@ html, body {
 }
 /* 페이지·프레임·캔버스 모두 투명 — body의 그라디언트가 전체에 비치도록 */
 .frame, .canvas { background: transparent !important; }
-.page, #game, #home, #learn { background: transparent !important; }
+.page, #game, #home, #learn, #charintro { background: transparent !important; }
 /* 결과 페이지 + 훈도감(영역) — 화이트 캔버스 */
 #result.page,
 #area.page {
@@ -3518,7 +3757,48 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
     <div class="home-eum" id="h-eum">
       <strong>태어나다</strong><span class="dot">·</span><strong>살다</strong><span class="dot">·</span><strong>자라다</strong>
     </div>
-    <button class="btn-start" onclick="goGame()">시작하기</button>
+    <button class="btn-start" onclick="goCharIntro()">시작하기</button>
+  </div>
+
+  <!-- ══ 도입 — 오늘의 한자 (어원·다의 학습) ══ -->
+  <div class="page" id="charintro">
+    <div class="topbar">
+      <div class="logo"><div class="logo-mark"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="14" y1="14" x2="6" y2="6"/><line x1="14" y1="14" x2="22" y2="6"/><line x1="14" y1="14" x2="5" y2="18"/><line x1="14" y1="14" x2="22" y2="20"/><line x1="14" y1="14" x2="14" y2="24"/></g><g fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="22" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="22" cy="20" r="2"/><circle cx="14" cy="24" r="2"/></g><circle cx="14" cy="14" r="3.6" fill="currentColor"/><circle cx="14" cy="14" r="3.6" fill="rgba(255,255,255,0.18)"/></svg></div></div>
+    </div>
+    <div class="ci-body">
+      <div class="ci-meta">
+        <span class="ci-area" id="ci-area">환경과 생물</span>
+        <span class="ci-meta-sep">·</span>
+        <span class="ci-round" id="ci-round">1회차</span>
+        <span class="ci-meta-sep">·</span>
+        <span class="ci-stage-tag">오늘의 한자</span>
+      </div>
+
+      <div class="ci-hero">
+        <div class="ci-hero-rings"></div>
+        <div class="ci-char-big" id="ci-char">生</div>
+        <div class="ci-hun-big" id="ci-hun">날 생</div>
+      </div>
+
+      <div class="ci-section ci-etymology-row">
+        <div class="ci-section-head"><span class="ci-section-num">①</span>어원</div>
+        <p class="ci-etymology-body" id="ci-etymology">
+          땅 위로 새싹이 자라나는 모습을 본떠 만든 글자입니다.
+        </p>
+      </div>
+
+      <div class="ci-section ci-meanings-row">
+        <div class="ci-section-head"><span class="ci-section-num">②</span>이 글자의 여러 뜻</div>
+        <div class="ci-meanings-list" id="ci-meanings"></div>
+      </div>
+
+      <div class="ci-section ci-preview-row">
+        <div class="ci-section-head"><span class="ci-section-num">③</span>오늘 만날 가족 어휘 <span class="ci-preview-count" id="ci-preview-count">38개</span></div>
+        <div class="ci-preview-chips" id="ci-preview-chips"></div>
+      </div>
+
+      <button class="ci-start-btn" onclick="goGame()"><span>훈 감각 깨우러 가기</span><span class="ci-start-arrow">→</span></button>
+    </div>
   </div>
 
   <!-- ══ 학습 (NEW) ══ -->
@@ -3873,8 +4153,8 @@ function addScore(type){
 function updateScoreVisibility(pageId){
   var chip = document.getElementById('score-chip');
   if(!chip) return;
-  // 홈/영역에서는 숨김. 게임/탐구/inferq/강화/결과에서는 표시
-  var hide = (pageId === 'home' || pageId === 'area');
+  // 홈/도입/영역에서는 숨김. 게임/탐구/inferq/강화/결과에서는 표시
+  var hide = (pageId === 'home' || pageId === 'area' || pageId === 'charintro');
   chip.classList.toggle('show', !hide);
   chip.style.display = '';   // CSS의 .show 클래스에 위임
   // 다크 캔버스 페이지(게임/탐구/결과/영역)에서는 글래스 톤
@@ -4775,6 +5055,49 @@ function renderDeckStack(remaining){
   var html = '';
   for(var i=0;i<n;i++) html += '<div class="ld-card"></div>';
   stack.innerHTML = html;
+}
+
+// ── 도입(오늘의 한자) 페이지 진입 ──
+// 홈의 [시작하기]를 누르면 먼저 이 페이지를 거친 후, 사용자가 [훈 감각 깨우러 가기]를 누르면 goGame()으로 진입.
+function goCharIntro(){
+  var sess = SESSION;
+  // 메타
+  var elArea  = document.getElementById('ci-area');
+  var elRound = document.getElementById('ci-round');
+  if(elArea)  elArea.textContent  = sess.area || '';
+  if(elRound) elRound.textContent = (sess.id || 1) + '회차';
+  // 한자 + 훈
+  var elChar = document.getElementById('ci-char');
+  var elHun  = document.getElementById('ci-hun');
+  if(elChar) elChar.textContent = sess.mainChar;
+  if(elHun)  elHun.textContent  = sess.mainHunFull;
+  // 어원
+  var elEty = document.getElementById('ci-etymology');
+  if(elEty && sess.mainEtymology) elEty.textContent = sess.mainEtymology;
+  // 다의 정리
+  var elMeans = document.getElementById('ci-meanings');
+  if(elMeans){
+    var meanings = sess.mainMeanings || [];
+    elMeans.innerHTML = meanings.map(function(m, i){
+      var examples = (m.examples || []).join(' · ');
+      return '<div class="ci-meaning">'
+        +   '<span class="ci-meaning-num">'+(i+1)+'</span>'
+        +   '<span class="ci-meaning-hun">'+(m.hun||'')+'</span>'
+        +   '<span class="ci-meaning-examples">'+examples+'</span>'
+        + '</div>';
+    }).join('');
+  }
+  // 가족 어휘 미리보기 — 무작위 6개 (스포일러 최소화)
+  var elPrev = document.getElementById('ci-preview-chips');
+  var elPrevCnt = document.getElementById('ci-preview-count');
+  if(elPrev && typeof WORD_LIST !== 'undefined' && WORD_LIST && WORD_LIST.length){
+    var sample = shuffle(WORD_LIST.slice()).slice(0, 6);
+    elPrev.innerHTML = sample.map(function(w){
+      return '<span class="ci-preview-chip">'+w+'</span>';
+    }).join('');
+    if(elPrevCnt) elPrevCnt.textContent = WORD_LIST.length + '개';
+  }
+  showPage('charintro');
 }
 
 function goGame(){

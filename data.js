@@ -7,6 +7,8 @@
 //
 // [sessions 테이블]
 //   id, area, mainChar, mainHun, mainHunFull, mainEum
+//   mainEtymology   : 어원 스토리 (한 줄~두 줄)
+//   mainMeanings    : 다의 정리 [{ hun, examples[] }, ...]
 //
 // [words 테이블] — sessionId(FK) 추가하면 다회차 통합 가능
 //   word         : 한글 (회차 내 고유)
@@ -32,6 +34,17 @@ var SESSION = {
   mainHun: '날',
   mainHunFull: '날 생',
   mainEum: '태어나다 · 살다 · 자라다',
+
+  // ── 도입(오늘의 한자) 페이지용 ──
+  // mainEtymology: 어원 스토리 (실제 콘텐츠는 작업 중 — placeholder)
+  mainEtymology: '땅(土) 위로 새싹이 자라나는 모습을 본떠 만든 글자입니다. 처음 "태어나다"의 뜻에서 출발하여, "살다", "자라나다", "생기다"로 의미가 확장되었습니다.',
+
+  // mainMeanings: 다의 정리 — 각 뜻과 그 뜻으로 쓰이는 대표 어휘 2~3개
+  mainMeanings: [
+    { hun: '나다 · 태어나다', examples: ['출생', '생일', '탄생'] },
+    { hun: '살다 · 살아있다', examples: ['생존', '인생', '생활'] },
+    { hun: '자라나다 · 생기다', examples: ['생물', '발생', '생산'] }
+  ],
 
   words: [
     {
