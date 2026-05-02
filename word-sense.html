@@ -3397,12 +3397,15 @@ html, body {
 /* 페이지·프레임·캔버스 모두 투명 — body의 그라디언트가 전체에 비치도록 */
 .frame, .canvas { background: transparent !important; }
 .page, #game, #home, #learn { background: transparent !important; }
-/* 결과 페이지 + 훈도감 + 도입(오늘의 한자) — 화이트 캔버스 */
+/* 결과 페이지 + 훈도감 + 도입(오늘의 한자) — 화이트 캔버스
+   box-shadow spread로 viewport 사방을 외곽 그라디언트 톤(#D7DCE8)으로 확장 →
+   캔버스와 뷰포트 가장자리가 한 톤으로 이어져 검은 띠 노출 방지. */
 #result.page,
 #area.page,
 #charintro.page {
   background:
     radial-gradient(ellipse 80% 60% at 50% 35%, #EEF1F7 0%, #E4E8F1 60%, #D7DCE8 100%) !important;
+  box-shadow: 0 0 0 9999px #D7DCE8 !important;
 }
 /* 캔버스 외곽 보더/라운드/그림자 제거 — 전체 화면이 한 톤으로 이어지게 */
 #screen {
@@ -3530,16 +3533,15 @@ body.recap-mode .g-node.lit.is-silent {
   background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0.10), rgba(0,0,0,0) 70%) !important;
 }
 
-/* 하단 흰 도크 — viewport 좌우 끝까지 풀폭 연장 (box-shadow 트릭, 매우 큰 offset으로 ultrawide 대비) */
+/* 하단 흰 도크 — viewport 좌우/하단 끝까지 풀폭·풀하이트 연장 (box-shadow spread 트릭)
+   spread를 크게 줘서 도크 박스를 사방으로 확장. body{overflow:hidden}이 viewport 끝에서 자름.
+   y-offset = spread 로 설정해 도크 위쪽으로는 확장되지 않도록(캔버스 콘텐츠 안 가림) */
 #screen { overflow: visible !important; }
 .game-bottom {
   border-radius: 0 !important;
   border-top: 1px solid rgba(0,0,0,0.06) !important;
   background: #FFFFFF !important;
-  /* scale 작을 때도 충분히 viewport를 덮도록 300vw — body { overflow:hidden }이 viewport 끝에서 자름 */
-  box-shadow:
-    -300vw 0 0 0 #FFFFFF,
-     300vw 0 0 0 #FFFFFF !important;
+  box-shadow: 0 9999px 0 9999px #FFFFFF !important;
 }
 /* 환원 모드: 탐구 후 어휘망 점등 화면에서는 하단 흰 도크 숨김 */
 body.recap-mode .game-bottom { display: none !important; }
