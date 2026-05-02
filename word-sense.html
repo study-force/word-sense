@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>뜻추론 훈도감</title>
+<title>훈감각 익히기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Noto+Serif+KR:wght@300;400;500;700&family=Noto+Serif+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/webfontworld/scoredream/SCoreDream.css">
@@ -76,7 +76,7 @@
   --stage-accent-light:#5BD8A2;
   --stage-accent-rgb:  69,194,138;
 }
-#area {                 /* 나의 훈도감 — 파랑 (실험: 안 어울리면 위 블록에 다시 합치기) */
+#area {                 /* 나의 훈사전 — 파랑 (실험: 안 어울리면 위 블록에 다시 합치기) */
   --stage-accent:      #4FA3F0;
   --stage-accent-deep: #2E7DC4;
   --stage-accent-light:#8FC4F8;
@@ -2696,7 +2696,7 @@ body.dark-canvas .score-chip,
   padding: 20px 24px; gap: 14px; overflow: visible;   /* 호버 라벨 클리핑 방지 */
   position: relative; z-index: 1;
 }
-/* 페이지 타이틀 — "나의 훈도감" (centered page header) */
+/* 페이지 타이틀 — "나의 훈사전" (centered page header) */
 .area-page-title {
   position: relative;
   display: flex; align-items: center; justify-content: center; gap: 16px;
@@ -3403,7 +3403,7 @@ body.dark-canvas .score-chip,
 
 /* ════════════════════════════════════════════════════════════
    다크 캔버스 + 흰 노드 (인출/확장/강화 메인 톤)
-   결과 페이지·훈도감만 별도 라이트 캔버스로 오버라이드
+   결과 페이지·훈사전만 별도 라이트 캔버스로 오버라이드
    ════════════════════════════════════════════════════════════ */
 /* 페이지 테마는 body에서 결정 — viewport 전체가 한 톤으로 이어지도록.
    showPage(id)에서 라이트 페이지(#charintro/#result/#area) 진입 시 body.theme-light 토글. */
@@ -3417,7 +3417,7 @@ html, body {
     radial-gradient(ellipse 130% 110% at 50% 48%, #1B2230 0%, #11151E 45%, #080A12 75%, #02030680 100%) !important;
   background-attachment: fixed !important;
 }
-/* 라이트 테마 — 결과/훈도감/도입(오늘의 한자) */
+/* 라이트 테마 — 결과/훈사전/도입(오늘의 한자) */
 body.theme-light {
   background:
     radial-gradient(ellipse 80% 60% at 50% 45%, #EEF1F7 0%, #E4E8F1 55%, #D7DCE8 100%) !important;
@@ -3678,7 +3678,7 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
   <div class="page active" id="home">
     <div class="home-subtitle">어휘 네트워크 강화훈련</div>
     <div class="home-hero" id="home-hero">
-      <span class="hero-text hero-left">뜻추론</span>
+      <span class="hero-text hero-left">훈감각</span>
       <div class="hero-bubble">
         <div class="home-stage-rings hero-rings"></div>
         <div class="circle-cap c-green" id="h-cap">
@@ -3686,7 +3686,7 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
           <div class="hun-text" id="h-hun">날 생</div>
         </div>
       </div>
-      <span class="hero-text hero-right">훈도감</span>
+      <span class="hero-text hero-right">익히기</span>
     </div>
     <div class="home-area-tag">
       <em id="h-area">환경과 생물</em>
@@ -3829,7 +3829,7 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
     <div class="area-body">
       <div class="area-page-title">
         <div class="apt-mark">訓</div>
-        <div class="apt-name">나의 훈도감</div>
+        <div class="apt-name">나의 훈사전</div>
       </div>
       <div class="area-header">
         <div class="area-title"><em id="area-title-name">환경과 생물</em> 영역</div>
@@ -3907,7 +3907,7 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
           </div>
         </div>
       </div>
-      <button class="r-home-btn" id="r-home-btn" onclick="goArea()">나의 훈도감 보기 →</button>
+      <button class="r-home-btn" id="r-home-btn" onclick="goArea()">나의 훈사전 보기 →</button>
     </div>
   </div>
 
