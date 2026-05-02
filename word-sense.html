@@ -1390,9 +1390,10 @@ button { font-family: inherit; color: inherit; }
     0 5px 12px rgba(74,46,140,0.36);
 }
 
-/* ── 인출 진입 인트로 — 화면 전체 블러 + 한 줄 메시지 ── */
+/* ── 인출 진입 인트로 — viewport 전체 블러 + 한 줄 메시지 ──
+   #screen(transform 적용) 밖으로 옮겨 position:fixed가 viewport 전체 덮음 */
 .game-intro {
-  position: absolute; inset: 0; z-index: 35;
+  position: fixed; inset: 0; z-index: 9000;
   display: none; align-items: center; justify-content: center;
   background: rgba(14,12,10,0.42);
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -1532,10 +1533,9 @@ body.mission-mode #game .stage-nav {
 }
 /* 점수칩이 미션 화면 중앙으로 이동(center-mission). 확인 클릭 시 클래스 제거 → 우상단 복귀 (transition으로 자연 애니메이션) */
 .score-chip.center-mission {
-  /* 칩 시작 center=(1032,64). 목표: gi-mission 내 placeholder 중심 (550, 244)
-     gi-msg 총 높이 ≈ 200(chip)+56(gap)+~140(text+btn) = 396, 800에서 중앙 → top 202
-     placeholder 중심 = 202+100 = 302. translate y = 302-64 = 238 */
-  transform: translate(-482px, 238px) scale(2.0);
+  /* viewport 기준 fixed 칩(center: 100vw-68px, 64px)을 목표 (50vw, 38vh)으로 이동.
+     38vh는 미션 카드 placeholder 위치 근사 (원래 canvas 800 기준 302/800 = 37.75%) */
+  transform: translate(calc(-50vw + 68px), calc(38vh - 64px)) scale(2.0);
   box-shadow:
     0 8px 22px rgba(0,0,0,0.32),
     0 0 0 1px rgba(0,0,0,0.4),
@@ -1754,9 +1754,9 @@ body.mission-mode #game .stage-nav {
   100% { opacity: 1; transform: translateY(-50px) scale(1); }
 }
 
-/* ── 퀴즈 오버레이 ── */
+/* ── 퀴즈 오버레이 — viewport 전체 (position:fixed, #screen 밖) ── */
 .quiz-overlay {
-  position: absolute; inset: 0; z-index: 40;
+  position: fixed; inset: 0; z-index: 9100;
   display: none; align-items: center; justify-content: center;
   background: rgba(14,12,10,0.55);
   backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
@@ -2423,9 +2423,10 @@ body.mission-mode #game .stage-nav {
   /* 단계별 컨셉 색상 변수 — data-stage가 갱신하면 보더/글로우 자동 반영 */
   --sc-rgb: 69,194,138;        /* 기본 녹색 (인출/홈/영역/결과) */
   --sc-rgb-tint: 155,108,217;  /* 보조 그라디언트 색 */
-  position: absolute;
+  /* viewport 기준 fixed — 오버레이(z:9000+)보다 위에 떠 있도록 z-index 9500 */
+  position: fixed;
   top: 18px; right: 22px;
-  z-index: 50;
+  z-index: 9500;
   width: 92px; height: 92px;
   box-sizing: border-box;
   padding: 0;
@@ -3356,8 +3357,8 @@ body.dark-canvas .score-chip,
   transform-origin: center;
 }
 .score-chip.center-result {
-  /* 칩 시작 center=(1032,64). 깔때기 제거 + 점수판 60px 위로(186→126), 추가 15px 위(126→111) */
-  transform: translate(-482px, 111px) scale(2.0);
+  /* viewport 기준 fixed 칩 → 결과 페이지 점수판 슬롯(50vw, ~22vh) */
+  transform: translate(calc(-50vw + 68px), calc(22vh - 64px)) scale(2.0);
   box-shadow:
     0 8px 22px rgba(0,0,0,0.32),
     0 0 0 1px rgba(0,0,0,0.4),
@@ -3385,7 +3386,10 @@ body.dark-canvas .score-chip,
    다크 캔버스 + 흰 노드 (인출/확장/강화 메인 톤)
    결과 페이지·훈도감만 별도 라이트 캔버스로 오버라이드
    ════════════════════════════════════════════════════════════ */
-/* 깊이감 배경 — 중심부에서 미세한 민트 광이 새어나오는 다층 라디얼 그라디언트 */
+/* 페이지 테마는 body에서 결정 — viewport 전체가 한 톤으로 이어지도록.
+   showPage(id)에서 라이트 페이지(#charintro/#result/#area) 진입 시 body.theme-light 토글. */
+
+/* 다크 테마 (기본) — 인출/확장/강화/홈 */
 html, body {
   background:
     /* (1) 캔버스 중심 근처 — 매우 옅은 민트 글로우 */
@@ -3394,19 +3398,15 @@ html, body {
     radial-gradient(ellipse 130% 110% at 50% 48%, #1B2230 0%, #11151E 45%, #080A12 75%, #02030680 100%) !important;
   background-attachment: fixed !important;
 }
-/* 페이지·프레임·캔버스 모두 투명 — body의 그라디언트가 전체에 비치도록 */
-.frame, .canvas { background: transparent !important; }
-.page, #game, #home, #learn { background: transparent !important; }
-/* 결과 페이지 + 훈도감 + 도입(오늘의 한자) — 화이트 캔버스
-   box-shadow spread로 viewport 사방을 외곽 그라디언트 톤(#D7DCE8)으로 확장 →
-   캔버스와 뷰포트 가장자리가 한 톤으로 이어져 검은 띠 노출 방지. */
-#result.page,
-#area.page,
-#charintro.page {
+/* 라이트 테마 — 결과/훈도감/도입(오늘의 한자) */
+body.theme-light {
   background:
-    radial-gradient(ellipse 80% 60% at 50% 35%, #EEF1F7 0%, #E4E8F1 60%, #D7DCE8 100%) !important;
-  box-shadow: 0 0 0 9999px #D7DCE8 !important;
+    radial-gradient(ellipse 80% 60% at 50% 45%, #EEF1F7 0%, #E4E8F1 55%, #D7DCE8 100%) !important;
+  background-attachment: fixed !important;
 }
+/* 페이지·프레임·캔버스 모두 투명 — body 테마가 그대로 비치도록 */
+.frame, .canvas { background: transparent !important; }
+.page, #game, #home, #learn, #charintro, #result, #area { background: transparent !important; }
 /* 캔버스 외곽 보더/라운드/그림자 제거 — 전체 화면이 한 톤으로 이어지게 */
 #screen {
   border-radius: 0 !important;
@@ -3634,21 +3634,22 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
 </style>
 </head>
 <body>
-<div id="screen">
 
-  <!-- ══ 점수판 (페이지 전환과 무관하게 상단 우측에 떠 있음) ══ -->
-  <div class="score-chip" id="score-chip">
-    <div class="sc-bulbs" aria-hidden="true">
-      <i class="sc-bulb t1"></i><i class="sc-bulb b-mint t2"></i><i class="sc-bulb t3"></i><i class="sc-bulb b-violet t4"></i><i class="sc-bulb t5"></i><i class="sc-bulb b-mint t6"></i><i class="sc-bulb t7"></i>
-      <i class="sc-bulb b-violet r1"></i><i class="sc-bulb r2"></i><i class="sc-bulb b-mint r3"></i><i class="sc-bulb r4"></i>
-      <i class="sc-bulb b-violet b7"></i><i class="sc-bulb b6"></i><i class="sc-bulb b-mint b5"></i><i class="sc-bulb b4"></i><i class="sc-bulb b-violet b3"></i><i class="sc-bulb b2"></i><i class="sc-bulb b-mint b1"></i>
-      <i class="sc-bulb l4"></i><i class="sc-bulb b-violet l3"></i><i class="sc-bulb l2"></i><i class="sc-bulb b-mint l1"></i>
-    </div>
-    <span class="sc-num" id="sc-num">0</span>
-    <span class="sc-denom" id="sc-denom"></span>
-    <div class="sc-ring" id="sc-ring"></div>
-    <div class="sc-pop" id="sc-pop"></div>
+<!-- ══ 점수판 — #screen 밖에 두어 오버레이/모달과 같은 stacking layer에서 z-index로 순서 제어 ══ -->
+<div class="score-chip" id="score-chip">
+  <div class="sc-bulbs" aria-hidden="true">
+    <i class="sc-bulb t1"></i><i class="sc-bulb b-mint t2"></i><i class="sc-bulb t3"></i><i class="sc-bulb b-violet t4"></i><i class="sc-bulb t5"></i><i class="sc-bulb b-mint t6"></i><i class="sc-bulb t7"></i>
+    <i class="sc-bulb b-violet r1"></i><i class="sc-bulb r2"></i><i class="sc-bulb b-mint r3"></i><i class="sc-bulb r4"></i>
+    <i class="sc-bulb b-violet b7"></i><i class="sc-bulb b6"></i><i class="sc-bulb b-mint b5"></i><i class="sc-bulb b4"></i><i class="sc-bulb b-violet b3"></i><i class="sc-bulb b2"></i><i class="sc-bulb b-mint b1"></i>
+    <i class="sc-bulb l4"></i><i class="sc-bulb b-violet l3"></i><i class="sc-bulb l2"></i><i class="sc-bulb b-mint l1"></i>
   </div>
+  <span class="sc-num" id="sc-num">0</span>
+  <span class="sc-denom" id="sc-denom"></span>
+  <div class="sc-ring" id="sc-ring"></div>
+  <div class="sc-pop" id="sc-pop"></div>
+</div>
+
+<div id="screen">
 
   <!-- ══ 홈 ══ -->
   <div class="page active" id="home">
@@ -3726,10 +3727,6 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
       </div>
 
     </div>
-    <!-- 확장 진입 인트로 — 화면 전체 블러 + 한 줄 메시지 (인출 화면과 동일 패턴) -->
-    <div class="game-intro" id="learn-intro" onclick="hideLearnIntro()">
-      <div class="gi-msg gi-card" id="li-msg"></div>
-    </div>
     <button class="learn-skip" onclick="goRecap()">확장 끝내고 강화 →</button>
   </div>
 
@@ -3760,10 +3757,6 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
       <div class="g-nodes" id="g-nodes"></div>
       <div class="fb-zone"><div id="fb"></div></div>
     </div>
-    <!-- 인출 진입 인트로 — 화면 전체 블러 + 한 줄 메시지 -->
-    <div class="game-intro" id="game-intro" onclick="gameIntroOverlayClick()">
-      <div class="gi-msg" id="gi-msg"></div>
-    </div>
     <div class="game-bottom">
       <div class="input-row">
         <div class="input-wrap">
@@ -3774,9 +3767,6 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
         <button class="btn-ok" onclick="submit()">확인</button>
       </div>
       <button class="btn-done" id="dbtn" onclick="goLearn()"><span class="bd-label">완료</span><span class="bd-arrow"><svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polyline points="6,1.5 13,9 6,16.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
-    </div>
-    <div class="quiz-overlay" id="qo">
-      <div class="quiz-card" id="qc"></div>
     </div>
   </div>
 
@@ -3804,9 +3794,6 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
     </div>
     <div class="qpage-body">
       <div class="qcard" id="fq-card"></div>
-    </div>
-    <div class="game-intro" id="fillq-intro" onclick="hideFillIntro()">
-      <div class="gi-msg gi-card" id="fi-msg"></div>
     </div>
     <button class="skip-link" onclick="goResult()">건너뛰고 결과 보기 →</button>
   </div>
@@ -3903,6 +3890,20 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
 
 </div><!-- /screen -->
 
+<!-- ══ 모달 오버레이들 — #screen(transform 적용) 밖에 두어 position:fixed가 viewport 기준으로 동작하게 함 ══ -->
+<div class="game-intro" id="game-intro" onclick="gameIntroOverlayClick()">
+  <div class="gi-msg" id="gi-msg"></div>
+</div>
+<div class="game-intro" id="learn-intro" onclick="hideLearnIntro()">
+  <div class="gi-msg gi-card" id="li-msg"></div>
+</div>
+<div class="game-intro" id="fillq-intro" onclick="hideFillIntro()">
+  <div class="gi-msg gi-card" id="fi-msg"></div>
+</div>
+<div class="quiz-overlay" id="qo">
+  <div class="quiz-card" id="qc"></div>
+</div>
+
 <script src="data.js"></script>
 <script>
 // ── 스케일 ──────────────────────────────────
@@ -3927,6 +3928,10 @@ function nextCap(){ return CAPS[capIdx++ % CAPS.length]; }
 function showPage(id){
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   document.getElementById(id).classList.add('active');
+  // 페이지별 body 테마 — 라이트(흰 캔버스): charintro/result/area, 그 외는 다크
+  // body 그라디언트가 viewport 전체를 채우므로 캔버스 가장자리 봉합 자국 없음
+  var isLightPage = (id === 'charintro' || id === 'result' || id === 'area');
+  document.body.classList.toggle('theme-light', isLightPage);
   // 결과 페이지를 떠날 때는 점수판 위치를 원위치로 복귀
   if(id !== 'result'){
     var chipBack = document.getElementById('score-chip');
