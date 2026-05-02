@@ -685,7 +685,7 @@ button { font-family: inherit; color: inherit; }
 }
 .ci-hun-big {
   font-family: var(--font-han);
-  font-size: 20px; font-weight: 600;
+  font-size: 22px; font-weight: 600;
   color: var(--ci-accent-deep);
   letter-spacing: 0.18em;
   margin-top: 10px;
@@ -704,7 +704,7 @@ button { font-family: inherit; color: inherit; }
 /* 어원 본문 */
 .ci-etymology-body {
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 14px; font-weight: 400;
+  font-size: 16px; font-weight: 400;
   color: #2A3050;
   line-height: 1.7;
   letter-spacing: 0.02em;
@@ -745,7 +745,7 @@ button { font-family: inherit; color: inherit; }
 }
 .ci-meaning-hun .cm-hun-line {
   font-family: var(--font-han);
-  font-size: 15px; font-weight: 600;
+  font-size: 17px; font-weight: 600;
   color: #2A3050;
   letter-spacing: 0.02em;
   line-height: 1.35;
@@ -761,7 +761,7 @@ button { font-family: inherit; color: inherit; }
 }
 .ci-meaning-examples .cm-ex {
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 12px; font-weight: 500;
+  font-size: 14px; font-weight: 500;
   color: var(--ci-accent);
   letter-spacing: 0.02em;
   line-height: 1.4;
@@ -2794,23 +2794,24 @@ body.dark-canvas .score-chip,
 
 /* ── 잠금: 점선 + 약간 흐린 한자 (배경 없음) ───────────────── */
 .area-cell.locked {
-  background: transparent;
+  background: rgba(255,255,255,0.35);
   border: 1px dashed rgba(20,25,40,0.20);
+  box-shadow: 0 1px 2px rgba(20,25,40,0.04);
 }
 .area-cell.locked .cell-hun {
   display: block;
-  color: rgba(20,25,40,0.32);
+  color: rgba(20,25,40,0.20);
   opacity: 1;
 }
-.area-cell.locked .cell-char { color: rgba(20,25,40,0.42); }
+.area-cell.locked .cell-char { color: rgba(20,25,40,0.26); }
 
 /* ── 과거 통과 — 컨셉 컬러(area=파랑) 보더 + 부드러운 글로우 ──── */
 .area-cell.pass:not(.current) {
-  background: rgba(var(--stage-accent-rgb), 0.06);
+  background: #FFFFFF;
   border: 1px solid rgba(var(--stage-accent-rgb), 0.55);
   box-shadow:
-    0 0 0 1px rgba(var(--stage-accent-rgb), 0.10),
-    inset 0 0 10px rgba(var(--stage-accent-rgb), 0.06);
+    0 0 0 1px rgba(var(--stage-accent-rgb), 0.12),
+    0 1px 2px rgba(20,25,40,0.04);
 }
 .area-cell.pass:not(.current) .cell-char { color: rgba(20,25,40,0.92); }
 .area-cell.pass:not(.current) .cell-hun  { color: rgba(20,25,40,0.72); opacity: 1; }
@@ -2818,11 +2819,11 @@ body.dark-canvas .score-chip,
 
 /* ── 과거 미통과 — 빨강 보더 + 부드러운 글로우 ────────────── */
 .area-cell:not(.locked):not(.current):not(.pass) {
-  background: rgba(216,120,120,0.06);
-  border: 1px solid rgba(216,120,120,0.55);
+  background: rgba(216,120,120,0.10);
+  border: 1px solid rgba(216,120,120,0.75);
   box-shadow:
-    0 0 0 1px rgba(216,120,120,0.10),
-    inset 0 0 10px rgba(216,120,120,0.06);
+    0 0 0 1px rgba(216,120,120,0.20),
+    0 1px 2px rgba(20,25,40,0.04);
 }
 .area-cell:not(.locked):not(.current):not(.pass) .cell-char { color: rgba(20,25,40,0.92); }
 .area-cell:not(.locked):not(.current):not(.pass) .cell-hun  { color: rgba(20,25,40,0.72); opacity: 1; }
@@ -2930,15 +2931,15 @@ body.dark-canvas .score-chip,
   box-shadow: 0 0 8px rgba(216,120,120,0.55);
 }
 .al-swatch.al-past-pass {
-  background: rgba(var(--stage-accent-rgb), 0.04);
+  background: #FFFFFF;
   border: 1px solid rgba(var(--stage-accent-rgb), 0.55);
 }
 .al-swatch.al-past-fail {
-  background: rgba(216,120,120,0.04);
+  background: #FFFFFF;
   border: 1px solid rgba(216,120,120,0.5);
 }
 .al-swatch.al-locked {
-  background: transparent;
+  background: #FFFFFF;
   border: 1px dashed rgba(20,25,40,0.32);
 }
 
