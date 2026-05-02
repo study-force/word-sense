@@ -630,41 +630,37 @@ button { font-family: inherit; color: inherit; }
    도입 — 오늘의 한자 (어원·다의 학습)
 ════════════════════════════ */
 #charintro {
-  /* 페이지 컨셉 컬러: 따뜻한 골드/앰버 — 학문적·도입적 톤 */
-  --ci-accent: #E8C76B;
-  --ci-accent-rgb: 232, 199, 107;
-  --ci-accent-deep: #B89A45;
+  /* 페이지 컨셉 컬러: 먹빛 — 묵화·수묵의 차분하고 묵직한 톤 */
+  --ci-accent: #3D4D8C;
+  --ci-accent-rgb: 61, 77, 140;
+  --ci-accent-deep: #252F66;
 }
 .ci-body {
   flex: 1;
   display: flex; flex-direction: column;
   align-items: center;
+  justify-content: center;          /* 무게 중심을 세로 중앙으로 */
   padding: 28px 60px 24px;
-  gap: 18px;
+  gap: 22px;
   position: relative; z-index: 1;
   overflow: hidden;
 }
-/* 상단 메타: 영역 · 회차 · 단계 태그 */
-.ci-meta {
-  display: flex; align-items: center; gap: 10px;
+
+/* "오늘의 한자" 단계 태그 — 좌상단 절대 위치 */
+#charintro .ci-stage-tag {
+  position: absolute;
+  top: 24px; left: 28px;
+  z-index: 4;
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 12px;
-  color: #5A6178;
-  letter-spacing: 0.05em;
+  font-size: 11px; font-weight: 700;
+  color: var(--ci-accent-deep);
+  background: rgba(var(--ci-accent-rgb), 0.10);
+  border: 1px solid rgba(var(--ci-accent-rgb), 0.45);
+  padding: 5px 12px;
+  border-radius: 100px;
+  letter-spacing: 0.14em;
   opacity: 0;
   animation: ciFadeUp .6s ease .15s forwards;
-}
-.ci-meta .ci-area { color: var(--green-deep); font-weight: 600; }
-.ci-meta .ci-round { color: #2A3050; font-weight: 500; }
-.ci-meta-sep { color: rgba(20,25,40,0.22); }
-.ci-meta .ci-stage-tag {
-  font-size: 10.5px; font-weight: 700;
-  color: var(--ci-accent-deep);
-  background: rgba(var(--ci-accent-rgb), 0.14);
-  border: 1px solid rgba(var(--ci-accent-rgb), 0.55);
-  padding: 3px 9px;
-  border-radius: 100px;
-  letter-spacing: 0.10em;
 }
 
 /* 히어로: 큰 한자 + 훈음 */
@@ -676,20 +672,6 @@ button { font-family: inherit; color: inherit; }
   opacity: 0;
   animation: ciHeroIn .9s cubic-bezier(.2,1.2,.4,1) .25s forwards;
 }
-.ci-hero-rings {
-  position: absolute; inset: 0;
-  pointer-events: none;
-}
-.ci-hero-rings::before, .ci-hero-rings::after {
-  content: ''; position: absolute;
-  border-radius: 50%;
-  border: 1px dashed rgba(var(--ci-accent-rgb), 0.55);
-  left: 50%; top: 50%;
-  transform: translate(-50%, -50%);
-  animation: spinSlow 80s linear infinite;
-}
-.ci-hero-rings::before { width: 100%; height: 100%; }
-.ci-hero-rings::after  { width: 72%; height: 72%; animation-direction: reverse; animation-duration: 56s; }
 .ci-char-big {
   font-family: var(--font-han);
   font-size: 158px; font-weight: 300;
@@ -703,42 +685,21 @@ button { font-family: inherit; color: inherit; }
 }
 .ci-hun-big {
   font-family: var(--font-han);
-  font-size: 18px; font-weight: 600;
+  font-size: 20px; font-weight: 600;
   color: var(--ci-accent-deep);
   letter-spacing: 0.18em;
   margin-top: 10px;
   position: relative; z-index: 1;
 }
 
-/* 섹션 공통 */
+/* 섹션 공통 — 한 줄 길이 가독성 확보를 위해 좁은 폭 */
 .ci-section {
-  width: 100%; max-width: 720px;
+  width: 100%; max-width: 560px;
   opacity: 0;
   animation: ciFadeUp .7s cubic-bezier(.2,1,.3,1) forwards;
 }
 .ci-etymology-row { animation-delay: .55s; }
 .ci-meanings-row  { animation-delay: .75s; }
-.ci-preview-row   { animation-delay: .95s; }
-.ci-section-head {
-  display: flex; align-items: center; gap: 10px;
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 11px; font-weight: 700;
-  color: #5A6178;
-  letter-spacing: 0.18em;
-  margin-bottom: 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgba(var(--ci-accent-rgb), 0.45);
-}
-.ci-section-num {
-  font-size: 13px; color: var(--ci-accent-deep); font-weight: 800;
-  letter-spacing: 0;
-}
-.ci-preview-count {
-  margin-left: auto;
-  font-size: 11px; font-weight: 600;
-  color: var(--green-deep);
-  letter-spacing: 0.04em;
-}
 
 /* 어원 본문 */
 .ci-etymology-body {
@@ -751,58 +712,59 @@ button { font-family: inherit; color: inherit; }
   padding: 4px 6px 0;
 }
 
-/* 다의 정리 */
+/* 다의 정리 — 세로형 카드 3열 그리드 (시각적 응집력 강화) */
 .ci-meanings-list {
-  display: flex; flex-direction: column;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
   padding: 4px 0 0;
 }
 .ci-meaning {
-  display: flex; align-items: center; gap: 14px;
-  padding: 8px 12px;
+  display: flex; flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px 14px;
   background: #FFFFFF;
   border: 1px solid rgba(20,25,40,0.08);
-  border-left: 3px solid rgba(var(--ci-accent-rgb), 0.75);
-  border-radius: 4px;
+  border-top: 3px solid rgba(var(--ci-accent-rgb), 0.75);
+  border-radius: 4px 4px 6px 6px;
   box-shadow: 0 1px 2px rgba(20,25,40,0.04);
+  position: relative;
 }
 .ci-meaning-num {
+  position: absolute;
+  top: 10px; right: 10px;
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 13px; font-weight: 700;
-  color: var(--ci-accent-deep);
-  flex-shrink: 0;
-  width: 18px;
+  font-size: 11px; font-weight: 800;
+  color: rgba(var(--ci-accent-rgb), 0.85);
   letter-spacing: 0;
+  line-height: 1;
 }
 .ci-meaning-hun {
+  display: flex; flex-direction: column;
+  gap: 1px;
+}
+.ci-meaning-hun .cm-hun-line {
   font-family: var(--font-han);
-  font-size: 14px; font-weight: 600;
+  font-size: 15px; font-weight: 600;
   color: #2A3050;
-  letter-spacing: 0.04em;
-  flex-shrink: 0;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+}
+.ci-meaning-divider {
+  height: 1px;
+  background: rgba(20,25,40,0.08);
+  margin: 2px -14px 2px;
 }
 .ci-meaning-examples {
+  display: flex; flex-direction: column;
+  gap: 2px;
+}
+.ci-meaning-examples .cm-ex {
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 12px; font-weight: 400;
-  color: #5A6178;
-  letter-spacing: 0.03em;
-  margin-left: auto;
-}
-
-/* 가족 어휘 미리보기 칩 */
-.ci-preview-chips {
-  display: flex; flex-wrap: wrap; gap: 8px;
-  padding: 6px 4px 0;
-}
-.ci-preview-chip {
-  font-family: var(--font-han);
-  font-size: 14px; font-weight: 500;
-  color: var(--green-deep);
-  background: rgba(69,194,138,0.10);
-  border: 1px solid rgba(69,194,138,0.45);
-  padding: 5px 12px;
-  border-radius: 100px;
-  letter-spacing: 0.04em;
+  font-size: 12px; font-weight: 500;
+  color: var(--ci-accent);
+  letter-spacing: 0.02em;
+  line-height: 1.4;
 }
 
 /* 시작 버튼 */
@@ -1563,7 +1525,6 @@ body.mission-mode .game-intro {
   background: #050810 !important;     /* 거의 완전 검정 */
 }
 /* 미션 화면에서는 사운드 토글 숨김 + 게임 콘텐츠 보이지 않음 (페이지 전환 깜빡임 제거) */
-body.mission-mode .snd-toggle { display: none !important; }
 body.mission-mode #g-stage,
 body.mission-mode .game-bottom,
 body.mission-mode #game .stage-nav {
@@ -3655,41 +3616,6 @@ body.recap-mode .game-cap .hun-text { color: #E0CDF5 !important; }
 body.recap-mode .g-prompt-top em,
 body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
 
-/* 음소거 토글 — 좌측 상단 글로벌 플로팅 버튼 */
-.snd-toggle {
-  position: absolute;
-  top: 22px; left: 22px;
-  z-index: 50;
-  width: 36px; height: 36px;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(20,24,34,0.55);
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 50%;
-  color: rgba(255,255,255,0.78);
-  cursor: pointer;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  transition: all .18s ease;
-  padding: 0;
-}
-.snd-toggle:hover {
-  background: rgba(30,36,50,0.78);
-  border-color: rgba(69,194,138,0.50);
-  color: #FFFFFF;
-  box-shadow: 0 0 14px rgba(69,194,138,0.28);
-}
-.snd-toggle svg { width: 18px; height: 18px; display: block; }
-.snd-toggle .ic-on  { display: block; }
-.snd-toggle .ic-off { display: none; }
-.snd-toggle.muted .ic-on  { display: none; }
-.snd-toggle.muted .ic-off { display: block; }
-.snd-toggle.muted {
-  color: rgba(255,255,255,0.42);
-  border-color: rgba(255,255,255,0.06);
-}
-/* 홈 화면에서는 좀 더 안쪽으로 */
-#home .snd-toggle { top: 18px; left: 18px; }
-
 /* 단어 입력창 — 흰 도크 위에서 진한 회색으로 대비 */
 .word-input {
   background: #2C313F !important;
@@ -3722,20 +3648,6 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
     <div class="sc-pop" id="sc-pop"></div>
   </div>
 
-  <!-- ══ 음소거 토글 (글로벌) ══ -->
-  <button class="snd-toggle" id="snd-toggle" type="button" aria-label="사운드 켜기/끄기" title="사운드 끄기/켜기">
-    <svg class="ic-on" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="M11 5L6 9H3v6h3l5 4V5z" fill="currentColor"/>
-      <path d="M15.5 8.5a4.5 4.5 0 010 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-      <path d="M18.5 5.5a8 8 0 010 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-    </svg>
-    <svg class="ic-off" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="M11 5L6 9H3v6h3l5 4V5z" fill="currentColor"/>
-      <line x1="15" y1="9" x2="21" y2="15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-      <line x1="21" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-    </svg>
-  </button>
-
   <!-- ══ 홈 ══ -->
   <div class="page active" id="home">
     <div class="home-subtitle">어휘 네트워크 강화훈련</div>
@@ -3766,36 +3678,21 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
     <div class="topbar">
       <div class="logo"><div class="logo-mark"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="14" y1="14" x2="6" y2="6"/><line x1="14" y1="14" x2="22" y2="6"/><line x1="14" y1="14" x2="5" y2="18"/><line x1="14" y1="14" x2="22" y2="20"/><line x1="14" y1="14" x2="14" y2="24"/></g><g fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="22" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="22" cy="20" r="2"/><circle cx="14" cy="24" r="2"/></g><circle cx="14" cy="14" r="3.6" fill="currentColor"/><circle cx="14" cy="14" r="3.6" fill="rgba(255,255,255,0.18)"/></svg></div></div>
     </div>
+    <span class="ci-stage-tag">오늘의 한자</span>
     <div class="ci-body">
-      <div class="ci-meta">
-        <span class="ci-area" id="ci-area">환경과 생물</span>
-        <span class="ci-meta-sep">·</span>
-        <span class="ci-round" id="ci-round">1회차</span>
-        <span class="ci-meta-sep">·</span>
-        <span class="ci-stage-tag">오늘의 한자</span>
-      </div>
-
       <div class="ci-hero">
-        <div class="ci-hero-rings"></div>
         <div class="ci-char-big" id="ci-char">生</div>
         <div class="ci-hun-big" id="ci-hun">날 생</div>
       </div>
 
       <div class="ci-section ci-etymology-row">
-        <div class="ci-section-head"><span class="ci-section-num">①</span>어원</div>
         <p class="ci-etymology-body" id="ci-etymology">
           땅 위로 새싹이 자라나는 모습을 본떠 만든 글자입니다.
         </p>
       </div>
 
       <div class="ci-section ci-meanings-row">
-        <div class="ci-section-head"><span class="ci-section-num">②</span>이 글자의 여러 뜻</div>
         <div class="ci-meanings-list" id="ci-meanings"></div>
-      </div>
-
-      <div class="ci-section ci-preview-row">
-        <div class="ci-section-head"><span class="ci-section-num">③</span>오늘 만날 가족 어휘 <span class="ci-preview-count" id="ci-preview-count">38개</span></div>
-        <div class="ci-preview-chips" id="ci-preview-chips"></div>
       </div>
 
       <button class="ci-start-btn" onclick="goGame()"><span>훈 감각 깨우러 가기</span><span class="ci-start-arrow">→</span></button>
@@ -4174,7 +4071,7 @@ function ac(){
   return AC;
 }
 
-// 마스터 게인 + 음소거 토글 (localStorage 동기화)
+// 마스터 게인 + 사운드 ON/OFF 상태 (localStorage 동기화 — UI 토글은 제거됨, window.toggleSound로 콘솔 제어 가능)
 var SND_ON = (function(){
   try { return localStorage.getItem('sound-on') !== '0'; } catch(e){ return true; }
 })();
@@ -4486,7 +4383,6 @@ var _LAST_CLICK_SND = 0;
 document.addEventListener('click', function(e){
   var btn = e.target.closest('button, .skip-link');
   if(!btn) return;
-  if(btn.id === 'snd-toggle')              return;
   if(btn.classList.contains('choice-btn')) return;
   if(btn.classList.contains('hint-btn'))   return;
   if(btn.id === 'hbtn')                    return;
@@ -4497,22 +4393,6 @@ document.addEventListener('click', function(e){
   _LAST_CLICK_SND = now;
   sndClick();
 });  // capture: false (기본) — 평범한 bubbling 페이즈로 충분
-
-// ── 음소거 토글 UI 바인딩 ───────────────────
-(function(){
-  var btn = document.getElementById('snd-toggle');
-  if(!btn) return;
-  function reflect(){
-    if(SND_ON){ btn.classList.remove('muted'); btn.setAttribute('aria-pressed','false'); }
-    else      { btn.classList.add('muted');    btn.setAttribute('aria-pressed','true');  }
-  }
-  reflect();
-  btn.addEventListener('click', function(){
-    setSound(!SND_ON);
-    reflect();
-    if(SND_ON) sndClick();   // 켜는 순간만 짧은 피드백
-  });
-})();
 
 // ── 피드백 ──────────────────────────────────
 var FB_TIMER = null;
@@ -5062,11 +4942,6 @@ function renderDeckStack(remaining){
 // 홈의 [시작하기]를 누르면 먼저 이 페이지를 거친 후, 사용자가 [훈 감각 깨우러 가기]를 누르면 goGame()으로 진입.
 function goCharIntro(){
   var sess = SESSION;
-  // 메타
-  var elArea  = document.getElementById('ci-area');
-  var elRound = document.getElementById('ci-round');
-  if(elArea)  elArea.textContent  = sess.area || '';
-  if(elRound) elRound.textContent = (sess.id || 1) + '회차';
   // 한자 + 훈
   var elChar = document.getElementById('ci-char');
   var elHun  = document.getElementById('ci-hun');
@@ -5075,28 +4950,27 @@ function goCharIntro(){
   // 어원
   var elEty = document.getElementById('ci-etymology');
   if(elEty && sess.mainEtymology) elEty.textContent = sess.mainEtymology;
-  // 다의 정리
+  // 다의 정리 — 훈은 ·로 분리해 줄바꿈, 예시는 세로로 나열
   var elMeans = document.getElementById('ci-meanings');
   if(elMeans){
     var meanings = sess.mainMeanings || [];
     elMeans.innerHTML = meanings.map(function(m, i){
-      var examples = (m.examples || []).join(' · ');
+      var hunParts = (m.hun || '').split('·').map(function(s){ return s.trim(); }).filter(Boolean);
+      var hunHtml = hunParts.map(function(p){
+        return '<span class="cm-hun-line">'+p+'</span>';
+      }).join('');
+      // 예시 어휘는 카드당 2개만 노출 (시선 분산 최소화)
+      var examples = (m.examples || []).slice(0, 2);
+      var exHtml = examples.map(function(e){
+        return '<span class="cm-ex">'+e+'</span>';
+      }).join('');
       return '<div class="ci-meaning">'
         +   '<span class="ci-meaning-num">'+(i+1)+'</span>'
-        +   '<span class="ci-meaning-hun">'+(m.hun||'')+'</span>'
-        +   '<span class="ci-meaning-examples">'+examples+'</span>'
+        +   '<div class="ci-meaning-hun">'+hunHtml+'</div>'
+        +   '<div class="ci-meaning-divider"></div>'
+        +   '<div class="ci-meaning-examples">'+exHtml+'</div>'
         + '</div>';
     }).join('');
-  }
-  // 가족 어휘 미리보기 — 무작위 6개 (스포일러 최소화)
-  var elPrev = document.getElementById('ci-preview-chips');
-  var elPrevCnt = document.getElementById('ci-preview-count');
-  if(elPrev && typeof WORD_LIST !== 'undefined' && WORD_LIST && WORD_LIST.length){
-    var sample = shuffle(WORD_LIST.slice()).slice(0, 6);
-    elPrev.innerHTML = sample.map(function(w){
-      return '<span class="ci-preview-chip">'+w+'</span>';
-    }).join('');
-    if(elPrevCnt) elPrevCnt.textContent = WORD_LIST.length + '개';
   }
   showPage('charintro');
 }
