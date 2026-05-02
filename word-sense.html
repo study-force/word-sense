@@ -1533,9 +1533,8 @@ body.mission-mode #game .stage-nav {
 }
 /* 점수칩이 미션 화면 중앙으로 이동(center-mission). 확인 클릭 시 클래스 제거 → 우상단 복귀 (transition으로 자연 애니메이션) */
 .score-chip.center-mission {
-  /* viewport 기준 fixed 칩(center: 100vw-68px, 64px)을 목표 (50vw, 38vh)으로 이동.
-     38vh는 미션 카드 placeholder 위치 근사 (원래 canvas 800 기준 302/800 = 37.75%) */
-  transform: translate(calc(-50vw + 68px), calc(38vh - 64px)) scale(2.0);
+  /* chip-anchor가 canvas와 같은 좌표계라 원래 canvas-coords 그대로 사용 */
+  transform: translate(-482px, 238px) scale(2.0);
   box-shadow:
     0 8px 22px rgba(0,0,0,0.32),
     0 0 0 1px rgba(0,0,0,0.4),
@@ -2419,14 +2418,26 @@ body.mission-mode #game .stage-nav {
 /* ════════════════════════════
    점수판 (오늘 점수)
 ════════════════════════════ */
+/* 점수판 앵커 — #screen과 동일한 좌표계(1100×800) + transform.
+   chip은 이 안에서 canvas-coords 기준으로 자유롭게 배치.
+   z-index 9500로 모든 오버레이 위에 떠 있음. */
+#chip-anchor {
+  position: fixed;
+  top: 50%; left: 50%;
+  width: 1100px; height: 800px;
+  transform: translate(-50%, -50%);   /* applyScale에서 scale 추가 */
+  transform-origin: center center;
+  z-index: 9500;
+  pointer-events: none;               /* 칩 자체만 인터랙션 (현재는 pointer-events:none이지만 부모도 통과시킴) */
+}
+
 .score-chip {
   /* 단계별 컨셉 색상 변수 — data-stage가 갱신하면 보더/글로우 자동 반영 */
   --sc-rgb: 69,194,138;        /* 기본 녹색 (인출/홈/영역/결과) */
   --sc-rgb-tint: 155,108,217;  /* 보조 그라디언트 색 */
-  /* viewport 기준 fixed — 오버레이(z:9000+)보다 위에 떠 있도록 z-index 9500 */
-  position: fixed;
+  /* chip-anchor 내부에서 canvas-coords로 배치 (원래 위치) */
+  position: absolute;
   top: 18px; right: 22px;
-  z-index: 9500;
   width: 92px; height: 92px;
   box-sizing: border-box;
   padding: 0;
@@ -3357,8 +3368,8 @@ body.dark-canvas .score-chip,
   transform-origin: center;
 }
 .score-chip.center-result {
-  /* viewport 기준 fixed 칩 → 결과 페이지 점수판 슬롯(50vw, ~22vh) */
-  transform: translate(calc(-50vw + 68px), calc(22vh - 64px)) scale(2.0);
+  /* chip-anchor 내부 canvas-coords 기준 (점수판 슬롯) */
+  transform: translate(-482px, 111px) scale(2.0);
   box-shadow:
     0 8px 22px rgba(0,0,0,0.32),
     0 0 0 1px rgba(0,0,0,0.4),
@@ -3635,18 +3646,22 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
 </head>
 <body>
 
-<!-- ══ 점수판 — #screen 밖에 두어 오버레이/모달과 같은 stacking layer에서 z-index로 순서 제어 ══ -->
-<div class="score-chip" id="score-chip">
-  <div class="sc-bulbs" aria-hidden="true">
-    <i class="sc-bulb t1"></i><i class="sc-bulb b-mint t2"></i><i class="sc-bulb t3"></i><i class="sc-bulb b-violet t4"></i><i class="sc-bulb t5"></i><i class="sc-bulb b-mint t6"></i><i class="sc-bulb t7"></i>
-    <i class="sc-bulb b-violet r1"></i><i class="sc-bulb r2"></i><i class="sc-bulb b-mint r3"></i><i class="sc-bulb r4"></i>
-    <i class="sc-bulb b-violet b7"></i><i class="sc-bulb b6"></i><i class="sc-bulb b-mint b5"></i><i class="sc-bulb b4"></i><i class="sc-bulb b-violet b3"></i><i class="sc-bulb b2"></i><i class="sc-bulb b-mint b1"></i>
-    <i class="sc-bulb l4"></i><i class="sc-bulb b-violet l3"></i><i class="sc-bulb l2"></i><i class="sc-bulb b-mint l1"></i>
+<!-- ══ 점수판 앵커 — #screen과 동일한 좌표계/스케일로 정렬되는 가상 캔버스.
+     #screen 밖에 두어 오버레이 위로 띄우면서도 캔버스와 정확히 같은 위치/크기 유지.
+     applyScale()이 #screen과 함께 transform을 동기화. ══ -->
+<div id="chip-anchor">
+  <div class="score-chip" id="score-chip">
+    <div class="sc-bulbs" aria-hidden="true">
+      <i class="sc-bulb t1"></i><i class="sc-bulb b-mint t2"></i><i class="sc-bulb t3"></i><i class="sc-bulb b-violet t4"></i><i class="sc-bulb t5"></i><i class="sc-bulb b-mint t6"></i><i class="sc-bulb t7"></i>
+      <i class="sc-bulb b-violet r1"></i><i class="sc-bulb r2"></i><i class="sc-bulb b-mint r3"></i><i class="sc-bulb r4"></i>
+      <i class="sc-bulb b-violet b7"></i><i class="sc-bulb b6"></i><i class="sc-bulb b-mint b5"></i><i class="sc-bulb b4"></i><i class="sc-bulb b-violet b3"></i><i class="sc-bulb b2"></i><i class="sc-bulb b-mint b1"></i>
+      <i class="sc-bulb l4"></i><i class="sc-bulb b-violet l3"></i><i class="sc-bulb l2"></i><i class="sc-bulb b-mint l1"></i>
+    </div>
+    <span class="sc-num" id="sc-num">0</span>
+    <span class="sc-denom" id="sc-denom"></span>
+    <div class="sc-ring" id="sc-ring"></div>
+    <div class="sc-pop" id="sc-pop"></div>
   </div>
-  <span class="sc-num" id="sc-num">0</span>
-  <span class="sc-denom" id="sc-denom"></span>
-  <div class="sc-ring" id="sc-ring"></div>
-  <div class="sc-pop" id="sc-pop"></div>
 </div>
 
 <div id="screen">
@@ -3909,7 +3924,11 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
 // ── 스케일 ──────────────────────────────────
 function applyScale(){
   var s = Math.min(window.innerWidth/1100, window.innerHeight/800);
-  document.getElementById('screen').style.transform = 'translate(-50%,-50%) scale('+s+')';
+  var t = 'translate(-50%,-50%) scale('+s+')';
+  document.getElementById('screen').style.transform = t;
+  // 점수판 앵커도 동일한 transform 적용 → 캔버스와 정확히 같은 위치/크기
+  var anchor = document.getElementById('chip-anchor');
+  if(anchor) anchor.style.transform = t;
 }
 applyScale();
 window.addEventListener('resize', applyScale);
