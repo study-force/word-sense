@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>훈감각 익히기</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Noto+Serif+KR:wght@300;400;500;700&family=Noto+Serif+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/webfontworld/scoredream/SCoreDream.css">
@@ -3936,7 +3937,9 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
   </div>
 </div>
 
-<script src="data.js"></script>
+<!-- Supabase 클라이언트 + 데이터 fetch -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="data-supabase.js"></script>
 <script>
 // ── 스케일 ──────────────────────────────────
 function applyScale(){
@@ -3952,10 +3955,21 @@ function applyScale(){
 applyScale();
 window.addEventListener('resize', applyScale);
 
-// ── 데이터 룩업 (DB 마이그레이션 시 fetch로 교체) ──
+// ── 데이터 룩업 (Supabase fetch 완료 후 빌드) ──
 var WORD_MAP = {}, WRONG_MAP = {}, WORD_LIST = [];
-SESSION.words.forEach(function(w){ WORD_MAP[w.word] = w; WORD_LIST.push(w.word); });
-SESSION.wrongAnswers.forEach(function(w){ WRONG_MAP[w.word] = w.feedback; });
+window.SESSION_READY.then(function() {
+  SESSION.words.forEach(function(w){ WORD_MAP[w.word] = w; WORD_LIST.push(w.word); });
+  SESSION.wrongAnswers.forEach(function(w){ WRONG_MAP[w.word] = w.feedback; });
+  // 홈 화면 DOM도 SESSION 기준으로 갱신
+  var hChar  = document.getElementById('h-char');
+  var hHun   = document.getElementById('h-hun');
+  var hArea  = document.getElementById('h-area');
+  var hRound = document.getElementById('h-round');
+  if(hChar)  hChar.textContent  = SESSION.mainChar;
+  if(hHun)   hHun.textContent   = SESSION.mainHunFull;
+  if(hArea)  hArea.textContent  = SESSION.area;
+  if(hRound) hRound.textContent = String(SESSION.id || 1).padStart(2, '0');
+});
 
 // ── 색상 ────────────────────────────────────
 var CAPS = ['c-peach','c-sky','c-lav','c-rose','c-yel','c-green'];
@@ -6458,7 +6472,8 @@ document.addEventListener('keydown', function(e){
 });
 
 // ── 시작 ────────────────────────────────────
-goHome();
+// SESSION 로드 완료 후 초기 화면 진입 (Supabase fetch 비동기)
+window.SESSION_READY.then(function(){ goHome(); });
 </script>
 </body>
 </html>
