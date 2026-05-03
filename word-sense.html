@@ -5790,6 +5790,13 @@ function submit(){
   document.getElementById('wi').value = '';
   document.getElementById('wi').focus();
   resetHintNudge();
+  // 글자 수 검증 — 본 훈련은 2자 한자어만 다룸. 1자/3자+ 또는 비-한글은 즉시 반려.
+  // 처리 부담 ↓, 표준국어사전 매칭 시에도 검색 범위 ↓ (Phase 3 분류 시스템 사전 작업)
+  if(!/^[가-힣]{2}$/.test(val)){
+    setFb('unknown', '두 글자 한자어를 입력해 주세요');
+    sndUnknown();
+    return;
+  }
   if(S.found.indexOf(val) > -1){ setFb('miss', '"'+val+'" 은(는) 이미 찾았어요!'); sndDup(); return; }
   if(S.attempted && S.attempted.indexOf(val) > -1){ setFb('miss', '"'+val+'" 은(는) 이미 다뤘어요!'); sndDup(); return; }
   var w = WORD_MAP[val];
