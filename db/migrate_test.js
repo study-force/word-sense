@@ -17,7 +17,7 @@
 const fs = require('fs');
 const ExcelJS = require('C:/Users/이재훈/AppData/Local/Temp/xlsx_mod/node_modules/exceljs');
 
-const EXCEL_PATH = 'C:/Users/이재훈/Desktop/CLAUDE/word-sense/콘텐츠/훈감각_사전콘텐츠_박차장님용_훈음추가.xlsx';
+const EXCEL_PATH = 'C:/Users/이재훈/Desktop/CLAUDE/word-sense/콘텐츠/훈감각_사전콘텐츠_박차장님용_어원음훈추가.xlsx';
 
 // ─ 테스트 범위 (null = 전체) ──
 const TEST_AREA = '생물';
@@ -62,20 +62,25 @@ function parseWordMaster(ws) {
 }
 
 // ─ 2. 회차별 主字 파싱 → 회차 메타 ──────────────
+// 컬럼 매핑 (어원추가본 기준):
+//   A:영역 B:회차 C:主字 D:훈음 E~G:가족수
+//   H:Wiktionary 어원 (학술용, 미사용)
+//   I:검증상태 J:비고 (미사용)
+//   K:어원 풀이 (페이지 노출) ⭐
+//   L:의미 카드 (페이지 노출) ⭐
 function parseSessionMeta(ws) {
   const out = new Map();
   for (let r = 4; r <= ws.rowCount; r++) {
     const row = ws.getRow(r);
-    const area      = row.getCell(1).value;        // A: 영역 (예: '🌿 생물')
-    const round     = row.getCell(2).value;        // B: 회차
-    const mainChar  = row.getCell(3).value;        // C: 主字
-    const mainHun   = row.getCell(4).value;        // D: 훈음
-    const etymology = row.getCell(8).value;        // H: 어원
-    const meaningsRaw = row.getCell(9).value;      // I: 숨은 의미들
+    const area      = row.getCell(1).value;
+    const round     = row.getCell(2).value;
+    const mainChar  = row.getCell(3).value;
+    const mainHun   = row.getCell(4).value;
+    const etymology = row.getCell(11).value;       // K: 어원 풀이 (페이지 노출)
+    const meaningsRaw = row.getCell(12).value;     // L: 의미 카드 (페이지 노출)
 
     if (!area || !round || !mainChar) continue;
 
-    // 영역명 정규화 (이모지·공백 제거 → '생물')
     const areaClean = String(area).replace(/[^\wㄱ-ㆎ가-힯]/g, '').trim();
 
     out.set(`${areaClean}-${round}`, {
@@ -91,17 +96,23 @@ function parseSessionMeta(ws) {
   return out;
 }
 
-// "① 태어나다, 출생\n② 살다 (인생, 생활)" → [{hun, examples}, ...]
+// 박차장님 어원추가본 형식: "[1] 나다, 태어나다 → 출생, 탄생\n[2] ..."
+//   → [{hun: "나다, 태어나다", examples: ["출생", "탄생"]}, ...]
 function parseMainMeanings(raw) {
   if (!raw) return [];
   const text = String(raw);
-  const items = text.split(/[①②③④⑤⑥⑦⑧⑨⑩]/).map(s => s.trim()).filter(Boolean);
+  // [1] [2] [3] [4] 마커로 분할
+  const items = text.split(/\[\d+\]/).map(s => s.trim()).filter(Boolean);
   return items.map(item => {
-    // "사람 (학생, 선생)" 형식: 괄호 분리
-    const m = item.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
-    if (m) {
-      return { hun: m[1].trim(), examples: m[2].split(/[,，]/).map(s => s.trim()).filter(Boolean) };
+    // "나다, 태어나다 → 출생, 탄생" → 좌(의미)·우(예시) 분리
+    const arrowSplit = item.split('→').map(s => s.trim());
+    if (arrowSplit.length === 2) {
+      return {
+        hun: arrowSplit[0],
+        examples: arrowSplit[1].split(/[,，]/).map(s => s.trim()).filter(Boolean),
+      };
     }
+    // 화살표 없으면 통째로 hun
     return { hun: item, examples: [] };
   });
 }

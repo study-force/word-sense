@@ -11,13 +11,14 @@ const fs = require('fs');
 const ExcelJS = require('C:/Users/이재훈/AppData/Local/Temp/xlsx_mod/node_modules/exceljs');
 
 const INPUT_CANDIDATES = [
+  'C:/Users/이재훈/Downloads/훈감각_사전콘텐츠_박차장님용_어원추가.xlsx',
   'C:/Users/이재훈/Downloads/훈감각_사전콘텐츠_박차장님용 (1).xlsx',
   'C:/Users/이재훈/Desktop/CLAUDE/word-sense/콘텐츠/훈감각_사전,콘텐츠.xlsx',
 ];
 const inputPath = INPUT_CANDIDATES.find(p => fs.existsSync(p));
 if (!inputPath) { console.error('입력 Excel 못 찾음.'); process.exit(1); }
 
-const outputPath = 'C:/Users/이재훈/Desktop/CLAUDE/word-sense/콘텐츠/훈감각_사전콘텐츠_박차장님용_훈음추가.xlsx';
+const outputPath = 'C:/Users/이재훈/Desktop/CLAUDE/word-sense/콘텐츠/훈감각_사전콘텐츠_박차장님용_어원음훈추가.xlsx';
 const hunDict = JSON.parse(fs.readFileSync('C:/Users/이재훈/Desktop/CLAUDE/word-sense/db/hun_dict.json', 'utf8'));
 
 console.error('입력:', inputPath);
