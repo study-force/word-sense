@@ -713,14 +713,18 @@ button { font-family: inherit; color: inherit; }
   padding: 4px 6px 0;
 }
 
-/* 다의 정리 — 세로형 카드 3열 그리드 (시각적 응집력 강화) */
+/* 다의 정리 — 세로형 카드, 1~4개 단일 행 중앙 정렬 (줄바꿈 X) */
 .ci-meanings-list {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
   gap: 10px;
   padding: 4px 0 0;
 }
 .ci-meaning {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 170px;          /* 1~3개일 때 카드가 너무 넓어지지 않게 */
   display: flex; flex-direction: column;
   gap: 8px;
   padding: 12px 14px 14px;
@@ -747,7 +751,7 @@ button { font-family: inherit; color: inherit; }
 .ci-meaning-hun .cm-hun-line {
   font-family: var(--font-han);
   font-size: 17px; font-weight: 600;
-  color: #2A3050;
+  color: var(--green-deep);    /* 인출 게임의 game-eum strong 색상과 통일 */
   letter-spacing: 0.02em;
   line-height: 1.35;
 }
@@ -2819,16 +2823,16 @@ body.dark-canvas .score-chip,
 .area-cell.pass:not(.current) .cell-frac { color: rgba(var(--stage-accent-rgb), 0.85); }
 
 /* ── 과거 미통과 — 빨강 보더 + 부드러운 글로우 ────────────── */
-.area-cell:not(.locked):not(.current):not(.pass) {
+.area-cell:not(.locked):not(.pass) {
   background: rgba(216,120,120,0.10);
   border: 1px solid rgba(216,120,120,0.75);
   box-shadow:
     0 0 0 1px rgba(216,120,120,0.20),
     0 1px 2px rgba(20,25,40,0.04);
 }
-.area-cell:not(.locked):not(.current):not(.pass) .cell-char { color: rgba(20,25,40,0.92); }
-.area-cell:not(.locked):not(.current):not(.pass) .cell-hun  { color: rgba(20,25,40,0.72); opacity: 1; }
-.area-cell:not(.locked):not(.current):not(.pass) .cell-frac { color: rgba(216,120,120,0.85); }
+.area-cell:not(.locked):not(.pass) .cell-char { color: rgba(20,25,40,0.92); }
+.area-cell:not(.locked):not(.pass) .cell-hun  { color: rgba(20,25,40,0.72); opacity: 1; }
+.area-cell:not(.locked):not(.pass) .cell-frac { color: rgba(216,120,120,0.85); }
 
 /* ── 오늘 통과 (불투명 컨셉 컬러) ───────────────────────── */
 .area-cell.current.pass {
@@ -2851,9 +2855,9 @@ body.dark-canvas .score-chip,
 .area-cell.current:not(.pass) .cell-frac { color: rgba(255,255,255,0.85); }
 
 /* 과거 회차(통과·미통과 모두)는 재훈련 가능 — 호버 시 "재훈련" 중앙 표시 */
-.area-cell:not(.locked):not(.current) { cursor: pointer; }
-.area-cell:not(.locked):not(.current):hover { z-index: 5; }   /* 호버 셀이 인접 셀 위로 떠오르도록 */
-.area-cell:not(.locked):not(.current)::after {
+.area-cell:not(.locked) { cursor: pointer; }
+.area-cell:not(.locked):hover { z-index: 5; }   /* 호버 셀이 인접 셀 위로 떠오르도록 */
+.area-cell:not(.locked)::after {
   content: '재훈련';
   position: absolute; left: 50%; top: 50%;
   transform: translate(-50%, -50%) scale(0.92);
@@ -2870,27 +2874,27 @@ body.dark-canvas .score-chip,
   box-shadow: 0 4px 14px rgba(0,0,0,0.45);
 }
 /* 셀 내용은 호버 시 페이드 — 라벨이 가운데서 잘 보이게 */
-.area-cell:not(.locked):not(.current) .cell-char,
-.area-cell:not(.locked):not(.current) .cell-hun,
-.area-cell:not(.locked):not(.current) .cell-frac {
+.area-cell:not(.locked) .cell-char,
+.area-cell:not(.locked) .cell-hun,
+.area-cell:not(.locked) .cell-frac {
   transition: opacity .18s;
 }
-.area-cell:not(.locked):not(.current):hover .cell-char,
-.area-cell:not(.locked):not(.current):hover .cell-hun,
-.area-cell:not(.locked):not(.current):hover .cell-frac {
+.area-cell:not(.locked):hover .cell-char,
+.area-cell:not(.locked):hover .cell-hun,
+.area-cell:not(.locked):hover .cell-frac {
   opacity: 0.18;
 }
-/* 과거 통과 hover — 컨셉 컬러 글로우 */
-.area-cell.pass:not(.current):hover {
+/* 통과(과거+오늘) hover — 컨셉 컬러 글로우 */
+.area-cell.pass:hover {
   transform: translateY(-2px);
   box-shadow: 0 0 0 1px var(--stage-accent, var(--green)), 0 0 18px rgba(var(--stage-accent-rgb), 0.45), 0 4px 12px rgba(0,0,0,0.35);
 }
 /* 과거 미통과 hover — 빨강 글로우 */
-.area-cell:not(.locked):not(.current):not(.pass):hover {
+.area-cell:not(.locked):not(.pass):hover {
   transform: translateY(-2px);
   box-shadow: 0 0 0 1px var(--rose), 0 0 18px rgba(216,120,120,0.45), 0 4px 12px rgba(0,0,0,0.35);
 }
-.area-cell:not(.locked):not(.current):hover::after {
+.area-cell:not(.locked):hover::after {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
 }
@@ -5009,25 +5013,16 @@ function goCharIntro(){
   // 어원
   var elEty = document.getElementById('ci-etymology');
   if(elEty && sess.mainEtymology) elEty.textContent = sess.mainEtymology;
-  // 다의 정리 — 훈은 ·로 분리해 줄바꿈, 예시는 세로로 나열
+  // 다의 정리 — 카드당 첫 번째 의미만 (콤마 앞 부분) 노출. 길어지지 않도록 단순화.
   var elMeans = document.getElementById('ci-meanings');
   if(elMeans){
     var meanings = sess.mainMeanings || [];
     elMeans.innerHTML = meanings.map(function(m, i){
-      var hunParts = (m.hun || '').split('·').map(function(s){ return s.trim(); }).filter(Boolean);
-      var hunHtml = hunParts.map(function(p){
-        return '<span class="cm-hun-line">'+p+'</span>';
-      }).join('');
-      // 예시 어휘는 카드당 2개만 노출 (시선 분산 최소화)
-      var examples = (m.examples || []).slice(0, 2);
-      var exHtml = examples.map(function(e){
-        return '<span class="cm-ex">'+e+'</span>';
-      }).join('');
+      // 첫 번째 의미만 추출: "몸, 신체" → "몸", "사람 (학생, 선생)" → "사람"
+      var firstHun = (m.hun || '').split(',')[0].split('(')[0].trim();
       return '<div class="ci-meaning">'
         +   '<span class="ci-meaning-num">'+(i+1)+'</span>'
-        +   '<div class="ci-meaning-hun">'+hunHtml+'</div>'
-        +   '<div class="ci-meaning-divider"></div>'
-        +   '<div class="ci-meaning-examples">'+exHtml+'</div>'
+        +   '<div class="ci-meaning-hun"><span class="cm-hun-line">'+firstHun+'</span></div>'
         + '</div>';
     }).join('');
   }
@@ -6213,11 +6208,23 @@ function _renderRankCol(listId, view, extraRowClass){
   });
 }
 
-// 전체 랭킹 — truncation 없이 1~N 모두에 rank 부여
+// 랭킹 표시 정책:
+//   - 내가 100등 이내 → 1~100등 표시 (그 아래는 자름)
+//   - 내가 100등 밖   → 1~100등 표시 + ⋯ + 내 행 (실제 등수 노출)
+var RANK_TOP_LIMIT = 100;
 function buildFullRankView(list){
-  return list.map(function(s, i){
+  var ranked = list.map(function(s, i){
     return { name:s.name, count:s.count, me:s.me, rank:i+1 };
   });
+  var meIdx = ranked.findIndex(function(s){ return s.me; });
+  if (meIdx === -1) return ranked.slice(0, RANK_TOP_LIMIT);
+  // 내가 top 100 이내
+  if (meIdx < RANK_TOP_LIMIT) {
+    return ranked.slice(0, RANK_TOP_LIMIT);
+  }
+  // 내가 top 100 밖 → 상위 100 + ⋯ + 내 위치
+  return ranked.slice(0, RANK_TOP_LIMIT)
+    .concat([{ __ellipsis: true }, ranked[meIdx]]);
 }
 
 function renderRankList(){
@@ -6361,21 +6368,18 @@ var PASS_MIN = 10;
 function isPass(p){ return !p.locked && p.found >= PASS_MIN; }
 
 function buildAreaProgress(){
+  // 학습 기록 DB(Phase 2) 미구축 상태 — 현재 회차만 활성, 나머지는 모두 잠금.
+  // Phase 2 완료 시 attempts 테이블 query로 교체될 함수.
   AREA_PROGRESS = AREA_HANJA.map(function(ch, i){
     if(i === 0){
-      // 인출(S.found) + 확장(LEARN.collected) — 두 단계로 깨운 어휘 합산 (중복 없음: 확장 풀이 미발견에서만 추출)
+      // 오늘의 회차 — 인출(S.found) + 확장(LEARN.collected) 합산
       var foundFromGame = (S && S.found) ? S.found.length : 0;
       var foundFromLearn = (LEARN && LEARN.collected) ? LEARN.collected.length : 0;
       var foundTotal = foundFromGame + foundFromLearn;
       return { char:ch, total:WORD_LIST.length, found:foundTotal, locked:false, current:true };
     }
-    if(i < 12){
-      var total = 32 + Math.floor(Math.random() * 10);
-      var found = Math.floor(Math.random() * (total + 4));
-      if(found > total) found = total;
-      return { char:ch, total:total, found:found, locked:false, current:false };
-    }
-    return { char:ch, total:38, found:0, locked:true, current:false };
+    // 그 외 회차는 모두 잠금 (학습 기록 미존재)
+    return { char:ch, total:0, found:0, locked:true, current:false };
   });
   return AREA_PROGRESS;
 }
@@ -6411,8 +6415,8 @@ function goArea(){
       var f = document.createElement('div'); f.className = 'cell-frac';
       f.textContent = p.found + '/' + p.total; cell.appendChild(f);
     }
-    // 과거 회차(통과·미통과 모두) 재훈련 가능 — 클릭 시 홈으로 돌아가 새로 시작
-    if(!p.locked && !p.current){
+    // 잠금 외 모든 셀(오늘 + 과거 통과·미통과) 재훈련 가능 — 클릭 시 홈으로 돌아가 새로 시작
+    if(!p.locked){
       cell.title = p.char + ' 회차 재훈련';
       cell.addEventListener('click', function(){
         // 현재는 단일 회차 데이터만 존재 — 홈에서 다시 시작
