@@ -4,6 +4,12 @@ design claude/
 
 # 백업/업로드 변형
 *.upload.html
+*.backup-*.html
+
+# DB 자동 생성 파일 (스크립트 실행 시 재생성)
+db/migration_test.sql
+db/unique_chars.json
+db/*.log
 
 # OS·에디터 잔여물
 .DS_Store
