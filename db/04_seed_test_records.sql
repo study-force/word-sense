@@ -22,14 +22,13 @@
 -- ════════════════════════════════════════
 -- 1. 가상 학생 5명 — user_profile_cache
 -- ════════════════════════════════════════
-INSERT INTO user_profile_cache (member_no, login_id, name, school_level, grade, center) VALUES
-  (10001, 'hoon01', '김훈수',   '초', 6, '강남센터'),
-  (10002, 'jisoo02', '이지수',  '초', 5, '강남센터'),
-  (10003, 'minjae03', '박민재', '중', 1, '분당센터'),
-  (10004, 'soeun04', '최소은',  '중', 2, '분당센터'),
-  (10005, 'taeho05', '정태호',  '고', 1, '강남센터')
+INSERT INTO user_profile_cache (member_no, name, school_level, grade, center) VALUES
+  (10001, '김훈수', '초', 6, '강남센터'),
+  (10002, '이지수', '초', 5, '강남센터'),
+  (10003, '박민재', '중', 1, '분당센터'),
+  (10004, '최소은', '중', 2, '분당센터'),
+  (10005, '정태호', '고', 1, '강남센터')
 ON CONFLICT (member_no) DO UPDATE SET
-  login_id = EXCLUDED.login_id,
   name = EXCLUDED.name,
   school_level = EXCLUDED.school_level,
   grade = EXCLUDED.grade,
