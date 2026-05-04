@@ -19,9 +19,13 @@
 const SUPABASE_URL = 'https://fokuojmzhttxfkmiutmf.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZva3Vvam16aHR0eGZrbWl1dG1mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MDYwOTksImV4cCI6MjA5MzM4MjA5OX0.FuYv59ufKteXKusvAhJktBNWntMnWmxctQoHquaPKVA';
 
-// 로드할 회차 (현재는 고정 — 추후 URL 파라미터 등으로 가변화)
-const TARGET_AREA_SLUG = 'biology';
-const TARGET_ROUND_NO  = 1;
+// 로드할 회차 — URL 파라미터로 동적 지정 가능 (테스트 편의):
+//   ?area=biology&round=1   → 생물 1회차
+//   ?round=2                → 현재 영역 그대로, 2회차
+//   파라미터 없으면 default(생물 1회차)
+const _params = new URLSearchParams(location.search);
+const TARGET_AREA_SLUG = _params.get('area') || 'biology';
+const TARGET_ROUND_NO  = parseInt(_params.get('round'), 10) || 1;
 
 
 // ════════════════════════════════════════
