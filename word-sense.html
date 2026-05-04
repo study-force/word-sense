@@ -6370,8 +6370,10 @@ function isPass(p){ return !p.locked && p.found >= PASS_MIN; }
 function buildAreaProgress(){
   // 학습 기록 DB(Phase 2) 미구축 상태 — 현재 회차만 활성, 나머지는 모두 잠금.
   // Phase 2 완료 시 attempts 테이블 query로 교체될 함수.
+  // 현재 회차 인덱스 = SESSION.id(round_no) - 1 (round_no 1-based, AREA_HANJA 0-based)
+  var currentIdx = (SESSION && SESSION.id) ? (SESSION.id - 1) : 0;
   AREA_PROGRESS = AREA_HANJA.map(function(ch, i){
-    if(i === 0){
+    if(i === currentIdx){
       // 오늘의 회차 — 인출(S.found) + 확장(LEARN.collected) 합산
       var foundFromGame = (S && S.found) ? S.found.length : 0;
       var foundFromLearn = (LEARN && LEARN.collected) ? LEARN.collected.length : 0;
