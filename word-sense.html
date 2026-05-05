@@ -3321,11 +3321,13 @@ body.dark-canvas .score-chip,
   font-feature-settings: 'tnum' on;
 }
 
-/* ── 영역별 비교 — 보고서 표 ── */
+/* ── 영역별 비교 — 카드 그리드 (2열 × 3행) ── */
 .st-list {
   width: 100%;
   max-width: 760px;
-  display: flex; flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
   /* 영역별 막대 색상 — data-area 매핑 (한 군데 관리) */
   --area-biology: #5EBE7E;
   --area-society: #A87BD6;
@@ -3335,42 +3337,51 @@ body.dark-canvas .score-chip,
   --area-economy: #7BB6E6;
 }
 .st-row {
-  padding: 14px 0 16px;
-  border-bottom: 1px solid var(--st-line);
+  /* 카드 — 라이트 톤, 옅은 테두리 + 옅은 그림자 */
+  background: rgba(255,255,255,0.6);
+  border: 1px solid rgba(20,25,40,0.08);
+  border-radius: 9px;
+  padding: 18px 20px 16px;
+  box-shadow: 0 1px 3px rgba(20,25,40,0.04);
   transition: opacity .25s ease;
   opacity: 0;
   animation: ciFadeUp .55s ease forwards;
+  /* 카드 내부: 헤더(영역명+pct) → 막대 → 숫자/메타 (세로 스택) */
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
-.st-row:last-of-type { border-bottom: 1px solid var(--st-line-rule); }
-.st-row.empty { opacity: 0.42; }
+.st-row.empty { opacity: 0.35; }
 .st-row.empty {
   animation: ciFadeUp .55s ease forwards;
 }
 
-/* 행 1: 영역명 — 막대 — 숫자/% (가로 한 줄, flex row) */
+/* 카드 행 1: 영역명 + (오른쪽) pct */
 .st-row-head {
   display: flex;
   align-items: center;
-  gap: 18px;
-  margin-bottom: 8px;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
 }
 .st-row-name {
-  font-size: 30px; font-weight: 400;
+  font-size: 27px; font-weight: 400;
   color: var(--st-text-deep);
   letter-spacing: 0.18em;
   white-space: nowrap;
   flex: 0 0 auto;
-  min-width: 90px;
 }
-/* 가운데 — 막대 트랙: flex 로 남는 공간 채우기 */
+/* 카드 행 2: 막대 트랙 — 카드 폭 가득 채워 모든 카드의 트랙이 동일 폭 */
 .st-row-bar {
-  flex: 1 1 auto;
+  width: 100%;
   display: flex;
   align-items: center;
   min-width: 0;
+  margin-bottom: 10px;
 }
 .st-bar-track {
   flex: 1 1 auto;
+  width: 100%;
   height: 15px;
   background: var(--st-track);
   position: relative;
@@ -3406,7 +3417,14 @@ body.dark-canvas .score-chip,
 /* 미시작은 같은 색 유지하되 흐릿하게 (트랙 위에서 0% 폭이라 무관하지만, 톤 일관) */
 .st-row.empty .st-bar-fill { opacity: 0.35; }
 
-/* 오른쪽 — 850 / 1,932 (44%) */
+/* 카드 하단: 숫자(왼쪽) + 메타(오른쪽) — 한 줄 정렬 */
+.st-row-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+/* 850 / 1,932 (괄호 % 는 카드 헤드 우측으로 이동했으므로 % 는 헤드에 표시) */
 .st-row-numbers {
   flex: 0 0 auto;
   white-space: nowrap;
@@ -3425,19 +3443,21 @@ body.dark-canvas .score-chip,
   font-weight: 500;
   margin: 0 2px;
 }
+/* 카드 헤더 우측의 큰 % 표시 */
 .st-row-pct {
-  margin-left: 6px;
-  color: var(--st-dim);
-  font-weight: 600;
-  font-size: 11px;
+  flex: 0 0 auto;
+  color: var(--st-accent-deep);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  font-feature-settings: 'tnum' on;
 }
 .st-row.empty .st-row-pct,
 .st-row.empty .st-row-acquired { color: var(--st-dim-soft); }
 
-/* 행 하단: 메타 — 회차 (만점 제거) */
+/* 카드 하단 메타 — 회차 (만점 제거) */
 .st-row-meta {
-  margin-top: 10px;
-  padding-left: 108px; /* 영역명 폭(90px) + gap(18px) 정렬 */
+  flex: 0 0 auto;
   font-size: 10.5px; font-weight: 600;
   color: var(--st-dim-strong);
   letter-spacing: 0.16em;
@@ -7169,17 +7189,19 @@ function goStats(){
     return '<div class="st-row' + emptyCls + '" data-area="' + area.slug + '" style="animation-delay:' + delay + 's">'
          +   '<div class="st-row-head">'
          +     '<span class="st-row-name">' + area.name_ko + '</span>'
-         +     '<div class="st-row-bar">'
-         +       '<div class="st-bar-track"><div class="st-bar-fill" data-pct="' + pct + '"></div></div>'
-         +     '</div>'
+         +     '<span class="st-row-pct">' + pct + '%</span>'
+         +   '</div>'
+         +   '<div class="st-row-bar">'
+         +     '<div class="st-bar-track"><div class="st-bar-fill" data-pct="' + pct + '"></div></div>'
+         +   '</div>'
+         +   '<div class="st-row-foot">'
          +     '<span class="st-row-numbers">'
          +       '<span class="st-row-acquired">' + fmtNum(area.acquired) + '</span>'
          +       '<span class="st-row-total">/ ' + fmtNum(area.total) + '</span>'
-         +       '<span class="st-row-pct">(' + pct + '%)</span>'
          +     '</span>'
-         +   '</div>'
-         +   '<div class="st-row-meta">'
-         +     '<span class="st-meta-tags">' + metaHtml + '</span>'
+         +     '<div class="st-row-meta">'
+         +       '<span class="st-meta-tags">' + metaHtml + '</span>'
+         +     '</div>'
          +   '</div>'
          + '</div>';
   }).join('');
