@@ -3344,15 +3344,15 @@ body.dark-canvas .score-chip,
   font-feature-settings: 'tnum' on;
 }
 
-/* ── 영역별 비교 — 카드 그리드 (2열 × 3행, 우측 블록) ── */
+/* ── 영역별 비교 — 세로 1열 × 6행 (우측 블록), 한 줄 라인 형식 ── */
 .st-list {
   flex: 1 1 auto;
   width: 100%;
   max-width: 500px;
   min-width: 0;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   /* 영역별 막대 색상 — data-area 매핑 (한 군데 관리) */
   --area-biology: #5EBE7E;
   --area-society: #A87BD6;
@@ -3362,48 +3362,40 @@ body.dark-canvas .score-chip,
   --area-economy: #7BB6E6;
 }
 .st-row {
-  /* 카드 — 라이트 톤, 옅은 테두리 + 옅은 그림자 */
-  background: rgba(255,255,255,0.6);
-  border: 1px solid rgba(20,25,40,0.08);
-  border-radius: 9px;
-  padding: 16px 16px 14px;
-  min-width: 0;
-  box-shadow: 0 1px 3px rgba(20,25,40,0.04);
-  transition: opacity .25s ease;
-  opacity: 0;
-  animation: ciFadeUp .55s ease forwards;
-  /* 카드 내부: 헤더(영역명+pct) → 막대 → 숫자/메타 (세로 스택) */
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-.st-row.empty { opacity: 0.35; }
-.st-row.empty {
-  animation: ciFadeUp .55s ease forwards;
-}
-
-/* 카드 행 1: 영역명 + (오른쪽) pct */
-.st-row-head {
+  /* 한 줄 라인: 영역명 | 막대 | 분수 + % — 좌→우 가로 배치 */
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: 14px;
+  min-width: 0;
+  box-sizing: border-box;
+  opacity: 0;
+  animation: ciFadeUp .55s ease forwards;
+  transition: opacity .25s ease;
 }
+.st-row.empty { opacity: 0.35; }
+
 .st-row-name {
-  font-size: 27px; font-weight: 400;
+  font-size: 20px; font-weight: 400;
   color: var(--st-text-deep);
   letter-spacing: 0.12em;
   white-space: nowrap;
-  flex: 0 0 auto;
+  flex: 0 0 64px;
+  text-align: left;
 }
-/* 카드 행 2: 막대 트랙 — 카드 폭 가득 채워 모든 카드의 트랙이 동일 폭 */
+/* 영역별 영역명 색 — data-area 매핑 */
+.st-row[data-area="biology"] .st-row-name { color: var(--area-biology); }
+.st-row[data-area="society"] .st-row-name { color: var(--area-society); }
+.st-row[data-area="history"] .st-row-name { color: var(--area-history); }
+.st-row[data-area="science"] .st-row-name { color: var(--area-science); }
+.st-row[data-area="culture"] .st-row-name { color: var(--area-culture); }
+.st-row[data-area="economy"] .st-row-name { color: var(--area-economy); }
+
+/* 막대 트랙 — 가운데, flex:1로 가변 폭 */
 .st-row-bar {
-  width: 100%;
+  flex: 1 1 auto;
   display: flex;
   align-items: center;
   min-width: 0;
-  margin-bottom: 10px;
 }
 .st-bar-track {
   flex: 1 1 auto;
@@ -3440,120 +3432,38 @@ body.dark-canvas .score-chip,
 .st-row[data-area="science"] .st-bar-fill { background: var(--area-science); }
 .st-row[data-area="culture"] .st-bar-fill { background: var(--area-culture); }
 .st-row[data-area="economy"] .st-bar-fill { background: var(--area-economy); }
-/* 미시작은 같은 색 유지하되 흐릿하게 (트랙 위에서 0% 폭이라 무관하지만, 톤 일관) */
+/* 미시작은 같은 색 유지하되 흐릿하게 */
 .st-row.empty .st-bar-fill { opacity: 0.35; }
 
-/* 카드 하단: 숫자(왼쪽) + 메타(오른쪽) — 한 줄 정렬 */
-.st-row-foot {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-}
-/* 850 / 1,932 (괄호 % 는 카드 헤드 우측으로 이동했으므로 % 는 헤드에 표시) */
+/* 우측 분수 + % — 한 묶음, 영역색 */
 .st-row-numbers {
   flex: 0 0 auto;
   white-space: nowrap;
   font-feature-settings: 'tnum' on;
   font-size: 12.5px; font-weight: 600;
-  color: var(--st-dim-strong);
   letter-spacing: 0.04em;
+  text-align: right;
+  min-width: 130px;
 }
+.st-row[data-area="biology"] .st-row-numbers { color: var(--area-biology); }
+.st-row[data-area="society"] .st-row-numbers { color: var(--area-society); }
+.st-row[data-area="history"] .st-row-numbers { color: var(--area-history); }
+.st-row[data-area="science"] .st-row-numbers { color: var(--area-science); }
+.st-row[data-area="culture"] .st-row-numbers { color: var(--area-culture); }
+.st-row[data-area="economy"] .st-row-numbers { color: var(--area-economy); }
+
 .st-row-acquired {
-  color: var(--st-text-deep);
   font-weight: 700;
   font-size: 17.5px; /* 분자 강조 — 분모/% 12.5px 대비 +5px */
 }
 .st-row-total {
-  color: var(--st-dim);
   font-weight: 500;
+  opacity: 0.72;
   margin: 0 2px;
 }
-/* 카드 헤더 우측의 큰 % 표시 */
 .st-row-pct {
-  flex: 0 0 auto;
-  color: var(--st-accent-deep);
   font-weight: 700;
-  font-size: 16px;
-  letter-spacing: 0.04em;
-  font-feature-settings: 'tnum' on;
-}
-.st-row.empty .st-row-pct,
-.st-row.empty .st-row-acquired { color: var(--st-dim-soft); }
-
-/* 카드 하단 메타 — 회차 (만점 제거) */
-.st-row-meta {
-  flex: 0 0 auto;
-  font-size: 10.5px; font-weight: 600;
-  color: var(--st-dim-strong);
-  letter-spacing: 0.16em;
-  font-feature-settings: 'tnum' on;
-}
-.st-row-meta .st-meta-tags {
-  display: flex; gap: 18px;
-  flex-wrap: wrap;
-}
-.st-row-meta .st-meta-key {
-  color: var(--st-dim);
-  font-weight: 500;
-  margin-right: 6px;
-  letter-spacing: 0.18em;
-}
-.st-row-meta .st-meta-val {
-  color: var(--st-text);
-  font-weight: 700;
-  font-feature-settings: 'tnum' on;
-}
-.st-row-meta .st-meta-val.accent {
-  color: var(--st-accent-deep);
-}
-.st-row-meta .st-meta-val.empty {
-  color: var(--st-dim-soft);
-  font-weight: 600;
-}
-.st-row.empty .st-meta-val { color: var(--st-dim-soft); }
-
-/* ── 보고서 푸터 — 산출 기준 ── */
-.st-footnote {
-  width: 100%;
-  max-width: 980px;
-  margin-top: 22px;
-  padding: 14px 0 2px;
-  border-top: 1px solid var(--st-line);
-  font-size: 10px; font-weight: 500;
-  color: var(--st-dim);
-  letter-spacing: 0.10em;
-  line-height: 1.7;
-  opacity: 0;
-  animation: ciFadeUp .6s ease .92s forwards;
-}
-.st-footnote .st-foot-key {
-  color: var(--st-dim-strong);
-  font-weight: 700;
-  margin-right: 6px;
-  letter-spacing: 0.16em;
-}
-
-.st-back-btn {
-  margin: 22px 0 8px;
-  align-self: center;
-  appearance: none; -webkit-appearance: none;
-  cursor: pointer;
-  border: 1px solid var(--st-line-strong);
-  background: transparent;
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 12px; font-weight: 700;
-  color: var(--st-dim-strong);
-  padding: 10px 28px;
-  border-radius: 100px;
-  letter-spacing: 0.16em;
-  transition: all .2s ease;
-  opacity: 0;
-  animation: ciFadeUp .6s ease 1.00s forwards;
-}
-.st-back-btn:hover {
-  color: var(--st-text);
-  border-color: var(--st-text);
+  margin-left: 6px;
 }
 
 /* 임시 — 홈 화면의 통계 진입 (개발용, 추후 제거) */
@@ -4433,13 +4343,6 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
         <div class="st-headline" id="st-headline"></div>
         <div class="st-list" id="st-list"></div>
       </div>
-
-      <div class="st-footnote">
-        <div><span class="st-foot-key">산출 기준</span>강화 단계에서 정답 처리한 distinct 어휘 수를 기준으로 함. 인출·확장 단계의 노출만으로는 집계되지 않음.</div>
-        <div><span class="st-foot-key">회차 통과</span>각 회차의 강화 등급(tier ≥ 1)을 받은 회차 수. 만점은 PERFECT 등급 회차에 한함.</div>
-      </div>
-
-      <button class="st-back-btn" onclick="goHome()">처음으로</button>
     </div>
   </div>
 
@@ -4641,8 +4544,8 @@ function addScore(type){
 function updateScoreVisibility(pageId){
   var chip = document.getElementById('score-chip');
   if(!chip) return;
-  // 홈/도입/영역에서는 숨김. 게임/탐구/inferq/강화/결과에서는 표시
-  var hide = (pageId === 'home' || pageId === 'area' || pageId === 'charintro');
+  // 홈/도입/영역/통계에서는 숨김. 게임/탐구/inferq/강화/결과에서는 표시
+  var hide = (pageId === 'home' || pageId === 'area' || pageId === 'charintro' || pageId === 'stats');
   chip.classList.toggle('show', !hide);
   chip.style.display = '';   // CSS의 .show 클래스에 위임
   // 다크 캔버스 페이지(게임/탐구/결과/영역)에서는 글래스 톤
@@ -7200,38 +7103,22 @@ function goStats(){
     });
   });
 
-  // ── 영역별 비교 행 — 막대 차트 ──
+  // ── 영역별 비교 행 — 한 줄 라인 형식 (영역명 | 막대 | 분수 + %) ──
   listEl.innerHTML = stats.map(function(area, i){
     var pct = (area.total > 0) ? Math.round((area.acquired / area.total) * 100) : 0;
     var emptyCls = (area.acquired === 0) ? ' empty' : '';
     var delay    = (0.40 + i * 0.06).toFixed(2);
 
-    /* 메타 — 회차만 (만점 제거), 미시작은 dash */
-    var metaHtml;
-    if(area.acquired === 0 && area.cleared === 0){
-      metaHtml = '<span class="st-meta-key">상태</span><span class="st-meta-val empty">미시작</span>';
-    } else {
-      metaHtml =
-          '<span><span class="st-meta-key">회차</span><span class="st-meta-val">' + area.cleared + '<span style="color:var(--st-dim);font-weight:500"> / 50</span></span></span>';
-    }
-
     return '<div class="st-row' + emptyCls + '" data-area="' + area.slug + '" style="animation-delay:' + delay + 's">'
-         +   '<div class="st-row-head">'
-         +     '<span class="st-row-name">' + area.name_ko + '</span>'
-         +     '<span class="st-row-pct">' + pct + '%</span>'
-         +   '</div>'
+         +   '<span class="st-row-name">' + area.name_ko + '</span>'
          +   '<div class="st-row-bar">'
          +     '<div class="st-bar-track"><div class="st-bar-fill" data-pct="' + pct + '"></div></div>'
          +   '</div>'
-         +   '<div class="st-row-foot">'
-         +     '<span class="st-row-numbers">'
-         +       '<span class="st-row-acquired">' + fmtNum(area.acquired) + '</span>'
-         +       '<span class="st-row-total">/ ' + fmtNum(area.total) + '</span>'
-         +     '</span>'
-         +     '<div class="st-row-meta">'
-         +       '<span class="st-meta-tags">' + metaHtml + '</span>'
-         +     '</div>'
-         +   '</div>'
+         +   '<span class="st-row-numbers">'
+         +     '<span class="st-row-acquired">' + fmtNum(area.acquired) + '</span>'
+         +     '<span class="st-row-total">/ ' + fmtNum(area.total) + '</span>'
+         +     '<span class="st-row-pct">(' + pct + '%)</span>'
+         +   '</span>'
          + '</div>';
   }).join('');
 
