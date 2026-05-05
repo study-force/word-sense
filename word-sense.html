@@ -3156,7 +3156,7 @@ body.dark-canvas .score-chip,
 
 /* ══════════════════════════════════════════════
    통계 페이지 (#stats) — 6 영역 종합 학습 현황
-   레이아웃 C: 한 줄 컴팩트 (영역×등급 분포)
+   핵심 지표: 어휘 습득률 (강화 단계 정답 처리한 distinct 어휘 수)
    ══════════════════════════════════════════════ */
 #stats {
   --st-accent: #3D4D8C;
@@ -3166,8 +3166,8 @@ body.dark-canvas .score-chip,
   position: absolute; inset: 56px 0 0 0;
   display: flex; flex-direction: column;
   align-items: center;
-  padding: 32px 60px 24px;
-  gap: 20px;
+  padding: 30px 60px 22px;
+  gap: 16px;
   overflow-y: auto;
   z-index: 1;
 }
@@ -3183,87 +3183,122 @@ body.dark-canvas .score-chip,
   font-size: 13px; font-weight: 400;
   color: rgba(0,0,0,0.55);
   letter-spacing: 0.02em;
-  margin: -10px 0 4px;
+  margin: -8px 0 6px;
 }
 .st-list {
   width: 100%;
-  max-width: 920px;
+  max-width: 760px;
   display: flex; flex-direction: column;
   gap: 10px;
 }
 .st-row {
-  display: flex; align-items: center;
   background: #FFFFFF;
   border: 1px solid rgba(20,25,40,0.08);
-  border-radius: 6px;
-  padding: 14px 22px;
-  gap: 16px;
+  border-radius: 8px;
+  padding: 14px 22px 14px;
   font-family: 'Noto Sans KR', sans-serif;
   box-shadow: 0 1px 2px rgba(20,25,40,0.04);
+  display: flex; flex-direction: column;
+  gap: 8px;
 }
 .st-row-head {
-  flex: 0 0 130px;
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: baseline;
+  gap: 10px;
 }
-.st-row-emoji { font-size: 20px; }
+.st-row-emoji { font-size: 20px; line-height: 1; }
 .st-row-name {
   font-size: 16px; font-weight: 700;
   color: #2A3050;
   letter-spacing: 0.02em;
 }
-.st-row-progress {
-  flex: 0 0 90px;
-  text-align: right;
-  font-size: 14px; font-weight: 700;
+.st-row-percent {
+  margin-left: auto;
+  font-size: 16px; font-weight: 800;
   color: var(--st-accent);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
 }
-.st-row-progress .st-pg-total {
-  color: rgba(0,0,0,0.40);
-  font-weight: 500;
+.st-row-percent.zero { color: rgba(0,0,0,0.30); }
+
+.st-row-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(20,25,40,0.06);
+  border-radius: 100px;
+  overflow: hidden;
+  position: relative;
 }
-.st-row-tiers {
-  flex: 1;
+.st-row-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(var(--st-accent-rgb),0.65), rgba(var(--st-accent-rgb),1));
+  border-radius: 100px;
+  transition: width 0.6s cubic-bezier(.2,.9,.3,1);
+}
+.st-row-stats {
   display: flex; align-items: center;
-  justify-content: space-around;
-  gap: 8px;
-}
-.st-tier {
-  display: flex; align-items: center; gap: 5px;
-  transition: opacity .25s ease;
-}
-.st-tier.zero { opacity: 0.32; }
-.st-tier-icon {
-  display: inline-flex;
-  align-items: center;
-  gap: 1px;
-}
-.st-tier-icon .stx {
-  width: 12px; height: 12px;
-  fill: #FFB300;
-  filter: drop-shadow(0 0 2px rgba(255,180,0,0.5));
-}
-.st-tier.zero .st-tier-icon .stx {
-  fill: #C5CBD7;
-  filter: none;
-}
-.st-tier-perfect-icon {
-  font-size: 18px;
-  line-height: 1;
-  filter: drop-shadow(0 0 4px rgba(255,200,0,0.7));
-}
-.st-tier.zero .st-tier-perfect-icon {
-  filter: grayscale(1) opacity(0.6);
-}
-.st-tier-count {
+  flex-wrap: wrap;
+  gap: 4px 14px;
   font-size: 13px;
+  color: rgba(20,25,40,0.72);
+  letter-spacing: 0.01em;
+}
+.st-stat-main {
   font-weight: 700;
   color: #2A3050;
-  min-width: 14px;
-  text-align: left;
 }
+.st-stat-main .st-stat-num {
+  color: var(--st-accent);
+  font-weight: 800;
+}
+.st-stat-main .st-stat-den {
+  color: rgba(20,25,40,0.45);
+  font-weight: 600;
+}
+.st-stat-sep {
+  color: rgba(20,25,40,0.20);
+}
+.st-stat-perfect {
+  color: #B87800;
+  font-weight: 700;
+}
+.st-stat-perfect.zero { color: rgba(20,25,40,0.30); font-weight: 500; }
+
+/* 합계 카드 — 6 영역 전체 어휘 습득 */
+.st-total {
+  width: 100%;
+  max-width: 760px;
+  background: linear-gradient(135deg, rgba(var(--st-accent-rgb),0.08), rgba(var(--st-accent-rgb),0.04));
+  border: 1px solid rgba(var(--st-accent-rgb), 0.20);
+  border-radius: 8px;
+  padding: 16px 22px;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+.st-total-label {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px; font-weight: 600;
+  color: rgba(20,25,40,0.70);
+  letter-spacing: 0.04em;
+}
+.st-total-value {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 18px; font-weight: 800;
+  color: var(--st-accent);
+  letter-spacing: 0.01em;
+}
+.st-total-value .st-stat-den { color: rgba(20,25,40,0.45); font-weight: 600; }
+.st-total-value .st-total-pct {
+  margin-left: 10px;
+  padding: 2px 10px;
+  background: var(--st-accent);
+  color: #FFFFFF;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .st-back-btn {
-  margin-top: 10px;
+  margin-top: 6px;
   align-self: center;
   appearance: none; -webkit-appearance: none;
   cursor: pointer;
@@ -4156,8 +4191,9 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
     </div>
     <div class="st-body">
       <h1 class="st-title">내 학습 현황</h1>
-      <div class="st-subtitle">6개 영역 어휘 습득 통계</div>
+      <div class="st-subtitle">훈감각 훈련으로 익힌 어휘 — 강화 단계 정답 처리한 어휘만 집계</div>
       <div class="st-list" id="st-list"></div>
+      <div class="st-total" id="st-total"></div>
       <button class="st-back-btn" onclick="goHome()">← 처음으로</button>
     </div>
   </div>
@@ -6672,8 +6708,24 @@ function renderTierBadge(correct, total){
 }
 
 // ══════════════════════════════════════════════
-// 통계 페이지 — 6 영역 종합 학습 현황
-//   현재는 mock 데이터, 추후 v_area_tier_distribution view에서 fetch
+// 통계 페이지 — 6 영역 어휘 습득 통계
+//   핵심 지표: acquired / total — 강화 단계에서 정답 처리(reinforce_passed=true)한
+//   distinct 어휘 수 / 영역 전체 가족 어휘 수
+//
+//   추후 Phase 2 frontend 통합 시 다음 쿼리로 교체:
+//     [영역별 학생 어휘 습득 수]
+//     SELECT s.area_id, COUNT(DISTINCT wr.word_master_id) AS acquired
+//     FROM word_results wr
+//     JOIN session_words sw ON sw.id = wr.session_word_id
+//     JOIN sessions s ON s.id = sw.session_id
+//     WHERE wr.member_no = ? AND wr.reinforce_passed = true
+//     GROUP BY s.area_id;
+//
+//     [영역별 전체 가족 어휘 수]
+//     SELECT s.area_id, COUNT(DISTINCT sw.word_master_id) AS total
+//     FROM session_words sw
+//     JOIN sessions s ON s.id = sw.session_id
+//     GROUP BY s.area_id;
 // ══════════════════════════════════════════════
 var STATS_AREAS = [
   { slug:'biology', emoji:'🌿', name_ko:'생물' },
@@ -6684,68 +6736,81 @@ var STATS_AREAS = [
   { slug:'economy', emoji:'💰', name_ko:'경제' }
 ];
 
-// Mock 데이터 — 다양한 분포로 페이지 디자인 검증
+// Mock 데이터 — 영역별 학생 학습 진척도 다양화
+//   acquired: 강화 정답 처리한 distinct 어휘 수 (학생 진척도)
+//   total:    영역 전체 가족 어휘 수 (50회차 합산, ~2,000개 수준)
+//   cleared:  통과한 회차 수 (tier ≥ 1)
+//   perfect:  PERFECT 등급 회차 수 (만점)
 var STATS_MOCK = {
-  biology: { cleared:12, perfect:5, t5:0, t4:2, t3:3, t2:1, t1:1 },
-  society: { cleared: 8, perfect:1, t5:0, t4:2, t3:3, t2:1, t1:1 },
-  history: { cleared: 4, perfect:0, t5:0, t4:1, t3:1, t2:1, t1:1 },
-  science: { cleared: 0, perfect:0, t5:0, t4:0, t3:0, t2:0, t1:0 },
-  culture: { cleared: 6, perfect:2, t5:1, t4:1, t3:1, t2:0, t1:1 },
-  economy: { cleared: 0, perfect:0, t5:0, t4:0, t3:0, t2:0, t1:0 }
+  biology: { acquired: 850, total: 1932, cleared: 12, perfect: 5 },
+  society: { acquired: 320, total: 1756, cleared:  8, perfect: 1 },
+  history: { acquired:  95, total: 1800, cleared:  4, perfect: 0 },
+  science: { acquired:   0, total: 1820, cleared:  0, perfect: 0 },
+  culture: { acquired: 410, total: 1650, cleared:  7, perfect: 2 },
+  economy: { acquired:   0, total: 1500, cleared:  0, perfect: 0 }
 };
 
 function fetchAreaStats(){
-  // TODO Phase 2 frontend 통합: SELECT * FROM v_area_tier_distribution WHERE member_no=...
-  // 현재는 mock 데이터 반환
+  // TODO Phase 2 frontend 통합: 위 SQL로 실데이터 fetch
   return STATS_AREAS.map(function(area){
-    var stat = STATS_MOCK[area.slug] || { cleared:0, perfect:0, t5:0, t4:0, t3:0, t2:0, t1:0 };
+    var stat = STATS_MOCK[area.slug] || { acquired:0, total:0, cleared:0, perfect:0 };
     return Object.assign({}, area, stat);
   });
 }
 
-function renderStatsStarsCompact(starCount){
-  // 작은 별 N개 (12px) — 통계 페이지의 등급별 아이콘
-  var svg = '<svg viewBox="0 0 24 24" class="stx" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polygon points="12,2.5 14.6,9.4 22,9.8 16.3,14.6 18.2,21.6 12,17.7 5.8,21.6 7.7,14.6 2,9.8 9.4,9.4"/></svg>';
-  var html = '';
-  for(var i = 0; i < starCount; i++) html += svg;
-  return html;
+function fmtNum(n){
+  // 1,932 형식 — 천 단위 콤마
+  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
 function goStats(){
   var stats = fetchAreaStats();
-  var listEl = document.getElementById('st-list');
+  var listEl  = document.getElementById('st-list');
+  var totalEl = document.getElementById('st-total');
   if(!listEl) return;
 
+  // ── 영역별 카드 ──
   listEl.innerHTML = stats.map(function(area){
-    // 등급별 컬럼 — PERFECT, 5단계, 4단계, 3단계, 2단계, 1단계
-    var tiers = [
-      { count: area.perfect, isPerfect: true },
-      { count: area.t5, stars: 5 },
-      { count: area.t4, stars: 4 },
-      { count: area.t3, stars: 3 },
-      { count: area.t2, stars: 2 },
-      { count: area.t1, stars: 1 }
-    ];
-    var tiersHtml = tiers.map(function(t){
-      var iconHtml = t.isPerfect
-        ? '<span class="st-tier-perfect-icon">⭐</span>'
-        : '<span class="st-tier-icon">' + renderStatsStarsCompact(t.stars) + '</span>';
-      var zeroCls = (t.count === 0) ? ' zero' : '';
-      return '<div class="st-tier' + zeroCls + '">'
-           +   iconHtml
-           +   '<span class="st-tier-count">' + t.count + '</span>'
-           + '</div>';
-    }).join('');
+    var pct = (area.total > 0) ? Math.round((area.acquired / area.total) * 100) : 0;
+    var pctCls = (pct === 0) ? ' zero' : '';
+    var perfectCls = (area.perfect === 0) ? ' zero' : '';
 
     return '<div class="st-row">'
          +   '<div class="st-row-head">'
          +     '<span class="st-row-emoji">' + area.emoji + '</span>'
          +     '<span class="st-row-name">' + area.name_ko + '</span>'
+         +     '<span class="st-row-percent' + pctCls + '">' + pct + '%</span>'
          +   '</div>'
-         +   '<div class="st-row-tiers">' + tiersHtml + '</div>'
-         +   '<div class="st-row-progress">' + area.cleared + '<span class="st-pg-total"> / 50</span></div>'
+         +   '<div class="st-row-bar">'
+         +     '<div class="st-row-bar-fill" style="width:' + pct + '%;"></div>'
+         +   '</div>'
+         +   '<div class="st-row-stats">'
+         +     '<span class="st-stat-main">'
+         +       '<span class="st-stat-num">' + fmtNum(area.acquired) + '</span>'
+         +       '<span class="st-stat-den"> / ' + fmtNum(area.total) + ' 어휘</span>'
+         +     '</span>'
+         +     '<span class="st-stat-sep">·</span>'
+         +     '<span>' + area.cleared + ' / 50 회차 통과</span>'
+         +     '<span class="st-stat-sep">·</span>'
+         +     '<span class="st-stat-perfect' + perfectCls + '">⭐ ' + area.perfect + ' 만점</span>'
+         +   '</div>'
          + '</div>';
   }).join('');
+
+  // ── 6 영역 합계 ──
+  var totalAcquired = stats.reduce(function(s,a){ return s + a.acquired; }, 0);
+  var totalAll      = stats.reduce(function(s,a){ return s + a.total; }, 0);
+  var totalPct      = (totalAll > 0) ? Math.round((totalAcquired / totalAll) * 100) : 0;
+
+  if(totalEl){
+    totalEl.innerHTML =
+        '<div class="st-total-label">6 영역 전체 합계</div>'
+      + '<div class="st-total-value">'
+      +   fmtNum(totalAcquired)
+      +   '<span class="st-stat-den"> / ' + fmtNum(totalAll) + ' 어휘</span>'
+      +   '<span class="st-total-pct">' + totalPct + '%</span>'
+      + '</div>';
+  }
 
   showPage('stats');
 }
