@@ -3299,7 +3299,7 @@ body.dark-canvas .score-chip,
   margin-bottom: 8px;
 }
 .st-row-name {
-  font-size: 35px; font-weight: 400;
+  font-size: 30px; font-weight: 400;
   color: var(--st-text-deep);
   letter-spacing: 0.18em;
   white-space: nowrap;
@@ -3319,6 +3319,7 @@ body.dark-canvas .score-chip,
   background: var(--st-track);
   position: relative;
   overflow: hidden;
+  border-radius: 7.5px; /* 캡슐 — 높이의 절반 */
 }
 .st-bar-fill {
   position: absolute;
@@ -3326,6 +3327,18 @@ body.dark-canvas .score-chip,
   background: var(--st-accent-deep);
   width: 0%;
   transition: width 1.0s cubic-bezier(.2,.9,.2,1);
+  border-radius: 7.5px; /* 캡슐 마감 */
+  overflow: hidden;
+}
+/* 글로시 하이라이트 — 위쪽 30% 옅은 흰색 반사선 */
+.st-bar-fill::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 30%;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.45), rgba(255,255,255,0));
+  border-radius: 7.5px 7.5px 0 0;
+  pointer-events: none;
 }
 /* 영역별 막대 색 — data-area 매핑 */
 .st-row[data-area="biology"] .st-bar-fill { background: var(--area-biology); }
@@ -3349,6 +3362,7 @@ body.dark-canvas .score-chip,
 .st-row-acquired {
   color: var(--st-text-deep);
   font-weight: 700;
+  font-size: 17.5px; /* 분자 강조 — 분모/% 12.5px 대비 +5px */
 }
 .st-row-total {
   color: var(--st-dim);
