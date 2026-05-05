@@ -3270,6 +3270,13 @@ body.dark-canvas .score-chip,
   width: 100%;
   max-width: 760px;
   display: flex; flex-direction: column;
+  /* 영역별 막대 색상 — data-area 매핑 (한 군데 관리) */
+  --area-biology: #5EBE7E;
+  --area-society: #A87BD6;
+  --area-history: #E5C257;
+  --area-science: #9CA3B3;
+  --area-culture: #E889A8;
+  --area-economy: #7BB6E6;
 }
 .st-row {
   padding: 14px 0 16px;
@@ -3284,62 +3291,30 @@ body.dark-canvas .score-chip,
   animation: ciFadeUp .55s ease forwards;
 }
 
-/* 행 1: 영역명 — 숫자 — 진척률 (3 컬럼) */
+/* 행 1: 영역명 — 막대 — 숫자/% (가로 한 줄, flex row) */
 .st-row-head {
-  display: grid;
-  grid-template-columns: 100px 1fr 78px;
-  align-items: baseline;
-  gap: 14px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
   margin-bottom: 8px;
 }
 .st-row-name {
-  font-size: 40px; font-weight: 400;
+  font-size: 35px; font-weight: 400;
   color: var(--st-text-deep);
   letter-spacing: 0.18em;
   white-space: nowrap;
-  min-width: 100px;
+  flex: 0 0 auto;
+  min-width: 90px;
 }
-.st-row-numbers {
-  text-align: right;
-  font-feature-settings: 'tnum' on;
-  white-space: nowrap;
-}
-.st-row-acquired {
-  font-size: 24px; font-weight: 800;
-  color: var(--st-text-deep);
-  letter-spacing: -0.012em;
-}
-.st-row-total {
-  font-size: 12px; font-weight: 500;
-  color: var(--st-dim);
-  letter-spacing: 0.02em;
-  margin-left: 6px;
-}
-.st-row-pct {
-  text-align: right;
-  font-size: 18px; font-weight: 800;
-  color: var(--st-accent-deep);
-  letter-spacing: 0;
-  font-feature-settings: 'tnum' on;
-  line-height: 1;
-}
-.st-row-pct .st-row-pct-sym {
-  font-size: 12px; font-weight: 700;
-  color: var(--st-accent);
-  margin-left: 1px;
-  vertical-align: 2px;
-}
-.st-row.empty .st-row-pct,
-.st-row.empty .st-row-pct .st-row-pct-sym { color: var(--st-dim-soft); }
-
-/* 행 2: 진척 막대 — 6 영역 가로 비교 */
+/* 가운데 — 막대 트랙: flex 로 남는 공간 채우기 */
 .st-row-bar {
-  display: grid;
-  grid-template-columns: 100px 1fr 78px;
-  gap: 14px;
+  flex: 1 1 auto;
+  display: flex;
   align-items: center;
+  min-width: 0;
 }
 .st-bar-track {
+  flex: 1 1 auto;
   height: 15px;
   background: var(--st-track);
   position: relative;
@@ -3352,14 +3327,47 @@ body.dark-canvas .score-chip,
   width: 0%;
   transition: width 1.0s cubic-bezier(.2,.9,.2,1);
 }
-.st-row.empty .st-bar-fill { background: var(--st-dim-soft); }
+/* 영역별 막대 색 — data-area 매핑 */
+.st-row[data-area="biology"] .st-bar-fill { background: var(--area-biology); }
+.st-row[data-area="society"] .st-bar-fill { background: var(--area-society); }
+.st-row[data-area="history"] .st-bar-fill { background: var(--area-history); }
+.st-row[data-area="science"] .st-bar-fill { background: var(--area-science); }
+.st-row[data-area="culture"] .st-bar-fill { background: var(--area-culture); }
+.st-row[data-area="economy"] .st-bar-fill { background: var(--area-economy); }
+/* 미시작은 같은 색 유지하되 흐릿하게 (트랙 위에서 0% 폭이라 무관하지만, 톤 일관) */
+.st-row.empty .st-bar-fill { opacity: 0.35; }
 
-/* 행 3: 메타 — 회차/만점 */
+/* 오른쪽 — 850 / 1,932 (44%) */
+.st-row-numbers {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-feature-settings: 'tnum' on;
+  font-size: 12.5px; font-weight: 600;
+  color: var(--st-dim-strong);
+  letter-spacing: 0.04em;
+}
+.st-row-acquired {
+  color: var(--st-text-deep);
+  font-weight: 700;
+}
+.st-row-total {
+  color: var(--st-dim);
+  font-weight: 500;
+  margin: 0 2px;
+}
+.st-row-pct {
+  margin-left: 6px;
+  color: var(--st-dim);
+  font-weight: 600;
+  font-size: 11px;
+}
+.st-row.empty .st-row-pct,
+.st-row.empty .st-row-acquired { color: var(--st-dim-soft); }
+
+/* 행 하단: 메타 — 회차 (만점 제거) */
 .st-row-meta {
   margin-top: 10px;
-  display: grid;
-  grid-template-columns: 100px 1fr;
-  gap: 14px;
+  padding-left: 108px; /* 영역명 폭(90px) + gap(18px) 정렬 */
   font-size: 10.5px; font-weight: 600;
   color: var(--st-dim-strong);
   letter-spacing: 0.16em;
@@ -6922,32 +6930,28 @@ function goStats(){
     var emptyCls = (area.acquired === 0) ? ' empty' : '';
     var delay    = (0.40 + i * 0.06).toFixed(2);
 
-    /* 메타 — 회차/만점, 미시작은 dash */
+    /* 메타 — 회차만 (만점 제거), 미시작은 dash */
     var metaHtml;
     if(area.acquired === 0 && area.cleared === 0){
       metaHtml = '<span class="st-meta-key">상태</span><span class="st-meta-val empty">미시작</span>';
     } else {
       metaHtml =
-          '<span><span class="st-meta-key">통과</span><span class="st-meta-val">' + area.cleared + '<span style="color:var(--st-dim);font-weight:500"> / 50</span></span></span>'
-        + '<span><span class="st-meta-key">만점</span><span class="st-meta-val accent">' + area.perfect + '</span></span>';
+          '<span><span class="st-meta-key">회차</span><span class="st-meta-val">' + area.cleared + '<span style="color:var(--st-dim);font-weight:500"> / 50</span></span></span>';
     }
 
-    return '<div class="st-row' + emptyCls + '" style="animation-delay:' + delay + 's">'
+    return '<div class="st-row' + emptyCls + '" data-area="' + area.slug + '" style="animation-delay:' + delay + 's">'
          +   '<div class="st-row-head">'
          +     '<span class="st-row-name">' + area.name_ko + '</span>'
+         +     '<div class="st-row-bar">'
+         +       '<div class="st-bar-track"><div class="st-bar-fill" data-pct="' + pct + '"></div></div>'
+         +     '</div>'
          +     '<span class="st-row-numbers">'
          +       '<span class="st-row-acquired">' + fmtNum(area.acquired) + '</span>'
          +       '<span class="st-row-total">/ ' + fmtNum(area.total) + '</span>'
+         +       '<span class="st-row-pct">(' + pct + '%)</span>'
          +     '</span>'
-         +     '<span class="st-row-pct">' + pct + '<span class="st-row-pct-sym">%</span></span>'
-         +   '</div>'
-         +   '<div class="st-row-bar">'
-         +     '<span></span>'
-         +     '<div class="st-bar-track"><div class="st-bar-fill" data-pct="' + pct + '"></div></div>'
-         +     '<span></span>'
          +   '</div>'
          +   '<div class="st-row-meta">'
-         +     '<span></span>'
          +     '<span class="st-meta-tags">' + metaHtml + '</span>'
          +   '</div>'
          + '</div>';
