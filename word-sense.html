@@ -3287,15 +3287,17 @@ body.dark-canvas .score-chip,
 /* 행 1: 영역명 — 숫자 — 진척률 (3 컬럼) */
 .st-row-head {
   display: grid;
-  grid-template-columns: 76px 1fr 78px;
+  grid-template-columns: 100px 1fr 78px;
   align-items: baseline;
   gap: 14px;
   margin-bottom: 8px;
 }
 .st-row-name {
-  font-size: 40px; font-weight: 700;
+  font-size: 40px; font-weight: 400;
   color: var(--st-text-deep);
   letter-spacing: 0.18em;
+  white-space: nowrap;
+  min-width: 100px;
 }
 .st-row-numbers {
   text-align: right;
@@ -3333,7 +3335,7 @@ body.dark-canvas .score-chip,
 /* 행 2: 진척 막대 — 6 영역 가로 비교 */
 .st-row-bar {
   display: grid;
-  grid-template-columns: 76px 1fr 78px;
+  grid-template-columns: 100px 1fr 78px;
   gap: 14px;
   align-items: center;
 }
@@ -3356,7 +3358,7 @@ body.dark-canvas .score-chip,
 .st-row-meta {
   margin-top: 10px;
   display: grid;
-  grid-template-columns: 76px 1fr;
+  grid-template-columns: 100px 1fr;
   gap: 14px;
   font-size: 10.5px; font-weight: 600;
   color: var(--st-dim-strong);
