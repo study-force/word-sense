@@ -3155,166 +3155,186 @@ body.dark-canvas .score-chip,
 }
 
 /* ══════════════════════════════════════════════
-   통계 페이지 (#stats) — 6 영역 종합 학습 현황
-   핵심 지표: 어휘 습득률 (강화 단계 정답 처리한 distinct 어휘 수)
+   통계 페이지 (#stats) — 어휘 습득 분석 보고서
+   디자인 톤: 오늘의 한자(charintro) 페이지와 결 통일
+     • 라이트 캔버스 + 진남색 텍스트
+     • 박스/카드 없이 가는 선만 사용
+     • 타이포그래피 위계로 중요도 표현
+     • 박스 그림자·테두리·이모지 모두 배제
    ══════════════════════════════════════════════ */
 #stats {
   --st-accent: #3D4D8C;
+  --st-accent-deep: #252F66;
   --st-accent-rgb: 61, 77, 140;
+  --st-line: rgba(20,25,40,0.08);
+  --st-line-strong: rgba(20,25,40,0.18);
+  --st-text: #2A3050;
+  --st-dim: rgba(20,25,40,0.45);
+  --st-dim-strong: rgba(20,25,40,0.62);
+  --st-dim-soft:   rgba(20,25,40,0.28);
 }
+
 .st-body {
   position: absolute; inset: 56px 0 0 0;
   display: flex; flex-direction: column;
   align-items: center;
-  padding: 30px 60px 22px;
-  gap: 16px;
+  padding: 32px 60px 24px;
   overflow-y: auto;
   z-index: 1;
-}
-.st-title {
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 22px; font-weight: 700;
-  color: #2A3050;
-  letter-spacing: 0.04em;
-  margin: 0;
+}
+
+.st-title {
+  font-size: 13px; font-weight: 700;
+  color: var(--st-dim-strong);
+  letter-spacing: 0.32em;
+  margin: 0 0 4px;
+  text-indent: 0.32em;        /* 자간 보정 */
 }
 .st-subtitle {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 13px; font-weight: 400;
-  color: rgba(0,0,0,0.55);
-  letter-spacing: 0.02em;
-  margin: -8px 0 6px;
+  font-size: 11px; font-weight: 500;
+  color: var(--st-dim);
+  letter-spacing: 0.18em;
+  margin: 0 0 28px;
 }
-.st-list {
-  width: 100%;
-  max-width: 760px;
-  display: flex; flex-direction: column;
-  gap: 10px;
-}
-.st-row {
-  background: #FFFFFF;
-  border: 1px solid rgba(20,25,40,0.08);
-  border-radius: 8px;
-  padding: 14px 22px 14px;
-  font-family: 'Noto Sans KR', sans-serif;
-  box-shadow: 0 1px 2px rgba(20,25,40,0.04);
-  display: flex; flex-direction: column;
-  gap: 8px;
-}
-.st-row-head {
-  display: flex; align-items: baseline;
-  gap: 10px;
-}
-.st-row-emoji { font-size: 20px; line-height: 1; }
-.st-row-name {
-  font-size: 16px; font-weight: 700;
-  color: #2A3050;
-  letter-spacing: 0.02em;
-}
-.st-row-percent {
-  margin-left: auto;
-  font-size: 16px; font-weight: 800;
-  color: var(--st-accent);
-  letter-spacing: 0.01em;
-}
-.st-row-percent.zero { color: rgba(0,0,0,0.30); }
 
-.st-row-bar {
+/* ── 히어로 — 6 영역 합계 ── */
+.st-hero {
   width: 100%;
-  height: 8px;
-  background: rgba(20,25,40,0.06);
-  border-radius: 100px;
-  overflow: hidden;
-  position: relative;
+  max-width: 540px;
+  border-top: 1px solid var(--st-line-strong);
+  border-bottom: 1px solid var(--st-line-strong);
+  padding: 26px 0 28px;
+  display: flex; flex-direction: column;
+  align-items: center;
+  margin-bottom: 22px;
 }
-.st-row-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, rgba(var(--st-accent-rgb),0.65), rgba(var(--st-accent-rgb),1));
-  border-radius: 100px;
-  transition: width 0.6s cubic-bezier(.2,.9,.3,1);
+.st-hero-acquired {
+  font-size: 56px; font-weight: 800;
+  color: var(--st-text);
+  letter-spacing: -0.025em;
+  line-height: 1;
+  font-feature-settings: 'tnum' on;
 }
-.st-row-stats {
-  display: flex; align-items: center;
-  flex-wrap: wrap;
-  gap: 4px 14px;
-  font-size: 13px;
-  color: rgba(20,25,40,0.72);
-  letter-spacing: 0.01em;
+.st-hero-label {
+  font-size: 11px; font-weight: 600;
+  color: var(--st-dim);
+  letter-spacing: 0.32em;
+  margin-top: 10px;
+  text-indent: 0.32em;
 }
-.st-stat-main {
-  font-weight: 700;
-  color: #2A3050;
+.st-hero-divider {
+  width: 28px; height: 1px;
+  background: var(--st-line-strong);
+  margin: 14px 0 12px;
 }
-.st-stat-main .st-stat-num {
-  color: var(--st-accent);
-  font-weight: 800;
+.st-hero-total {
+  font-size: 14px; font-weight: 500;
+  color: var(--st-dim-strong);
+  letter-spacing: 0.02em;
+  font-feature-settings: 'tnum' on;
 }
-.st-stat-main .st-stat-den {
-  color: rgba(20,25,40,0.45);
-  font-weight: 600;
-}
-.st-stat-sep {
-  color: rgba(20,25,40,0.20);
-}
-.st-stat-perfect {
-  color: #B87800;
-  font-weight: 700;
-}
-.st-stat-perfect.zero { color: rgba(20,25,40,0.30); font-weight: 500; }
-
-/* 합계 카드 — 6 영역 전체 어휘 습득 */
-.st-total {
-  width: 100%;
-  max-width: 760px;
-  background: linear-gradient(135deg, rgba(var(--st-accent-rgb),0.08), rgba(var(--st-accent-rgb),0.04));
-  border: 1px solid rgba(var(--st-accent-rgb), 0.20);
-  border-radius: 8px;
-  padding: 16px 22px;
-  display: flex; align-items: center;
-  justify-content: space-between;
-  margin-top: 4px;
-}
-.st-total-label {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 13px; font-weight: 600;
-  color: rgba(20,25,40,0.70);
+.st-hero-total .st-hero-total-label {
+  color: var(--st-dim);
+  font-weight: 400;
+  margin-left: 6px;
   letter-spacing: 0.04em;
 }
-.st-total-value {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 18px; font-weight: 800;
-  color: var(--st-accent);
-  letter-spacing: 0.01em;
-}
-.st-total-value .st-stat-den { color: rgba(20,25,40,0.45); font-weight: 600; }
-.st-total-value .st-total-pct {
-  margin-left: 10px;
-  padding: 2px 10px;
-  background: var(--st-accent);
-  color: #FFFFFF;
-  border-radius: 100px;
-  font-size: 13px;
-  font-weight: 700;
+.st-hero-pct {
+  margin-top: 14px;
+  font-size: 13px; font-weight: 700;
+  color: var(--st-accent-deep);
+  letter-spacing: 0.06em;
+  font-feature-settings: 'tnum' on;
 }
 
-.st-back-btn {
+/* ── 영역별 행 ── */
+.st-list {
+  width: 100%;
+  max-width: 540px;
+  display: flex; flex-direction: column;
+}
+.st-row {
+  padding: 16px 4px;
+  border-bottom: 1px solid var(--st-line);
+  transition: opacity .25s ease;
+}
+.st-row:last-of-type { border-bottom: none; }
+.st-row.empty { opacity: 0.36; }
+
+.st-row-line1 {
+  display: flex; align-items: baseline;
+  gap: 14px;
+}
+.st-row-name {
+  flex: 0 0 auto;
+  font-size: 16px; font-weight: 700;
+  color: var(--st-text);
+  letter-spacing: 0.10em;
+  min-width: 60px;
+}
+.st-row-numbers {
+  flex: 1;
+  text-align: right;
+  font-feature-settings: 'tnum' on;
+}
+.st-row-acquired {
+  font-size: 22px; font-weight: 800;
+  color: var(--st-text);
+  letter-spacing: -0.01em;
+}
+.st-row-total {
+  font-size: 13px; font-weight: 500;
+  color: var(--st-dim);
+  letter-spacing: 0.02em;
+  margin-left: 4px;
+}
+.st-row-pct {
+  flex: 0 0 56px;
+  text-align: right;
+  font-size: 17px; font-weight: 700;
+  color: var(--st-accent-deep);
+  letter-spacing: 0.01em;
+  font-feature-settings: 'tnum' on;
+}
+.st-row.empty .st-row-pct { color: var(--st-dim-soft); }
+
+.st-row-line2 {
   margin-top: 6px;
+  font-size: 11px; font-weight: 500;
+  color: var(--st-dim);
+  letter-spacing: 0.10em;
+  text-align: right;
+  font-feature-settings: 'tnum' on;
+}
+.st-row-line2 .st-meta-sep {
+  margin: 0 8px;
+  color: var(--st-dim-soft);
+}
+.st-row-line2 .st-meta-perfect-num {
+  color: var(--st-accent);
+  font-weight: 700;
+}
+.st-row.empty .st-row-line2 { color: var(--st-dim-soft); }
+
+.st-back-btn {
+  margin-top: 28px;
   align-self: center;
   appearance: none; -webkit-appearance: none;
   cursor: pointer;
-  border: 1px solid rgba(20,25,40,0.18);
-  background: #FFFFFF;
+  border: 1px solid var(--st-line-strong);
+  background: transparent;
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 14px; font-weight: 700;
-  color: #2A3050;
+  font-size: 12px; font-weight: 700;
+  color: var(--st-dim-strong);
   padding: 10px 28px;
   border-radius: 100px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.16em;
   transition: all .2s ease;
 }
 .st-back-btn:hover {
-  background: #F5F7FB;
-  border-color: rgba(20,25,40,0.32);
+  color: var(--st-text);
+  border-color: var(--st-text);
 }
 
 /* 임시 — 홈 화면의 통계 진입 (개발용, 추후 제거) */
@@ -4190,11 +4210,11 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
       <div class="logo"><div class="logo-mark"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="14" y1="14" x2="6" y2="6"/><line x1="14" y1="14" x2="22" y2="6"/><line x1="14" y1="14" x2="5" y2="18"/><line x1="14" y1="14" x2="22" y2="20"/><line x1="14" y1="14" x2="14" y2="24"/></g><g fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="22" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="22" cy="20" r="2"/><circle cx="14" cy="24" r="2"/></g><circle cx="14" cy="14" r="3.6" fill="currentColor"/><circle cx="14" cy="14" r="3.6" fill="rgba(255,255,255,0.18)"/></svg></div></div>
     </div>
     <div class="st-body">
-      <h1 class="st-title">내 학습 현황</h1>
-      <div class="st-subtitle">훈감각 훈련으로 익힌 어휘 — 강화 단계 정답 처리한 어휘만 집계</div>
+      <div class="st-title">내 학습 현황</div>
+      <div class="st-subtitle">훈감각 훈련 어휘 습득 분석</div>
+      <div class="st-hero" id="st-hero"></div>
       <div class="st-list" id="st-list"></div>
-      <div class="st-total" id="st-total"></div>
-      <button class="st-back-btn" onclick="goHome()">← 처음으로</button>
+      <button class="st-back-btn" onclick="goHome()">처음으로</button>
     </div>
   </div>
 
@@ -6765,52 +6785,52 @@ function fmtNum(n){
 
 function goStats(){
   var stats = fetchAreaStats();
-  var listEl  = document.getElementById('st-list');
-  var totalEl = document.getElementById('st-total');
-  if(!listEl) return;
+  var heroEl = document.getElementById('st-hero');
+  var listEl = document.getElementById('st-list');
+  if(!listEl || !heroEl) return;
 
-  // ── 영역별 카드 ──
-  listEl.innerHTML = stats.map(function(area){
-    var pct = (area.total > 0) ? Math.round((area.acquired / area.total) * 100) : 0;
-    var pctCls = (pct === 0) ? ' zero' : '';
-    var perfectCls = (area.perfect === 0) ? ' zero' : '';
-
-    return '<div class="st-row">'
-         +   '<div class="st-row-head">'
-         +     '<span class="st-row-emoji">' + area.emoji + '</span>'
-         +     '<span class="st-row-name">' + area.name_ko + '</span>'
-         +     '<span class="st-row-percent' + pctCls + '">' + pct + '%</span>'
-         +   '</div>'
-         +   '<div class="st-row-bar">'
-         +     '<div class="st-row-bar-fill" style="width:' + pct + '%;"></div>'
-         +   '</div>'
-         +   '<div class="st-row-stats">'
-         +     '<span class="st-stat-main">'
-         +       '<span class="st-stat-num">' + fmtNum(area.acquired) + '</span>'
-         +       '<span class="st-stat-den"> / ' + fmtNum(area.total) + ' 어휘</span>'
-         +     '</span>'
-         +     '<span class="st-stat-sep">·</span>'
-         +     '<span>' + area.cleared + ' / 50 회차 통과</span>'
-         +     '<span class="st-stat-sep">·</span>'
-         +     '<span class="st-stat-perfect' + perfectCls + '">⭐ ' + area.perfect + ' 만점</span>'
-         +   '</div>'
-         + '</div>';
-  }).join('');
-
-  // ── 6 영역 합계 ──
+  // ── 히어로: 6 영역 합계 ──
   var totalAcquired = stats.reduce(function(s,a){ return s + a.acquired; }, 0);
   var totalAll      = stats.reduce(function(s,a){ return s + a.total; }, 0);
   var totalPct      = (totalAll > 0) ? Math.round((totalAcquired / totalAll) * 100) : 0;
 
-  if(totalEl){
-    totalEl.innerHTML =
-        '<div class="st-total-label">6 영역 전체 합계</div>'
-      + '<div class="st-total-value">'
-      +   fmtNum(totalAcquired)
-      +   '<span class="st-stat-den"> / ' + fmtNum(totalAll) + ' 어휘</span>'
-      +   '<span class="st-total-pct">' + totalPct + '%</span>'
-      + '</div>';
-  }
+  heroEl.innerHTML =
+      '<div class="st-hero-acquired">' + fmtNum(totalAcquired) + '</div>'
+    + '<div class="st-hero-label">습득 어휘</div>'
+    + '<div class="st-hero-divider"></div>'
+    + '<div class="st-hero-total">'
+    +   '/ ' + fmtNum(totalAll)
+    +   '<span class="st-hero-total-label">6개 영역 전체 가능</span>'
+    + '</div>'
+    + '<div class="st-hero-pct">' + totalPct + '%</div>';
+
+  // ── 영역별 행 ──
+  listEl.innerHTML = stats.map(function(area){
+    var pct = (area.total > 0) ? Math.round((area.acquired / area.total) * 100) : 0;
+    var emptyCls = (area.acquired === 0) ? ' empty' : '';
+
+    // 라인2 — 회차/만점 메타. 미시작 영역은 dash 처리
+    var line2;
+    if(area.acquired === 0 && area.cleared === 0){
+      line2 = '<span>—</span>';
+    } else {
+      line2 = '<span>' + area.cleared + ' / 50 회차 통과</span>'
+            + '<span class="st-meta-sep">·</span>'
+            + '<span>만점 <span class="st-meta-perfect-num">' + area.perfect + '</span></span>';
+    }
+
+    return '<div class="st-row' + emptyCls + '">'
+         +   '<div class="st-row-line1">'
+         +     '<span class="st-row-name">' + area.name_ko + '</span>'
+         +     '<span class="st-row-numbers">'
+         +       '<span class="st-row-acquired">' + fmtNum(area.acquired) + '</span>'
+         +       '<span class="st-row-total"> / ' + fmtNum(area.total) + '</span>'
+         +     '</span>'
+         +     '<span class="st-row-pct">' + pct + '%</span>'
+         +   '</div>'
+         +   '<div class="st-row-line2">' + line2 + '</div>'
+         + '</div>';
+  }).join('');
 
   showPage('stats');
 }
