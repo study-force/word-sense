@@ -3094,17 +3094,19 @@ body.dark-canvas .score-chip,
 }
 .rtb-stars {
   display: flex;
-  gap: 3px;
+  gap: 4px;
 }
 .rtb-star {
-  width: 22px; height: 22px;
+  width: 28px; height: 28px;                 /* 22 → 28 (더 잘 보이게) */
   display: block;
-  fill: #D5D9E0;                             /* 회색 별 */
+  fill: #C5CBD7;                             /* 회색 별 — 약간 더 진해서 노랑과 대비 */
   transition: fill .3s ease, transform .3s ease;
 }
 .rtb-star.filled {
-  fill: #FFC842;                             /* 노랑 별 */
-  filter: drop-shadow(0 1px 2px rgba(255,180,0,0.35));
+  fill: #FFB300;                             /* 진한 황금 — 다크/라이트 양쪽에서 잘 보임 */
+  filter:
+    drop-shadow(0 0 6px rgba(255,180,0,0.65))
+    drop-shadow(0 1px 2px rgba(200,130,0,0.50));
 }
 .rtb-score {
   font-family: 'Noto Sans KR', sans-serif;
