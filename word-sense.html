@@ -3488,8 +3488,8 @@ body.dark-canvas .score-chip,
   align-items: center;
   gap: 8px;
   padding: 12px 20px;
-  background: #1F2238;
-  border: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(180deg, #2A2F45, #1A1E30);
+  border: 1px solid rgba(255,255,255,0.10);
   border-radius: 10px;
   color: #FFFFFF;
   font-family: 'Noto Sans KR', sans-serif;
@@ -3498,13 +3498,13 @@ body.dark-canvas .score-chip,
   letter-spacing: 0.04em;
   cursor: pointer;
   z-index: 5;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.30);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 4px 12px rgba(0,0,0,0.45);
   transition: transform 0.2s ease, box-shadow 0.25s ease, background 0.25s ease;
 }
 .st-finish-btn:hover {
-  background: #2A2E4A;
+  background: linear-gradient(180deg, #323855, #1F2438);
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.40);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 8px 18px rgba(0,0,0,0.55);
 }
 .st-finish-btn .st-finish-x {
   width: 14px;
