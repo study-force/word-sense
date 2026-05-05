@@ -3479,6 +3479,27 @@ body.dark-canvas .score-chip,
   color: rgba(255,255,255,0.45);
 }
 
+/* ── 하단 끝내기 버튼 — 다크 캔버스 dim 캡슐 ── */
+.st-finish-btn {
+  display: inline-block;
+  margin: 32px auto 8px;
+  padding: 10px 28px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 100px;
+  color: rgba(255,255,255,0.65);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+  transition: border-color 0.25s ease, color 0.25s ease, background 0.25s ease;
+}
+.st-finish-btn:hover {
+  border-color: rgba(255,255,255,0.85);
+  color: rgba(255,255,255,0.85);
+}
+
 /* 임시 — 홈 화면의 통계 진입 (개발용, 추후 제거) */
 .home-stats-link {
   position: absolute;
@@ -4359,6 +4380,7 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
           <div class="st-list" id="st-list"></div>
         </div>
       </div>
+      <button type="button" class="st-finish-btn" onclick="goHome()">끝내기</button>
     </div>
   </div>
 
