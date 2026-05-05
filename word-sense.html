@@ -3349,7 +3349,7 @@ body.dark-canvas .score-chip,
   /* 한 줄 라인: 영역명 | 막대 | 분수 + % — 좌→우 가로 배치 */
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 8px; /* 기본 간격 14px → 8px (약 43% 축소) — 영역명↔막대, 막대↔분수 공통 */
   min-width: 0;
   box-sizing: border-box;
   opacity: 0;
@@ -3357,6 +3357,8 @@ body.dark-canvas .score-chip,
   transition: opacity .25s ease;
 }
 .st-row.empty { opacity: 0.45; }
+/* 미시작 영역 — 영역명 추가 딤드 (행 opacity 외에 텍스트 색까지 약화) */
+.st-row.empty .st-row-name { color: rgba(255,255,255,0.40); }
 
 .st-row-name {
   font-size: 20px; font-weight: 400;
@@ -3450,7 +3452,7 @@ body.dark-canvas .score-chip,
   letter-spacing: 0.04em;
   text-align: left;
   min-width: 48px;
-  margin-left: 12px;
+  margin-left: 6px; /* 분수↔(%) 12px → 6px */
   color: rgba(255,255,255,0.45);
 }
 
