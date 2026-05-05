@@ -3209,13 +3209,17 @@ body.dark-canvas .score-chip,
   margin-bottom: 14px;
 }
 
-/* 도넛 컨테이너 — SVG 와 중앙 텍스트를 겹치기 위해 relative */
+/* 도넛 컨테이너 — SVG 와 중앙 텍스트를 겹치기 위해 relative
+   바깥 라벨 공간 확보 위해 wrap 자체는 480x480, 내부 도넛은 300px */
 .st-donut-wrap {
   position: relative;
-  width: 300px; height: 300px;
+  width: 480px; height: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .st-donut-svg {
-  width: 100%; height: 100%;
+  width: 480px; height: 480px;
   /* 12시 방향에서 시작하도록 -90도 회전 */
   transform: rotate(-90deg);
   display: block;
@@ -3232,6 +3236,46 @@ body.dark-canvas .score-chip,
   /* segment 채움 애니메이션 — dashoffset 줄이며 그려짐 */
   transition: stroke-dashoffset 1.0s cubic-bezier(.2,.9,.2,1);
 }
+/* 방사형 라벨 — segment 바깥 가이드 점 + 영역명 + 숫자 */
+.st-donut-label {
+  position: absolute;
+  display: flex; flex-direction: column;
+  align-items: center;
+  font-family: 'Noto Sans KR', sans-serif;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  animation: ciFadeUp .55s ease forwards;
+  white-space: nowrap;
+}
+.st-donut-label .st-lbl-name {
+  font-size: 13px; font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1;
+}
+.st-donut-label .st-lbl-num {
+  margin-top: 4px;
+  font-size: 11px; font-weight: 600;
+  color: var(--st-dim-strong);
+  letter-spacing: 0.04em;
+  font-feature-settings: 'tnum' on;
+}
+.st-donut-label.empty {
+  opacity: 0.35 !important;
+}
+.st-donut-label.empty .st-lbl-name { color: var(--st-dim-soft); }
+.st-donut-label.empty .st-lbl-num  { color: var(--st-dim-soft); }
+/* 가이드 점 — segment 색과 동일 */
+.st-donut-dot {
+  position: absolute;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0;
+  animation: ciFadeUp .55s ease forwards;
+}
+.st-donut-dot.empty { opacity: 0.35 !important; }
 
 /* 도넛 중앙 — 큰 숫자 + 분모 + % */
 .st-donut-center {
@@ -6947,42 +6991,65 @@ function goStats(){
   var totalPct              = (totalDistinct > 0) ? Math.round((totalAcquiredDistinct / totalDistinct) * 100) : 0;
 
   // ── 도넛 SVG 파라미터 ──
-  // 외곽지름 300, 두께 34 → 반지름 = (300-34)/2 = 133
-  var SVG_SIZE   = 300;
+  // wrap 480x480 안에 도넛 외곽지름 300, 두께 34 → 반지름 = (300-34)/2 = 133
+  // SVG viewBox 는 480x480 으로 키워 바깥 라벨 영역을 함께 잡되, 도넛 자체 크기는 유지
+  var SVG_SIZE   = 480;
+  var DONUT_OUT  = 300;
   var STROKE_W   = 34;
-  var RADIUS     = (SVG_SIZE - STROKE_W) / 2;          // 133
+  var RADIUS     = (DONUT_OUT - STROKE_W) / 2;         // 133
   var CIRC       = 2 * Math.PI * RADIUS;               // 약 835.66
   var GAP_PX     = 2.5;                                 // segment 사이 갭(픽셀)
+  var CENTER     = SVG_SIZE / 2;                        // 240
 
   // 영역별 segment 비율 — 분모는 totalDistinct (4432)
   // mock에서는 영역별 acquired 합산해도 OK (안내문 기준)
-  var segments = stats.map(function(area){
+  // 미습득(0) 영역도 라벨을 위해 균등한 가상 슬롯을 잡아 표시 위치를 계산
+  var areaSegs = stats.map(function(area){
     var ratio = (totalDistinct > 0) ? (area.acquired / totalDistinct) : 0;
     return {
       slug: area.slug,
+      name_ko: area.name_ko,
       color: STATS_AREA_COLORS[area.slug] || '#9CA3B3',
+      acquired: area.acquired,
       ratio: ratio,
-      length: ratio * CIRC
+      length: ratio * CIRC,
+      isEmpty: (area.acquired === 0)
     };
-  }).filter(function(s){ return s.length > 0; });
+  });
+
+  var segments = areaSegs.filter(function(s){ return s.length > 0; });
 
   // 미습득 segment — 나머지
   var acquiredRatioSum = segments.reduce(function(a,s){ return a + s.ratio; }, 0);
   var unusedRatio      = Math.max(0, 1 - acquiredRatioSum);
   var unusedLen        = unusedRatio * CIRC;
 
+  // 미습득(0) 영역 수 — 가상 라벨 슬롯 분배용
+  var emptyAreas = areaSegs.filter(function(s){ return s.isEmpty; });
+
   // ── 도넛 SVG 빌드 ──
   // 각 segment 는 단일 <circle> (stroke-dasharray = [seg, rest], stroke-dashoffset = 누적 시작점)
   // 갭은 dasharray 의 seg 길이를 GAP_PX 만큼 줄여서 표현
   var cumulative = 0;
+  // 라벨 위치: segment 중간 각도 (12시=0도, 시계방향)
+  var labelData = [];
   var segSvg = segments.map(function(s){
     var visibleLen = Math.max(0.5, s.length - GAP_PX);
     var dashArr    = visibleLen + ' ' + (CIRC - visibleLen);
     var dashOff    = -cumulative; // 음수: 시작점을 cumulative 만큼 회전
+    var midLen     = cumulative + s.length / 2;
+    var midAngle   = (midLen / CIRC) * 360;             // 12시=0, 시계방향
+    labelData.push({
+      slug: s.slug,
+      name_ko: s.name_ko,
+      color: s.color,
+      acquired: s.acquired,
+      angle: midAngle,
+      isEmpty: false
+    });
     cumulative += s.length;
-    // 초기값: dashoffset 을 -(cumulative - segLen) + CIRC 로 두면 길이 0 부터 채워짐
     return '<circle class="st-donut-seg" data-final-len="' + visibleLen + '" '
-         + 'cx="' + (SVG_SIZE/2) + '" cy="' + (SVG_SIZE/2) + '" r="' + RADIUS + '" '
+         + 'cx="' + CENTER + '" cy="' + CENTER + '" r="' + RADIUS + '" '
          + 'stroke="' + s.color + '" stroke-width="' + STROKE_W + '" '
          + 'stroke-dasharray="0 ' + CIRC + '" '
          + 'stroke-dashoffset="' + dashOff + '" '
@@ -6991,16 +7058,62 @@ function goStats(){
 
   // 미습득 트랙 — segment 들 다음 위치에 작은 갭 두고 회색 옅게
   var trackSvg = '';
+  var trackStart = cumulative;
   if(unusedLen > 0){
     var trackVisibleLen = Math.max(0.5, unusedLen - (segments.length > 0 ? GAP_PX : 0));
     trackSvg = '<circle class="st-donut-track" '
-             + 'cx="' + (SVG_SIZE/2) + '" cy="' + (SVG_SIZE/2) + '" r="' + RADIUS + '" '
+             + 'cx="' + CENTER + '" cy="' + CENTER + '" r="' + RADIUS + '" '
              + 'stroke-width="' + STROKE_W + '" '
              + 'stroke-dasharray="' + trackVisibleLen + ' ' + (CIRC - trackVisibleLen) + '" '
              + 'stroke-dashoffset="' + (-cumulative) + '" />';
   }
 
-  // ── 메인 KPI — 도넛 + 중앙 통합 ──
+  // 미습득(0) 영역 라벨 — 트랙(미습득 호) 내에 균등 분배
+  if(emptyAreas.length > 0 && unusedLen > 0){
+    var slotLen = unusedLen / emptyAreas.length;
+    emptyAreas.forEach(function(s, idx){
+      var midLen = trackStart + slotLen * (idx + 0.5);
+      var midAngle = (midLen / CIRC) * 360;
+      labelData.push({
+        slug: s.slug,
+        name_ko: s.name_ko,
+        color: s.color,
+        acquired: 0,
+        angle: midAngle,
+        isEmpty: true
+      });
+    });
+  }
+
+  // 라벨 위치 산출 — 도넛 외곽(반지름 = DONUT_OUT/2 = 150) 에서 22px 바깥
+  // 가이드 점은 외곽 +10px, 텍스트는 +52px (텍스트가 두 줄이므로 여유)
+  var DOT_R   = DONUT_OUT / 2 + 10;   // 160
+  var TEXT_R  = DONUT_OUT / 2 + 56;   // 206
+  var labelHtml = labelData.map(function(L, i){
+    // SVG 12시=0, 시계방향. CSS 좌표계에서 각도 → 위치
+    var rad = (L.angle - 90) * Math.PI / 180;
+    var dotX = CENTER + DOT_R * Math.cos(rad);
+    var dotY = CENTER + DOT_R * Math.sin(rad);
+    var txtX = CENTER + TEXT_R * Math.cos(rad);
+    var txtY = CENTER + TEXT_R * Math.sin(rad);
+    var emptyCls = L.isEmpty ? ' empty' : '';
+    var delay = (0.55 + i * 0.06).toFixed(2);
+    var nameStyle = L.isEmpty ? '' : ('color:' + L.color + ';');
+    var dotStyle  = 'background:' + L.color + ';';
+    var numTxt    = L.isEmpty ? '— ' : (fmtNum(L.acquired) + ' ');
+    return ''
+      + '<span class="st-donut-dot' + emptyCls + '" '
+      +   'style="left:' + dotX + 'px;top:' + dotY + 'px;' + dotStyle
+      +   'animation-delay:' + delay + 's"></span>'
+      + '<span class="st-donut-label' + emptyCls + '" '
+      +   'style="left:' + txtX + 'px;top:' + txtY + 'px;'
+      +   'animation-delay:' + delay + 's">'
+      +   '<span class="st-lbl-name" style="' + nameStyle + '">' + L.name_ko + '</span>'
+      +   '<span class="st-lbl-num">' + numTxt + '</span>'
+      + '</span>';
+  }).join('');
+
+  // ── 메인 KPI — 도넛 + 중앙 통합 + 방사형 라벨 ──
   headlineEl.innerHTML =
       '<div class="st-headline-label">습득 어휘</div>'
     + '<div class="st-donut-wrap">'
@@ -7008,6 +7121,7 @@ function goStats(){
     +     trackSvg
     +     segSvg
     +   '</svg>'
+    +   labelHtml
     +   '<div class="st-donut-center">'
     +     '<div class="st-donut-num">' + fmtNum(totalAcquiredDistinct) + '<span class="st-num-unit">개</span></div>'
     +     '<div class="st-donut-frac">/ <span class="st-frac-em">' + fmtNum(totalDistinct) + '</span> 어휘</div>'
