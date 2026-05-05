@@ -3412,22 +3412,23 @@ body.dark-canvas .score-chip,
 /* 미시작은 같은 색 유지하되 흐릿하게 (다크 배경 고려해 살짝 올림) */
 .st-row.empty .st-bar-fill { opacity: 0.45; }
 
-/* 우측 분수 + % — 한 묶음, 영역색 */
-.st-row-numbers {
+/* 우측 분수 — 블록 1, 분모 끝 동일 X 좌표 정렬 (오른쪽 정렬) */
+.st-row-fraction {
   flex: 0 0 auto;
   white-space: nowrap;
   font-feature-settings: 'tnum' on;
+  font-variant-numeric: tabular-nums;
   font-size: 12.5px; font-weight: 600;
   letter-spacing: 0.04em;
   text-align: right;
-  min-width: 130px;
+  min-width: 110px;
 }
-.st-row[data-area="biology"] .st-row-numbers { color: var(--area-biology); }
-.st-row[data-area="society"] .st-row-numbers { color: var(--area-society); }
-.st-row[data-area="history"] .st-row-numbers { color: var(--area-history); }
-.st-row[data-area="science"] .st-row-numbers { color: var(--area-science); }
-.st-row[data-area="culture"] .st-row-numbers { color: var(--area-culture); }
-.st-row[data-area="economy"] .st-row-numbers { color: var(--area-economy); }
+.st-row[data-area="biology"] .st-row-fraction { color: var(--area-biology); }
+.st-row[data-area="society"] .st-row-fraction { color: var(--area-society); }
+.st-row[data-area="history"] .st-row-fraction { color: var(--area-history); }
+.st-row[data-area="science"] .st-row-fraction { color: var(--area-science); }
+.st-row[data-area="culture"] .st-row-fraction { color: var(--area-culture); }
+.st-row[data-area="economy"] .st-row-fraction { color: var(--area-economy); }
 
 .st-row-acquired {
   font-weight: 700;
@@ -3437,12 +3438,20 @@ body.dark-canvas .score-chip,
   font-weight: 500;
   color: rgba(255,255,255,0.45); /* 분모는 회색 — 영역색 끄기 */
   opacity: 1;
-  margin: 0 2px;
 }
+
+/* 우측 백분율 — 블록 2, 모든 행의 시작 X 동일 (왼쪽 정렬) */
 .st-row-pct {
-  font-weight: 700;
-  color: rgba(255,255,255,0.45); /* 백분율도 회색 */
-  margin-left: 6px;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-feature-settings: 'tnum' on;
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px; font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: left;
+  min-width: 48px;
+  margin-left: 12px;
+  color: rgba(255,255,255,0.45);
 }
 
 /* 임시 — 홈 화면의 통계 진입 (개발용, 추후 제거) */
@@ -6997,43 +7006,20 @@ function goStats(){
              + 'stroke-dashoffset="' + (-cumulative) + '" />';
   }
 
-  // 미습득(0) 영역 라벨 — 트랙(미습득 호) 내에 균등 분배
-  if(emptyAreas.length > 0 && unusedLen > 0){
-    var slotLen = unusedLen / emptyAreas.length;
-    emptyAreas.forEach(function(s, idx){
-      var midLen = trackStart + slotLen * (idx + 0.5);
-      var midAngle = (midLen / CIRC) * 360;
-      labelData.push({
-        slug: s.slug,
-        name_ko: s.name_ko,
-        color: s.color,
-        acquired: 0,
-        angle: midAngle,
-        isEmpty: true
-      });
-    });
-  }
+  // 미진행(0 acquired) 영역은 도넛에서 segment·라벨 모두 제거 — 트랙으로만 표시.
+  // (6 영역 라인 리스트에서는 dim 처리되어 그대로 노출됨)
 
-  // 라벨 위치 산출 — 도넛 외곽(반지름 = DONUT_OUT/2 = 150) 에서 22px 바깥
-  // 가이드 점은 외곽 +10px, 텍스트는 +52px (텍스트가 두 줄이므로 여유)
-  var DOT_R   = DONUT_OUT / 2 + 10;   // 160
-  var TEXT_R  = DONUT_OUT / 2 + 56;   // 206
+  // 라벨 위치 산출 — 점이 사라진 위치(도넛 외곽 가까이)에 영역명 텍스트 배치
+  var TEXT_R  = DONUT_OUT / 2 + 10;   // 160 (이전 점 위치)
   var labelHtml = labelData.map(function(L, i){
     // SVG 12시=0, 시계방향. CSS 좌표계에서 각도 → 위치
     var rad = (L.angle - 90) * Math.PI / 180;
-    var dotX = CENTER + DOT_R * Math.cos(rad);
-    var dotY = CENTER + DOT_R * Math.sin(rad);
     var txtX = CENTER + TEXT_R * Math.cos(rad);
     var txtY = CENTER + TEXT_R * Math.sin(rad);
-    var emptyCls = L.isEmpty ? ' empty' : '';
     var delay = (0.55 + i * 0.06).toFixed(2);
-    var nameStyle = L.isEmpty ? '' : ('color:' + L.color + ';');
-    var dotStyle  = 'background:' + L.color + ';';
+    var nameStyle = 'color:' + L.color + ';';
     return ''
-      + '<span class="st-donut-dot' + emptyCls + '" '
-      +   'style="left:' + dotX + 'px;top:' + dotY + 'px;' + dotStyle
-      +   'animation-delay:' + delay + 's"></span>'
-      + '<span class="st-donut-label' + emptyCls + '" '
+      + '<span class="st-donut-label" '
       +   'style="left:' + txtX + 'px;top:' + txtY + 'px;'
       +   'animation-delay:' + delay + 's">'
       +   '<span class="st-lbl-name" style="' + nameStyle + '">' + L.name_ko + '</span>'
@@ -7042,8 +7028,7 @@ function goStats(){
 
   // ── 메인 KPI — 도넛 + 중앙 통합 + 방사형 라벨 ──
   headlineEl.innerHTML =
-      '<div class="st-headline-label">습득 어휘</div>'
-    + '<div class="st-donut-frame">'
+      '<div class="st-donut-frame">'
     + '<div class="st-donut-wrap">'
     +   '<svg class="st-donut-svg" viewBox="0 0 ' + SVG_SIZE + ' ' + SVG_SIZE + '" aria-hidden="true">'
     +     trackSvg
@@ -7091,11 +7076,11 @@ function goStats(){
          +   '<div class="st-row-bar">'
          +     '<div class="st-bar-track"><div class="st-bar-fill" data-pct="' + pct + '"></div></div>'
          +   '</div>'
-         +   '<span class="st-row-numbers">'
+         +   '<span class="st-row-fraction">'
          +     '<span class="st-row-acquired">' + fmtNum(area.acquired) + '</span>'
-         +     '<span class="st-row-total">/ ' + fmtNum(area.total) + '</span>'
-         +     '<span class="st-row-pct">(' + pct + '%)</span>'
+         +     '<span class="st-row-total"> / ' + fmtNum(area.total) + '</span>'
          +   '</span>'
+         +   '<span class="st-row-pct">(' + pct + '%)</span>'
          + '</div>';
   }).join('');
 
