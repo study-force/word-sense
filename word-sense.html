@@ -3188,15 +3188,28 @@ body.dark-canvas .score-chip,
   color: var(--st-text);
 }
 
-/* ── 메인 KPI — 도넛 + 중앙 숫자 통합 ── */
-.st-headline {
+/* ── 좌(도넛) · 우(영역 카드) 분할 컨테이너 ── */
+.st-split {
   width: 100%;
-  max-width: 760px;
+  max-width: 980px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;       /* 도넛과 카드 그리드 세로 중앙선 맞춤 */
+  justify-content: center;
+  gap: 40px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+/* ── 메인 KPI — 도넛 + 중앙 숫자 통합 (좌측 블록) ── */
+.st-headline {
+  flex: 0 0 440px;
+  width: 440px;
+  max-width: 440px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 4px;
-  margin-bottom: 28px;
+  margin: 0;
   opacity: 0;
   animation: ciFadeUp .7s cubic-bezier(.2,1,.3,1) .12s forwards;
 }
@@ -3210,13 +3223,23 @@ body.dark-canvas .score-chip,
 }
 
 /* 도넛 컨테이너 — SVG 와 중앙 텍스트를 겹치기 위해 relative
-   바깥 라벨 공간 확보 위해 wrap 자체는 480x480, 내부 도넛은 300px */
+   바깥 라벨 공간 확보 위해 내부는 480x480 좌표계 유지 (JS 라벨 좌표가 480 기준).
+   좌우 분할 레이아웃에 맞춰 transform: scale 로 시각적으로 440 폭 축소.
+   외부 박스(.st-donut-frame)가 440x440 자리만 차지. */
+.st-donut-frame {
+  width: 440px; height: 440px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .st-donut-wrap {
   position: relative;
   width: 480px; height: 480px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transform: scale(0.9167); /* 440/480 */
+  transform-origin: center center;
 }
 .st-donut-svg {
   width: 480px; height: 480px;
@@ -3321,13 +3344,15 @@ body.dark-canvas .score-chip,
   font-feature-settings: 'tnum' on;
 }
 
-/* ── 영역별 비교 — 카드 그리드 (2열 × 3행) ── */
+/* ── 영역별 비교 — 카드 그리드 (2열 × 3행, 우측 블록) ── */
 .st-list {
+  flex: 1 1 auto;
   width: 100%;
-  max-width: 760px;
+  max-width: 500px;
+  min-width: 0;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
+  gap: 12px;
   /* 영역별 막대 색상 — data-area 매핑 (한 군데 관리) */
   --area-biology: #5EBE7E;
   --area-society: #A87BD6;
@@ -3341,7 +3366,8 @@ body.dark-canvas .score-chip,
   background: rgba(255,255,255,0.6);
   border: 1px solid rgba(20,25,40,0.08);
   border-radius: 9px;
-  padding: 18px 20px 16px;
+  padding: 16px 16px 14px;
+  min-width: 0;
   box-shadow: 0 1px 3px rgba(20,25,40,0.04);
   transition: opacity .25s ease;
   opacity: 0;
@@ -3367,7 +3393,7 @@ body.dark-canvas .score-chip,
 .st-row-name {
   font-size: 27px; font-weight: 400;
   color: var(--st-text-deep);
-  letter-spacing: 0.18em;
+  letter-spacing: 0.12em;
   white-space: nowrap;
   flex: 0 0 auto;
 }
@@ -3490,7 +3516,7 @@ body.dark-canvas .score-chip,
 /* ── 보고서 푸터 — 산출 기준 ── */
 .st-footnote {
   width: 100%;
-  max-width: 760px;
+  max-width: 980px;
   margin-top: 22px;
   padding: 14px 0 2px;
   border-top: 1px solid var(--st-line);
@@ -4403,9 +4429,10 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
       <div class="logo"><div class="logo-mark"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="14" y1="14" x2="6" y2="6"/><line x1="14" y1="14" x2="22" y2="6"/><line x1="14" y1="14" x2="5" y2="18"/><line x1="14" y1="14" x2="22" y2="20"/><line x1="14" y1="14" x2="14" y2="24"/></g><g fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="22" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="22" cy="20" r="2"/><circle cx="14" cy="24" r="2"/></g><circle cx="14" cy="14" r="3.6" fill="currentColor"/><circle cx="14" cy="14" r="3.6" fill="rgba(255,255,255,0.18)"/></svg></div></div>
     </div>
     <div class="st-body">
-      <div class="st-headline" id="st-headline"></div>
-
-      <div class="st-list" id="st-list"></div>
+      <div class="st-split">
+        <div class="st-headline" id="st-headline"></div>
+        <div class="st-list" id="st-list"></div>
+      </div>
 
       <div class="st-footnote">
         <div><span class="st-foot-key">산출 기준</span>강화 단계에서 정답 처리한 distinct 어휘 수를 기준으로 함. 인출·확장 단계의 노출만으로는 집계되지 않음.</div>
@@ -7136,6 +7163,7 @@ function goStats(){
   // ── 메인 KPI — 도넛 + 중앙 통합 + 방사형 라벨 ──
   headlineEl.innerHTML =
       '<div class="st-headline-label">습득 어휘</div>'
+    + '<div class="st-donut-frame">'
     + '<div class="st-donut-wrap">'
     +   '<svg class="st-donut-svg" viewBox="0 0 ' + SVG_SIZE + ' ' + SVG_SIZE + '" aria-hidden="true">'
     +     trackSvg
@@ -7147,6 +7175,7 @@ function goStats(){
     +     '<div class="st-donut-frac">/ <span class="st-frac-em">' + fmtNum(totalDistinct) + '</span> 어휘</div>'
     +     '<div class="st-donut-pct">(' + totalPct + '%)</div>'
     +   '</div>'
+    + '</div>'
     + '</div>';
 
   // ── 도넛 채움 애니메이션 — segment 의 dasharray 를 0 → 목표 길이로 트랜지션 ──
