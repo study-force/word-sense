@@ -3069,6 +3069,78 @@ body.dark-canvas .score-chip,
   letter-spacing: 0.06em;
 }
 
+/* ── 등급 배지 (별 시스템) ──────────────────────────
+   결과 페이지 상단, 회차 메타 아래 중앙.
+   회차 가족 어휘 수에 따라 별 1~5개 표시 (ceil(total/10), max 5).
+   PERFECT(전부 정답)는 별 숨기고 황금 배지로 변경.
+*/
+.r-tier-badge {
+  position: absolute;
+  top: 56px;                                 /* topbar(56px) 바로 아래 */
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px;
+  z-index: 5;
+  opacity: 0;
+  transition: opacity .5s ease, transform .5s ease;
+  transition-delay: .9s;                     /* 점수판 도착 후 등장 */
+  pointer-events: none;
+}
+.r-tier-badge.on {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.rtb-stars {
+  display: flex;
+  gap: 3px;
+}
+.rtb-star {
+  width: 22px; height: 22px;
+  display: block;
+  fill: #D5D9E0;                             /* 회색 별 */
+  transition: fill .3s ease, transform .3s ease;
+}
+.rtb-star.filled {
+  fill: #FFC842;                             /* 노랑 별 */
+  filter: drop-shadow(0 1px 2px rgba(255,180,0,0.35));
+}
+.rtb-score {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2A3050;
+  letter-spacing: 0.04em;
+}
+.rtb-score em { color: var(--stage-accent, var(--green)); font-style: normal; font-weight: 800; }
+.rtb-msg {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(0,0,0,0.50);
+  letter-spacing: 0.02em;
+}
+
+/* PERFECT 변형 — 별 숨기고 황금 배지로 */
+.r-tier-badge.is-perfect .rtb-stars { display: none; }
+.rtb-perfect {
+  display: none;                             /* 기본 숨김, .is-perfect에서 표시 */
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  background: linear-gradient(135deg, #FFD700 0%, #FF8A00 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: rtb-perfect-glow 1.6s ease-in-out infinite alternate;
+}
+.r-tier-badge.is-perfect .rtb-perfect { display: block; }
+@keyframes rtb-perfect-glow {
+  from { filter: drop-shadow(0 0 4px rgba(255,180,0,0.35)); }
+  to   { filter: drop-shadow(0 0 12px rgba(255,180,0,0.75)); }
+}
+
 .result-body-v3 {
   position: absolute; inset: 56px 0 0 0;
   display: flex; flex-direction: column;
@@ -3868,6 +3940,13 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
         <span class="r-tm-han" id="r-tm-han">生</span>
         <span class="r-tm-hun" id="r-tm-hun">날 생</span>
       </div>
+    </div>
+    <!-- ══ 등급 배지 (별) — JS가 calcBadge 결과 채움 ══ -->
+    <div class="r-tier-badge" id="r-tier-badge">
+      <div class="rtb-stars" id="rtb-stars"></div>
+      <div class="rtb-perfect">⭐ PERFECT!!</div>
+      <div class="rtb-score" id="rtb-score"><em>0</em> / 0</div>
+      <div class="rtb-msg" id="rtb-msg"></div>
     </div>
     <div class="result-body-v3">
       <div class="r-trio-row" id="r-collect-row">
@@ -6295,6 +6374,12 @@ function goResult(){
   });
   document.getElementById('r-exp-cnt').textContent = exp.length;
 
+  // ── 등급 배지 (별 시스템) ──
+  // correct = 강화 첫시도 정답 어휘 수, total = 회차 가족 어휘 총수
+  var correct = (typeof FQ !== 'undefined' && FQ) ? (FQ.correct || 0) : 0;
+  var total   = (typeof WORD_LIST !== 'undefined' && WORD_LIST) ? WORD_LIST.length : 0;
+  renderTierBadge(correct, total);
+
   // ── 랭킹 (4종: 인출 / 인출+확장 / 인출+확장+강화 / 인출+확장+강화 누적) ──
   RANK_RETR   = buildRetrieveRank();
   RANK_COMBO  = buildComboRank();
@@ -6315,12 +6400,14 @@ function goResult(){
   var collectRow = document.getElementById('r-collect-row');
   var rankBlock  = document.getElementById('r-rank-block');
   var homeBtn    = document.getElementById('r-home-btn');
+  var tierBadge  = document.getElementById('r-tier-badge');
 
   // 진입 시 깨끗한 상태로 초기화
   if(chip)       chip.classList.remove('center-result', 'landed');
   if(collectRow) collectRow.classList.remove('on');
   if(rankBlock)  rankBlock.classList.remove('on');
   if(homeBtn)    homeBtn.classList.remove('on');
+  if(tierBadge)  tierBadge.classList.remove('on');
 
   // 다음 프레임에 클래스 추가 → transition 발동
   requestAnimationFrame(function(){
@@ -6330,12 +6417,73 @@ function goResult(){
       setTimeout(function(){
         if(chip && chip.classList.contains('center-result')) chip.classList.add('landed');
       }, 920);
-      // 컬렉션/랭킹/버튼은 CSS transition delay로 등장 (.on 토글)
+      // 컬렉션/랭킹/버튼/배지는 CSS transition delay로 등장 (.on 토글)
       if(collectRow) collectRow.classList.add('on');
       if(rankBlock)  rankBlock.classList.add('on');
       if(homeBtn)    homeBtn.classList.add('on');
+      if(tierBadge)  tierBadge.classList.add('on');
     });
   });
+}
+
+// ══════════════════════════════════════════════
+// 등급 배지 (별 시스템)
+//   • 별 개수 = ceil(가족어휘 총수 / 10), 최대 5
+//   • 노랑 별 = floor(정답 / 10), 단 PERFECT(전부 정답)는 모든 별 노랑
+//   • PERFECT는 별 숨기고 황금 배지 표시
+// ══════════════════════════════════════════════
+function calcBadge(correct, total){
+  correct = Math.max(0, correct|0);
+  total   = Math.max(0, total|0);
+  var starCount  = Math.min(Math.ceil(total / 10), 5);
+  if(starCount < 1) starCount = 1;          // total=0 같은 엣지 케이스 안전
+  var isPerfect  = (total > 0 && correct >= total);
+  var yellowCount;
+  if(isPerfect)      yellowCount = starCount;
+  else               yellowCount = Math.min(Math.floor(correct / 10), starCount);
+  return {
+    starCount: starCount,
+    yellowCount: yellowCount,
+    grayCount: starCount - yellowCount,
+    isPerfect: isPerfect,
+    correct: correct,
+    total: total
+  };
+}
+
+function getBadgeMessage(b){
+  if(b.isPerfect)              return '⭐ 완벽! 한 문제도 안 틀렸어!';
+  if(b.yellowCount === 0)      return '다시 도전해 보자!';
+  if(b.yellowCount === b.starCount) return '별 다 모았다! 이제 PERFECT만 남았어.';
+  var remaining = b.starCount - b.yellowCount;
+  if(remaining === 1)          return '잘했어! 별 ' + b.starCount + '개까지 가보자.';
+  return '좋아! 별 ' + remaining + '개 더 노려볼까?';
+}
+
+function renderTierBadge(correct, total){
+  var badge   = document.getElementById('r-tier-badge');
+  var stars   = document.getElementById('rtb-stars');
+  var scoreEl = document.getElementById('rtb-score');
+  var msgEl   = document.getElementById('rtb-msg');
+  if(!badge || !stars || !scoreEl) return;
+
+  var b = calcBadge(correct, total);
+
+  // 별 SVG 렌더 (노랑 N개 + 회색 M개)
+  var starSvg = '<svg viewBox="0 0 24 24" class="rtb-star{CLS}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polygon points="12,2.5 14.6,9.4 22,9.8 16.3,14.6 18.2,21.6 12,17.7 5.8,21.6 7.7,14.6 2,9.8 9.4,9.4"/></svg>';
+  var html = '';
+  for(var i = 0; i < b.yellowCount; i++) html += starSvg.replace('{CLS}', ' filled');
+  for(var j = 0; j < b.grayCount;   j++) html += starSvg.replace('{CLS}', '');
+  stars.innerHTML = html;
+
+  // 분수 표시 (correct / total) — 분모는 가족 어휘 총수
+  scoreEl.innerHTML = '<em>' + b.correct + '</em> / ' + b.total;
+
+  // 메시지
+  msgEl.textContent = getBadgeMessage(b);
+
+  // PERFECT 토글
+  badge.classList.toggle('is-perfect', b.isPerfect);
 }
 
 // ══════════════════════════════════════════════
