@@ -3154,6 +3154,156 @@ body.dark-canvas .score-chip,
   z-index: 1;
 }
 
+/* ══════════════════════════════════════════════
+   통계 페이지 (#stats) — 6 영역 종합 학습 현황
+   레이아웃 C: 한 줄 컴팩트 (영역×등급 분포)
+   ══════════════════════════════════════════════ */
+#stats {
+  --st-accent: #3D4D8C;
+  --st-accent-rgb: 61, 77, 140;
+}
+.st-body {
+  position: absolute; inset: 56px 0 0 0;
+  display: flex; flex-direction: column;
+  align-items: center;
+  padding: 32px 60px 24px;
+  gap: 20px;
+  overflow-y: auto;
+  z-index: 1;
+}
+.st-title {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 22px; font-weight: 700;
+  color: #2A3050;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+.st-subtitle {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px; font-weight: 400;
+  color: rgba(0,0,0,0.55);
+  letter-spacing: 0.02em;
+  margin: -10px 0 4px;
+}
+.st-list {
+  width: 100%;
+  max-width: 920px;
+  display: flex; flex-direction: column;
+  gap: 10px;
+}
+.st-row {
+  display: flex; align-items: center;
+  background: #FFFFFF;
+  border: 1px solid rgba(20,25,40,0.08);
+  border-radius: 6px;
+  padding: 14px 22px;
+  gap: 16px;
+  font-family: 'Noto Sans KR', sans-serif;
+  box-shadow: 0 1px 2px rgba(20,25,40,0.04);
+}
+.st-row-head {
+  flex: 0 0 130px;
+  display: flex; align-items: center; gap: 8px;
+}
+.st-row-emoji { font-size: 20px; }
+.st-row-name {
+  font-size: 16px; font-weight: 700;
+  color: #2A3050;
+  letter-spacing: 0.02em;
+}
+.st-row-progress {
+  flex: 0 0 90px;
+  text-align: right;
+  font-size: 14px; font-weight: 700;
+  color: var(--st-accent);
+  letter-spacing: 0.02em;
+}
+.st-row-progress .st-pg-total {
+  color: rgba(0,0,0,0.40);
+  font-weight: 500;
+}
+.st-row-tiers {
+  flex: 1;
+  display: flex; align-items: center;
+  justify-content: space-around;
+  gap: 8px;
+}
+.st-tier {
+  display: flex; align-items: center; gap: 5px;
+  transition: opacity .25s ease;
+}
+.st-tier.zero { opacity: 0.32; }
+.st-tier-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+.st-tier-icon .stx {
+  width: 12px; height: 12px;
+  fill: #FFB300;
+  filter: drop-shadow(0 0 2px rgba(255,180,0,0.5));
+}
+.st-tier.zero .st-tier-icon .stx {
+  fill: #C5CBD7;
+  filter: none;
+}
+.st-tier-perfect-icon {
+  font-size: 18px;
+  line-height: 1;
+  filter: drop-shadow(0 0 4px rgba(255,200,0,0.7));
+}
+.st-tier.zero .st-tier-perfect-icon {
+  filter: grayscale(1) opacity(0.6);
+}
+.st-tier-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2A3050;
+  min-width: 14px;
+  text-align: left;
+}
+.st-back-btn {
+  margin-top: 10px;
+  align-self: center;
+  appearance: none; -webkit-appearance: none;
+  cursor: pointer;
+  border: 1px solid rgba(20,25,40,0.18);
+  background: #FFFFFF;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px; font-weight: 700;
+  color: #2A3050;
+  padding: 10px 28px;
+  border-radius: 100px;
+  letter-spacing: 0.04em;
+  transition: all .2s ease;
+}
+.st-back-btn:hover {
+  background: #F5F7FB;
+  border-color: rgba(20,25,40,0.32);
+}
+
+/* 임시 — 홈 화면의 통계 진입 (개발용, 추후 제거) */
+.home-stats-link {
+  position: absolute;
+  top: 18px; right: 24px;
+  z-index: 30;
+  appearance: none; cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 11px; font-weight: 600;
+  color: rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.18);
+  padding: 5px 12px; border-radius: 100px;
+  letter-spacing: 0.04em;
+  transition: all .2s ease;
+}
+.home-stats-link:hover {
+  color: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.32);
+}
+
+
 /* 점수판 슬롯 — 트리오 행 가운데 (점수판 scale에 맞춰 셀 너비) */
 .r-score-cell {
   flex: 0 0 220px;
@@ -3756,6 +3906,7 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
 
   <!-- ══ 홈 ══ -->
   <div class="page active" id="home">
+    <button class="home-stats-link" onclick="goStats()" title="개발용 — 통계 페이지">통계 (개발용)</button>
     <div class="home-subtitle">어휘 네트워크 강화훈련</div>
     <div class="home-hero" id="home-hero">
       <span class="hero-text hero-left">훈감각</span>
@@ -3998,6 +4149,19 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
     </div>
   </div>
 
+  <!-- ══ 통계 — 6 영역 종합 학습 현황 (현재는 mock 데이터) ══ -->
+  <div class="page" id="stats">
+    <div class="topbar">
+      <div class="logo"><div class="logo-mark"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="14" y1="14" x2="6" y2="6"/><line x1="14" y1="14" x2="22" y2="6"/><line x1="14" y1="14" x2="5" y2="18"/><line x1="14" y1="14" x2="22" y2="20"/><line x1="14" y1="14" x2="14" y2="24"/></g><g fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="22" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="22" cy="20" r="2"/><circle cx="14" cy="24" r="2"/></g><circle cx="14" cy="14" r="3.6" fill="currentColor"/><circle cx="14" cy="14" r="3.6" fill="rgba(255,255,255,0.18)"/></svg></div></div>
+    </div>
+    <div class="st-body">
+      <h1 class="st-title">내 학습 현황</h1>
+      <div class="st-subtitle">6개 영역 어휘 습득 통계</div>
+      <div class="st-list" id="st-list"></div>
+      <button class="st-back-btn" onclick="goHome()">← 처음으로</button>
+    </div>
+  </div>
+
 </div><!-- /screen -->
 
 <!-- ══ 모달 오버레이들 — #screen 밖, position:fixed로 viewport 전체 덮음.
@@ -4066,9 +4230,9 @@ function nextCap(){ return CAPS[capIdx++ % CAPS.length]; }
 function showPage(id){
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   document.getElementById(id).classList.add('active');
-  // 페이지별 body 테마 — 라이트(흰 캔버스): charintro/result/area, 그 외는 다크
+  // 페이지별 body 테마 — 라이트(흰 캔버스): charintro/result/area/stats, 그 외는 다크
   // body 그라디언트가 viewport 전체를 채우므로 캔버스 가장자리 봉합 자국 없음
-  var isLightPage = (id === 'charintro' || id === 'result' || id === 'area');
+  var isLightPage = (id === 'charintro' || id === 'result' || id === 'area' || id === 'stats');
   document.body.classList.toggle('theme-light', isLightPage);
   // 결과 페이지를 떠날 때는 점수판 위치를 원위치로 복귀
   if(id !== 'result'){
@@ -6506,6 +6670,100 @@ function renderTierBadge(correct, total){
   // PERFECT 토글
   badge.classList.toggle('is-perfect', b.isPerfect);
 }
+
+// ══════════════════════════════════════════════
+// 통계 페이지 — 6 영역 종합 학습 현황
+//   현재는 mock 데이터, 추후 v_area_tier_distribution view에서 fetch
+// ══════════════════════════════════════════════
+var STATS_AREAS = [
+  { slug:'biology', emoji:'🌿', name_ko:'생물' },
+  { slug:'society', emoji:'⚖️', name_ko:'사회' },
+  { slug:'history', emoji:'📜', name_ko:'역사' },
+  { slug:'science', emoji:'🔬', name_ko:'과학' },
+  { slug:'culture', emoji:'🎭', name_ko:'문화' },
+  { slug:'economy', emoji:'💰', name_ko:'경제' }
+];
+
+// Mock 데이터 — 다양한 분포로 페이지 디자인 검증
+var STATS_MOCK = {
+  biology: { cleared:12, perfect:5, t5:0, t4:2, t3:3, t2:1, t1:1 },
+  society: { cleared: 8, perfect:1, t5:0, t4:2, t3:3, t2:1, t1:1 },
+  history: { cleared: 4, perfect:0, t5:0, t4:1, t3:1, t2:1, t1:1 },
+  science: { cleared: 0, perfect:0, t5:0, t4:0, t3:0, t2:0, t1:0 },
+  culture: { cleared: 6, perfect:2, t5:1, t4:1, t3:1, t2:0, t1:1 },
+  economy: { cleared: 0, perfect:0, t5:0, t4:0, t3:0, t2:0, t1:0 }
+};
+
+function fetchAreaStats(){
+  // TODO Phase 2 frontend 통합: SELECT * FROM v_area_tier_distribution WHERE member_no=...
+  // 현재는 mock 데이터 반환
+  return STATS_AREAS.map(function(area){
+    var stat = STATS_MOCK[area.slug] || { cleared:0, perfect:0, t5:0, t4:0, t3:0, t2:0, t1:0 };
+    return Object.assign({}, area, stat);
+  });
+}
+
+function renderStatsStarsCompact(starCount){
+  // 작은 별 N개 (12px) — 통계 페이지의 등급별 아이콘
+  var svg = '<svg viewBox="0 0 24 24" class="stx" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polygon points="12,2.5 14.6,9.4 22,9.8 16.3,14.6 18.2,21.6 12,17.7 5.8,21.6 7.7,14.6 2,9.8 9.4,9.4"/></svg>';
+  var html = '';
+  for(var i = 0; i < starCount; i++) html += svg;
+  return html;
+}
+
+function goStats(){
+  var stats = fetchAreaStats();
+  var listEl = document.getElementById('st-list');
+  if(!listEl) return;
+
+  listEl.innerHTML = stats.map(function(area){
+    // 등급별 컬럼 — PERFECT, 5단계, 4단계, 3단계, 2단계, 1단계
+    var tiers = [
+      { count: area.perfect, isPerfect: true },
+      { count: area.t5, stars: 5 },
+      { count: area.t4, stars: 4 },
+      { count: area.t3, stars: 3 },
+      { count: area.t2, stars: 2 },
+      { count: area.t1, stars: 1 }
+    ];
+    var tiersHtml = tiers.map(function(t){
+      var iconHtml = t.isPerfect
+        ? '<span class="st-tier-perfect-icon">⭐</span>'
+        : '<span class="st-tier-icon">' + renderStatsStarsCompact(t.stars) + '</span>';
+      var zeroCls = (t.count === 0) ? ' zero' : '';
+      return '<div class="st-tier' + zeroCls + '">'
+           +   iconHtml
+           +   '<span class="st-tier-count">' + t.count + '</span>'
+           + '</div>';
+    }).join('');
+
+    return '<div class="st-row">'
+         +   '<div class="st-row-head">'
+         +     '<span class="st-row-emoji">' + area.emoji + '</span>'
+         +     '<span class="st-row-name">' + area.name_ko + '</span>'
+         +   '</div>'
+         +   '<div class="st-row-tiers">' + tiersHtml + '</div>'
+         +   '<div class="st-row-progress">' + area.cleared + '<span class="st-pg-total"> / 50</span></div>'
+         + '</div>';
+  }).join('');
+
+  showPage('stats');
+}
+
+// URL 파라미터 ?page=stats 지원 — 개발 편의 (홈 → 통계로 직행)
+(function checkStartPage(){
+  var params = new URLSearchParams(location.search);
+  if(params.get('page') === 'stats'){
+    // SESSION_READY 기다린 후 stats 페이지 표시
+    if(window.SESSION_READY){
+      window.SESSION_READY.then(function(){ goStats(); });
+    } else {
+      // SESSION_READY 없는 환경(독립 테스트)에서도 동작
+      setTimeout(goStats, 100);
+    }
+  }
+})();
+
 
 // ══════════════════════════════════════════════
 // 영역 진행
