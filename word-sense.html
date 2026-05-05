@@ -3300,7 +3300,7 @@ body.dark-canvas .score-chip,
 }
 .st-donut-dot.empty { opacity: 0.35 !important; }
 
-/* 도넛 중앙 — 큰 숫자 + 분모 + % */
+/* 도넛 중앙 — 3줄 (라벨 / 큰 숫자 / 총수 보조) */
 .st-donut-center {
   position: absolute;
   inset: 0;
@@ -3309,6 +3309,14 @@ body.dark-canvas .score-chip,
   align-items: center;
   justify-content: center;
   pointer-events: none;
+  gap: 6px;
+}
+.st-donut-caplabel {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 11.5px; font-weight: 600;
+  color: rgba(42, 48, 80, 0.6);
+  letter-spacing: 0.08em;
+  line-height: 1;
 }
 .st-donut-num {
   font-family: 'Noto Sans KR', sans-serif;
@@ -3318,29 +3326,12 @@ body.dark-canvas .score-chip,
   line-height: 0.92;
   font-feature-settings: 'tnum' on;
 }
-.st-donut-num .st-num-unit {
-  font-size: 16px; font-weight: 600;
-  color: var(--st-dim-strong);
-  letter-spacing: 0.02em;
-  margin-left: 6px;
-  vertical-align: 4px;
-}
-.st-donut-frac {
-  margin-top: 10px;
-  font-size: 11.5px; font-weight: 600;
-  color: var(--st-dim-strong);
-  letter-spacing: 0.06em;
-  font-feature-settings: 'tnum' on;
-}
-.st-donut-frac .st-frac-em {
-  color: var(--st-text);
-  font-weight: 700;
-}
-.st-donut-pct {
-  margin-top: 4px;
-  font-size: 11px; font-weight: 700;
-  color: var(--st-accent-deep);
-  letter-spacing: 0.08em;
+.st-donut-subtotal {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12.5px; font-weight: 600;
+  color: rgba(42, 48, 80, 0.6);
+  letter-spacing: 0.04em;
+  line-height: 1;
   font-feature-settings: 'tnum' on;
 }
 
@@ -7074,9 +7065,9 @@ function goStats(){
     +   '</svg>'
     +   labelHtml
     +   '<div class="st-donut-center">'
-    +     '<div class="st-donut-num">' + fmtNum(totalAcquiredDistinct) + '<span class="st-num-unit">개</span></div>'
-    +     '<div class="st-donut-frac">/ <span class="st-frac-em">' + fmtNum(totalDistinct) + '</span> 어휘</div>'
-    +     '<div class="st-donut-pct">(' + totalPct + '%)</div>'
+    +     '<div class="st-donut-caplabel">습득 어휘 수</div>'
+    +     '<div class="st-donut-num">' + fmtNum(totalAcquiredDistinct) + '</div>'
+    +     '<div class="st-donut-subtotal">총 ' + totalDistinct + '개 중</div>'
     +   '</div>'
     + '</div>'
     + '</div>';
