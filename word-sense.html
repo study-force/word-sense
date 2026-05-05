@@ -3276,18 +3276,10 @@ body.dark-canvas .score-chip,
   letter-spacing: 0.14em;
   line-height: 1;
 }
-.st-donut-label .st-lbl-num {
-  margin-top: 4px;
-  font-size: 11px; font-weight: 600;
-  color: var(--st-dim-strong);
-  letter-spacing: 0.04em;
-  font-feature-settings: 'tnum' on;
-}
 .st-donut-label.empty {
   opacity: 0.45 !important;
 }
 .st-donut-label.empty .st-lbl-name { color: var(--st-dim-soft); }
-.st-donut-label.empty .st-lbl-num  { color: var(--st-dim-soft); }
 /* 가이드 점 — segment 색과 동일 */
 .st-donut-dot {
   position: absolute;
@@ -3333,6 +3325,7 @@ body.dark-canvas .score-chip,
   letter-spacing: 0.04em;
   line-height: 1;
   font-feature-settings: 'tnum' on;
+  margin-top: 8px; /* "1,230"과 "총 …개 중" 사이 간격 확대 (기본 gap:6px + 8px) */
 }
 
 /* ── 영역별 비교 — 세로 1열 × 6행 (우측 블록), 한 줄 라인 형식 ── */
@@ -3367,19 +3360,12 @@ body.dark-canvas .score-chip,
 
 .st-row-name {
   font-size: 20px; font-weight: 400;
-  color: var(--st-text-deep);
+  color: #F2F4FA; /* 영역명 모두 흰색 통일 — 영역색은 막대/분수에만 */
   letter-spacing: 0.12em;
   white-space: nowrap;
   flex: 0 0 64px;
   text-align: left;
 }
-/* 영역별 영역명 색 — data-area 매핑 */
-.st-row[data-area="biology"] .st-row-name { color: var(--area-biology); }
-.st-row[data-area="society"] .st-row-name { color: var(--area-society); }
-.st-row[data-area="history"] .st-row-name { color: var(--area-history); }
-.st-row[data-area="science"] .st-row-name { color: var(--area-science); }
-.st-row[data-area="culture"] .st-row-name { color: var(--area-culture); }
-.st-row[data-area="economy"] .st-row-name { color: var(--area-economy); }
 
 /* 막대 트랙 — 가운데, flex:1로 가변 폭 */
 .st-row-bar {
@@ -3449,11 +3435,13 @@ body.dark-canvas .score-chip,
 }
 .st-row-total {
   font-weight: 500;
-  opacity: 0.72;
+  color: rgba(255,255,255,0.45); /* 분모는 회색 — 영역색 끄기 */
+  opacity: 1;
   margin: 0 2px;
 }
 .st-row-pct {
   font-weight: 700;
+  color: rgba(255,255,255,0.45); /* 백분율도 회색 */
   margin-left: 6px;
 }
 
@@ -7041,7 +7029,6 @@ function goStats(){
     var delay = (0.55 + i * 0.06).toFixed(2);
     var nameStyle = L.isEmpty ? '' : ('color:' + L.color + ';');
     var dotStyle  = 'background:' + L.color + ';';
-    var numTxt    = L.isEmpty ? '— ' : (fmtNum(L.acquired) + ' ');
     return ''
       + '<span class="st-donut-dot' + emptyCls + '" '
       +   'style="left:' + dotX + 'px;top:' + dotY + 'px;' + dotStyle
@@ -7050,7 +7037,6 @@ function goStats(){
       +   'style="left:' + txtX + 'px;top:' + txtY + 'px;'
       +   'animation-delay:' + delay + 's">'
       +   '<span class="st-lbl-name" style="' + nameStyle + '">' + L.name_ko + '</span>'
-      +   '<span class="st-lbl-num">' + numTxt + '</span>'
       + '</span>';
   }).join('');
 
@@ -7067,7 +7053,7 @@ function goStats(){
     +   '<div class="st-donut-center">'
     +     '<div class="st-donut-caplabel">습득 어휘 수</div>'
     +     '<div class="st-donut-num">' + fmtNum(totalAcquiredDistinct) + '</div>'
-    +     '<div class="st-donut-subtotal">총 ' + totalDistinct + '개 중</div>'
+    +     '<div class="st-donut-subtotal">총 ' + fmtNum(totalDistinct) + '개 중</div>'
     +   '</div>'
     + '</div>'
     + '</div>';
