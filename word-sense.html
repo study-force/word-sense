@@ -3156,25 +3156,25 @@ body.dark-canvas .score-chip,
 
 /* ══════════════════════════════════════════════
    통계 페이지 (#stats) — 어휘 습득 분석 보고서
-   디자인 톤: 오늘의 한자(charintro) 페이지와 결 통일
-     • 라이트 캔버스 + 진남색 텍스트
+   디자인 톤: 다크 캔버스 (게임/학습 페이지와 결 통일)
+     • 다크 캔버스 + 흰 텍스트
      • 박스/카드 없이 가는 선만 사용
      • 타이포그래피 위계로 중요도 표현
      • 박스 그림자·테두리·이모지 모두 배제
    ══════════════════════════════════════════════ */
 #stats {
-  --st-accent: #3D4D8C;
-  --st-accent-deep: #252F66;
-  --st-accent-rgb: 61, 77, 140;
-  --st-line: rgba(20,25,40,0.08);
-  --st-line-strong: rgba(20,25,40,0.18);
-  --st-line-rule:   rgba(20,25,40,0.32);   /* 보고서 본문 굵은 선 */
-  --st-text: #2A3050;
-  --st-text-deep: #1F2238;
-  --st-dim: rgba(20,25,40,0.45);
-  --st-dim-strong: rgba(20,25,40,0.62);
-  --st-dim-soft:   rgba(20,25,40,0.28);
-  --st-track:      rgba(20,25,40,0.06);
+  --st-accent: #8FA0E0;
+  --st-accent-deep: #B8C4F0;
+  --st-accent-rgb: 184, 196, 240;
+  --st-line: rgba(255,255,255,0.08);
+  --st-line-strong: rgba(255,255,255,0.18);
+  --st-line-rule:   rgba(255,255,255,0.32);   /* 보고서 본문 굵은 선 */
+  --st-text: #E8EBF3;
+  --st-text-deep: #F2F4FA;
+  --st-dim: rgba(230,235,245,0.55);
+  --st-dim-strong: rgba(230,235,245,0.72);
+  --st-dim-soft:   rgba(230,235,245,0.35);
+  --st-track:      rgba(255,255,255,0.10);
 }
 
 .st-body {
@@ -3284,7 +3284,7 @@ body.dark-canvas .score-chip,
   font-feature-settings: 'tnum' on;
 }
 .st-donut-label.empty {
-  opacity: 0.35 !important;
+  opacity: 0.45 !important;
 }
 .st-donut-label.empty .st-lbl-name { color: var(--st-dim-soft); }
 .st-donut-label.empty .st-lbl-num  { color: var(--st-dim-soft); }
@@ -3298,7 +3298,7 @@ body.dark-canvas .score-chip,
   opacity: 0;
   animation: ciFadeUp .55s ease forwards;
 }
-.st-donut-dot.empty { opacity: 0.35 !important; }
+.st-donut-dot.empty { opacity: 0.45 !important; }
 
 /* 도넛 중앙 — 3줄 (라벨 / 큰 숫자 / 총수 보조) */
 .st-donut-center {
@@ -3314,14 +3314,14 @@ body.dark-canvas .score-chip,
 .st-donut-caplabel {
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 11.5px; font-weight: 600;
-  color: rgba(42, 48, 80, 0.6);
+  color: rgba(230, 235, 245, 0.65);
   letter-spacing: 0.08em;
   line-height: 1;
 }
 .st-donut-num {
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 64px; font-weight: 800;
-  color: var(--st-text-deep);
+  color: #FFFFFF;
   letter-spacing: -0.035em;
   line-height: 0.92;
   font-feature-settings: 'tnum' on;
@@ -3329,7 +3329,7 @@ body.dark-canvas .score-chip,
 .st-donut-subtotal {
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 12.5px; font-weight: 600;
-  color: rgba(42, 48, 80, 0.6);
+  color: rgba(230, 235, 245, 0.55);
   letter-spacing: 0.04em;
   line-height: 1;
   font-feature-settings: 'tnum' on;
@@ -3348,7 +3348,7 @@ body.dark-canvas .score-chip,
   --area-biology: #5EBE7E;
   --area-society: #A87BD6;
   --area-history: #E5C257;
-  --area-science: #9CA3B3;
+  --area-science: #B5BCCB;  /* 다크 배경에서 가독성 위해 톤업 */
   --area-culture: #E889A8;
   --area-economy: #7BB6E6;
 }
@@ -3363,7 +3363,7 @@ body.dark-canvas .score-chip,
   animation: ciFadeUp .55s ease forwards;
   transition: opacity .25s ease;
 }
-.st-row.empty { opacity: 0.35; }
+.st-row.empty { opacity: 0.45; }
 
 .st-row-name {
   font-size: 20px; font-weight: 400;
@@ -3423,8 +3423,8 @@ body.dark-canvas .score-chip,
 .st-row[data-area="science"] .st-bar-fill { background: var(--area-science); }
 .st-row[data-area="culture"] .st-bar-fill { background: var(--area-culture); }
 .st-row[data-area="economy"] .st-bar-fill { background: var(--area-economy); }
-/* 미시작은 같은 색 유지하되 흐릿하게 */
-.st-row.empty .st-bar-fill { opacity: 0.35; }
+/* 미시작은 같은 색 유지하되 흐릿하게 (다크 배경 고려해 살짝 올림) */
+.st-row.empty .st-bar-fill { opacity: 0.45; }
 
 /* 우측 분수 + % — 한 묶음, 영역색 */
 .st-row-numbers {
@@ -4405,9 +4405,9 @@ function nextCap(){ return CAPS[capIdx++ % CAPS.length]; }
 function showPage(id){
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   document.getElementById(id).classList.add('active');
-  // 페이지별 body 테마 — 라이트(흰 캔버스): charintro/result/area/stats, 그 외는 다크
+  // 페이지별 body 테마 — 라이트(흰 캔버스): charintro/result/area, 그 외는 다크 (stats는 다크)
   // body 그라디언트가 viewport 전체를 채우므로 캔버스 가장자리 봉합 자국 없음
-  var isLightPage = (id === 'charintro' || id === 'result' || id === 'area' || id === 'stats');
+  var isLightPage = (id === 'charintro' || id === 'result' || id === 'area');
   document.body.classList.toggle('theme-light', isLightPage);
   // 결과 페이지를 떠날 때는 점수판 위치를 원위치로 복귀
   if(id !== 'result'){
@@ -6902,7 +6902,7 @@ var STATS_AREA_COLORS = {
   biology: '#5EBE7E',
   society: '#A87BD6',
   history: '#E5C257',
-  science: '#9CA3B3',
+  science: '#B5BCCB',  /* 다크 배경에서 가독성 위해 톤업 (CSS --area-science와 일치) */
   culture: '#E889A8',
   economy: '#7BB6E6'
 };
@@ -6950,7 +6950,7 @@ function goStats(){
     return {
       slug: area.slug,
       name_ko: area.name_ko,
-      color: STATS_AREA_COLORS[area.slug] || '#9CA3B3',
+      color: STATS_AREA_COLORS[area.slug] || '#B5BCCB',
       acquired: area.acquired,
       ratio: ratio,
       length: ratio * CIRC,
