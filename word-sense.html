@@ -979,6 +979,7 @@ button { font-family: inherit; color: inherit; }
 .game-eum strong:nth-child(1) { color: var(--mint); border-color: transparent; background: transparent; }
 .game-eum strong:nth-child(3) { color: var(--green-deep); border-color: transparent; background: transparent; }
 .game-eum strong:nth-child(5) { color: var(--lav); border-color: transparent; background: transparent; }
+.game-eum strong:nth-child(7) { color: #E8B589; border-color: transparent; background: transparent; }  /* 4번째 의미 — soft peach */
 .game-eum .sep { display: none; }
 
 /* 떠다니는 노드 */
@@ -4595,7 +4596,9 @@ function eumToPills(text){
   var html = '';
   for(var i=0;i<parts.length;i++){
     if(i>0) html += '<span class="dot">·</span>';
-    html += '<strong>'+parts[i]+'</strong>';
+    // 첫 번째 의미만 추출 — 인출/확장 화면은 단순화 (예: "나다, 태어나다" → "나다")
+    var firstMeaning = parts[i].split(',')[0].split('(')[0].trim();
+    html += '<strong>'+firstMeaning+'</strong>';
   }
   return html;
 }
