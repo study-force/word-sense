@@ -6653,13 +6653,14 @@ function buildMasterRank(){
   var others = MOCK_NAMES.map(function(name){
     var retr = 4 + Math.floor(Math.random() * 18);
     var exp  = Math.floor(Math.random() * 9);
-    var reinf = Math.floor(Math.random() * Math.max(1, retr + exp));
-    return { name:name, count: retr + exp + reinf, me:false };
+    var combo = retr + exp;
+    // 강화 정답 어휘 = combo 이하의 랜덤 값 (마스터된 어휘 수)
+    var master = Math.floor(Math.random() * (combo + 1));
+    return { name:name, count: master, me:false };
   });
-  var myRetr = (S && S.found) ? S.found.length : 0;
-  var myExp  = (typeof LEARN !== 'undefined' && LEARN && LEARN.collected) ? LEARN.collected.length : 0;
-  var myReinf = (typeof scoreTotal === 'function') ? Math.round(scoreTotal()) : 0;
-  var me = { name:'나', count: myRetr + myExp + myReinf, me:true };
+  // 본인 = FQ.correct (강화 첫시도 정답 어휘 수)
+  var myMaster = (typeof FQ !== 'undefined' && FQ) ? (FQ.correct || 0) : 0;
+  var me = { name:'나', count: myMaster, me:true };
   return _sortRank(others.concat([me]));
 }
 // 인출+확장 누적 랭킹 (회차 누적, 영역 내)
@@ -6806,10 +6807,8 @@ function goResult(){
   RANK_RETR   = buildRetrieveRank();
   RANK_COMBO  = buildComboRank();
   RANK_MASTER = buildMasterRank();
-  // 누적 = 인출+확장+강화의 회차 누적 — 오늘 기여분도 master 기준으로
-  var myMasterToday = (S.found ? S.found.length : 0)
-                    + ((typeof LEARN !== 'undefined' && LEARN && LEARN.collected) ? LEARN.collected.length : 0)
-                    + ((typeof scoreTotal === 'function') ? Math.round(scoreTotal()) : 0);
+  // 누적 = 인출+확장+강화의 회차 누적 — 오늘 기여분 = 강화 첫시도 정답 어휘 수
+  var myMasterToday = (typeof FQ !== 'undefined' && FQ) ? (FQ.correct || 0) : 0;
   RANK_CUMUL = buildCumulRank(myMasterToday);
   renderRankList();
 
