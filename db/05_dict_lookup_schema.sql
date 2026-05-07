@@ -91,12 +91,12 @@ LANGUAGE plpgsql
 STABLE
 AS $$
 DECLARE
-  v_main_in_curriculum  BOOLEAN;
   v_match_in_curriculum RECORD;
   v_match               RECORD;
   v_msg                 TEXT;
   v_result              TEXT;
   v_matches             JSONB;
+  v_particle            TEXT;
 BEGIN
   -- 0. 입력 정제
   p_word := COALESCE(TRIM(p_word), '');
@@ -109,6 +109,19 @@ BEGIN
     );
   END IF;
 
+  -- 한국어 받침 자동 판정 (을/를)
+  --   한글 음절 = 0xAC00 + 초성×588 + 중성×28 + 종성
+  --   (codepoint - 0xAC00) % 28 = 0 이면 받침 없음 → '를'
+  --                              > 0 이면 받침 있음 → '을'
+  IF length(p_word) > 0 AND
+     ascii(substr(p_word, length(p_word), 1)) BETWEEN 44032 AND 55203 AND
+     ((ascii(substr(p_word, length(p_word), 1)) - 44032) % 28) > 0
+  THEN
+    v_particle := '을';
+  ELSE
+    v_particle := '를';
+  END IF;
+
   -- 1단계: 출제 범위(word_master) 안에서 主字 포함 어휘 매칭 → 정답
   SELECT wm.* INTO v_match_in_curriculum
   FROM word_master wm
@@ -119,7 +132,7 @@ BEGIN
   IF FOUND THEN
     RETURN jsonb_build_object(
       'result',  'correct',
-      'message', '가족 어휘를 찾았어요!',
+      'message', '''' || p_word || '''' || v_particle || ' 찾았어요!',
       'word',    v_match_in_curriculum.word,
       'hanja',   v_match_in_curriculum.hanja
     );
@@ -169,7 +182,7 @@ BEGIN
     -- 어종별 메시지
     IF v_match.word_type = 1 THEN
       v_result := 'hanja_word';
-      v_msg    := '한자어이지만 이번 회차의 가족 어휘가 아니에요.';
+      v_msg    := '어려운 한자어를 알고 있네요. 훌륭해요!';
     ELSIF v_match.word_type = 2 THEN
       v_result := 'native';
       v_msg    := '이건 순우리말이에요!';
