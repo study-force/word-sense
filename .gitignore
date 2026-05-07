@@ -10,6 +10,12 @@ design claude/
 db/migration_test.sql
 db/unique_chars.json
 db/*.log
+db/dict_lookup_stdict.csv
+db/dict_lookup_opendict.csv
+
+# 사전 원본 (대용량, 별도 보관)
+콘텐츠/표준국어대사전_*/
+콘텐츠/우리말샘_*/
 
 # OS·에디터 잔여물
 .DS_Store
