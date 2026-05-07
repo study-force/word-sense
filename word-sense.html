@@ -4978,7 +4978,7 @@ function shuffle(arr){
 }
 
 // ── 상태 ────────────────────────────────────
-var S = { found:[], attempted:[], hints:5, okCount:0, hintTargets:[], hintFound:[] };
+var S = { found:[], attempted:[], attemptedFb:{}, hints:5, okCount:0, hintTargets:[], hintFound:[] };
 var HINT_NUDGE_TIMER = null;
 function resetHintNudge(){
   if(HINT_NUDGE_TIMER){ clearTimeout(HINT_NUDGE_TIMER); HINT_NUDGE_TIMER = null; }
@@ -5013,7 +5013,7 @@ function pad2(n){ n = String(n); while(n.length < 2) n = '0' + n; return n; }
 
 function goHome(){
   var sess = SESSION;
-  S = { found:[], attempted:[], hints:5, okCount:0, hintTargets:[], hintFound:[] };
+  S = { found:[], attempted:[], attemptedFb:{}, hints:5, okCount:0, hintTargets:[], hintFound:[] };
   capIdx = 0;
   CONFETTI_FIRED = false;
   if(HINT_NUDGE_TIMER){ clearTimeout(HINT_NUDGE_TIMER); HINT_NUDGE_TIMER = null; }
@@ -6295,8 +6295,15 @@ async function submit(){
     sndUnknown();
     return;
   }
-  if(S.found.indexOf(val) > -1){ setFb('miss', '"'+val+'" 은(는) 이미 찾았어요!'); sndDup(); return; }
-  if(S.attempted && S.attempted.indexOf(val) > -1){ setFb('miss', '"'+val+'" 은(는) 이미 다뤘어요!'); sndDup(); return; }
+  // 가족 어휘 중복 — quiz 통과해 정답 처리된 어휘
+  if(S.found.indexOf(val) > -1){ setFb('miss', '"'+val+'" 은(는) 이미 찾은 어휘에요!'); sndDup(); return; }
+  // 가족 어휘 외 중복 — 이전 분류 메시지가 있으면 그대로 다시 표시 (RPC 재호출 X)
+  if(S.attempted && S.attempted.indexOf(val) > -1){
+    var prev = S.attemptedFb && S.attemptedFb[val];
+    if(prev){ setFb(prev.type, prev.message); }
+    else    { setFb('miss', '"'+val+'" 은(는) 이미 다뤘어요!'); }
+    sndDup(); return;
+  }
   var w = WORD_MAP[val];
   var wr = WRONG_MAP[val];
   if(wr){ setFb('no', wr); sndErr(); return; }
@@ -6305,7 +6312,8 @@ async function submit(){
   // ── 가족 어휘·함정 외 입력 → Supabase RPC 분류 ──
   // classify_word_input(p_word, p_main_char) 호출 → 어종별 피드백 메시지
   // 점수에는 영향 없음 (현 회차 가족 어휘만 점수 카운트)
-  if(!S.attempted) S.attempted = [];
+  if(!S.attempted)   S.attempted = [];
+  if(!S.attemptedFb) S.attemptedFb = {};
   S.attempted.push(val);
 
   try {
@@ -6337,6 +6345,8 @@ async function submit(){
     }
     setFb(fbType, message);
     if(typeof fbSound === 'function') fbSound();
+    // 같은 어휘 재입력 시 동일 메시지 재현 위해 캐시
+    S.attemptedFb[val] = { type: fbType, message: message };
   } catch(err) {
     console.error('[classify] RPC 실패:', err);
     // RPC 실패 시 기존 동작으로 폴백

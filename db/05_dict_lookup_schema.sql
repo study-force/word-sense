@@ -219,7 +219,7 @@ BEGIN
   -- 4단계: 어디에도 없음
   RETURN jsonb_build_object(
     'result',  'not_found',
-    'message', '등록된 단어가 아니에요.'
+    'message', '표준국어대사전에 등록된 어휘가 아니에요.'
   );
 END;
 $$;
