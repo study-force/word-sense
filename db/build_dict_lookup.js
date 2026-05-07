@@ -101,7 +101,7 @@ function processFile(filepath) {
   const out = [];
 
   for (const r of rows) {
-    const word     = String(r['어휘']        || '').trim();
+    const wordRaw  = String(r['어휘']        || '').trim();
     const unit     = String(r['구성 단위']    || '').trim();
     const wordType = String(r['고유어 여부']  || '').trim();
     const wonEo    = String(r['원어']         || '').trim();
@@ -109,6 +109,10 @@ function processFile(filepath) {
     const pumsa    = String(r['품사']         || '').trim();
     const category = String(r['범주']         || '').trim();
     const domain   = String(r['전문 분야']    || '').trim();
+
+    // 표제어 정규화 — 동음이의어 번호 표기 제거
+    //   "공생(02)" → "공생", "기생01" → "기생", "공생-감" → 그대로 (필터에서 컷)
+    const word = wordRaw.replace(/\(\d+\)$|\d+$/, '').trim();
 
     if (!TWO_HANGUL.test(word))   { stats.drop_not_2han++; continue; }
     if (unit !== '단어')          { stats.drop_not_word++; continue; }
@@ -174,8 +178,21 @@ function processFile(filepath) {
     allRows.push(...out);
   }
 
-  // CSV 출력
-  const header = 'word,hanja,word_type,word_type_label,composition,source';
+  // 전체 행 dedupe — (word, hanja, source) 기준 (DB UNIQUE 제약과 일치)
+  //   같은 한자 표기에 여러 의미가 분리 등재된 경우 (예: 대수 代數 — 수학 / 대 잇기) 첫 번째만 유지
+  //   고유어 동음이의어(가난01·가난02 등 한자 빈 문자열)도 마찬가지
+  const dedupeMap = new Map();
+  for (const r of allRows) {
+    const key = `${r.word}|${r.hanja}|${r.source}`;
+    if (!dedupeMap.has(key)) dedupeMap.set(key, r);
+  }
+  const beforeDedup = allRows.length;
+  allRows.length = 0;
+  allRows.push(...dedupeMap.values());
+  console.error(`\n[dedupe] ${beforeDedup} → ${allRows.length} (${beforeDedup - allRows.length}개 중복 제거)`);
+
+  // CSV 출력 — Supabase Import 호환 (테이블 컬럼과 1:1 일치)
+  const header = 'word,hanja,word_type,composition,source';
   const lines = [header];
   for (const r of allRows) {
     // 콤마·따옴표 안전 처리
@@ -184,7 +201,7 @@ function processFile(filepath) {
       return s.includes(',') || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s;
     };
     lines.push([
-      esc(r.word), esc(r.hanja), r.word_type, esc(r.word_type_label),
+      esc(r.word), esc(r.hanja), r.word_type,
       esc(r.composition), r.source
     ].join(','));
   }
