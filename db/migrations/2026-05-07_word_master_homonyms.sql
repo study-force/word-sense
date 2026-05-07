@@ -21,12 +21,14 @@
 
 
 -- ════════════════════════════════════════
--- 1. UNIQUE 제약 변경
+-- 1. UNIQUE 제약 변경 (idempotent — 재실행 안전)
 -- ════════════════════════════════════════
 
 -- 기존 UNIQUE(word) 제약 제거
--- (Supabase는 자동 생성 제약명을 word_master_word_key로 부여)
 ALTER TABLE word_master DROP CONSTRAINT IF EXISTS word_master_word_key;
+
+-- 이미 새 제약이 있으면 한 번 제거 후 재추가 (재실행 시 에러 방지)
+ALTER TABLE word_master DROP CONSTRAINT IF EXISTS word_master_word_hanja_key;
 
 -- 새 UNIQUE(word, hanja) 제약 추가
 ALTER TABLE word_master
