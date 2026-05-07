@@ -6283,6 +6283,16 @@ function spawnBurst(container, cx, cy, count, colors){
   }
 }
 
+// 한국어 받침에 따른 조사 자동 선택 (한글 음절 종성 검사)
+//   한글 음절 코드 = 0xAC00 + 초성×588 + 중성×28 + 종성
+//   (codepoint - 0xAC00) % 28 = 0 이면 받침 없음
+function eunNeun(s){
+  if(!s) return '는';
+  var c = s.charCodeAt(s.length - 1);
+  if(c < 0xAC00 || c > 0xD7A3) return '는';
+  return ((c - 0xAC00) % 28) > 0 ? '은' : '는';
+}
+
 async function submit(){
   var val = document.getElementById('wi').value.trim();
   if(!val) return;
@@ -6296,12 +6306,12 @@ async function submit(){
     return;
   }
   // 가족 어휘 중복 — quiz 통과해 정답 처리된 어휘
-  if(S.found.indexOf(val) > -1){ setFb('miss', '"'+val+'" 은(는) 이미 찾은 어휘에요!'); sndDup(); return; }
+  if(S.found.indexOf(val) > -1){ setFb('miss', '"'+val+'"'+eunNeun(val)+' 이미 찾은 어휘에요!'); sndDup(); return; }
   // 가족 어휘 외 중복 — 이전 분류 메시지가 있으면 그대로 다시 표시 (RPC 재호출 X)
   if(S.attempted && S.attempted.indexOf(val) > -1){
     var prev = S.attemptedFb && S.attemptedFb[val];
     if(prev){ setFb(prev.type, prev.message); }
-    else    { setFb('miss', '"'+val+'" 은(는) 이미 다뤘어요!'); }
+    else    { setFb('miss', '"'+val+'"'+eunNeun(val)+' 이미 다뤘어요!'); }
     sndDup(); return;
   }
   var w = WORD_MAP[val];
@@ -6325,7 +6335,7 @@ async function submit(){
     if(error) throw error;
 
     var result = (data && data.result) || 'not_found';
-    var message = (data && data.message) || '"'+val+'" 은(는) 모르는 단어예요';
+    var message = (data && data.message) || '"'+val+'"'+eunNeun(val)+' 모르는 단어예요';
 
     // 결과별 피드백 톤 매핑
     var fbType, fbSound;
@@ -6350,7 +6360,7 @@ async function submit(){
   } catch(err) {
     console.error('[classify] RPC 실패:', err);
     // RPC 실패 시 기존 동작으로 폴백
-    setFb('unknown', '"'+val+'" 은(는) 모르는 단어예요');
+    setFb('unknown', '"'+val+'"'+eunNeun(val)+' 모르는 단어예요');
     sndUnknown();
   }
 }
