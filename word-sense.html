@@ -6343,10 +6343,10 @@ async function submit(){
       case 'correct':           // 다른 회차 가족 어휘
       case 'hanja_with_main':   // 主字 포함 한자어 (출제 범위 밖)
         fbType = 'praise'; fbSound = sndOk; break;
-      case 'hanja_word':        // 主字 미포함 한자어 — 主字의 훈음으로 안내 메시지 재구성
+      case 'hanja_word':        // 主字 미포함 한자어 — 主字 훈음 + 한자로 안내 메시지 재구성
         fbType = 'info'; fbSound = sndUnknown;
-        if(SESSION && SESSION.mainHunFull){
-          message = SESSION.mainHunFull + '의 가족 어휘가 아니에요.';
+        if(SESSION && SESSION.mainHunFull && SESSION.mainChar){
+          message = SESSION.mainHunFull + '(' + SESSION.mainChar + ')의 가족 어휘가 아니에요.';
         }
         break;
       case 'native':            // 고유어
