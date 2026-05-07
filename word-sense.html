@@ -1235,6 +1235,9 @@ button { font-family: inherit; color: inherit; }
 .fb.miss    { color: var(--light-2); font-weight: 500; }
 .fb.hint    { color: #7BE0AE; }
 .fb.unknown { color: var(--light-2); font-weight: 500; }
+/* Phase 3 분류 시스템 — 칭찬형 / 분류 안내형 */
+.fb.praise  { color: #FFD580; font-weight: 600; }   /* 어려운 어휘 알고 있어요 등 */
+.fb.info    { color: #8FC4F8; font-weight: 500; }   /* 고유어·외래어·혼종어 안내 */
 .fb.fade-out { animation: fbFadeOut .4s ease forwards; }
 @keyframes fbFadeOut {
   from { opacity: 1; transform: translateY(0); }
@@ -6280,14 +6283,13 @@ function spawnBurst(container, cx, cy, count, colors){
   }
 }
 
-function submit(){
+async function submit(){
   var val = document.getElementById('wi').value.trim();
   if(!val) return;
   document.getElementById('wi').value = '';
   document.getElementById('wi').focus();
   resetHintNudge();
   // 글자 수 검증 — 본 훈련은 2자 한자어만 다룸. 1자/3자+ 또는 비-한글은 즉시 반려.
-  // 처리 부담 ↓, 표준국어사전 매칭 시에도 검색 범위 ↓ (Phase 3 분류 시스템 사전 작업)
   if(!/^[가-힣]{2}$/.test(val)){
     setFb('unknown', '두 글자 한자어를 입력해 주세요');
     sndUnknown();
@@ -6298,8 +6300,49 @@ function submit(){
   var w = WORD_MAP[val];
   var wr = WRONG_MAP[val];
   if(wr){ setFb('no', wr); sndErr(); return; }
-  if(w){ S.solving = val; showQuiz(); }
-  else { setFb('unknown', '"'+val+'" 은(는) 모르는 단어예요'); sndUnknown(); }
+  if(w){ S.solving = val; showQuiz(); return; }
+
+  // ── 가족 어휘·함정 외 입력 → Supabase RPC 분류 ──
+  // classify_word_input(p_word, p_main_char) 호출 → 어종별 피드백 메시지
+  // 점수에는 영향 없음 (현 회차 가족 어휘만 점수 카운트)
+  if(!S.attempted) S.attempted = [];
+  S.attempted.push(val);
+
+  try {
+    if(!window.SUPABASE_CLIENT) throw new Error('SUPABASE_CLIENT 미초기화');
+    const { data, error } = await window.SUPABASE_CLIENT.rpc('classify_word_input', {
+      p_word: val,
+      p_main_char: SESSION.mainChar
+    });
+    if(error) throw error;
+
+    var result = (data && data.result) || 'not_found';
+    var message = (data && data.message) || '"'+val+'" 은(는) 모르는 단어예요';
+
+    // 결과별 피드백 톤 매핑
+    var fbType, fbSound;
+    switch(result) {
+      case 'correct':           // 다른 회차 가족 어휘
+      case 'hanja_with_main':   // 主字 포함 한자어 (출제 범위 밖)
+        fbType = 'praise'; fbSound = sndOk; break;
+      case 'hanja_word':        // 主字 미포함 한자어
+        fbType = 'praise'; fbSound = sndOk; break;
+      case 'native':            // 고유어
+      case 'foreign':           // 외래어
+      case 'hybrid':            // 혼종어
+        fbType = 'info'; fbSound = sndUnknown; break;
+      case 'not_found':
+      default:
+        fbType = 'unknown'; fbSound = sndUnknown; break;
+    }
+    setFb(fbType, message);
+    if(typeof fbSound === 'function') fbSound();
+  } catch(err) {
+    console.error('[classify] RPC 실패:', err);
+    // RPC 실패 시 기존 동작으로 폴백
+    setFb('unknown', '"'+val+'" 은(는) 모르는 단어예요');
+    sndUnknown();
+  }
 }
 
 function showQuiz(){

@@ -31,9 +31,12 @@ const TARGET_ROUND_NO  = parseInt(_params.get('round'), 10) || 1;
 // ════════════════════════════════════════
 // SESSION_READY — inline script가 await할 Promise
 // ════════════════════════════════════════
+// 글로벌 Supabase 클라이언트 — 다른 곳(예: classify_word_input RPC)에서 재사용
+window.SUPABASE_CLIENT = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 window.SESSION_READY = (async function loadSession() {
-  // Supabase 클라이언트 (CDN으로 로드된 supabase 글로벌 사용)
-  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // Supabase 클라이언트 — 위에서 생성한 전역 인스턴스 사용
+  const client = window.SUPABASE_CLIENT;
 
   try {
     // 1. 영역 ID 조회

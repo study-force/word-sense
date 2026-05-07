@@ -130,9 +130,11 @@ BEGIN
   LIMIT 1;
 
   IF FOUND THEN
+    -- 호출 전제: 프론트의 step 6에서만 호출됨 → 현 회차 WORD_MAP 외 어휘
+    -- 따라서 word_master 매칭 = 다른 회차 가족 어휘 (점수 카운트 안 됨)
     RETURN jsonb_build_object(
       'result',  'correct',
-      'message', '''' || p_word || '''' || v_particle || ' 찾았어요!',
+      'message', '꽤 어려운 어휘를 알고 있네요. (다른 회차에서 만나요)',
       'word',    v_match_in_curriculum.word,
       'hanja',   v_match_in_curriculum.hanja
     );
