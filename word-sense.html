@@ -647,6 +647,88 @@ button { font-family: inherit; color: inherit; }
   overflow: hidden;
 }
 
+/* ── 1단계 스플래시 — 큰 한자만 화면 가득 ─────────────────────
+   탭하면 .dismissed 클래스 추가 → 한자 축소·페이드아웃 → ci-body 등장 */
+#charintro .ci-splash {
+  position: absolute;
+  top: 56px;                       /* topbar 아래 */
+  left: 0; right: 0; bottom: 0;
+  z-index: 20;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  cursor: pointer;
+  background: transparent;          /* charintro 페이지 배경 그대로 */
+  transition: opacity .9s ease;
+}
+#charintro .ci-splash.dismissed {
+  opacity: 0;
+  pointer-events: none;
+}
+#charintro .ci-splash-char {
+  font-family: var(--font-han);
+  font-size: 380px;
+  font-weight: 300;
+  color: #2A3050;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-shadow:
+    0 0 60px rgba(var(--ci-accent-rgb), 0.40),
+    0 4px 12px rgba(20,25,40, 0.10);
+  animation: ciSplashCharIn 1.3s cubic-bezier(.2,1.2,.4,1);
+  transition: transform 1s cubic-bezier(.4,0,.2,1), opacity .9s ease;
+}
+#charintro .ci-splash.dismissed .ci-splash-char {
+  transform: scale(0.42);          /* 158/380 ≈ 0.42 — ci-char-big 크기로 축소 */
+  opacity: 0;
+}
+#charintro .ci-splash-hun {
+  font-family: var(--font-han);
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--ci-accent-deep);
+  letter-spacing: 0.20em;
+  margin-top: 22px;
+  opacity: 0;
+  animation: ciSplashHunIn .9s ease .55s forwards;
+  transition: opacity .5s ease;
+}
+#charintro .ci-splash.dismissed .ci-splash-hun {
+  opacity: 0;
+  transition-delay: 0s;
+}
+#charintro .ci-splash-hint {
+  position: absolute;
+  bottom: 50px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px; font-weight: 500;
+  color: rgba(0,0,0,0.42);
+  letter-spacing: 0.20em;
+  opacity: 0;
+  animation: ciSplashHintIn 1.2s ease 1.0s forwards, ciSplashHintPulse 2.2s ease-in-out 2.2s infinite;
+}
+#charintro .ci-splash.dismissed .ci-splash-hint {
+  opacity: 0;
+  animation: none;
+}
+@keyframes ciSplashCharIn {
+  0%   { opacity: 0; transform: scale(0.55); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes ciSplashHunIn {
+  from { opacity: 0; transform: translateY(8px); letter-spacing: 0.10em; }
+  to   { opacity: 0.85; transform: translateY(0); letter-spacing: 0.20em; }
+}
+@keyframes ciSplashHintIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 0.65; transform: translateY(0); }
+}
+@keyframes ciSplashHintPulse {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.75; }
+}
+
+/* 본문 (ci-body) 진입 시퀀스는 splash가 사라진 직후 자연스럽게 진행됨 */
+
 /* "오늘의 한자" 단계 태그 — 좌상단 절대 위치 */
 #charintro .ci-stage-tag {
   position: absolute;
@@ -4171,6 +4253,12 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
     <div class="topbar">
       <div class="logo"><div class="logo-mark"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="14" y1="14" x2="6" y2="6"/><line x1="14" y1="14" x2="22" y2="6"/><line x1="14" y1="14" x2="5" y2="18"/><line x1="14" y1="14" x2="22" y2="20"/><line x1="14" y1="14" x2="14" y2="24"/></g><g fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="22" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="22" cy="20" r="2"/><circle cx="14" cy="24" r="2"/></g><circle cx="14" cy="14" r="3.6" fill="currentColor"/><circle cx="14" cy="14" r="3.6" fill="rgba(255,255,255,0.18)"/></svg></div></div>
     </div>
+    <!-- ══ 1단계 (스플래시) — 큰 한자 + 훈음. 탭하면 dismiss → 본문(ci-body) 진입 ══ -->
+    <div class="ci-splash" id="ci-splash" onclick="dismissCharIntroSplash()">
+      <div class="ci-splash-char" id="ci-splash-char">生</div>
+      <div class="ci-splash-hun"  id="ci-splash-hun">날 생</div>
+      <div class="ci-splash-hint">화면을 탭해서 시작</div>
+    </div>
     <span class="ci-stage-tag">오늘의 한자</span>
     <div class="ci-body">
       <div class="ci-hero">
@@ -5530,7 +5618,28 @@ function goCharIntro(){
         + '</div>';
     }).join('');
   }
+  // 1단계 스플래시 리셋 — 회차 진입 시 한자 큰 화면 다시 표시
+  var splash    = document.getElementById('ci-splash');
+  var splashCh  = document.getElementById('ci-splash-char');
+  var splashHun = document.getElementById('ci-splash-hun');
+  if(splash){
+    splash.classList.remove('dismissed');
+    splash.style.display = '';
+  }
+  if(splashCh)  splashCh.textContent  = sess.mainChar;
+  if(splashHun) splashHun.textContent = sess.mainHunFull;
   showPage('charintro');
+}
+
+// 1단계 스플래시 dismiss — 한자 축소·페이드아웃 → 본 페이지(2단계) 진입
+function dismissCharIntroSplash(){
+  var splash = document.getElementById('ci-splash');
+  if(!splash || splash.classList.contains('dismissed')) return;
+  splash.classList.add('dismissed');
+  // transition 끝나면 DOM에서 숨김 (다른 페이지 진입 시 잔상 방지)
+  setTimeout(function(){
+    if(splash.classList.contains('dismissed')) splash.style.display = 'none';
+  }, 1100);
 }
 
 function goGame(){
