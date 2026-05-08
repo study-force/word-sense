@@ -657,7 +657,8 @@ button { font-family: inherit; color: inherit; }
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   cursor: pointer;
-  background: transparent;          /* charintro 페이지 배경 그대로 */
+  /* body.theme-light 그라디언트와 동일 — 본문(ci-body) 비침 차단 */
+  background: radial-gradient(ellipse 80% 60% at 50% 45%, #EEF1F7 0%, #E4E8F1 55%, #D7DCE8 100%);
   transition: opacity .9s ease;
 }
 #charintro .ci-splash.dismissed {
