@@ -665,7 +665,7 @@ button { font-family: inherit; color: inherit; }
   transition: opacity .6s ease .7s; /* char morph 후반에 bg 페이드 */
 }
 #charintro .ci-splash.dismissed {
-  opacity: 0;
+  /* 부모 opacity는 그대로 — splash 한자가 작은 자리에 머무른 채 유지 */
   pointer-events: none;
 }
 #charintro .ci-splash-char {
@@ -679,11 +679,16 @@ button { font-family: inherit; color: inherit; }
     0 0 60px rgba(var(--ci-accent-rgb), 0.40),
     0 4px 12px rgba(20,25,40, 0.10);
   animation: ciSplashCharIn 1.3s cubic-bezier(.2,1.2,.4,1);
-  /* transform·opacity는 JS에서 inline으로 (FLIP 정확 위치) */
+  /* transform만 transition — splash 한자가 작은 자리로 morph 후 그 자리에 머무름 */
   transition: transform 1s cubic-bezier(.4,0,.2,1),
-              opacity .35s ease .65s,
               text-shadow .8s ease;
-  will-change: transform, opacity;
+  will-change: transform;
+}
+/* morph 완료된 splash 한자의 그림자는 작은 자리에 맞게 톤 다운 */
+#charintro .ci-splash.dismissed .ci-splash-char {
+  text-shadow:
+    0 0 24px rgba(var(--ci-accent-rgb), 0.35),
+    0 2px 8px rgba(20,25,40, 0.10);
 }
 #charintro .ci-splash-hun {
   font-family: var(--font-han);
@@ -732,9 +737,11 @@ button { font-family: inherit; color: inherit; }
 }
 
 /* ── ci-body 콘텐츠 — 기본 invisible. #charintro.entered 시 staggered fade in ──
-   기존 ciFadeUp/ciHeroIn 애니메이션은 비활성. */
+   기존 ciFadeUp/ciHeroIn 애니메이션은 비활성.
+   splash 한자가 ci-char-big 위치로 morph 완료(~1s) 후 순차 등장. */
 #charintro .ci-stage-tag,
 #charintro .ci-hero,
+#charintro .ci-hun-big,
 #charintro .ci-section,
 #charintro .ci-start-btn {
   opacity: 0;
@@ -742,11 +749,20 @@ button { font-family: inherit; color: inherit; }
   animation: none !important;
 }
 
-#charintro.entered .ci-hero          { opacity: 1; transition-delay: 0.05s; }
-#charintro.entered .ci-stage-tag     { opacity: 1; transition-delay: 0.25s; }
-#charintro.entered .ci-etymology-row { opacity: 1; transition-delay: 0.50s; }
-#charintro.entered .ci-meanings-row  { opacity: 1; transition-delay: 0.70s; }
-#charintro.entered .ci-start-btn     { opacity: 1; transition-delay: 0.90s; }
+/* ci-char-big — 영구 숨김. splash 한자가 morph 후 그 자리에 머무르며 시각적 역할 대행. */
+#charintro .ci-char-big {
+  opacity: 0 !important;
+  animation: none !important;
+}
+
+/* hero 컨테이너 자체는 .entered 시 즉시 visible(자식 hun-big 등 페이드인 위해) */
+#charintro.entered .ci-hero          { opacity: 1; transition-delay: 0s; }
+/* 다른 요소들은 morph 완료(~1s) 후 차례로 등장 */
+#charintro.entered .ci-hun-big       { opacity: 1; transition-delay: 1.05s; }
+#charintro.entered .ci-stage-tag     { opacity: 1; transition-delay: 1.20s; }
+#charintro.entered .ci-etymology-row { opacity: 1; transition-delay: 1.40s; }
+#charintro.entered .ci-meanings-row  { opacity: 1; transition-delay: 1.60s; }
+#charintro.entered .ci-start-btn     { opacity: 1; transition-delay: 1.80s; }
 
 /* "오늘의 한자" 단계 태그 — 좌상단 절대 위치 */
 #charintro .ci-stage-tag {
@@ -5649,9 +5665,15 @@ function goCharIntro(){
   }
   if(splashCh){
     splashCh.textContent  = sess.mainChar;
-    // 이전 morph 상태 초기화 (재진입 시 큰 상태로 복귀)
-    splashCh.style.transform = '';
-    splashCh.style.opacity   = '';
+    // 이전 morph 상태 초기화 — transition·animation 일시 해제하여 즉시 큰 상태로 복귀
+    //   (재진입 시 작은 자리에서 큰 자리로 transition 되는 어색함 방지)
+    splashCh.style.transition = 'none';
+    splashCh.style.animation  = 'none';
+    splashCh.style.transform  = '';
+    splashCh.style.opacity    = '';
+    void splashCh.offsetWidth;     // force reflow — 위 변경 즉시 적용
+    splashCh.style.transition = '';   // CSS 정의 복원
+    splashCh.style.animation  = '';   // ciSplashCharIn 재실행 (1.3s)
   }
   if(splashHun) splashHun.textContent = sess.mainHunFull;
   showPage('charintro');
@@ -5679,19 +5701,14 @@ function dismissCharIntroSplash(){
     var scale = targetRect.width / splashRect.width;
     var dx = (targetRect.left + targetRect.width / 2) - (splashRect.left + splashRect.width / 2);
     var dy = (targetRect.top  + targetRect.height/ 2) - (splashRect.top  + splashRect.height/ 2);
-    // CSS transition이 transform 1s 잡혀 있어 부드럽게 이동
+    // splash 한자가 작은 자리로 morph 후 그 자리에 머무름 (ci-char-big은 영구 숨김)
     splashCh.style.transform = 'translate(' + dx + 'px, ' + dy + 'px) scale(' + scale + ')';
-    // opacity는 transition delay 0.65s 후 0.35s에 걸쳐 0으로 (ci-char-big에 자리 양보)
-    splashCh.style.opacity = '0';
   }
 
-  // 3) splash bg + 부속요소(hun/hint) 페이드아웃은 dismissed 클래스 트리거
+  // 3) splash 부속요소(hun/hint) 페이드아웃은 dismissed 클래스 트리거
+  //    splash 한자 본체는 morph된 위치에 그대로 머무름 (ci-char-big 역할 대행)
+  //    splash DOM은 charintro 페이지 내에 그대로 유지 — showPage가 페이지 전환 시 알아서 처리
   splash.classList.add('dismissed');
-
-  // 4) 모션 완료 후 splash DOM 숨김 (다른 페이지 진입 시 잔상 방지)
-  setTimeout(function(){
-    if(splash.classList.contains('dismissed')) splash.style.display = 'none';
-  }, 1200);
 }
 
 function goGame(){
