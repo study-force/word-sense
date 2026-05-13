@@ -153,22 +153,6 @@ button { font-family: inherit; color: inherit; }
   position: relative; z-index: 10;
   /* 자식 stage-nav은 absolute로 페이지 상단에 자유롭게 배치됨 */
 }
-.logo {
-  display: none;                       /* 좌측 네트워크 아이콘 제거 */
-}
-.logo-mark {
-  width: 28px; height: 28px;
-  position: relative; align-self: center;
-  flex-shrink: 0;
-  color: var(--green);
-  filter: drop-shadow(0 0 6px rgba(69,194,138,0.45));
-  transition: transform .3s cubic-bezier(.2,1.5,.4,1);
-}
-.logo-mark:hover { transform: rotate(-12deg) scale(1.1); }
-.logo-mark svg { width: 100%; height: 100%; display: block; }
-.logo-ko { font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
-.logo em { color: var(--green); font-style: normal; }
-
 /* ── 단계 네비 (나의 어휘 네트워크 — 미니 네트워크 다이어그램) ──
    2줄 구성: 1줄 = "나의 어휘 네트워크" 라벨, 2줄 = "인출-확장-강화" 다이어그램 */
 .stage-nav {
@@ -279,12 +263,6 @@ button { font-family: inherit; color: inherit; }
       0 0 28px rgba(var(--sn-rgb), 0.22);
   }
 }
-.logo sub {
-  font-family: var(--font-han);
-  font-size: 10px; color: var(--light); margin-left: 4px;
-  letter-spacing: 0.18em; align-self: center;
-  font-weight: 400; white-space: nowrap;
-}
 
 /* ── 캡슐 색상 (3D 글로시 그라디언트) ── */
 .c-green   { background: radial-gradient(circle at 32% 28%, #A8EDC9 0%, #5BC893 55%, #2E9E6B 100%); }
@@ -363,23 +341,10 @@ button { font-family: inherit; color: inherit; }
   0%   { opacity: 0; transform: translateY(-6px); letter-spacing: 0.30em; }
   100% { opacity: 1; transform: translateY(0);    letter-spacing: 0.18em; }
 }
-.home-title {
-  font-size: 46px; font-weight: 300;
-  color: var(--text); letter-spacing: -0.03em;
-  line-height: 1;
-}
-.home-title em {
-  font-style: normal; font-weight: 700;
-  color: var(--green);
-}
 .home-area-tag {
   font-size: 24px; color: var(--mid);   /* 12 → 24 (2x) */
   margin: 8px 0 28px;                   /* 메인 타이틀 아래로 이동 — 위 간격은 좁게, 아래는 시작 버튼과 호흡 */
   display: flex; align-items: center; gap: 14px;
-}
-.home-area-tag .area-dot {
-  width: 12px; height: 12px; border-radius: 50%;     /* 8 → 12 */
-  background: var(--green); box-shadow: 0 0 10px rgba(69,194,138,0.5);
 }
 .home-area-tag em { font-style: normal; color: var(--text); font-weight: 600; }
 .home-area-tag .sep { color: var(--light-2); }
@@ -510,41 +475,7 @@ button { font-family: inherit; color: inherit; }
   margin-top: 8px;
 }
 
-.home-eum {
-  display: none !important;            /* 메인 타이틀 페이지에서는 노출하지 않음 */
-  font-size: 17px; color: var(--mid);
-  letter-spacing: 0.05em;
-  margin-bottom: 30px;
-  font-weight: 300;
-  display: inline-flex; align-items: center; gap: 0;
-}
-.home-eum strong {
-  color: var(--text); font-weight: 600;
-  background: var(--green-l);
-  padding: 4px 12px;
-  border-radius: 100px;
-  border: 1px solid var(--green-line);
-  margin: 0 4px;
-  transition: transform .25s cubic-bezier(.2,1.5,.4,1);
-}
-.home-eum strong:nth-child(1) { background: rgba(111,212,192,0.10); border-color: rgba(111,212,192,0.32); color: var(--mint); }
-.home-eum strong:nth-child(3) { background: rgba(69,194,138,0.10); border-color: var(--green-line); color: var(--green); }
-.home-eum strong:nth-child(5) { background: rgba(183,156,233,0.10); border-color: rgba(183,156,233,0.32); color: var(--lav); }
-.home-eum strong:hover { transform: translateY(-2px) scale(1.05); }
-
-/* ── 의미 3개 + 시작 버튼 순차 등장 (생 한자 팝 이후) ── */
-.home-eum > * { opacity: 0; transform: translateY(8px); }
-#home.active .home-eum strong:nth-child(1) { animation: eumIn .55s cubic-bezier(.2,1.4,.4,1) 1.70s both; }
-#home.active .home-eum .dot:nth-child(2)   { animation: eumIn .45s ease-out 1.85s both; }
-#home.active .home-eum strong:nth-child(3) { animation: eumIn .55s cubic-bezier(.2,1.4,.4,1) 1.95s both; }
-#home.active .home-eum .dot:nth-child(4)   { animation: eumIn .45s ease-out 2.10s both; }
-#home.active .home-eum strong:nth-child(5) { animation: eumIn .55s cubic-bezier(.2,1.4,.4,1) 2.20s both; }
-@keyframes eumIn {
-  0%   { opacity: 0; transform: translateY(10px) scale(0.92); }
-  60%  { opacity: 1; transform: translateY(-2px) scale(1.04); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
-}
-.home-eum .dot, .game-eum .dot {
+.game-eum .dot {
   /* progress-row의 .dot(22×4px 바) 스타일을 eum 컨텍스트에서 무력화 — 작은 가운뎃점으로 */
   width: auto; height: auto;
   background: transparent; border-radius: 0;
@@ -660,6 +591,8 @@ button { font-family: inherit; color: inherit; }
   z-index: 20;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
+  /* 무게중심 위로 — 한자+훈음 덩이가 viewport 중앙에서 살짝 위쪽으로 보이도록 */
+  padding-bottom: 12vh;
   cursor: pointer;
   background: transparent;          /* 본문은 이미 .entered 전엔 opacity 0 → 비침 없음 */
   transition: opacity .6s ease .7s; /* char morph 후반에 bg 페이드 */
@@ -1015,19 +948,6 @@ button { font-family: inherit; color: inherit; }
 }
 .cnt-label::before { content: '⌖ '; opacity: .6; }
 
-/* 좌상단 회차 메타 — 숨김 (영역명/회차번호는 다른 곳에서 안내) */
-.game-meta { display: none !important; }
-
-/* 우상단 발견 카운터 — 인풋박스 내부로 이동했으므로 숨김 */
-.game-counter { display: none !important; }
-.gc-num {
-  font-size: 28px; font-weight: 300; line-height: 1;
-  color: var(--light);
-  letter-spacing: -0.02em;
-}
-.gc-num em { font-style: normal; color: var(--green); font-weight: 700; }
-.gc-num .slash { color: var(--light); margin: 0 4px; font-weight: 200; }
-
 /* 게임 스테이지 */
 .game-stage {
   flex: 1; position: relative; overflow: hidden;
@@ -1037,15 +957,6 @@ button { font-family: inherit; color: inherit; }
   position: absolute; inset: 0; width: 100%; height: 100%;
   pointer-events: none; z-index: 1;   /* g-center(3) 아래 — 캡슐의 불투명 배경이 안쪽 라인을 가려 깔끔하게 */
 }
-.g-prompt-line {
-  font-size: 13px; color: var(--light); text-align: center;
-  letter-spacing: .05em; font-weight: 300;
-}
-.g-prompt-line em {
-  color: var(--green); font-style: normal; font-weight: 600;
-  letter-spacing: .08em;
-}
-
 .g-center {
   position: absolute; left: 50%; top: 50%;
   transform: translate(-50%, calc(-50% + 20px));   /* 버블 네트워크 20px 아래로 — 무게중심 균형 */
@@ -1560,19 +1471,6 @@ button { font-family: inherit; color: inherit; }
   text-shadow: 0 2px 14px rgba(0,0,0,0.45), 0 0 24px rgba(69,194,138,0.18);
   animation: giMsgIn .7s cubic-bezier(.2,1.2,.4,1) .12s both;
 }
-.gi-msg .gi-han {
-  font-family: var(--font-han);
-  font-weight: 500;
-  color: var(--green);
-  margin: 0 2px;
-  text-shadow: 0 0 14px rgba(69,194,138,0.55);
-}
-.gi-msg .gi-num {
-  color: var(--green);
-  font-weight: 700;
-  margin: 0 2px;
-  font-feature-settings: "tnum" 1;
-}
 @keyframes giMsgIn {
   0%   { opacity: 0; transform: translateY(-42px); letter-spacing: 0.04em; }   /* -50 + 8 */
   100% { opacity: 1; transform: translateY(-50px); letter-spacing: -0.005em; } /* 인트로 메시지 50px 위로 */
@@ -1726,35 +1624,6 @@ body.mission-mode #game .stage-nav {
   margin: 0 4px;
   text-shadow: 0 0 14px rgba(69,194,138,0.55);
 }
-/* 숫자 박스: "38 개" — 미션 화면의 시각 중심 */
-.game-intro .gi-msg.gi-mission .gm-num {
-  width: 460px;
-  padding: 36px 28px;
-  border: 2px solid rgba(69,194,138,0.55);
-  border-radius: 14px;
-  background: rgba(69,194,138,0.04);
-  box-sizing: border-box;
-  display: flex; align-items: baseline; justify-content: center; gap: 10px;
-  font-family: 'S-Core Dream', 'SCoreDream', 'Noto Sans KR', sans-serif;
-  line-height: 1;
-  margin-bottom: 16px;
-}
-.game-intro .gi-msg.gi-mission .gm-num em {
-  font-style: normal;
-  font-size: 92px; font-weight: 800;
-  color: var(--green);
-  letter-spacing: -0.04em;
-  font-variant-numeric: tabular-nums;
-  text-shadow: 0 0 24px rgba(69,194,138,0.45);
-  display: inline-block;
-  animation: gmNumPop .8s cubic-bezier(.2,1.4,.4,1) .35s both;
-}
-.game-intro .gi-msg.gi-mission .gm-unit {
-  font-size: 30px; font-weight: 600;
-  color: rgba(255,255,255,0.72);
-  text-shadow: none;
-  letter-spacing: -0.02em;
-}
 .game-intro .gi-msg.gi-mission .gm-foot {
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 18px; font-weight: 500;
@@ -1787,12 +1656,6 @@ body.mission-mode #game .stage-nav {
   0%   { opacity: 0; transform: translateY(8px); }
   100% { opacity: 1; transform: translateY(0); }
 }
-@keyframes gmNumPop {
-  0%   { transform: scale(.4); opacity: 0; }
-  60%  { transform: scale(1.12); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
 .gi-progress {
   display: flex; align-items: center; justify-content: center;
   gap: 0;
@@ -1947,7 +1810,6 @@ body.mission-mode #game .stage-nav {
 }
 .intro-banner::before { content: none; }
 .intro-banner strong { color: var(--stage-accent-deep, var(--green-deep)); font-weight: 700; }
-.ib-sky { /* 호환 클래스 (기존 HTML 유지) */ }
 
 /* 진행 막대 (dot bar) */
 .progress-row {
@@ -2650,8 +2512,7 @@ body.mission-mode #game .stage-nav {
   text-align: center;
 }
 /* 점수 시 sc-num은 변하지 않음 — 전구만 반응 */
-.score-chip .sc-ring,
-.score-chip .sc-pop { display: none !important; }
+.score-chip .sc-ring { display: none !important; }
 
 /* 보더(액자 프레임) 안에 박힌 작은 전구들
    기본: 꺼짐(소켓만 보임). 점수 시: 둘레를 따라 깜빡이며 빛남 */
@@ -2876,20 +2737,6 @@ body.dark-canvas .score-chip,
   white-space: nowrap; letter-spacing: -0.01em;
 }
 .area-title em { color: var(--stage-accent, var(--green)); font-style: normal; font-weight: 700; text-shadow: 0 0 14px rgba(var(--stage-accent-rgb), 0.45); }
-.area-progress { flex: 1; display: flex; align-items: center; gap: 14px; }
-.area-progress-bar {
-  flex: 1; height: 5px;
-  background: rgba(20,25,40,0.06);
-  border-radius: 3px;
-  overflow: hidden;
-  border: 1px solid rgba(20,25,40,0.06);
-}
-.area-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--stage-accent-light, #5DD0A0), var(--stage-accent, var(--green)), var(--stage-accent-deep, #2FA070));
-  transition: width .8s ease;
-  box-shadow: 0 0 10px rgba(var(--stage-accent-rgb), 0.30);
-}
 .area-progress-stat {
   font-size: 12px; font-weight: 500; color: #5A6178;
   white-space: nowrap; letter-spacing: 0.05em;
@@ -4018,10 +3865,8 @@ body.theme-light {
 }
 #screen::before { opacity: 0 !important; } /* 회로 그리드 숨김 */
 .topbar { border-bottom-color: rgba(255,255,255,0.08); }
-.home-title { color: #F2F4FA; }
 .home-area-tag { color: #B6BCCB; }
 .home-area-tag em { color: #F2F4FA !important; }
-.logo-ko { color: #F2F4FA; }
 /* 메인 히어로 — 익히기는 다크모드에서 흰색 */
 .hero-right { color: #F2F4FA !important; }
 .hero-left  { color: var(--green) !important; }
@@ -4096,23 +3941,6 @@ body.recap-mode .g-node.lit.is-silent {
 .home-stage-rings, .g-stage-rings { opacity: 0.25; }
 
 /* 상단으로 옮긴 프롬프트 — 캔버스 위 가운데 배치 */
-.g-prompt-top {
-  position: absolute;
-  top: 64px; left: 50%;
-  transform: translateX(-50%);
-  font-size: 14px; color: #E2E6EE; font-weight: 400;
-  letter-spacing: 0.02em;
-  z-index: 4; pointer-events: none;
-  white-space: nowrap;
-}
-.g-prompt-top em {
-  font-style: normal; font-weight: 600;
-  color: var(--green);
-  font-family: var(--font-han);
-  letter-spacing: 0.05em;
-  margin: 0 2px;
-}
-
 /* 초록 캡슐 — 본문 배경과 같은 톤(#1B2230) + 초록 투명 그라디언트 (뒤 라인 가림) */
 .c-green {
   background:
@@ -4218,7 +4046,6 @@ body.recap-mode .game-cap.c-green::before {
 /* 캡슐 안 음훈도 보라로 */
 body.recap-mode .game-cap .hun-text { color: #E0CDF5 !important; }
 /* 캔버스 위 프롬프트 한자(em) 보라로 */
-body.recap-mode .g-prompt-top em,
 body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
 
 /* 단어 입력창 — 흰 도크 위에서 진한 회색으로 대비 */
@@ -4252,7 +4079,6 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
     <span class="sc-num" id="sc-num">0</span>
     <span class="sc-denom" id="sc-denom"></span>
     <div class="sc-ring" id="sc-ring"></div>
-    <div class="sc-pop" id="sc-pop"></div>
   </div>
 </div>
 
@@ -4278,16 +4104,12 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
       <span class="sep">/</span>
       <span class="round-num" id="h-round">01</span>
     </div>
-    <div class="home-eum" id="h-eum">
-      <strong>태어나다</strong><span class="dot">·</span><strong>살다</strong><span class="dot">·</span><strong>자라다</strong>
-    </div>
     <button class="btn-start" onclick="goCharIntro()">시작하기</button>
   </div>
 
   <!-- ══ 도입 — 오늘의 한자 (어원·다의 학습) ══ -->
   <div class="page" id="charintro">
     <div class="topbar">
-      <div class="logo"><div class="logo-mark"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="14" y1="14" x2="6" y2="6"/><line x1="14" y1="14" x2="22" y2="6"/><line x1="14" y1="14" x2="5" y2="18"/><line x1="14" y1="14" x2="22" y2="20"/><line x1="14" y1="14" x2="14" y2="24"/></g><g fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="22" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="22" cy="20" r="2"/><circle cx="14" cy="24" r="2"/></g><circle cx="14" cy="14" r="3.6" fill="currentColor"/><circle cx="14" cy="14" r="3.6" fill="rgba(255,255,255,0.18)"/></svg></div></div>
     </div>
     <!-- ══ 1단계 (스플래시) — 큰 한자 + 훈음. 탭하면 dismiss → 본문(ci-body) 진입 ══ -->
     <div class="ci-splash" id="ci-splash" onclick="dismissCharIntroSplash()">
@@ -4319,7 +4141,6 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
   <!-- ══ 학습 (NEW) ══ -->
   <div class="page" id="learn">
     <div class="topbar">
-      <div class="logo"><div class="logo-mark"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="14" y1="14" x2="6" y2="6"/><line x1="14" y1="14" x2="22" y2="6"/><line x1="14" y1="14" x2="5" y2="18"/><line x1="14" y1="14" x2="22" y2="20"/><line x1="14" y1="14" x2="14" y2="24"/></g><g fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="22" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="22" cy="20" r="2"/><circle cx="14" cy="24" r="2"/></g><circle cx="14" cy="14" r="3.6" fill="currentColor"/><circle cx="14" cy="14" r="3.6" fill="rgba(255,255,255,0.18)"/></svg></div></div>
       <div class="stage-nav" data-stage="확장"><span class="sn-meta">나의 어휘 네트워크</span><div class="sn-track"><div class="sn-step" data-st="인출"><span class="sn-dot"></span><span class="sn-label">인출</span></div><span class="sn-link"></span><div class="sn-step" data-st="확장"><span class="sn-dot"></span><span class="sn-label">확장</span></div><span class="sn-link"></span><div class="sn-step" data-st="강화"><span class="sn-dot"></span><span class="sn-label">강화</span></div></div></div>
     </div>
     <div class="learn-stage" id="learn-stage">
@@ -4347,17 +4168,9 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
   <!-- ══ 게임 ══ -->
   <div class="page" id="game">
     <div class="topbar">
-      <div class="logo"><div class="logo-mark"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="14" y1="14" x2="6" y2="6"/><line x1="14" y1="14" x2="22" y2="6"/><line x1="14" y1="14" x2="5" y2="18"/><line x1="14" y1="14" x2="22" y2="20"/><line x1="14" y1="14" x2="14" y2="24"/></g><g fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="22" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="22" cy="20" r="2"/><circle cx="14" cy="24" r="2"/></g><circle cx="14" cy="14" r="3.6" fill="currentColor"/><circle cx="14" cy="14" r="3.6" fill="rgba(255,255,255,0.18)"/></svg></div></div>
       <div class="stage-nav" data-stage="인출"><span class="sn-meta">나의 어휘 네트워크</span><div class="sn-track"><div class="sn-step" data-st="인출"><span class="sn-dot"></span><span class="sn-label">인출</span></div><span class="sn-link"></span><div class="sn-step" data-st="확장"><span class="sn-dot"></span><span class="sn-label">확장</span></div><span class="sn-link"></span><div class="sn-step" data-st="강화"><span class="sn-dot"></span><span class="sn-label">강화</span></div></div></div>
     </div>
     <div class="game-stage" id="g-stage">
-      <div class="game-meta">
-        <div class="gm-area" id="g-area">환경과 생물</div>
-        <div class="gm-round" id="g-round">ROUND 001</div>
-      </div>
-      <div class="game-counter">
-        <div class="gc-num"><em id="g-found">0</em><span class="slash">/</span><span id="g-total">38</span></div>
-      </div>
       <canvas class="g-canvas" id="g-canvas"></canvas>
       <div class="g-center">
         <div class="game-cap c-green">
@@ -4387,7 +4200,6 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
   <!-- ══ 미발견 추론 ══ -->
   <div class="page" id="inferq">
     <div class="topbar">
-      <div class="logo"><div class="logo-mark"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="14" y1="14" x2="6" y2="6"/><line x1="14" y1="14" x2="22" y2="6"/><line x1="14" y1="14" x2="5" y2="18"/><line x1="14" y1="14" x2="22" y2="20"/><line x1="14" y1="14" x2="14" y2="24"/></g><g fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="22" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="22" cy="20" r="2"/><circle cx="14" cy="24" r="2"/></g><circle cx="14" cy="14" r="3.6" fill="currentColor"/><circle cx="14" cy="14" r="3.6" fill="rgba(255,255,255,0.18)"/></svg></div></div>
       <div class="stage-nav" data-stage="확장"><span class="sn-meta">나의 어휘 네트워크</span><div class="sn-track"><div class="sn-step" data-st="인출"><span class="sn-dot"></span><span class="sn-label">인출</span></div><span class="sn-link"></span><div class="sn-step" data-st="확장"><span class="sn-dot"></span><span class="sn-label">확장</span></div><span class="sn-link"></span><div class="sn-step" data-st="강화"><span class="sn-dot"></span><span class="sn-label">강화</span></div></div></div>
       <div class="cnt-label" id="iq-cnt"></div>
     </div>
@@ -4402,7 +4214,6 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
   <!-- ══ 빈칸 채우기 ══ -->
   <div class="page" id="fillq">
     <div class="topbar">
-      <div class="logo"><div class="logo-mark"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="14" y1="14" x2="6" y2="6"/><line x1="14" y1="14" x2="22" y2="6"/><line x1="14" y1="14" x2="5" y2="18"/><line x1="14" y1="14" x2="22" y2="20"/><line x1="14" y1="14" x2="14" y2="24"/></g><g fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="22" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="22" cy="20" r="2"/><circle cx="14" cy="24" r="2"/></g><circle cx="14" cy="14" r="3.6" fill="currentColor"/><circle cx="14" cy="14" r="3.6" fill="rgba(255,255,255,0.18)"/></svg></div></div>
       <div class="stage-nav" data-stage="강화"><span class="sn-meta">나의 어휘 네트워크</span><div class="sn-track"><div class="sn-step" data-st="인출"><span class="sn-dot"></span><span class="sn-label">인출</span></div><span class="sn-link"></span><div class="sn-step" data-st="확장"><span class="sn-dot"></span><span class="sn-label">확장</span></div><span class="sn-link"></span><div class="sn-step" data-st="강화"><span class="sn-dot"></span><span class="sn-label">강화</span></div></div></div>
       <div class="cnt-label" id="fq-cnt"></div>
     </div>
@@ -4415,7 +4226,6 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
   <!-- ══ 영역 진행 ══ -->
   <div class="page" id="area">
     <div class="topbar">
-      <div class="logo"><div class="logo-mark"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="14" y1="14" x2="6" y2="6"/><line x1="14" y1="14" x2="22" y2="6"/><line x1="14" y1="14" x2="5" y2="18"/><line x1="14" y1="14" x2="22" y2="20"/><line x1="14" y1="14" x2="14" y2="24"/></g><g fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="22" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="22" cy="20" r="2"/><circle cx="14" cy="24" r="2"/></g><circle cx="14" cy="14" r="3.6" fill="currentColor"/><circle cx="14" cy="14" r="3.6" fill="rgba(255,255,255,0.18)"/></svg></div></div>
     </div>
     <div class="area-body">
       <div class="area-page-title">
@@ -4445,7 +4255,6 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
   <!-- ══ 결과 ══ -->
   <div class="page" id="result">
     <div class="topbar">
-      <div class="logo"><div class="logo-mark"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="14" y1="14" x2="6" y2="6"/><line x1="14" y1="14" x2="22" y2="6"/><line x1="14" y1="14" x2="5" y2="18"/><line x1="14" y1="14" x2="22" y2="20"/><line x1="14" y1="14" x2="14" y2="24"/></g><g fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="22" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="22" cy="20" r="2"/><circle cx="14" cy="24" r="2"/></g><circle cx="14" cy="14" r="3.6" fill="currentColor"/><circle cx="14" cy="14" r="3.6" fill="rgba(255,255,255,0.18)"/></svg></div></div>
       <div class="r-topbar-meta">
         <span class="r-tm-area" id="r-tm-area">환경과 생물</span>
         <span class="r-tm-sep">·</span>
@@ -4512,7 +4321,6 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
   <!-- ══ 통계 — 6 영역 종합 학습 현황 (현재는 mock 데이터) ══ -->
   <div class="page" id="stats">
     <div class="topbar">
-      <div class="logo"><div class="logo-mark"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="14" y1="14" x2="6" y2="6"/><line x1="14" y1="14" x2="22" y2="6"/><line x1="14" y1="14" x2="5" y2="18"/><line x1="14" y1="14" x2="22" y2="20"/><line x1="14" y1="14" x2="14" y2="24"/></g><g fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="22" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="22" cy="20" r="2"/><circle cx="14" cy="24" r="2"/></g><circle cx="14" cy="14" r="3.6" fill="currentColor"/><circle cx="14" cy="14" r="3.6" fill="rgba(255,255,255,0.18)"/></svg></div></div>
     </div>
     <div class="st-body">
       <h1 class="st-page-title">영역별 훈련 현황</h1>
@@ -4584,11 +4392,6 @@ window.SESSION_READY.then(function() {
   if(hArea)  hArea.textContent  = SESSION.area;
   if(hRound) hRound.textContent = String(SESSION.id || 1).padStart(2, '0');
 });
-
-// ── 색상 ────────────────────────────────────
-var CAPS = ['c-peach','c-sky','c-lav','c-rose','c-yel','c-green'];
-var capIdx = 0;
-function nextCap(){ return CAPS[capIdx++ % CAPS.length]; }
 
 // ── 페이지 ──────────────────────────────────
 function showPage(id){
@@ -4697,21 +4500,6 @@ function refreshScoreUI(animate){
     setTimeout(function(){ chip.classList.remove('bump'); }, 4500);
   }
 }
-function popScoreDelta(type, delta){
-  var pop = document.getElementById('sc-pop');
-  if(!pop) return;
-  pop.className = 'sc-pop';
-  pop.textContent = '+' + fmtScore(delta);
-  if(type === 'explore')   pop.classList.add('fly-explore');
-  if(type === 'reinforce') pop.classList.add('fly-reinforce');
-  // reflow
-  void pop.offsetWidth;
-  pop.classList.add('fly');
-  setTimeout(function(){
-    pop.className = 'sc-pop';
-    pop.textContent = '';
-  }, 1050);
-}
 function addScore(type){
   if(!(type in SCORE)) return;
   // 강화(reinforce) 단계 첫 시도 정답 = 뜻+적용 둘 다 맞힘 = 어휘 1개 완전 습득 → +1점
@@ -4719,7 +4507,6 @@ function addScore(type){
   var inc = 1;
   SCORE[type] += inc;
   refreshScoreUI(true);
-  popScoreDelta(type, inc);
 }
 function updateScoreVisibility(pageId){
   var chip = document.getElementById('score-chip');
@@ -4806,19 +4593,6 @@ function _autoCleanup(srcNode /* oscillator | bufferSource */, nodes){
     try{ srcNode.disconnect(); }catch(e){}
     if(nodes){ for(var i=0;i<nodes.length;i++){ try{ nodes[i].disconnect(); }catch(e){} } }
   };
-}
-// 톤 헬퍼 — 모두 마스터 게인을 통해 출력
-function tone(f,s,d,v,t){
-  try{
-    var a=ac(), o=a.createOscillator(), g=a.createGain();
-    var dest = sndDest() || a.destination;
-    o.type=t||'sine'; o.frequency.value=f; o.connect(g); g.connect(dest);
-    var ct=a.currentTime+s;
-    g.gain.setValueAtTime(0,ct); g.gain.linearRampToValueAtTime(v,ct+.06);
-    g.gain.setValueAtTime(v,ct+d-.08); g.gain.linearRampToValueAtTime(0,ct+d);
-    o.start(ct); o.stop(ct+d+.05);
-    _autoCleanup(o, [g]);
-  }catch(e){}
 }
 // 노이즈 버스트 — 종이/공기 마찰음 (밴드패스로 음역 한정)
 function noiseBurst(start, dur, vol, centerHz, q){
@@ -5138,7 +4912,6 @@ function pad2(n){ n = String(n); while(n.length < 2) n = '0' + n; return n; }
 function goHome(){
   var sess = SESSION;
   S = { found:[], attempted:[], attemptedFb:{}, hints:5, okCount:0, hintTargets:[], hintFound:[] };
-  capIdx = 0;
   CONFETTI_FIRED = false;
   if(HINT_NUDGE_TIMER){ clearTimeout(HINT_NUDGE_TIMER); HINT_NUDGE_TIMER = null; }
   document.getElementById('g-nodes').innerHTML = '';
@@ -5149,7 +4922,6 @@ function goHome(){
   updateHints();
   document.getElementById('h-char').textContent = sess.mainChar;
   document.getElementById('h-hun').textContent  = sess.mainHunFull;
-  document.getElementById('h-eum').innerHTML    = eumToPills(sess.mainEum);
   var hArea = document.getElementById('h-area');
   if(hArea) hArea.textContent = sess.area || '';
   var hRound = document.getElementById('h-round');
@@ -5163,10 +4935,6 @@ function goHome(){
 function updateGameCounter(){
   var n = S.found.length;
   var t = (SESSION && SESSION.words) ? SESSION.words.length : 0;
-  var fEl = document.getElementById('g-found');
-  var tEl = document.getElementById('g-total');
-  if(fEl) fEl.textContent = n;
-  if(tEl) tEl.textContent = t;
   // 인풋박스 내부 좌측 카운터
   var wf = document.getElementById('wi-found');
   var wt = document.getElementById('wi-total');
@@ -5248,8 +5016,6 @@ function goRecap(){
       lightUpNode(w, true);   // fromLearn = true → 보라색
       try{ sndOk(); }catch(e){}
       var newCount = baseFound + (i + 1);
-      var fEl = document.getElementById('g-found');
-      if(fEl) fEl.textContent = newCount;
       var wf = document.getElementById('wi-found');
       if(wf) wf.textContent = newCount;
     }, startDelay + i * stepDelay);
@@ -5701,14 +5467,26 @@ function dismissCharIntroSplash(){
   // 1) 본문 페이드인 시작 — ci-hero 컨테이너 visible (레이아웃 위치 보장)
   charintroEl.classList.add('entered');
 
+  // #screen 컨테이너는 뷰포트 맞춤 위해 scale(>1)이 걸려있음.
+  // getBoundingClientRect는 그 scale이 곱해진 화면 좌표를 반환하지만,
+  // inline transform의 translate(px)는 부모 scale로 곱해져 화면에 표현되므로
+  // 변위를 부모 scale로 나눠 보정해야 정확히 목표 위치로 morph됨.
+  var screenEl = document.getElementById('screen');
+  var screenScale = 1;
+  if(screenEl){
+    var sRect = screenEl.getBoundingClientRect();
+    var sOffW = screenEl.offsetWidth;
+    if(sOffW > 0) screenScale = sRect.width / sOffW;
+  }
+
   // 2) FLIP — splash 한자를 ci-char-big 위치·크기로 정확히 이동·축소
   ciChar.getBoundingClientRect();   // reflow
   var charSrc = splashCh.getBoundingClientRect();
   var charDst = ciChar.getBoundingClientRect();
   if(charSrc.width > 0 && charDst.width > 0){
     var charScale = charDst.width / charSrc.width;
-    var charDx = (charDst.left + charDst.width / 2) - (charSrc.left + charSrc.width / 2);
-    var charDy = (charDst.top  + charDst.height/ 2) - (charSrc.top  + charSrc.height/ 2);
+    var charDx = ((charDst.left + charDst.width / 2) - (charSrc.left + charSrc.width / 2)) / screenScale;
+    var charDy = ((charDst.top  + charDst.height/ 2) - (charSrc.top  + charSrc.height/ 2)) / screenScale;
     splashCh.style.transform = 'translate(' + charDx + 'px, ' + charDy + 'px) scale(' + charScale + ')';
   }
 
@@ -5718,8 +5496,8 @@ function dismissCharIntroSplash(){
     var hunDst = ciHun.getBoundingClientRect();
     if(hunSrc.width > 0 && hunDst.width > 0){
       var hunScale = hunDst.width / hunSrc.width;
-      var hunDx = (hunDst.left + hunDst.width / 2) - (hunSrc.left + hunSrc.width / 2);
-      var hunDy = (hunDst.top  + hunDst.height/ 2) - (hunSrc.top  + hunSrc.height/ 2);
+      var hunDx = ((hunDst.left + hunDst.width / 2) - (hunSrc.left + hunSrc.width / 2)) / screenScale;
+      var hunDy = ((hunDst.top  + hunDst.height/ 2) - (hunSrc.top  + hunSrc.height/ 2)) / screenScale;
       splashHun.style.transform = 'translate(' + hunDx + 'px, ' + hunDy + 'px) scale(' + hunScale + ')';
     }
   }
@@ -5742,10 +5520,6 @@ function goGame(){
   // 인풋 placeholder를 회차의 訓에 맞춰 동적으로 채움
   var wi = document.getElementById('wi');
   if(wi) wi.placeholder = "'" + sess.mainHunFull + "'의 가족 어휘";
-  var gArea = document.getElementById('g-area');
-  if(gArea) gArea.textContent = sess.area || '';
-  var gRound = document.getElementById('g-round');
-  if(gRound) gRound.textContent = 'ROUND ' + pad3(sess.id || 1);
   updateGameCounter();
   // 미션 모드 활성화 — 게임 캔버스 숨기고 페이지 전환 시 깜빡임 제거
   document.body.classList.add('mission-mode');
@@ -6865,7 +6639,6 @@ function renderFQCard(word){
 // ══════════════════════════════════════════════
 // 결과
 // ══════════════════════════════════════════════
-var ELEM_WORDS = [], HARD_WORDS = [];
 var RANK_RETR = [], RANK_COMBO = [], RANK_MASTER = [], RANK_CUMUL = [];
 var MOCK_NAMES = (function(){
   var family = ['김','이','박','최','정','한','윤','강','오','임','서','홍','노','조','신','장','권','문','양','손','배','백','허','유','남','심','전','고','문','진'];
@@ -6880,10 +6653,6 @@ var MOCK_NAMES = (function(){
   return out;
 })();
 
-function buildPools(){
-  ELEM_WORDS = WORD_LIST.filter(function(w){ return !WORD_MAP[w].isInferQuiz; });
-  HARD_WORDS = WORD_LIST.filter(function(w){ return WORD_MAP[w].isInferQuiz; });
-}
 function _sortRank(list){
   list.sort(function(a,b){
     if(b.count !== a.count) return b.count - a.count;
@@ -7026,7 +6795,6 @@ function renderRankList(){
 
 function goResult(){
   var sess = SESSION;
-  buildPools();
 
   // ── 상단 메타 (영역 · 회차 · 한자 · 훈) ──
   var area = sess.area || '환경과 생물';
@@ -7454,10 +7222,6 @@ var AREA_HANJA = ['生','體','動','物','植','林','山','海','川','江',
                   '死','滅','護','環','境','季','春','夏','秋','冬',
                   '雨','雪','風','雲','光','熱','溫','寒','自','然',
                   '地','球','空','氣','鳥','蟲','魚','獸','土','石'];
-var AREA_HARD = {
-  '體':1,'葉':1,'種':1,'根':1,'養':1,'命':1,'滅':1,'護':1,'環':1,'境':1,
-  '季':1,'雲':1,'熱':1,'溫':1,'寒':1,'然':1,'氣':1,'蟲':1,'獸':1,'植':1
-};
 var AREA_HUN = {
   '生':'날 생','體':'몸 체','動':'움직일 동','物':'물건 물','植':'심을 식',
   '林':'수풀 림','山':'메 산','海':'바다 해','川':'내 천','江':'강 강',
@@ -7501,8 +7265,6 @@ function goArea(){
 
   document.getElementById('area-title-name').textContent = SESSION.area || '환경과 생물';
   document.getElementById('area-pass-count').textContent = passes;
-  var apFill = document.getElementById('area-progress-fill');
-  if(apFill) apFill.style.width = (passes/totalSessions*100) + '%';
 
   var grid = document.getElementById('area-grid'); grid.innerHTML = '';
   prog.forEach(function(p){
