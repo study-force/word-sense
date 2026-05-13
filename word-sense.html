@@ -723,8 +723,10 @@ button { font-family: inherit; color: inherit; }
   100% { opacity: 1; transform: scale(1); }
 }
 @keyframes ciSplashHunIn {
-  from { opacity: 0; transform: translateY(8px); letter-spacing: 0.10em; }
-  to   { opacity: 0.85; transform: translateY(0); letter-spacing: 0.20em; }
+  /* transform 제외 — animation forwards가 transform 잡고 있으면 JS inline transform이 막힘.
+     입장 효과는 opacity + letter-spacing 확장으로만 표현. */
+  from { opacity: 0; letter-spacing: 0.10em; }
+  to   { opacity: 0.85; letter-spacing: 0.20em; }
 }
 @keyframes ciSplashHintIn {
   from { opacity: 0; transform: translateY(6px); }
