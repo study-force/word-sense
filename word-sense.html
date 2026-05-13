@@ -647,8 +647,12 @@ button { font-family: inherit; color: inherit; }
   overflow: hidden;
 }
 
-/* ── 1단계 스플래시 — 큰 한자만 화면 가득 ─────────────────────
-   탭하면 .dismissed 클래스 추가 → 한자 축소·페이드아웃 → ci-body 등장 */
+/* ── 1단계 스플래시 — 큰 한자만 화면 가득. FLIP 모션으로 ci-char-big 위치로 morph ──
+   탭하면:
+   1) ci-splash-char가 JS로 측정한 transform 받아 ci-char-big 위치·크기로 축소
+   2) 동시에 #charintro에 .entered 클래스 → 본문 요소들이 staggered fade in
+   3) splash bg 페이드아웃 + DOM 제거
+*/
 #charintro .ci-splash {
   position: absolute;
   top: 56px;                       /* topbar 아래 */
@@ -657,9 +661,8 @@ button { font-family: inherit; color: inherit; }
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   cursor: pointer;
-  /* body.theme-light 그라디언트와 동일 — 본문(ci-body) 비침 차단 */
-  background: radial-gradient(ellipse 80% 60% at 50% 45%, #EEF1F7 0%, #E4E8F1 55%, #D7DCE8 100%);
-  transition: opacity .9s ease;
+  background: transparent;          /* 본문은 이미 .entered 전엔 opacity 0 → 비침 없음 */
+  transition: opacity .6s ease .7s; /* char morph 후반에 bg 페이드 */
 }
 #charintro .ci-splash.dismissed {
   opacity: 0;
@@ -676,11 +679,11 @@ button { font-family: inherit; color: inherit; }
     0 0 60px rgba(var(--ci-accent-rgb), 0.40),
     0 4px 12px rgba(20,25,40, 0.10);
   animation: ciSplashCharIn 1.3s cubic-bezier(.2,1.2,.4,1);
-  transition: transform 1s cubic-bezier(.4,0,.2,1), opacity .9s ease;
-}
-#charintro .ci-splash.dismissed .ci-splash-char {
-  transform: scale(0.42);          /* 158/380 ≈ 0.42 — ci-char-big 크기로 축소 */
-  opacity: 0;
+  /* transform·opacity는 JS에서 inline으로 (FLIP 정확 위치) */
+  transition: transform 1s cubic-bezier(.4,0,.2,1),
+              opacity .35s ease .65s,
+              text-shadow .8s ease;
+  will-change: transform, opacity;
 }
 #charintro .ci-splash-hun {
   font-family: var(--font-han);
@@ -691,11 +694,10 @@ button { font-family: inherit; color: inherit; }
   margin-top: 22px;
   opacity: 0;
   animation: ciSplashHunIn .9s ease .55s forwards;
-  transition: opacity .5s ease;
+  transition: opacity .35s ease;
 }
 #charintro .ci-splash.dismissed .ci-splash-hun {
   opacity: 0;
-  transition-delay: 0s;
 }
 #charintro .ci-splash-hint {
   position: absolute;
@@ -706,6 +708,7 @@ button { font-family: inherit; color: inherit; }
   letter-spacing: 0.20em;
   opacity: 0;
   animation: ciSplashHintIn 1.2s ease 1.0s forwards, ciSplashHintPulse 2.2s ease-in-out 2.2s infinite;
+  transition: opacity .25s ease;
 }
 #charintro .ci-splash.dismissed .ci-splash-hint {
   opacity: 0;
@@ -728,7 +731,22 @@ button { font-family: inherit; color: inherit; }
   50%      { opacity: 0.75; }
 }
 
-/* 본문 (ci-body) 진입 시퀀스는 splash가 사라진 직후 자연스럽게 진행됨 */
+/* ── ci-body 콘텐츠 — 기본 invisible. #charintro.entered 시 staggered fade in ──
+   기존 ciFadeUp/ciHeroIn 애니메이션은 비활성. */
+#charintro .ci-stage-tag,
+#charintro .ci-hero,
+#charintro .ci-section,
+#charintro .ci-start-btn {
+  opacity: 0;
+  transition: opacity 0.7s cubic-bezier(.2,1,.3,1);
+  animation: none !important;
+}
+
+#charintro.entered .ci-hero          { opacity: 1; transition-delay: 0.05s; }
+#charintro.entered .ci-stage-tag     { opacity: 1; transition-delay: 0.25s; }
+#charintro.entered .ci-etymology-row { opacity: 1; transition-delay: 0.50s; }
+#charintro.entered .ci-meanings-row  { opacity: 1; transition-delay: 0.70s; }
+#charintro.entered .ci-start-btn     { opacity: 1; transition-delay: 0.90s; }
 
 /* "오늘의 한자" 단계 태그 — 좌상단 절대 위치 */
 #charintro .ci-stage-tag {
@@ -5619,28 +5637,61 @@ function goCharIntro(){
         + '</div>';
     }).join('');
   }
-  // 1단계 스플래시 리셋 — 회차 진입 시 한자 큰 화면 다시 표시
-  var splash    = document.getElementById('ci-splash');
-  var splashCh  = document.getElementById('ci-splash-char');
-  var splashHun = document.getElementById('ci-splash-hun');
+  // 1단계 스플래시 리셋 — 회차 진입 시 큰 한자 다시 표시, .entered 제거
+  var charintroEl = document.getElementById('charintro');
+  var splash      = document.getElementById('ci-splash');
+  var splashCh    = document.getElementById('ci-splash-char');
+  var splashHun   = document.getElementById('ci-splash-hun');
+  if(charintroEl) charintroEl.classList.remove('entered');
   if(splash){
     splash.classList.remove('dismissed');
     splash.style.display = '';
   }
-  if(splashCh)  splashCh.textContent  = sess.mainChar;
+  if(splashCh){
+    splashCh.textContent  = sess.mainChar;
+    // 이전 morph 상태 초기화 (재진입 시 큰 상태로 복귀)
+    splashCh.style.transform = '';
+    splashCh.style.opacity   = '';
+  }
   if(splashHun) splashHun.textContent = sess.mainHunFull;
   showPage('charintro');
 }
 
-// 1단계 스플래시 dismiss — 한자 축소·페이드아웃 → 본 페이지(2단계) 진입
+// 1단계 스플래시 dismiss — FLIP 모션으로 ci-char-big 위치로 정확히 morph
 function dismissCharIntroSplash(){
-  var splash = document.getElementById('ci-splash');
-  if(!splash || splash.classList.contains('dismissed')) return;
+  var splash      = document.getElementById('ci-splash');
+  var splashCh    = document.getElementById('ci-splash-char');
+  var ciChar      = document.getElementById('ci-char');
+  var charintroEl = document.getElementById('charintro');
+  if(!splash || !splashCh || !ciChar) return;
+  if(splash.classList.contains('dismissed')) return;
+
+  // 1) 본문 요소 fade in 시작 — ci-char-big도 점차 보이기 시작
+  charintroEl.classList.add('entered');
+
+  // 2) FLIP — splash char 현재 rect와 ci-char-big 최종 rect 측정
+  //    splash char를 ci-char-big 위치로 정확히 이동·축소
+  //    레이아웃 강제 reflow 후 measure (entered가 막 적용된 시점이라 ci-char-big 위치 안정)
+  ciChar.getBoundingClientRect();   // reflow
+  var splashRect = splashCh.getBoundingClientRect();
+  var targetRect = ciChar.getBoundingClientRect();
+  if(splashRect.width > 0 && targetRect.width > 0){
+    var scale = targetRect.width / splashRect.width;
+    var dx = (targetRect.left + targetRect.width / 2) - (splashRect.left + splashRect.width / 2);
+    var dy = (targetRect.top  + targetRect.height/ 2) - (splashRect.top  + splashRect.height/ 2);
+    // CSS transition이 transform 1s 잡혀 있어 부드럽게 이동
+    splashCh.style.transform = 'translate(' + dx + 'px, ' + dy + 'px) scale(' + scale + ')';
+    // opacity는 transition delay 0.65s 후 0.35s에 걸쳐 0으로 (ci-char-big에 자리 양보)
+    splashCh.style.opacity = '0';
+  }
+
+  // 3) splash bg + 부속요소(hun/hint) 페이드아웃은 dismissed 클래스 트리거
   splash.classList.add('dismissed');
-  // transition 끝나면 DOM에서 숨김 (다른 페이지 진입 시 잔상 방지)
+
+  // 4) 모션 완료 후 splash DOM 숨김 (다른 페이지 진입 시 잔상 방지)
   setTimeout(function(){
     if(splash.classList.contains('dismissed')) splash.style.display = 'none';
-  }, 1100);
+  }, 1200);
 }
 
 function goGame(){
