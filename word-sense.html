@@ -5280,6 +5280,56 @@ function buildIqHead(word, d){
     + '</div>';
 }
 
+// 4지선다 버튼 처리 — 확장(learn)/인출 확인(quiz)/추론(inferQ) 세 곳의 공통 로직.
+//   cs:        choices-col 컨테이너 element
+//   choices:   섞인 보기 배열
+//   ci:        정답 인덱스 (shuf 안에서)
+//   opts.bubbleText: 정답 시 ans-bubble 텍스트
+//   opts.beforeNext(wrongAttempted): 정답 클릭 즉시 (효과음·카운터 증가 등)
+//   opts.onCorrect(wrongAttempted):  정답 후 1100ms 대기 후 (페이지 전환·다음 카드 등)
+function setupChoiceButtons(cs, choices, ci, opts){
+  opts = opts || {};
+  var bubbleText = opts.bubbleText || '맞아요';
+  var beforeNext = opts.beforeNext || function(){};
+  var onCorrect  = opts.onCorrect  || function(){};
+  var wrongAttempted = false;
+  choices.forEach(function(ch, i){
+    var wrap = document.createElement('div'); wrap.style.position = 'relative';
+    var btn = document.createElement('button'); btn.className = 'choice-btn';
+    btn.innerHTML = '<span class="num-badge">'+(i+1)+'</span>' + ch;
+    btn.onclick = function(){
+      if(i === ci){
+        btn.className = 'choice-btn ok';
+        cs.querySelectorAll('.choice-btn').forEach(function(b){ b.disabled = true; });
+        beforeNext(wrongAttempted);
+        var bub = document.createElement('div');
+        bub.className = 'ans-bubble';
+        bub.textContent = bubbleText;
+        wrap.appendChild(bub);
+        setTimeout(function(){ onCorrect(wrongAttempted); }, 1100);
+      } else {
+        sndErr();
+        wrongAttempted = true;
+        btn.className = 'choice-btn no';
+        cs.querySelectorAll('.choice-btn').forEach(function(b){ b.disabled = true; });
+        var m = document.createElement('div');
+        m.className = 'try-again-mask';
+        m.textContent = '다시 생각해보세요';
+        wrap.appendChild(m);
+        setTimeout(function(){
+          m.remove();
+          btn.classList.remove('no');
+          btn.classList.add('dim');
+          cs.querySelectorAll('.choice-btn').forEach(function(b, bi){
+            if(bi !== i && !b.classList.contains('dim')) b.disabled = false;
+          });
+        }, 1000);
+      }
+    };
+    wrap.appendChild(btn); cs.appendChild(wrap);
+  });
+}
+
 function renderLearnCard(){
   var w = WORD_MAP[LEARN.words[LEARN.idx]];
   if(!w) return;
@@ -5302,71 +5352,41 @@ function renderLearnCard(){
     + '<div class="reveal-msg" id="lc-rev"></div>';
 
   var cs = document.getElementById('lc-ch');
-  var wrongAttempted = false;   // 이 카드에서 한 번이라도 오답을 골랐는지
-  shuf.forEach(function(ch, i){
-    var wrap = document.createElement('div'); wrap.style.position = 'relative';
-    var btn = document.createElement('button'); btn.className = 'choice-btn';
-    btn.innerHTML = '<span class="num-badge">'+(i+1)+'</span>' + ch;
-    btn.onclick = function(){
-      var ok = (i === ci);
-      if(ok){
-        btn.className = 'choice-btn ok';
-        cs.querySelectorAll('.choice-btn').forEach(function(b){ b.disabled = true; });
-        LEARN.correct++; sndOk();
-        // 확장 첫 시도 정답 시에만 강화 후보 카운트 +1
-        if(!wrongAttempted) bumpCounting();
-        var bub = document.createElement('div');
-        bub.className = 'ans-bubble';
-        bub.textContent = '맞아요. 훈으로 의미를 깨웠어요 ✨';
-        wrap.appendChild(bub);
-        setTimeout(function(){
-          // 컬렉션 누적 — 뜻 퀴즈 첫 시도 정답만 노드 점등(보라) + 강화 후보가 됨.
-          // 오답 후 재정답이면 silentCollected로 분리 — 검정 노드 표시만, 강화 후보 X.
-          if(!wrongAttempted){
-            LEARN.collected.push(LEARN.words[LEARN.idx]);
-          } else {
-            LEARN.silentCollected.push(LEARN.words[LEARN.idx]);
-          }
-          // 왼쪽 "뒤집힌 카드" 카운트는 정/오답 무관하게 +1 (카드를 넘기는 동작 자체)
-          LEARN.flipped = (LEARN.flipped || 0) + 1;
-          updateLearnCounters();
-          checkCelebrate();   // 인출 + 탐구 누적 임계치 체크
-          // 카드 슬라이드 아웃 → 다음 카드
-          if(LEARN.idx >= LEARN.words.length - 1){
-            // 마지막 카드도 발견 덱에 쌓이는 모션 + 효과음 → 환원
-            card.classList.add('flying-out');
-            setTimeout(function(){ sndCardStack(); }, 340);
-            setTimeout(function(){ goRecap(); }, 520);
-          } else {
-            card.classList.add('flying-out');
-            // 카드가 발견 덱에 살짝 늦게 닿을 때 효과음 (애니메이션 후반부)
-            setTimeout(function(){ sndCardStack(); }, 340);
-            setTimeout(function(){
-              LEARN.idx++;
-              renderLearnCard();
-            }, 460);
-          }
-        }, 1100);
+  setupChoiceButtons(cs, shuf, ci, {
+    bubbleText: '맞아요. 훈으로 의미를 깨웠어요 ✨',
+    beforeNext: function(wrongAttempted){
+      LEARN.correct++; sndOk();
+      // 확장 첫 시도 정답 시에만 강화 후보 카운트 +1
+      if(!wrongAttempted) bumpCounting();
+    },
+    onCorrect: function(wrongAttempted){
+      // 컬렉션 누적 — 뜻 퀴즈 첫 시도 정답만 노드 점등(보라) + 강화 후보가 됨.
+      // 오답 후 재정답이면 silentCollected로 분리 — 검정 노드 표시만, 강화 후보 X.
+      if(!wrongAttempted){
+        LEARN.collected.push(LEARN.words[LEARN.idx]);
       } else {
-        sndErr();
-        wrongAttempted = true;   // 첫 오답 → 이후 정답 맞혀도 점수 가산 X (확장 카드)
-        btn.className = 'choice-btn no';
-        cs.querySelectorAll('.choice-btn').forEach(function(b){ b.disabled = true; });
-        var m = document.createElement('div');
-        m.className = 'try-again-mask';
-        m.textContent = '다시 생각해보세요';
-        wrap.appendChild(m);
-        setTimeout(function(){
-          m.remove();
-          btn.classList.remove('no');
-          btn.classList.add('dim');
-          cs.querySelectorAll('.choice-btn').forEach(function(b, bi){
-            if(bi !== i && !b.classList.contains('dim')) b.disabled = false;
-          });
-        }, 1000);
+        LEARN.silentCollected.push(LEARN.words[LEARN.idx]);
       }
-    };
-    wrap.appendChild(btn); cs.appendChild(wrap);
+      // 왼쪽 "뒤집힌 카드" 카운트는 정/오답 무관하게 +1 (카드를 넘기는 동작 자체)
+      LEARN.flipped = (LEARN.flipped || 0) + 1;
+      updateLearnCounters();
+      checkCelebrate();   // 인출 + 탐구 누적 임계치 체크
+      // 카드 슬라이드 아웃 → 다음 카드
+      if(LEARN.idx >= LEARN.words.length - 1){
+        // 마지막 카드도 발견 덱에 쌓이는 모션 + 효과음 → 환원
+        card.classList.add('flying-out');
+        setTimeout(function(){ sndCardStack(); }, 340);
+        setTimeout(function(){ goRecap(); }, 520);
+      } else {
+        card.classList.add('flying-out');
+        // 카드가 발견 덱에 살짝 늦게 닿을 때 효과음 (애니메이션 후반부)
+        setTimeout(function(){ sndCardStack(); }, 340);
+        setTimeout(function(){
+          LEARN.idx++;
+          renderLearnCard();
+        }, 460);
+      }
+    }
   });
 
   updateLearnCounters();
@@ -6367,50 +6387,17 @@ function showQuiz(){
   qc.innerHTML = buildIqHead(word, d)
     + '<div class="choices-col" id="qc-ch"></div>';
   var cs = document.getElementById('qc-ch');
-  (function(w, ci, shuf){
-    var wrongAttempted = false;   // 이 퀴즈에서 한 번이라도 오답 클릭했는지
-    shuf.forEach(function(ch, i){
-      var wrap = document.createElement('div'); wrap.style.position = 'relative';
-      var btn = document.createElement('button'); btn.className = 'choice-btn';
-      btn.innerHTML = '<span class="num-badge">'+(i+1)+'</span>' + ch;
-      btn.onclick = function(){
-        var ok = (i === ci);
-        if(ok){
-          btn.className = 'choice-btn ok';
-          cs.querySelectorAll('.choice-btn').forEach(function(b){ b.disabled = true; });
-          var bub = document.createElement('div');
-          bub.className = 'ans-bubble';
-          bub.textContent = '맞아요. 의미까지 인출했어요 ✨';
-          wrap.appendChild(bub);
-          setTimeout(function(){
-            document.getElementById('qo').className = 'quiz-overlay';
-            // 뜻 퀴즈 첫 시도 정답만 노드 점등 + 강화 후보 카운트.
-            // 오답 후 재정답이면 silent 처리(노드/카운트/결과집계 X), 재입력 방지만.
-            finishWord(w, wrongAttempted ? { silent: true } : null);
-            document.getElementById('wi').focus();
-          }, 1100);
-        } else {
-          sndErr();
-          wrongAttempted = true;   // 오답 → 이후 정답 맞혀도 점수 X
-          btn.className = 'choice-btn no';
-          cs.querySelectorAll('.choice-btn').forEach(function(b){ b.disabled = true; });
-          var m = document.createElement('div');
-          m.className = 'try-again-mask';
-          m.textContent = '다시 생각해보세요';
-          wrap.appendChild(m);
-          setTimeout(function(){
-            m.remove();
-            btn.classList.remove('no');
-            btn.classList.add('dim');
-            cs.querySelectorAll('.choice-btn').forEach(function(b, bi){
-              if(bi !== i && !b.classList.contains('dim')) b.disabled = false;
-            });
-          }, 1000);
-        }
-      };
-      wrap.appendChild(btn); cs.appendChild(wrap);
-    });
-  })(word, ci, shuf);
+  setupChoiceButtons(cs, shuf, ci, {
+    bubbleText: '맞아요. 의미까지 인출했어요 ✨',
+    // beforeNext 없음 — 인출 확인 quiz는 정답 즉시 효과음/카운터 변화 의도적으로 없음 (finishWord 안에서 처리)
+    onCorrect: function(wrongAttempted){
+      document.getElementById('qo').className = 'quiz-overlay';
+      // 뜻 퀴즈 첫 시도 정답만 노드 점등 + 강화 후보 카운트.
+      // 오답 후 재정답이면 silent 처리(노드/카운트/결과집계 X), 재입력 방지만.
+      finishWord(word, wrongAttempted ? { silent: true } : null);
+      document.getElementById('wi').focus();
+    }
+  });
 }
 
 function useHint(){
@@ -6468,44 +6455,16 @@ function renderIQCard(word){
    +'<div style="display:flex;justify-content:center">'
    +'<button class="next-btn c-sky" id="iq-nb">다음 →</button></div>';
   var cs = document.getElementById('iq-ch');
-  shuf.forEach(function(ch, i){
-    var wrap = document.createElement('div'); wrap.style.position = 'relative';
-    var btn = document.createElement('button'); btn.className = 'choice-btn';
-    btn.innerHTML = '<span class="num-badge">'+(i+1)+'</span>' + ch;
-    btn.onclick = function(){
-      var ok = (i === ci);
-      if(ok){
-        btn.className = 'choice-btn ok';
-        cs.querySelectorAll('.choice-btn').forEach(function(b){ b.disabled = true; });
-        IQ.correct++; sndOk();
-        var bub = document.createElement('div');
-        bub.className = 'ans-bubble';
-        bub.textContent = '맞아요. 뜻이 보였네요';
-        wrap.appendChild(bub);
-        setTimeout(function(){
-          IQ.idx++; renderIQDots();
-          if(IQ.idx >= IQ.words.length) goFillQ();
-          else renderIQCard(IQ.words[IQ.idx]);
-        }, 1100);
-      } else {
-        sndErr();
-        btn.className = 'choice-btn no';
-        cs.querySelectorAll('.choice-btn').forEach(function(b){ b.disabled = true; });
-        var m = document.createElement('div');
-        m.className = 'try-again-mask';
-        m.textContent = '다시 생각해보세요';
-        wrap.appendChild(m);
-        setTimeout(function(){
-          m.remove();
-          btn.classList.remove('no');
-          btn.classList.add('dim');
-          cs.querySelectorAll('.choice-btn').forEach(function(b, bi){
-            if(bi !== i && !b.classList.contains('dim')) b.disabled = false;
-          });
-        }, 1000);
-      }
-    };
-    wrap.appendChild(btn); cs.appendChild(wrap);
+  setupChoiceButtons(cs, shuf, ci, {
+    bubbleText: '맞아요. 뜻이 보였네요',
+    beforeNext: function(){
+      IQ.correct++; sndOk();
+    },
+    onCorrect: function(){
+      IQ.idx++; renderIQDots();
+      if(IQ.idx >= IQ.words.length) goFillQ();
+      else renderIQCard(IQ.words[IQ.idx]);
+    }
   });
   document.getElementById('iq-nb').onclick = function(){
     IQ.idx++; renderIQDots();
