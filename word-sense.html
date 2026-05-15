@@ -1259,6 +1259,24 @@ button { font-family: inherit; color: inherit; }
   text-shadow: 0 1px 6px rgba(0,0,0,0.45);
 }
 @keyframes fadeUp { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+
+/* 오답 후 "다시 생각해보세요" 빨강 마스크 — choice/fill 버튼 위를 덮어 가림. */
+.try-again-mask {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(208,112,112,0.82);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 14px; font-weight: 700;
+  letter-spacing: 0.02em; white-space: nowrap;
+  animation: fadeUp .2s ease;
+  backdrop-filter: blur(1px);
+}
+.try-again-mask--fill {
+  border-radius: 4px 16px 16px 16px;
+  font-size: 15px;
+}
+
 .fb.ok      { color: #7BE0AE; }
 .fb.no      { color: #F0A0A0; }
 .fb.miss    { color: var(--light-2); font-weight: 500; }
@@ -5249,6 +5267,19 @@ function fmtHun(s){
   return '<span class="hun-han">'+hun+'</span><span class="hun-eum">'+eum+'</span>';
 }
 
+// 한자 분해 카드 헤더 — 확장(learn)/인출 확인(quiz)/추론(inferQ) 세 곳에서 동일 마크업 사용
+function buildIqHead(word, d){
+  return '<div class="iq-head">'
+    +   '<span class="iq-word">'+word+'</span>'
+    +   '<span class="iq-divider"></span>'
+    +   '<div class="iq-decomp">'
+    +     '<div class="db-block"><div class="db-char">'+d.char1+'</div><div class="db-hun">'+fmtHun(d.hun1)+'</div></div>'
+    +     '<div class="db-sep">+</div>'
+    +     '<div class="db-block"><div class="db-char">'+d.char2+'</div><div class="db-hun">'+fmtHun(d.hun2)+'</div></div>'
+    +   '</div>'
+    + '</div>';
+}
+
 function renderLearnCard(){
   var w = WORD_MAP[LEARN.words[LEARN.idx]];
   if(!w) return;
@@ -5266,16 +5297,7 @@ function renderLearnCard(){
 
   // 카드 본문 = inferQ 스타일 (한자 분해 + 4지선다)
   var body = document.getElementById('lc-body');
-  body.innerHTML =
-      '<div class="iq-head">'
-    +   '<span class="iq-word">'+w.word+'</span>'
-    +   '<span class="iq-divider"></span>'
-    +   '<div class="iq-decomp">'
-    +     '<div class="db-block"><div class="db-char">'+w.char1+'</div><div class="db-hun">'+fmtHun(w.hun1)+'</div></div>'
-    +     '<div class="db-sep">+</div>'
-    +     '<div class="db-block"><div class="db-char">'+w.char2+'</div><div class="db-hun">'+fmtHun(w.hun2)+'</div></div>'
-    +   '</div>'
-    + '</div>'
+  body.innerHTML = buildIqHead(w.word, w)
     + '<div class="choices-col" id="lc-ch"></div>'
     + '<div class="reveal-msg" id="lc-rev"></div>';
 
@@ -5331,7 +5353,7 @@ function renderLearnCard(){
         btn.className = 'choice-btn no';
         cs.querySelectorAll('.choice-btn').forEach(function(b){ b.disabled = true; });
         var m = document.createElement('div');
-        m.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(208,112,112,0.82);border-radius:10px;color:#fff;font-size:14px;font-weight:700;letter-spacing:0.02em;white-space:nowrap;animation:fadeUp .2s ease;backdrop-filter:blur(1px)';
+        m.className = 'try-again-mask';
         m.textContent = '다시 생각해보세요';
         wrap.appendChild(m);
         setTimeout(function(){
@@ -6342,16 +6364,7 @@ function showQuiz(){
   document.getElementById('wi').blur();
   var qc = document.getElementById('qc');
   // 확장(learn-card)과 동일한 구조: iq-head + choices-col
-  qc.innerHTML =
-      '<div class="iq-head">'
-    +   '<span class="iq-word">'+word+'</span>'
-    +   '<span class="iq-divider"></span>'
-    +   '<div class="iq-decomp">'
-    +     '<div class="db-block"><div class="db-char">'+d.char1+'</div><div class="db-hun">'+fmtHun(d.hun1)+'</div></div>'
-    +     '<div class="db-sep">+</div>'
-    +     '<div class="db-block"><div class="db-char">'+d.char2+'</div><div class="db-hun">'+fmtHun(d.hun2)+'</div></div>'
-    +   '</div>'
-    + '</div>'
+  qc.innerHTML = buildIqHead(word, d)
     + '<div class="choices-col" id="qc-ch"></div>';
   var cs = document.getElementById('qc-ch');
   (function(w, ci, shuf){
@@ -6382,7 +6395,7 @@ function showQuiz(){
           btn.className = 'choice-btn no';
           cs.querySelectorAll('.choice-btn').forEach(function(b){ b.disabled = true; });
           var m = document.createElement('div');
-          m.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(208,112,112,0.82);border-radius:10px;color:#fff;font-size:14px;font-weight:700;letter-spacing:0.02em;white-space:nowrap;animation:fadeUp .2s ease;backdrop-filter:blur(1px)';
+          m.className = 'try-again-mask';
           m.textContent = '다시 생각해보세요';
           wrap.appendChild(m);
           setTimeout(function(){
@@ -6449,16 +6462,7 @@ function renderIQCard(word){
   var d = WORD_MAP[word];
   var correct = d.choices[0], shuf = shuffle(d.choices), ci = shuf.indexOf(correct);
   var card = document.getElementById('iq-card');
-  card.innerHTML =
-    '<div class="iq-head">'
-   +'<span class="iq-word">'+word+'</span>'
-   +'<span class="iq-divider"></span>'
-   +'<div class="iq-decomp">'
-   +'<div class="db-block"><div class="db-char">'+d.char1+'</div><div class="db-hun">'+fmtHun(d.hun1)+'</div></div>'
-   +'<div class="db-sep">+</div>'
-   +'<div class="db-block"><div class="db-char">'+d.char2+'</div><div class="db-hun">'+fmtHun(d.hun2)+'</div></div>'
-   +'</div>'
-   +'</div>'
+  card.innerHTML = buildIqHead(word, d)
    +'<div class="choices-col" id="iq-ch"></div>'
    +'<div class="reveal-msg" id="iq-rev"></div>'
    +'<div style="display:flex;justify-content:center">'
@@ -6488,7 +6492,7 @@ function renderIQCard(word){
         btn.className = 'choice-btn no';
         cs.querySelectorAll('.choice-btn').forEach(function(b){ b.disabled = true; });
         var m = document.createElement('div');
-        m.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(208,112,112,0.82);border-radius:10px;color:#fff;font-size:14px;font-weight:700;letter-spacing:0.02em;white-space:nowrap;animation:fadeUp .2s ease;backdrop-filter:blur(1px)';
+        m.className = 'try-again-mask';
         m.textContent = '다시 생각해보세요';
         wrap.appendChild(m);
         setTimeout(function(){
@@ -6608,7 +6612,7 @@ function renderFQCard(word){
         btn.classList.add('no');
         cs.querySelectorAll('.fill-btn').forEach(function(b){ b.disabled = true; });
         var m = document.createElement('div');
-        m.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(208,112,112,0.82);border-radius:4px 16px 16px 16px;color:#fff;font-size:15px;font-weight:700;letter-spacing:0.02em;white-space:nowrap;animation:fadeUp .2s ease;backdrop-filter:blur(1px)';
+        m.className = 'try-again-mask try-again-mask--fill';
         m.textContent = '다시 생각해보세요';
         wrap.appendChild(m);
         setTimeout(function(){
