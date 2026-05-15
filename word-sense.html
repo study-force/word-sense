@@ -4373,6 +4373,8 @@ function applyScale(){
   if(anchor) anchor.style.transform = t;
   // 오버레이 내부 카드들이 참조하는 canvas-scale 변수
   document.documentElement.style.setProperty('--canvas-scale', s);
+  // 윈도우 리사이즈 → 캡슐 좌표계 변화 가능 → 캐시 무효화
+  if(typeof CAP_CENTER !== 'undefined') CAP_CENTER = null;
 }
 applyScale();
 window.addEventListener('resize', applyScale);
@@ -4955,15 +4957,10 @@ var LEARN = { idx: 0, words: [], collected: [], silentCollected: [], correct: 0,
 function rebalanceNodesToCap(){
   var stage = document.getElementById('g-stage');
   if(!stage || !GNODES || !GNODES.length) return;
-  var cap = stage.querySelector('.g-center .game-cap');
-  if(!cap) return;
-  var sr = stage.getBoundingClientRect();
-  if(!(sr.width > 0)) return;
-  var W = stage.clientWidth;
-  var scale = sr.width / W;
-  var cr = cap.getBoundingClientRect();
-  var newCx = (cr.left - sr.left + cr.width/2) / scale;
-  var newCy = (cr.top  - sr.top  + cr.height/2) / scale;
+  CAP_CENTER = null;   // layout 변경 직후 호출 — 캐시 강제 갱신
+  var cc = getCapCenter(stage);
+  if(!cc) return;
+  var newCx = cc.cx, newCy = cc.cy;
   // 기존 노드들의 평균 위치 = 옛 캡슐 중심 (원형 배치이므로)
   var avgX = 0, avgY = 0;
   GNODES.forEach(function(n){ avgX += n.baseX; avgY += n.baseY; });
@@ -5583,26 +5580,40 @@ var GNODES = [];
 var GANIM = null;
 var NODE_COUNT = 10;
 
+// 캡슐 중심 좌표 캐시 — drawGameStage가 매 프레임 getBoundingClientRect를 호출하지 않게.
+// layout 변경(resize, setupGameStage, rebalanceNodesToCap 호출) 시 null로 무효화.
+var CAP_CENTER = null;
+function getCapCenter(stage){
+  if(CAP_CENTER) return CAP_CENTER;
+  stage = stage || document.getElementById('g-stage');
+  if(!stage) return null;
+  var cap = stage.querySelector('.g-center .game-cap');
+  if(!cap) return null;
+  var sr = stage.getBoundingClientRect();
+  if(!(sr.width > 0)) return null;
+  var W = stage.clientWidth || 1100;
+  var scale = sr.width / W;
+  var cr = cap.getBoundingClientRect();
+  CAP_CENTER = {
+    cx: (cr.left - sr.left + cr.width/2) / scale,
+    cy: (cr.top  - sr.top  + cr.height/2) / scale
+  };
+  return CAP_CENTER;
+}
+
 function setupGameStage(){
   var stage = document.getElementById('g-stage');
   var holder = document.getElementById('g-nodes');
   holder.innerHTML = '';
   GNODES = [];
+  CAP_CENTER = null;   // 새 셋업 — 캐시 무효화
   var W = stage.clientWidth || 1100;
   var H = stage.clientHeight || 290;
   // 노드 배치 기준점 = 캡슐 시각 중심 (drawGameStage의 라인 출발점과 동일)
   // — eum 텍스트 때문에 g-center가 아래로 길어져 H/2보다 캡슐이 위에 있음
   var cx = W/2, cy = H/2;
-  (function alignToCapsule(){
-    var cap = stage.querySelector('.g-center .game-cap');
-    if(!cap) return;
-    var sr = stage.getBoundingClientRect();
-    if(!(sr.width > 0)) return;
-    var scl = sr.width / W;
-    var cr = cap.getBoundingClientRect();
-    cx = (cr.left - sr.left + cr.width/2) / scl;
-    cy = (cr.top  - sr.top  + cr.height/2) / scl;
-  })();
+  var cc = getCapCenter(stage);
+  if(cc){ cx = cc.cx; cy = cc.cy; }
   var rBase = Math.min(W, H*1.6) * 0.24;
   // 들쑥날쑥 패턴 + 정원(ry=rx) 배치 — 위·아래·좌·우 라인 길이 균형
   var rScale = [0.85, 1.15, 0.85, 1.15, 0.85, 1.15, 0.85, 1.15, 0.85, 1.15];
@@ -5778,18 +5789,9 @@ function drawGameStage(){
   var ctx = cv.getContext('2d');
   ctx.clearRect(0,0,W,H);
   var cx = W/2, cy = H/2;
-  // 라인 수렴점 = 원 버블(.game-cap, 232×232 round)의 기하 중심.
-  // X는 캡슐 중심, Y는 캡슐 중심에서 살짝 아래(시각적 중앙 보정).
-  var cap = stage.querySelector('.g-center .game-cap');
-  if(cap){
-    var sr = stage.getBoundingClientRect();
-    if(sr.width > 0){
-      var scale = sr.width / W;
-      var cr = cap.getBoundingClientRect();
-      cx = (cr.left - sr.left + cr.width/2)  / scale;
-      cy = (cr.top  - sr.top  + cr.height/2) / scale;
-    }
-  }
+  // 라인 수렴점 = 캡슐 기하 중심. 캐시된 좌표 사용 (RAF 핫패스에서 BCR 호출 0회).
+  var cc = getCapCenter(stage);
+  if(cc){ cx = cc.cx; cy = cc.cy; }
   var now = Date.now()/1000;
   GNODES.forEach(function(n){
     var dx = Math.sin(now*n.speedX + n.phase) * n.ampX;
@@ -5851,16 +5853,8 @@ function spawnUnlitNodes(count){
   var H = stage.clientHeight || 290;
   var cx = W/2, cy = H/2;
   // 캡슐 중심을 라인 출발점·배치 기준점으로
-  (function alignToCapsule(){
-    var cap = stage.querySelector('.g-center .game-cap');
-    if(!cap) return;
-    var sr = stage.getBoundingClientRect();
-    if(!(sr.width > 0)) return;
-    var scl = sr.width / W;
-    var cr = cap.getBoundingClientRect();
-    cx = (cr.left - sr.left + cr.width/2) / scl;
-    cy = (cr.top  - sr.top  + cr.height/2) / scl;
-  })();
+  var cc = getCapCenter(stage);
+  if(cc){ cx = cc.cx; cy = cc.cy; }
   var rBase = Math.min(W, H*1.6) * 0.24;
 
   // 主字(캡슐 + 뜻 텍스트) 회피 — .g-center 전체를 회피 박스로
