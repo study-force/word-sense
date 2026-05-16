@@ -1102,70 +1102,79 @@ button { font-family: inherit; color: inherit; }
   100% { opacity: 1; }
 }
 
-/* ── 38/38 완성 폭죽(꽃가루) 효과 ───────────────────────────── */
+/* ── 38/38 완성 종이 꽃가루(콘페티) 효과 ───────────────────────
+   사이버틱한 글로우 제거 → 무광 종이가 펄럭이며 떨어지는 결.
+   • box-shadow 글로우 → 부드러운 drop-shadow만
+   • 가로:세로 1:1.6 직사각형 (종잇조각 비율)
+   • Z축 회전 + Y축 회전 — 종이가 뒤집히며 펄럭이는 입체감
+   • 사방으로 터진 뒤 중력으로 천천히 낙하 */
 .confetti-container {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 50;
   overflow: visible;
+  perspective: 600px;                 /* 3D 회전 깊이감 */
 }
 .confetti-piece {
   position: absolute;
   left: var(--cx, 50%);
   top:  var(--cy, 50%);
-  width: var(--cs, 6px);
-  height: var(--cs, 6px);
+  width: var(--cs, 8px);
+  height: calc(var(--cs, 8px) * 1.6);  /* 종잇조각 비율 1:1.6 */
   background: var(--cc, #A8EDC9);
-  border-radius: var(--cr, 2px);
   opacity: 0;
   transform: translate(-50%, -50%);
-  animation: confettiBurst var(--cd, 2.2s) cubic-bezier(.16, .68, .28, 1) var(--cdl, 0s) forwards;
-  box-shadow: 0 0 8px var(--cc, #A8EDC9);
+  transform-style: preserve-3d;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.18));   /* 무광 종이 그림자 */
+  animation: confettiBurst var(--cd, 2.8s) cubic-bezier(.22, .68, .35, 1) var(--cdl, 0s) forwards;
   will-change: transform, opacity;
 }
-.confetti-piece.streak {
-  width: var(--cs, 3px);
-  height: calc(var(--cs, 3px) * 4);
-  border-radius: 1px;
-  opacity: 0.85;
-}
-.confetti-piece.star {
-  background: transparent;
-  box-shadow: none;
-  border-radius: 0;
-}
-.confetti-piece.star::before {
-  content: '✦';
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--cc, #FFFFFF);
-  font-size: calc(var(--cs, 8px) * 1.8);
-  text-shadow: 0 0 12px var(--cc, #FFFFFF), 0 0 22px var(--cc, #FFFFFF);
-}
 @keyframes confettiBurst {
-  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(0deg); }
+  0%   {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5) rotateZ(0deg) rotateY(0deg);
+  }
   10%  { opacity: 1; }
-  40%  { opacity: 1; transform: translate(calc(-50% + var(--tx, 0px) * 0.78), calc(-50% + var(--ty, 0px) * 0.45 - 50px)) scale(1) rotate(calc(var(--rot, 360deg) * 0.45)); }
-  100% { opacity: 0; transform: translate(calc(-50% + var(--tx, 0px) * 1.05), calc(-50% + var(--ty, 0px) + 220px)) scale(0.7) rotate(var(--rot, 540deg)); }
+  /* 중반 — 위로 솟아 사방으로 흩어지며 회전 시작 */
+  40%  {
+    opacity: 1;
+    transform:
+      translate(
+        calc(-50% + var(--tx, 0px) * 0.78),
+        calc(-50% + var(--ty, 0px) * 0.45 - 50px)
+      )
+      scale(1)
+      rotateZ(calc(var(--rot, 360deg) * 0.45))
+      rotateY(calc(var(--rotY, 360deg) * 0.45));
+  }
+  /* 종반 — 중력 + 좌우 흔들림(--sway)으로 천천히 낙하 */
+  100% {
+    opacity: 0;
+    transform:
+      translate(
+        calc(-50% + var(--tx, 0px) * 1.05 + var(--sway, 0px)),
+        calc(-50% + var(--ty, 0px) + 320px)
+      )
+      scale(0.85)
+      rotateZ(var(--rot, 540deg))
+      rotateY(var(--rotY, 720deg));
+  }
 }
 
-/* 차분한 글로우 플래시 — 골든 플래시 대신 화이트+민트 톤 */
+/* 검정 오버레이 — Perfect 모션 동안 배경 어둡게 → 종이 꽃가루·배너에 시선 집중 */
 .win-flash {
   position: absolute; inset: 0;
   pointer-events: none; z-index: 49;
-  background: radial-gradient(circle at 50% 45%,
-    rgba(255,255,255,0.18),
-    rgba(168,237,201,0.14) 35%,
-    rgba(216,184,247,0.08) 55%,
-    transparent 75%);
+  background: rgba(0, 0, 0, 0.62);
   opacity: 0;
-  animation: winFlash 1.6s cubic-bezier(.2,.6,.3,1) forwards;
+  animation: winFlash 2.8s cubic-bezier(.2,.6,.3,1) forwards;
 }
 @keyframes winFlash {
-  0%   { opacity: 0; transform: scale(0.88); }
-  28%  { opacity: 1; transform: scale(1.0); }
-  100% { opacity: 0; transform: scale(1.18); }
+  0%   { opacity: 0; }
+  18%  { opacity: 1; }
+  78%  { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* 확장 링 — 우아한 기하 모티프 */
@@ -1186,55 +1195,53 @@ button { font-family: inherit; color: inherit; }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(8); border-width: 0.5px; }
 }
 
-/* "Perfect!" 배너 — 모던 산세리프 + 그라디언트 텍스트 */
+/* "Perfect!" 배너 — 종이 꽃가루와 어울리는 평온·따뜻한 톤
+   • 그라디언트·이중 글로우 제거 → 단색 + 부드러운 그림자
+   • 이탤릭·압축 자간 → 정자체 자연 자간
+   • 펄스 진동(1.08↔0.97↔1.02) → 부드러운 한 번 등장 */
 .win-banner {
   position: absolute;
-  left: 50%; top: 50%;
+  left: 50%; top: calc(50% - 100px);   /* 화면 중앙에서 위로 100px */
   transform: translate(-50%, -50%) scale(0.6);
   z-index: 51;
   pointer-events: none;
   text-align: center;
   opacity: 0;
-  animation: winBanner 2.6s cubic-bezier(.2, 1.4, .4, 1) 0.30s forwards;
+  /* sub + divider(약 47px) 만큼 위 여백을 줘서 title이 시각 정중앙에 오게 — 무게중심 보정 */
+  padding-top: 47px;
+  animation: winBanner 2.6s cubic-bezier(.2, 1.0, .3, 1) 0.30s forwards;
 }
 .win-banner .wb-title {
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 88px;
-  font-weight: 800;
-  font-style: italic;
-  letter-spacing: -0.03em;
+  font-size: 90px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   line-height: 1;
-  background: linear-gradient(135deg, #FFFFFF 0%, #A8EDC9 45%, #D8B8F8 100%);
-  -webkit-background-clip: text;
-          background-clip: text;
-  -webkit-text-fill-color: transparent;
-          color: transparent;
-  filter:
-    drop-shadow(0 4px 18px rgba(168,237,201,0.55))
-    drop-shadow(0 2px 10px rgba(216,184,247,0.45));
+  color: #FFFFFF;
+  text-shadow:
+    0 2px 8px rgba(0,0,0,0.35),
+    0 1px 2px rgba(0,0,0,0.20);
 }
 .win-banner .wb-title::after {
   content: '';
   display: block;
-  margin: 14px auto 0;
-  width: 64px; height: 1.5px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
-  opacity: 0.85;
+  margin: 16px auto 0;
+  width: 56px; height: 1px;
+  background: rgba(255,255,255,0.55);
 }
 .win-banner .wb-sub {
-  margin-top: 10px;
-  font-size: 11px; font-weight: 500;
-  color: rgba(255,255,255,0.70);
-  letter-spacing: 0.34em;
-  text-transform: uppercase;
+  margin-top: 12px;
+  font-size: 14px; font-weight: 500;
+  color: rgba(255,255,255,0.78);
+  letter-spacing: 0.06em;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.30);
 }
 @keyframes winBanner {
-  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
-  18%  { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
-  30%  { transform: translate(-50%, -50%) scale(0.97); }
-  42%  { transform: translate(-50%, -50%) scale(1.02); }
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+  22%  { opacity: 1; transform: translate(-50%, -50%) scale(1.02); }
+  40%  { transform: translate(-50%, -50%) scale(1); }
   78%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.03); }
 }
 
 /* 피드백 영역 — 인풋박스 위 검정(어두운) 캔버스 영역 가운데 */
@@ -6197,11 +6204,11 @@ function triggerConfetti(){
   var W = host.clientWidth  || 1100;
   var H = host.clientHeight || 800;
 
-  // 차분한 글로우 플래시
+  // 검정 오버레이 — 모션 동안 배경 어둡게
   var flash = document.createElement('div');
   flash.className = 'win-flash';
   host.appendChild(flash);
-  setTimeout(function(){ if(flash.parentNode) flash.parentNode.removeChild(flash); }, 1700);
+  setTimeout(function(){ if(flash.parentNode) flash.parentNode.removeChild(flash); }, 2800);
 
   // 확장 링 3겹 (민트 → 라벤더 → 화이트)
   ['', 'r2', 'r3'].forEach(function(rcls){
@@ -6222,7 +6229,7 @@ function triggerConfetti(){
   var n = totalDiscovered();
   banner.innerHTML =
       '<div class="wb-title">Perfect!</div>'
-    + '<div class="wb-sub">' + n + ' words discovered</div>';
+    + '<div class="wb-sub">' + n + '개 어휘를 모두 발견했어요~</div>';
   host.appendChild(banner);
   setTimeout(function(){ if(banner.parentNode) banner.parentNode.removeChild(banner); }, 3100);
 
@@ -6231,8 +6238,8 @@ function triggerConfetti(){
   container.className = 'confetti-container';
   host.appendChild(container);
 
-  // 브랜드 팔레트 — 화이트/민트/라벤더/소프트 골드 (4색 한정)
-  var COLORS = ['#FFFFFF','#A8EDC9','#69D0A0','#D8B8F8','#B79CE9','#FFE3A8'];
+  // 종이 꽃가루 팔레트 — 브랜드 톤(민트·라벤더) + 무광 파스텔 확장
+  var COLORS = ['#FFFFFF','#A8EDC9','#69D0A0','#D8B8F8','#B79CE9','#FFE3A8','#FFC8C8','#B8E0FF'];
 
   // 4개의 발사 지점 — 좌우 대칭, 차분
   var BURSTS = [
@@ -6256,23 +6263,20 @@ function triggerConfetti(){
 function spawnBurst(container, cx, cy, count, colors){
   for(var i=0;i<count;i++){
     var p = document.createElement('div');
-    var shape = Math.random();
-    var cls = 'confetti-piece';
-    if(shape > 0.78) cls += ' streak';
-    else if(shape > 0.92) cls += ' star';
-    p.className = cls;
+    p.className = 'confetti-piece';
 
     var ang = Math.random() * Math.PI * 2;
     // 폭죽 반경 — 사방으로 거리 분산
     var dist = 110 + Math.random() * 280;
     var tx = Math.cos(ang) * dist;
-    var ty = Math.sin(ang) * dist - 30; // 살짝 위쪽 편향
-    var size = 5 + Math.random() * 7;
-    var rot = (Math.random() * 1440 - 720) + 'deg';
-    var dur = (1.4 + Math.random() * 1.3).toFixed(2) + 's';
+    var ty = Math.sin(ang) * dist - 30;          // 살짝 위쪽 편향
+    var size = 6 + Math.random() * 5;            // 6~11px (가로) — 종잇조각 적당히 작게
+    var rotZ  = (Math.random() * 1440 - 720) + 'deg';   // Z축 회전
+    var rotY  = (Math.random() * 1080 - 540) + 'deg';   // Y축 펄럭임 (3D 뒤집힘)
+    var sway  = ((Math.random() - 0.5) * 80).toFixed(1) + 'px';   // 낙하 중 좌우 흔들림
+    var dur = (2.0 + Math.random() * 1.5).toFixed(2) + 's';       // 1.4~2.7 → 2.0~3.5 천천히 떨어짐
     var dly = (Math.random() * 0.18).toFixed(2) + 's';
     var color = colors[(Math.random() * colors.length) | 0];
-    var radius = Math.random() > 0.5 ? '50%' : '2px';
 
     p.style.setProperty('--cx', cx + 'px');
     p.style.setProperty('--cy', cy + 'px');
@@ -6280,8 +6284,9 @@ function spawnBurst(container, cx, cy, count, colors){
     p.style.setProperty('--ty', ty.toFixed(1) + 'px');
     p.style.setProperty('--cs', size.toFixed(1) + 'px');
     p.style.setProperty('--cc', color);
-    p.style.setProperty('--cr', radius);
-    p.style.setProperty('--rot', rot);
+    p.style.setProperty('--rot',  rotZ);
+    p.style.setProperty('--rotY', rotY);
+    p.style.setProperty('--sway', sway);
     p.style.setProperty('--cd', dur);
     p.style.setProperty('--cdl', dly);
 
