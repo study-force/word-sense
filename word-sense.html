@@ -2662,11 +2662,8 @@ body.mission-mode #game .stage-nav {
 .score-chip[data-stage="2"] { --sc-rgb: 155,108,217; --sc-rgb-tint: 79,163,240;  }  /* 확장 — 보라 */
 .score-chip[data-stage="3"] { --sc-rgb: 79,163,240;  --sc-rgb-tint: 69,194,138;  }  /* 강화 — 파랑 */
 
-/* ─── 카운팅 모드 (인출/확장) — 회색 테두리. 강화 후보 어휘 수를 카운팅 ─── */
-.score-chip.counting-mode {
-  --sc-rgb: 150,160,180;
-  --sc-rgb-tint: 130,140,160;
-}
+/* 카운팅 모드 (인출/확장) — 색 강제 회색 처리 제거. data-stage의 단계별 컨셉 색 유지.
+   인출=초록, 확장=보라, 강화=파랑, 결과=파랑. */
 
 /* ─── 분모 슬롯 — 강화(점수) 모드 진입 시 우하단 작게 표시 ─── */
 .sc-denom {
@@ -4194,11 +4191,7 @@ body.recap-mode .score-chip {
   --sc-rgb: 155,108,217;
   --sc-rgb-tint: 79,163,240;
 }
-/* recap 모드라도 counting-mode면 회색 유지 (강화 진입 전까지는 카운팅) */
-body.recap-mode .score-chip.counting-mode {
-  --sc-rgb: 150,160,180;
-  --sc-rgb-tint: 130,140,160;
-}
+/* recap 모드도 단계별 컨셉 색(보라) 유지 — 색 강제 처리 제거. */
 /* 미점등 노드 — 보라 글로우 */
 body.recap-mode .g-node:not(.lit) {
   box-shadow:
