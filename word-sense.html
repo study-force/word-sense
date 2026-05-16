@@ -234,16 +234,31 @@ button { font-family: inherit; color: inherit; }
   font-weight: 700;
   color: #252F66;
 }
-.tomorrow-splash .ts-hint {
-  position: absolute;
-  bottom: 50px;
+/* "다음 →" 버튼 — 통계 페이지로 이동. charintro 시작 버튼과 일관된 캡슐 톤. */
+.tomorrow-splash .ts-next {
+  margin-top: 8px;
+  appearance: none; -webkit-appearance: none;
+  border: 0; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 13px 32px;
+  border-radius: 100px;
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 12px; font-weight: 500;
-  color: rgba(0,0,0,0.42);
-  letter-spacing: 0.20em;
+  font-size: 16px; font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #FFFFFF;
+  background: linear-gradient(180deg, #3D4D8C 0%, #252F66 100%);
+  box-shadow: 0 6px 16px rgba(37, 47, 102, 0.32);
   opacity: 0;
-  animation: ciSplashHintIn 1.2s ease 1.0s forwards, ciSplashHintPulse 2.2s ease-in-out 2.2s infinite;
+  animation: ciFadeUp .7s cubic-bezier(.2,1,.3,1) .95s forwards;
+  transition: transform .15s cubic-bezier(.2,1.4,.4,1), box-shadow .15s ease;
 }
+.tomorrow-splash .ts-next:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(37, 47, 102, 0.40); }
+.tomorrow-splash .ts-next:active { transform: translateY(0); }
+.tomorrow-splash .ts-next-arrow {
+  font-weight: 500;
+  transition: transform .2s ease;
+}
+.tomorrow-splash .ts-next:hover .ts-next-arrow { transform: translateX(2px); }
 
 /* ── 탑바 — 자리만 차지하는 invisible 헤더 제거, stage-nav의 positioning context 역할만 유지 ── */
 .topbar {
@@ -4443,9 +4458,9 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
     </div>
     <button class="area-back-btn area-back-btn-floating" onclick="showTomorrowSplash()">다음 →</button>
 
-    <!-- ══ 내일의 한자 overlay — area "다음" 클릭 시 등장. 탭하면 통계 페이지로.
+    <!-- ══ 내일의 한자 overlay — area "다음" 클릭 시 등장. "다음 →" 버튼으로 통계 이동.
          charintro 본문 톤(한자 158px + 훈음) + 다음 훈련 준비 안내 메시지 ══ -->
-    <div class="tomorrow-splash" id="tomorrow-splash" onclick="goStats()">
+    <div class="tomorrow-splash" id="tomorrow-splash">
       <div class="ts-stage-tag">내일의 한자</div>
       <div class="ts-hero">
         <div class="ts-char" id="ts-char">體</div>
@@ -4457,7 +4472,7 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
       <p class="ts-guide" id="ts-guide">
         다음번 훈련을 위해 <em id="ts-guide-hun">'몸 체'</em> 한자가 들어간 어휘를 최대한 찾아보세요!
       </p>
-      <div class="ts-hint">화면을 탭하면 훈련 통계로</div>
+      <button class="ts-next" onclick="goStats()"><span>다음</span><span class="ts-next-arrow">→</span></button>
     </div>
   </div>
 
