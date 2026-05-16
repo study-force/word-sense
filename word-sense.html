@@ -1737,6 +1737,12 @@ body.mission-mode #game .stage-nav {
     inset 0 0 0 1px rgba(255,214,107,0.28),
     inset 0 1px 0 rgba(255,255,255,0.08);
 }
+/* 첫 등장(정면 center-mission) — 단계별 색 적용 전 회색 톤. data-stage보다 더 specific하게.
+   우상단 비행(center-mission 제거) 후 단계별 색으로 자연 전환 */
+.score-chip[data-stage].center-mission {
+  --sc-rgb: 150,160,180;
+  --sc-rgb-tint: 130,140,160;
+}
 .game-intro .gi-msg.gi-mission {
   display: flex; flex-direction: column; align-items: center;
   text-align: center;
