@@ -145,13 +145,14 @@ button { font-family: inherit; color: inherit; }
    charintro splash와 같은 결: 큰 한자 + 훈음 + 탭 안내. 탭 시 통계 페이지로. */
 .tomorrow-splash {
   position: absolute;
-  top: 56px;                                /* topbar 아래 */
+  top: 0;                                    /* area 페이지 타이틀까지 덮음 */
   left: 0; right: 0; bottom: 0;
   z-index: 30;
   display: none;                             /* 기본 숨김 — JS가 .on 토글 */
   flex-direction: column;
   align-items: center; justify-content: center;
-  padding-bottom: 12vh;                      /* 무게중심 살짝 위 (charintro splash와 동일) */
+  gap: 28px;
+  padding: 80px 60px 24px;
   cursor: pointer;
   background: linear-gradient(180deg, #F2F4FB 0%, #E9ECF4 100%);
 }
@@ -172,27 +173,66 @@ button { font-family: inherit; color: inherit; }
   opacity: 0;
   animation: ciFadeUp .6s ease .15s forwards;
 }
+/* 한자+훈음 묶음 — charintro 본문 톤(158px) */
+.tomorrow-splash .ts-hero {
+  display: flex; flex-direction: column; align-items: center;
+  opacity: 0;
+  animation: ciFadeUp .7s cubic-bezier(.2,1,.3,1) .25s forwards;
+}
 .tomorrow-splash .ts-char {
   font-family: var(--font-han);
-  font-size: 380px;
+  font-size: 158px;
   font-weight: 300;
   color: #2A3050;
   line-height: 1;
   letter-spacing: -0.02em;
   text-shadow:
-    0 0 60px rgba(61, 77, 140, 0.40),
-    0 4px 12px rgba(20,25,40, 0.10);
-  animation: ciSplashCharIn 1.3s cubic-bezier(.2,1.2,.4,1);
+    0 0 24px rgba(61, 77, 140, 0.35),
+    0 2px 8px rgba(20,25,40, 0.10);
 }
 .tomorrow-splash .ts-hun {
   font-family: var(--font-han);
-  font-size: 32px;
+  font-size: 22px;
   font-weight: 600;
   color: #252F66;
-  letter-spacing: 0.20em;
-  margin-top: 22px;
+  letter-spacing: 0.18em;
+  margin-top: 10px;
+}
+/* 어원 본문 — charintro 어원과 동일 톤 */
+.tomorrow-splash .ts-etymology {
+  max-width: 560px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 18px; font-weight: 400;
+  color: #2A3050;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+  margin: 0;
+  padding: 4px 6px 0;
+  text-align: center;
   opacity: 0;
-  animation: ciSplashHunIn .9s ease .55s forwards;
+  animation: ciFadeUp .7s cubic-bezier(.2,1,.3,1) .55s forwards;
+}
+/* 다음 훈련 준비 안내 — 어원보다 살짝 작고 액센트 톤 */
+.tomorrow-splash .ts-guide {
+  max-width: 560px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 15px; font-weight: 500;
+  color: #3D4D8C;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  margin: 0;
+  padding: 14px 18px;
+  text-align: center;
+  background: rgba(61, 77, 140, 0.07);
+  border: 1px solid rgba(61, 77, 140, 0.22);
+  border-radius: 100px;
+  opacity: 0;
+  animation: ciFadeUp .7s cubic-bezier(.2,1,.3,1) .75s forwards;
+}
+.tomorrow-splash .ts-guide em {
+  font-style: normal;
+  font-weight: 700;
+  color: #252F66;
 }
 .tomorrow-splash .ts-hint {
   position: absolute;
@@ -4403,11 +4443,20 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
     </div>
     <button class="area-back-btn area-back-btn-floating" onclick="showTomorrowSplash()">다음 →</button>
 
-    <!-- ══ 내일의 한자 splash overlay — area "다음" 클릭 시 등장, 탭하면 통계 페이지로 ══ -->
+    <!-- ══ 내일의 한자 overlay — area "다음" 클릭 시 등장. 탭하면 통계 페이지로.
+         charintro 본문 톤(한자 158px + 훈음) + 다음 훈련 준비 안내 메시지 ══ -->
     <div class="tomorrow-splash" id="tomorrow-splash" onclick="goStats()">
       <div class="ts-stage-tag">내일의 한자</div>
-      <div class="ts-char" id="ts-char">體</div>
-      <div class="ts-hun"  id="ts-hun">몸 체</div>
+      <div class="ts-hero">
+        <div class="ts-char" id="ts-char">體</div>
+        <div class="ts-hun"  id="ts-hun">몸 체</div>
+      </div>
+      <p class="ts-etymology" id="ts-etymology">
+        몸의 각 부분이 모여 이루어진 형태를 본떠 만든 글자입니다.
+      </p>
+      <p class="ts-guide" id="ts-guide">
+        다음번 훈련을 위해 <em id="ts-guide-hun">'몸 체'</em> 한자가 들어간 어휘를 최대한 찾아보세요!
+      </p>
       <div class="ts-hint">화면을 탭하면 훈련 통계로</div>
     </div>
   </div>
@@ -7491,13 +7540,19 @@ function buildAreaProgress(){
   return AREA_PROGRESS;
 }
 
-// area 페이지의 "다음 →" 버튼 핸들러 — 내일의 한자 splash overlay 등장
+// area 페이지의 "다음 →" 버튼 핸들러 — 내일의 한자 overlay 등장
 function showTomorrowSplash(){
   var nx = (SESSION && SESSION.nextPreview) || { char: '體', hunFull: '몸 체' };   // 데이터 없으면 fallback
+  var hun = nx.hunFull || '몸 체';
+  var etym = nx.etymology || '몸의 각 부분이 모여 이루어진 형태를 본떠 만든 글자입니다.';   // DB에 etymology 채워지면 자동 교체
   var c = document.getElementById('ts-char');
   var h = document.getElementById('ts-hun');
-  if(c) c.textContent = nx.char || '體';
-  if(h) h.textContent = nx.hunFull || '몸 체';
+  var e = document.getElementById('ts-etymology');
+  var gh = document.getElementById('ts-guide-hun');
+  if(c)  c.textContent  = nx.char || '體';
+  if(h)  h.textContent  = hun;
+  if(e)  e.textContent  = etym;
+  if(gh) gh.textContent = "'" + hun + "'";
   var overlay = document.getElementById('tomorrow-splash');
   if(overlay) overlay.classList.add('on');
 }
