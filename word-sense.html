@@ -138,11 +138,71 @@ button { font-family: inherit; color: inherit; }
 }
 
 /* ── 페이지 전환 ── */
-.page { position: absolute; inset: 0; display: none; flex-direction: column; z-index: 1; }
-.page.active { display: flex; animation: pageIn .4s cubic-bezier(.2,.8,.2,1); }
-@keyframes pageIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
+.page { position: absolute; inset: 0; display: none; flex-direction: column; z-index: 1; opacity: 0; transition: opacity .4s cubic-bezier(.2,.8,.2,1); }
+.page.active { display: flex; opacity: 1; }
+
+/* "내일의 한자" splash overlay — area 페이지 위에 표시.
+   charintro splash와 같은 결: 큰 한자 + 훈음 + 탭 안내. 탭 시 통계 페이지로. */
+.tomorrow-splash {
+  position: absolute;
+  top: 56px;                                /* topbar 아래 */
+  left: 0; right: 0; bottom: 0;
+  z-index: 30;
+  display: none;                             /* 기본 숨김 — JS가 .on 토글 */
+  flex-direction: column;
+  align-items: center; justify-content: center;
+  padding-bottom: 12vh;                      /* 무게중심 살짝 위 (charintro splash와 동일) */
+  cursor: pointer;
+  background: linear-gradient(180deg, #F2F4FB 0%, #E9ECF4 100%);
+}
+.tomorrow-splash.on { display: flex; animation: tomorrowSplashIn .5s cubic-bezier(.2,.8,.2,1); }
+@keyframes tomorrowSplashIn { from{opacity:0} to{opacity:1} }
+
+.tomorrow-splash .ts-stage-tag {
+  position: absolute;
+  top: 24px; left: 28px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 11px; font-weight: 700;
+  color: #252F66;
+  background: rgba(61, 77, 140, 0.10);
+  border: 1px solid rgba(61, 77, 140, 0.45);
+  padding: 5px 12px;
+  border-radius: 100px;
+  letter-spacing: 0.14em;
+  opacity: 0;
+  animation: ciFadeUp .6s ease .15s forwards;
+}
+.tomorrow-splash .ts-char {
+  font-family: var(--font-han);
+  font-size: 380px;
+  font-weight: 300;
+  color: #2A3050;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-shadow:
+    0 0 60px rgba(61, 77, 140, 0.40),
+    0 4px 12px rgba(20,25,40, 0.10);
+  animation: ciSplashCharIn 1.3s cubic-bezier(.2,1.2,.4,1);
+}
+.tomorrow-splash .ts-hun {
+  font-family: var(--font-han);
+  font-size: 32px;
+  font-weight: 600;
+  color: #252F66;
+  letter-spacing: 0.20em;
+  margin-top: 22px;
+  opacity: 0;
+  animation: ciSplashHunIn .9s ease .55s forwards;
+}
+.tomorrow-splash .ts-hint {
+  position: absolute;
+  bottom: 50px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px; font-weight: 500;
+  color: rgba(0,0,0,0.42);
+  letter-spacing: 0.20em;
+  opacity: 0;
+  animation: ciSplashHintIn 1.2s ease 1.0s forwards, ciSplashHintPulse 2.2s ease-in-out 2.2s infinite;
 }
 
 /* ── 탑바 — 자리만 차지하는 invisible 헤더 제거, stage-nav의 positioning context 역할만 유지 ── */
@@ -651,6 +711,22 @@ button { font-family: inherit; color: inherit; }
   opacity: 0;
   animation: none;
 }
+
+/* 본문 단계 진행 안내 — entered 후 화면 하단에 부드럽게 깜빡이며 다음 액션 유도 */
+#charintro .ci-tap-hint {
+  position: absolute;
+  bottom: 36px; left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px; font-weight: 500;
+  color: rgba(0,0,0,0.42);
+  letter-spacing: 0.18em;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+  animation: ciSplashHintPulse 2.2s ease-in-out 2.2s infinite;
+}
 @keyframes ciSplashCharIn {
   0%   { opacity: 0; transform: scale(0.55); }
   100% { opacity: 1; transform: scale(1); }
@@ -692,11 +768,18 @@ button { font-family: inherit; color: inherit; }
 
 /* hero 컨테이너 자체는 .entered 시 즉시 visible (레이아웃 공간 유지) */
 #charintro.entered .ci-hero          { opacity: 1; transition-delay: 0s; }
-/* 본문 요소들은 morph 완료(~1s) 후 차례로 등장 */
+/* 단계 태그(좌상단)와 탭 안내만 entered 직후 등장 — 본문(어원/의미/시작)은 단계별 unlock */
 #charintro.entered .ci-stage-tag     { opacity: 1; transition-delay: 1.20s; }
-#charintro.entered .ci-etymology-row { opacity: 1; transition-delay: 1.40s; }
-#charintro.entered .ci-meanings-row  { opacity: 1; transition-delay: 1.60s; }
-#charintro.entered .ci-start-btn     { opacity: 1; transition-delay: 1.80s; }
+#charintro.entered .ci-tap-hint      { opacity: 1; transition-delay: 1.60s; }
+
+/* 1단계 탭 → 어원만 등장 */
+#charintro.entered.step-1 .ci-etymology-row { opacity: 1; transition-delay: 0.05s; }
+
+/* 2단계 탭 → 다의 카드 + 시작 버튼 등장. 안내 사라짐 */
+#charintro.entered.step-2 .ci-etymology-row { opacity: 1; }
+#charintro.entered.step-2 .ci-meanings-row  { opacity: 1; transition-delay: 0.05s; }
+#charintro.entered.step-2 .ci-start-btn     { opacity: 1; transition-delay: 0.25s; }
+#charintro.entered.step-2 .ci-tap-hint      { opacity: 0 !important; animation: none !important; }
 
 /* "오늘의 한자" 단계 태그 — 좌상단 절대 위치 */
 #charintro .ci-stage-tag {
@@ -1808,6 +1891,45 @@ body.mission-mode #game .stage-nav {
   box-shadow: 0 0 12px var(--green-glow);
 }
 @keyframes cardPop { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
+
+/* 동음이의어 자동 연속 quiz — 카드 플립 모션 (Y축 회전으로 다음 entry로 전환) */
+.quiz-card { transform-style: preserve-3d; perspective: 1200px; }
+#qc.quiz-flip-out {
+  animation: qcFlipOut .3s cubic-bezier(.4,0,.2,1) forwards;
+}
+#qc.quiz-flip-in {
+  animation: qcFlipIn .35s cubic-bezier(.2,1,.3,1) forwards;
+}
+@keyframes qcFlipOut {
+  from { transform: rotateY(0deg);  opacity: 1; }
+  to   { transform: rotateY(90deg); opacity: 0; }
+}
+@keyframes qcFlipIn {
+  from { transform: rotateY(-90deg); opacity: 0; }
+  to   { transform: rotateY(0deg);   opacity: 1; }
+}
+/* 동음이의어 안내 — quiz overlay 안 상단에 잠시 등장 */
+.quiz-homonym-hint {
+  position: absolute;
+  top: 10%; left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.96);
+  color: #2D2D3A;
+  font-size: 14px; font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 10px 20px;
+  border-radius: 100px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  z-index: 9200;
+  pointer-events: none;
+  animation: homonymHint 1.4s cubic-bezier(.2,1,.3,1) forwards;
+}
+@keyframes homonymHint {
+  0%   { opacity: 0; transform: translate(-50%, -8px); }
+  18%  { opacity: 1; transform: translate(-50%, 0); }
+  78%  { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -4px); }
+}
 
 /* ════════════════════════════
    공통 퀴즈 페이지 (inferq / fillq)
@@ -3083,7 +3205,8 @@ body.dark-canvas .score-chip,
 }
 .r-tier-badge.on {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  /* 등장 시 위로 7px 추가 이동 — 별이 회차 메타에 살짝 더 가까이 */
+  transform: translateX(-50%) translateY(-7px);
 }
 .rtb-stars {
   display: flex;
@@ -3093,13 +3216,15 @@ body.dark-canvas .score-chip,
   width: 28px; height: 28px;                 /* 22 → 28 (더 잘 보이게) */
   display: block;
   fill: #C5CBD7;                             /* 회색 별 — 약간 더 진해서 노랑과 대비 */
+  stroke: #C5CBD7;                           /* 빈별도 보더 일관 (외곽 또렷) */
+  stroke-width: 1;
   transition: fill .3s ease, transform .3s ease;
 }
 .rtb-star.filled {
   fill: #FFB300;                             /* 진한 황금 — 다크/라이트 양쪽에서 잘 보임 */
-  filter:
-    drop-shadow(0 0 6px rgba(255,180,0,0.65))
-    drop-shadow(0 1px 2px rgba(200,130,0,0.50));
+  stroke: #B8860B;                           /* 황토색 보더 (노랑보다 짙은 톤) — 글로우 대신 윤곽으로 강조 */
+  stroke-width: 1.2;
+  /* 글로우 제거 — 무광 차분한 별로 */
 }
 .rtb-score {
   font-family: 'Noto Sans KR', sans-serif;
@@ -4161,6 +4286,8 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
 
       <button class="ci-start-btn" onclick="goGame()"><span>훈 감각 깨우러 가기</span><span class="ci-start-arrow">→</span></button>
     </div>
+    <!-- 본문 3단계 unlock 안내 — entered 후 등장, step-2에서 사라짐 -->
+    <div class="ci-tap-hint" id="ci-tap-hint">화면을 탭하면 어원이 보여요</div>
   </div>
 
   <!-- ══ 학습 (NEW) ══ -->
@@ -4274,7 +4401,15 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
         <div class="area-master-msg" id="area-master-msg"></div>
       </div>
     </div>
-    <button class="area-back-btn area-back-btn-floating" onclick="goHome()">← 처음으로</button>
+    <button class="area-back-btn area-back-btn-floating" onclick="showTomorrowSplash()">다음 →</button>
+
+    <!-- ══ 내일의 한자 splash overlay — area "다음" 클릭 시 등장, 탭하면 통계 페이지로 ══ -->
+    <div class="tomorrow-splash" id="tomorrow-splash" onclick="goStats()">
+      <div class="ts-stage-tag">내일의 한자</div>
+      <div class="ts-char" id="ts-char">體</div>
+      <div class="ts-hun"  id="ts-hun">몸 체</div>
+      <div class="ts-hint">화면을 탭하면 훈련 통계로</div>
+    </div>
   </div>
 
   <!-- ══ 결과 ══ -->
@@ -4405,9 +4540,20 @@ applyScale();
 window.addEventListener('resize', applyScale);
 
 // ── 데이터 룩업 (Supabase fetch 완료 후 빌드) ──
-var WORD_MAP = {}, WRONG_MAP = {}, WORD_LIST = [];
+// ── 회차 어휘 데이터 — 동음이의어 지원 (entry 단위 = word + hanja) ──
+//   WORD_LIST: entry[] (분모 단위 — 같은 word·다른 hanja면 별개 entry로 두 번 등장)
+//   WORD_MAP[word] = entry[] (1+) — word 입력 시 entry lookup
+//   WORD_KEY_MAP[key] = entry — entry key 기반 lookup (S.found 등 추적용)
+//   entry key = word + '|' + hanja  (헬퍼 entryKeyOf)
+var WORD_MAP = {}, WORD_KEY_MAP = {}, WRONG_MAP = {}, WORD_LIST = [];
+function entryKeyOf(e){ return e ? (e.word + '|' + (e.hanja || '')) : ''; }
 window.SESSION_READY.then(function() {
-  SESSION.words.forEach(function(w){ WORD_MAP[w.word] = w; WORD_LIST.push(w.word); });
+  SESSION.words.forEach(function(w){
+    WORD_LIST.push(w);
+    WORD_KEY_MAP[entryKeyOf(w)] = w;
+    if(!WORD_MAP[w.word]) WORD_MAP[w.word] = [];
+    WORD_MAP[w.word].push(w);
+  });
   SESSION.wrongAnswers.forEach(function(w){ WRONG_MAP[w.word] = w.feedback; });
   // 홈 화면 DOM도 SESSION 기준으로 갱신
   var hChar  = document.getElementById('h-char');
@@ -5083,13 +5229,13 @@ function goLearn(){
   var handledInGame = (S && S.found ? S.found.length : 0)
                     + (S && S.attempted ? S.attempted.length : 0);
   if(handledInGame > 0){
-    pool = WORD_LIST.filter(function(w){
-      if(S.found && S.found.indexOf(w) > -1) return false;
-      if(S.attempted && S.attempted.indexOf(w) > -1) return false;
+    pool = WORD_LIST.filter(function(entry){
+      if(S.found && S.found.indexOf(entryKeyOf(entry)) > -1) return false;
+      if(S.attempted && S.attempted.indexOf(entry.word) > -1) return false;
       return true;
     });
   } else {
-    pool = WORD_LIST.filter(function(w){ return WORD_MAP[w].isInferQuiz; });
+    pool = WORD_LIST.filter(function(entry){ return entry.isInferQuiz; });
   }
   LEARN.words  = shuffle(pool.slice());
   LEARN.idx = 0;
@@ -5338,7 +5484,8 @@ function setupChoiceButtons(cs, choices, ci, opts){
 }
 
 function renderLearnCard(){
-  var w = WORD_MAP[LEARN.words[LEARN.idx]];
+  // LEARN.words는 entry[] (객체 배열). 동음이의어 시 같은 word·다른 hanja가 각각 별개 entry.
+  var w = LEARN.words[LEARN.idx];
   if(!w) return;
   var card = document.getElementById('lc-card');
   card.classList.remove('flying-out');
@@ -5471,7 +5618,13 @@ function goCharIntro(){
   var splash      = document.getElementById('ci-splash');
   var splashCh    = document.getElementById('ci-splash-char');
   var splashHun   = document.getElementById('ci-splash-hun');
-  if(charintroEl) charintroEl.classList.remove('entered');
+  if(charintroEl){
+    charintroEl.classList.remove('entered', 'step-1', 'step-2');
+    charintroEl.removeEventListener('click', ciAdvanceStep);   // 이전 회차 핸들러 제거
+  }
+  CHARINTRO_STEP = 0;
+  var tapHint = document.getElementById('ci-tap-hint');
+  if(tapHint) tapHint.textContent = '화면을 탭하면 어원이 보여요';
   if(splash){
     splash.classList.remove('dismissed');
     splash.style.display = '';
@@ -5497,6 +5650,28 @@ function goCharIntro(){
     resetSplashEl(splashHun);
   }
   showPage('charintro');
+}
+
+// charintro 본문 3단계 unlock — 한자만 → 탭 → 어원 → 탭 → 다의 카드+시작 버튼
+//   학생이 한 번에 많은 정보 부담 받지 않도록 직접 탭으로 다음 단계 노출.
+var CHARINTRO_STEP = 0;
+function ciAdvanceStep(e){
+  // 시작 버튼 클릭은 goGame으로 흘려보냄 (단계 진행 X)
+  if(e && e.target && e.target.closest && e.target.closest('.ci-start-btn')) return;
+  // splash 아직 떠 있으면 (dismiss 전) 무시 — splash onclick에서 처리
+  var splash = document.getElementById('ci-splash');
+  if(splash && !splash.classList.contains('dismissed')) return;
+  var charintroEl = document.getElementById('charintro');
+  if(!charintroEl) return;
+  var hint = document.getElementById('ci-tap-hint');
+  CHARINTRO_STEP++;
+  if(CHARINTRO_STEP === 1){
+    charintroEl.classList.add('step-1');
+    if(hint) hint.textContent = '화면을 탭하면 의미가 보여요';
+  } else if(CHARINTRO_STEP === 2){
+    charintroEl.classList.add('step-2');
+    charintroEl.removeEventListener('click', ciAdvanceStep);
+  }
 }
 
 // 1단계 스플래시 dismiss — FLIP 모션으로 splash 한자·훈음이 작은 자리로 정확히 morph
@@ -5551,6 +5726,13 @@ function dismissCharIntroSplash(){
   // 4) splash hint만 페이드아웃 (한자·훈음은 morph 후 머무름)
   //    splash DOM은 charintro 페이지 내 유지 — showPage가 페이지 전환 시 알아서 처리
   splash.classList.add('dismissed');
+
+  // 5) 본문 3단계 unlock 준비 — morph 완료 후 ci-body 탭으로 단계 진행
+  charintroEl.classList.remove('step-1', 'step-2');
+  CHARINTRO_STEP = 0;
+  setTimeout(function(){
+    charintroEl.addEventListener('click', ciAdvanceStep);
+  }, 1100);   // morph 1s + 약간 여유
 }
 
 function goGame(){
@@ -6067,7 +6249,8 @@ function spawnUnlitNodes(count){
   return added;
 }
 
-function lightUpNode(word, fromLearn, silent){
+function lightUpNode(entry, fromLearn, silent){
+  // entry: word + hanja entry 객체 (동음이의어 지원)
   // 점등된 노드들로부터 "최소 거리"가 가장 큰 미점등 노드를 선택 — 활성 노드를 최대한 흩어지게
   var unlit = [];
   var lit = [];
@@ -6098,7 +6281,8 @@ function lightUpNode(word, fromLearn, silent){
   }
   if(!node) return;
   node.lit = true;
-  node.word = word;
+  node.entry = entry;
+  node.word = entry ? entry.word : '';   // chip 표시용
   node.lineT = 0;
   node.fromLearn = !!fromLearn;
   node.silent = !!silent;   // true → 오답 후 정답: 검정 노드 (점수/강화 후보 X, 시각 표시만)
@@ -6137,19 +6321,21 @@ function showNodeChip(node){
   node.el.textContent = node.word;
 }
 
-function finishWord(word, opts){
-  // opts.silent = true → 뜻 퀴즈 오답 후 재정답 케이스.
+function finishWord(entry, opts){
+  // entry: word + hanja entry 객체. 동음이의어 지원.
+  // opts.silent = true → 뜻 퀴즈 오답 후 재정답 케이스 (또는 동음이의어 잔여 entry).
   //   네트워크 노드 점등 X, 강화 후보 X, 결과 페이지 어휘 집계 X.
-  //   다만 게임 진행/재입력 방지를 위해 S.attempted에만 기록.
+  //   다만 게임 진행 표시는 위해 entry key 단위로 기록.
   opts = opts || {};
-  if(S.found.indexOf(word) > -1) return;
-  if(S.attempted.indexOf(word) > -1) return;
+  var key = entryKeyOf(entry);
+  if(S.found.indexOf(key) > -1) return;
+  if(S.attempted.indexOf(key) > -1) return;   // entry 단위 silent 차단
 
   if(opts.silent){
-    S.attempted.push(word);
+    S.attempted.push(key);   // entry 단위 silent 기록 (재진행 방지)
     S.okCount++;
     // 검정 노드로 시각 표시 — 점수/강화 후보엔 반영 X, "내가 적었다"는 흔적만 남김
-    lightUpNode(word, false, true);
+    lightUpNode(entry, false, true);
     setFb('ok', '또 다른 가족 어휘를 찾아볼까요?', 2400);
     updateGameCounter();
     if(S.okCount >= 1){
@@ -6159,10 +6345,10 @@ function finishWord(word, opts){
     return;
   }
 
-  S.found.push(word); S.okCount++;
-  if(S.hintTargets.indexOf(word) > -1){ S.hintFound.push(word); }
-  lightUpNode(word);
-  setFb('ok', '"' + word + '" 찾았어요!', 3000);
+  S.found.push(key); S.okCount++;
+  if(S.hintTargets.indexOf(key) > -1){ S.hintFound.push(key); }
+  lightUpNode(entry);
+  setFb('ok', '"' + entry.word + '" 찾았어요!', 3000);
   sndOk();
   // 인출 첫 시도 정답 시에만 강화 후보 카운트 +1
   bumpCounting();
@@ -6316,19 +6502,34 @@ async function submit(){
     sndUnknown();
     return;
   }
-  // 가족 어휘 중복 — quiz 통과해 정답 처리된 어휘
-  if(S.found.indexOf(val) > -1){ setFb('miss', '"'+val+'"'+eunNeun(val)+' 이미 찾았어요!'); sndDup(); return; }
   // 가족 어휘 외 중복 — 이전 분류 메시지가 있으면 그대로 다시 표시 (RPC 재호출 X)
-  if(S.attempted && S.attempted.indexOf(val) > -1){
+  // (가족 어휘는 entries 분기에서 처리)
+  if(S.attempted && S.attempted.indexOf(val) > -1 && !WORD_MAP[val]){
     var prev = S.attemptedFb && S.attemptedFb[val];
     if(prev){ setFb(prev.type, prev.message); }
     else    { setFb('miss', '표준국어대사전에 등록된 어휘가 아니에요.'); }
     sndDup(); return;
   }
-  var w = WORD_MAP[val];
   var wr = WRONG_MAP[val];
   if(wr){ setFb('no', wr); sndErr(); return; }
-  if(w){ S.solving = val; showQuiz(); return; }
+  // 가족 어휘 — 동음이의어 지원: 같은 word에 entry가 2+개일 수 있음
+  var entries = WORD_MAP[val];
+  if(entries && entries.length > 0){
+    // 미발견 entry 추출 (S.found 정답 발견 + S.attempted silent 처리 모두 제외)
+    var unfound = entries.filter(function(e){
+      var key = entryKeyOf(e);
+      return S.found.indexOf(key) === -1 && S.attempted.indexOf(key) === -1;
+    });
+    if(unfound.length === 0){
+      // 모든 entry 처리 완료 — 중복 차단
+      setFb('miss', '"'+val+'"'+eunNeun(val)+' 이미 찾았어요!');
+      sndDup(); return;
+    }
+    S.solving = unfound[0];                // entry 객체
+    S.solvingRemaining = unfound.slice(1); // 동음이의어 자동 연속 quiz 큐
+    showQuiz();
+    return;
+  }
 
   // ── 가족 어휘·함정 외 입력 → Supabase RPC 분류 ──
   // classify_word_input(p_word, p_main_char) 호출 → 어종별 피드백 메시지
@@ -6381,7 +6582,11 @@ async function submit(){
 }
 
 function showQuiz(){
-  var word = S.solving, d = WORD_MAP[word];
+  // S.solving: 현재 quiz 진행 중인 entry 객체 (동음이의어 첫 entry)
+  // S.solvingRemaining: 같은 word의 잔여 entry[] (동음이의어 자동 연속 quiz용)
+  var entry = S.solving;
+  if(!entry) return;
+  var d = entry;   // entry 자체가 char1/hun1/char2/hun2/choices/meaning 보유
   var correct = d.choices[0];
   var shuf = shuffle(d.choices);
   var ci = shuf.indexOf(correct);
@@ -6389,20 +6594,77 @@ function showQuiz(){
   document.getElementById('wi').blur();
   var qc = document.getElementById('qc');
   // 확장(learn-card)과 동일한 구조: iq-head + choices-col
-  qc.innerHTML = buildIqHead(word, d)
+  qc.innerHTML = buildIqHead(entry.word, d)
     + '<div class="choices-col" id="qc-ch"></div>';
   var cs = document.getElementById('qc-ch');
   setupChoiceButtons(cs, shuf, ci, {
     bubbleText: '맞아요. 의미를 정확히 알고 있네요 ✨',
     // beforeNext 없음 — 인출 확인 quiz는 정답 즉시 효과음/카운터 변화 의도적으로 없음 (finishWord 안에서 처리)
     onCorrect: function(wrongAttempted){
-      document.getElementById('qo').className = 'quiz-overlay';
-      // 뜻 퀴즈 첫 시도 정답만 노드 점등 + 강화 후보 카운트.
-      // 오답 후 재정답이면 silent 처리(노드/카운트/결과집계 X), 재입력 방지만.
-      finishWord(word, wrongAttempted ? { silent: true } : null);
-      document.getElementById('wi').focus();
+      // 현재 entry 발견 처리
+      finishWord(entry, wrongAttempted ? { silent: true } : null);
+      // 동음이의어 — 잔여 entry가 있으면 자동 연속 quiz로 진행 (overlay 유지)
+      if(S.solvingRemaining && S.solvingRemaining.length > 0){
+        var next = S.solvingRemaining.shift();
+        S.solving = next;
+        // 명시적 안내 + 카드 플립 모션으로 두 번째 entry quiz 전환
+        showHomonymHint(next.word);
+        setTimeout(function(){ flipToNextQuiz(next, shuf, ci); }, 1000);
+      } else {
+        // 마지막 entry — 평소처럼 overlay 닫고 인풋 복귀
+        document.getElementById('qo').className = 'quiz-overlay';
+        document.getElementById('wi').focus();
+      }
     }
   });
+}
+
+// 동음이의어 안내 — quiz overlay 안에 잠시 등장
+function showHomonymHint(word){
+  var qo = document.getElementById('qo');
+  if(!qo) return;
+  var prev = qo.querySelector('.quiz-homonym-hint');
+  if(prev) prev.remove();
+  var hint = document.createElement('div');
+  hint.className = 'quiz-homonym-hint';
+  hint.textContent = '또 다른 의미의 "' + word + '"도 있어요';
+  qo.appendChild(hint);
+  setTimeout(function(){ if(hint.parentNode) hint.parentNode.removeChild(hint); }, 1400);
+}
+
+// 동음이의어 다음 entry로 카드 플립 (Y축 회전) 전환
+function flipToNextQuiz(nextEntry){
+  var qc = document.getElementById('qc');
+  if(!qc) return;
+  qc.classList.add('quiz-flip-out');
+  setTimeout(function(){
+    // 카드 절반 회전 시점에 내용물 교체 후 들어오기
+    var d = nextEntry;
+    var correct = d.choices[0];
+    var shuf = shuffle(d.choices);
+    var ci = shuf.indexOf(correct);
+    qc.innerHTML = buildIqHead(nextEntry.word, d)
+      + '<div class="choices-col" id="qc-ch"></div>';
+    var cs = document.getElementById('qc-ch');
+    setupChoiceButtons(cs, shuf, ci, {
+      bubbleText: '맞아요. 의미를 정확히 알고 있네요 ✨',
+      onCorrect: function(wrongAttempted){
+        finishWord(nextEntry, wrongAttempted ? { silent: true } : null);
+        if(S.solvingRemaining && S.solvingRemaining.length > 0){
+          var next2 = S.solvingRemaining.shift();
+          S.solving = next2;
+          showHomonymHint(next2.word);
+          setTimeout(function(){ flipToNextQuiz(next2); }, 1000);
+        } else {
+          document.getElementById('qo').className = 'quiz-overlay';
+          document.getElementById('wi').focus();
+        }
+      }
+    });
+    qc.classList.remove('quiz-flip-out');
+    qc.classList.add('quiz-flip-in');
+    setTimeout(function(){ qc.classList.remove('quiz-flip-in'); }, 350);
+  }, 300);
 }
 
 function useHint(){
@@ -6410,14 +6672,14 @@ function useHint(){
   S.hints--; updateHints();
   sndHint();
   var hb = document.getElementById('hbtn'); if(hb) hb.classList.remove('shake');
-  var remaining = WORD_LIST.filter(function(w){
-    return !WORD_MAP[w].isInferQuiz && S.found.indexOf(w) === -1 && S.hintTargets.indexOf(w) === -1;
+  var remaining = WORD_LIST.filter(function(entry){
+    var key = entryKeyOf(entry);
+    return !entry.isInferQuiz && S.found.indexOf(key) === -1 && S.hintTargets.indexOf(key) === -1;
   });
   if(remaining.length > 0){
-    var w = remaining[Math.floor(Math.random() * remaining.length)];
-    S.hintTargets.push(w);
-    var d = WORD_MAP[w];
-    setFb('hint', '힌트: ' + d.meaning);
+    var entry = remaining[Math.floor(Math.random() * remaining.length)];
+    S.hintTargets.push(entryKeyOf(entry));
+    setFb('hint', '힌트: ' + entry.meaning);
   }
   resetHintNudge();
   document.getElementById('wi').focus();
@@ -6428,8 +6690,8 @@ function useHint(){
 // ══════════════════════════════════════════════
 function goInferQ(){
   if(HINT_NUDGE_TIMER){ clearTimeout(HINT_NUDGE_TIMER); HINT_NUDGE_TIMER = null; }
-  var eligible = WORD_LIST.filter(function(w){
-    return WORD_MAP[w].isInferQuiz && S.found.indexOf(w) === -1;
+  var eligible = WORD_LIST.filter(function(entry){
+    return entry.isInferQuiz && S.found.indexOf(entryKeyOf(entry)) === -1;
   });
   eligible = shuffle(eligible).slice(0, 3);
   if(eligible.length === 0){ goFillQ(); return; }
@@ -6482,16 +6744,22 @@ function renderIQCard(word){
 // 빈칸 채우기 (FillQ)
 // ══════════════════════════════════════════════
 function goFillQ(){
-  // 강화 = 인출(S.found) + 탐구(LEARN.collected) 모두
+  // 강화 = 인출(S.found) + 탐구(LEARN.collected) 모두 — entry 단위로 통합
   var pool = [];
-  if(S && S.found) pool = pool.concat(S.found);
+  if(S && S.found){
+    S.found.forEach(function(key){
+      var e = WORD_KEY_MAP[key];
+      if(e) pool.push(e);
+    });
+  }
   if(LEARN && LEARN.collected) pool = pool.concat(LEARN.collected);
-  // 중복 제거 + fillSentence 보유 단어만
+  // 중복 제거 + fillSentence 보유 entry만
   var seen = {};
-  var all = pool.filter(function(w){
-    if(seen[w]) return false;
-    seen[w] = true;
-    return WORD_MAP[w] && WORD_MAP[w].fillSentence;
+  var all = pool.filter(function(entry){
+    var key = entryKeyOf(entry);
+    if(seen[key]) return false;
+    seen[key] = true;
+    return entry.fillSentence;
   });
   if(all.length === 0){ goResult(); return; }
   all = shuffle(all);
@@ -6512,11 +6780,12 @@ function renderFQDots(){
   if(topCnt) topCnt.textContent = (FQ.idx+1) + ' / ' + FQ.total;
 }
 
-function renderFQCard(word){
-  var sentence = WORD_MAP[word].fillSentence;
-  var others = shuffle(FQ.words.filter(function(w){ return w !== word; })).slice(0, 3);
-  var choices = shuffle([word].concat(others));
-  var ci = choices.indexOf(word);
+function renderFQCard(entry){
+  // entry: word + hanja 객체. fillSentence 보유. 동음이의어 entry도 별개 카드로 처리.
+  var sentence = entry.fillSentence;
+  var others = shuffle(FQ.words.filter(function(e){ return e !== entry; })).slice(0, 3);
+  var choices = shuffle([entry].concat(others));   // entry 객체 4지선다
+  var ci = choices.indexOf(entry);
   var display = sentence.replace('___', '<span class="fill-blank" id="fb-blank">　　　</span>');
   var card = document.getElementById('fq-card');
   card.innerHTML =
@@ -6528,19 +6797,16 @@ function renderFQCard(word){
   var cs = document.getElementById('fq-ch');
   var wrongAttempted = false;   // 이 빈칸 카드에서 한 번이라도 오답 클릭했는지
   choices.forEach(function(ch, i){
+    // ch: entry 객체
     var wrap = document.createElement('div'); wrap.style.position = 'relative';
     var btn = document.createElement('button'); btn.className = 'fill-btn';
-    var data = WORD_MAP[ch];
-    var hjLines = '';
-    if(data){
-      hjLines =
-        '<span class="fb-line"><span class="fb-hj-char">'+data.char1+'</span> <span class="fb-hun">'+data.hun1+'</span></span>' +
-        '<span class="fb-line"><span class="fb-hj-char">'+data.char2+'</span> <span class="fb-hun">'+data.hun2+'</span></span>';
-    }
+    var hjLines =
+      '<span class="fb-line"><span class="fb-hj-char">'+ch.char1+'</span> <span class="fb-hun">'+ch.hun1+'</span></span>' +
+      '<span class="fb-line"><span class="fb-hj-char">'+ch.char2+'</span> <span class="fb-hun">'+ch.hun2+'</span></span>';
     btn.innerHTML =
       '<span class="num-badge">'+(i+1)+'</span>' +
       '<span class="fb-text">' +
-        '<span class="fb-word">'+ch+'</span>' +
+        '<span class="fb-word">'+ch.word+'</span>' +
         '<span class="fb-hj">'+ hjLines +'</span>' +
       '</span>';
     btn.onclick = function(){
@@ -6553,7 +6819,7 @@ function renderFQCard(word){
           if(bi === ci) b.classList.add('ok');
         });
         var blank = document.getElementById('fb-blank');
-        if(blank){ blank.textContent = word; blank.className = 'fill-blank revealed'; }
+        if(blank){ blank.textContent = entry.word; blank.className = 'fill-blank revealed'; }
         var sb = document.querySelector('#fq-card .fq-sentence-box');
         if(sb){
           var bub = document.createElement('div');
@@ -6561,7 +6827,7 @@ function renderFQCard(word){
           // 첫 시도 정답일 때만 "뜻+적용 모두 맞힘" 강조 (점수 +1)
           // 재시도 정답이면 통과는 되지만 점수 X — 메시지 톤 다르게
           bub.innerHTML = wrongAttempted
-            ? ('맞아요. "' + word + '"' + eunNeun(word) + ' 이렇게 활용할 수 있어요.')
+            ? ('맞아요. "' + entry.word + '"' + eunNeun(entry.word) + ' 이렇게 활용할 수 있어요.')
             : '어휘를 정확하게 활용할 수 있군요!';
           sb.appendChild(bub);
         }
@@ -6767,24 +7033,29 @@ function goResult(){
   var tmU = document.getElementById('r-tm-hun');    if(tmU) tmU.textContent = sess.mainHunFull || sess.mainHun || '';
 
   // ── 인출 어휘 (게임 단계에서 발견) ──
+  //   S.found는 entry key 배열 → entry로 변환해 word 표시
   var retrList = document.getElementById('r-retr-list'); retrList.innerHTML = '';
   var retr = (S && S.found) ? S.found.slice() : [];
-  retr.forEach(function(w, i){
+  retr.forEach(function(key, i){
+    var entry = WORD_KEY_MAP[key];
+    if(!entry) return;
     var el = document.createElement('div');
     el.className = 'r-collect-word tone-retr';
-    el.textContent = w;
+    el.textContent = entry.word;
     el.style.animationDelay = (1.10 + i * 0.05) + 's';
     retrList.appendChild(el);
   });
   document.getElementById('r-retr-cnt').textContent = retr.length;
 
   // ── 확장 어휘 (학습 단계에서 깨운 어휘) ──
+  //   LEARN.collected는 entry 객체 배열
   var expList = document.getElementById('r-exp-list'); expList.innerHTML = '';
   var exp = (LEARN && LEARN.collected) ? LEARN.collected.slice() : [];
-  exp.forEach(function(w, i){
+  exp.forEach(function(entry, i){
+    if(!entry) return;
     var el = document.createElement('div');
     el.className = 'r-collect-word tone-exp';
-    el.textContent = w;
+    el.textContent = entry.word;
     el.style.animationDelay = (1.10 + i * 0.05) + 's';
     expList.appendChild(el);
   });
@@ -7220,7 +7491,22 @@ function buildAreaProgress(){
   return AREA_PROGRESS;
 }
 
+// area 페이지의 "다음 →" 버튼 핸들러 — 내일의 한자 splash overlay 등장
+function showTomorrowSplash(){
+  var nx = (SESSION && SESSION.nextPreview) || { char: '體', hunFull: '몸 체' };   // 데이터 없으면 fallback
+  var c = document.getElementById('ts-char');
+  var h = document.getElementById('ts-hun');
+  if(c) c.textContent = nx.char || '體';
+  if(h) h.textContent = nx.hunFull || '몸 체';
+  var overlay = document.getElementById('tomorrow-splash');
+  if(overlay) overlay.classList.add('on');
+}
+
 function goArea(){
+  // area 페이지 진입 시 내일의 한자 splash는 닫혀있어야 — 재진입 시 잔존 방지
+  var tom = document.getElementById('tomorrow-splash');
+  if(tom) tom.classList.remove('on');
+
   var prog = AREA_PROGRESS || buildAreaProgress();
   var passes = prog.filter(isPass).length;
   var totalSessions = AREA_HANJA.length;
