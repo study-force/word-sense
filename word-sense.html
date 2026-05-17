@@ -4088,10 +4088,11 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
 }
 .r-rank-card .r-rank-row.cumul { cursor: default; }
 .r-rank-card .r-rank-row:hover { background: rgba(255,255,255,0.04); }
+/* 내 행 — 흰 배경 + 짙은 글자로 어두운 카드 안에서 가장 명확하게 부각 */
 .r-rank-card .r-rank-row.me {
-  background: rgba(var(--stage-accent-rgb), 0.18);
+  background: #FFFFFF;
 }
-.r-rank-card .r-rank-row.me:hover { background: rgba(var(--stage-accent-rgb), 0.26); }
+.r-rank-card .r-rank-row.me:hover { background: #F5F7FB; }
 .r-rank-card .r-rank-num {
   width: 22px; flex-shrink: 0;
   font-size: 12px; font-weight: 700;
@@ -4111,9 +4112,14 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   font-size: 13px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.r-rank-card .r-rank-row.me .r-rank-name {
-  color: #FFFFFF; font-weight: 700;
-}
+/* 내 행 — 흰 배경 위에서 이름·등수는 짙은 중성색.
+   점수는 카드별 brand 컬러를 흰 배경에 맞춰 한 톤 진하게 (영역별 정체성 유지). */
+.r-rank-card .r-rank-row.me .r-rank-name { color: #1A1F2E; font-weight: 700; }
+.r-rank-card .r-rank-row.me .r-rank-num  { color: #2A3050; }
+.r-rank-card.col-retr   .r-rank-row.me .r-rank-cnt { color: #2E9E6B; }
+.r-rank-card.col-combo  .r-rank-row.me .r-rank-cnt { color: #7C4FB8; }
+.r-rank-card.col-master .r-rank-row.me .r-rank-cnt { color: #2E7DC4; }
+.r-rank-card.col-cumul  .r-rank-row.me .r-rank-cnt { color: #8C6212; }
 .r-rank-card .r-rank-cnt {
   font-size: 12px; font-weight: 700;
   color: var(--stage-accent, var(--green));
