@@ -3357,14 +3357,8 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   stroke-width: 1.2;
   /* 글로우 제거 — 무광 차분한 별로 */
 }
-.rtb-score {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  color: #2A3050;
-  letter-spacing: 0.04em;
-}
-.rtb-score em { color: var(--stage-accent, var(--green)); font-style: normal; font-weight: 800; }
+/* 점수 (44/44) — 점수판 뒤에 가려져 의미 X. 숨김. */
+.rtb-score { display: none; }
 .rtb-msg {
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 11px;
@@ -3373,24 +3367,31 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   letter-spacing: 0.02em;
 }
 
-/* PERFECT 변형 — 별 숨기고 황금 배지로 */
+/* PERFECT 변형 — 별 숨기고 황금 배지로. 메시지도 숨김 (점수판 뒤로 가려져 의미 X). */
 .r-tier-badge.is-perfect .rtb-stars { display: none; }
+.r-tier-badge.is-perfect .rtb-msg   { display: none; }
 .rtb-perfect {
   display: none;                             /* 기본 숨김, .is-perfect에서 표시 */
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 22px;
   font-weight: 800;
   letter-spacing: 0.08em;
+  word-spacing: -6px;                        /* ⭐ ~ PERFECT 사이 간격 좁힘 */
   background: linear-gradient(135deg, #FFD700 0%, #FF8A00 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: rtb-perfect-glow 1.6s ease-in-out infinite alternate;
+  animation: rtb-perfect-glow 2.4s ease-in-out infinite alternate;
 }
 .r-tier-badge.is-perfect .rtb-perfect { display: block; }
+/* PERFECT 모드는 점수판과 거리 살짝 더 두기 — 별 모드보다 위로 */
+.r-tier-badge.is-perfect.on {
+  transform: translateX(-50%) translateY(-15px);
+}
 @keyframes rtb-perfect-glow {
-  from { filter: drop-shadow(0 0 4px rgba(255,180,0,0.35)); }
-  to   { filter: drop-shadow(0 0 12px rgba(255,180,0,0.75)); }
+  /* 글로우 부드럽게 — 12px → 5px, 강도도 톤 다운 */
+  from { filter: drop-shadow(0 0 2px rgba(255,180,0,0.22)); }
+  to   { filter: drop-shadow(0 0 5px rgba(255,180,0,0.40)); }
 }
 
 .result-body-v3 {
@@ -3806,7 +3807,7 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
 .r-trio-row {
   display: flex; gap: 18px;
   width: 100%; max-width: 940px;
-  height: 180px;        /* 200 → 180 (어휘 카드 높이 20px 축소) */
+  height: 187px;
   margin-top: -15px;    /* 트리오 행 전체 15px 위로 */
   align-items: stretch;
   opacity: 0;
@@ -3821,7 +3822,7 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   background: #FFFFFF;
   border: 1px solid rgba(20,25,40,0.12);
   border-radius: 14px;
-  padding: 12px 16px 10px;
+  padding: 12px 16px 10px;       /* 원위치 — 잘림 방지는 부모 r-trio-row height로 해결 */
   box-shadow:
     0 4px 16px rgba(20,25,40,0.08),
     0 1px 3px rgba(20,25,40,0.05);
@@ -3830,27 +3831,21 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
 }
 .r-collect-head {
   display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 10px;
-  padding-bottom: 9px;
+  margin-bottom: 7px;          /* 라인 아래 여백 10 → 7 */
+  padding-bottom: 6px;         /* 라인 위 여백 9 → 6 */
   border-bottom: 1px dashed rgba(20,25,40,0.10);
 }
+/* 인출/확장 어휘 박스 타이틀 — 가벼운 weight + 검정 텍스트.
+   색 구분은 갯수 숫자(em)로 이관. */
 .r-collect-tag {
   display: inline-flex; align-items: center;
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 12px; font-weight: 700;
-  letter-spacing: 0.10em;
-  padding: 4px 11px;
-  border-radius: 100px;
-}
-.r-collect-tag.tag-retr {
-  color: #45C28A;
-  background: rgba(69,194,138,0.12);
-  border: 1px solid rgba(69,194,138,0.42);
-}
-.r-collect-tag.tag-exp {
-  color: #C9A6F0;
-  background: rgba(155,108,217,0.14);
-  border: 1px solid rgba(155,108,217,0.45);
+  font-size: 15px; font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #2A3050;
+  padding: 0;
+  background: transparent;
+  border: none;
 }
 .r-collect-cnt {
   font-family: 'Noto Sans KR', sans-serif;
@@ -3859,11 +3854,13 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
 }
 .r-collect-cnt em {
   font-style: normal; font-size: 18px; font-weight: 700;
-  color: #C68A0A;     /* 흰 배경에서 충분한 대비를 가지는 따뜻한 골드 */
   margin-right: 2px;
 }
+/* 갯수 숫자 색 — 컬럼 정체성을 여기로 이관 (타이틀은 검정) */
+.r-col-retr .r-collect-cnt em { color: #45C28A; }   /* 초록 (인출) */
+.r-col-exp  .r-collect-cnt em { color: #9B6CD9; }   /* 보라 (확장) */
 .r-collect-list {
-  display: flex; flex-wrap: wrap; gap: 6px;
+  display: flex; flex-wrap: wrap; gap: 4px;
   align-content: flex-start;
   flex: 1;
   min-height: 0;
@@ -3885,8 +3882,8 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 13px; font-weight: 500;
   color: #2A3050;
-  padding: 5px 10px;
-  border-radius: 8px;
+  padding: 3px 8px;            /* 컴팩트 — 한 줄에 더 많이 */
+  border-radius: 6px;
   background: rgba(20,25,40,0.04);
   border: 1px solid rgba(20,25,40,0.10);
   letter-spacing: -0.01em;
@@ -3921,7 +3918,7 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
                   기존 id="r-rank-block"의 등장 애니메이션(.on)은 그대로 유지. */
 .r-rank-block {
   width: 100%; max-width: 940px;
-  margin-top: 15px;
+  margin: 28px 0 24px;   /* 위·아래 바깥 여백 확장 — 어휘판/버튼과 호흡 */
   display: flex;
   gap: 12px;
   align-items: stretch;
@@ -3931,21 +3928,25 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
 }
 .r-rank-block.on { opacity: 1; transform: translateY(0); }
 
-/* 각각의 작은 카드 — 분리된 dark 박스 */
+/* 각각의 작은 카드 — 깔끔한 검정 박스. 정체성은 타이틀 라벨의 솔리드 컬러로 표현.
+   보더/wash 제거. 카드 사이 분리는 gap + box-shadow로 확보. */
 .r-rank-card {
+  position: relative;
   flex: 1; min-width: 0;
   display: flex; flex-direction: column;
-  background: linear-gradient(180deg, #1F2638 0%, #181E2C 100%);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: #181E2C;
   border-radius: 12px;
-  padding: 10px 12px 10px;
+  padding: 16px 14px 19px;   /* 하단 +3px → 카드 세로 길이 +3px */
   box-shadow:
-    0 4px 14px rgba(20,25,40,0.18),
-    inset 0 1px 0 rgba(255,255,255,0.06);
+    0 4px 14px rgba(20,25,40,0.22),
+    inset 0 1px 0 rgba(255,255,255,0.04);
 }
+
 .r-rank-card-head {
-  display: flex; align-items: baseline; justify-content: space-between;
-  margin-bottom: 6px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 5px;          /* 라인 아래 여백 10 → 5 */
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
   gap: 6px;
 }
 /* 1·2·3등 전시대 — 스크롤과 별개로 카드 상단에 고정 노출.
@@ -3957,35 +3958,23 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   border-bottom: 1px dashed rgba(255,255,255,0.14);
   margin-bottom: 4px;
 }
+/* 랭킹 카드 타이틀 — 솔리드 컬러 라벨 + 흰색 글자. 검정 카드 배경 위에서
+   가장 명확히 보이는 형태. 단순 텍스트 색만으론 약해서 라벨 형태로 회귀. */
 .r-rank-col-tag {
   display: inline-flex; align-items: center;
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 10.5px; font-weight: 700;
-  letter-spacing: 0.10em;
-  padding: 3px 9px;
-  border-radius: 100px;
+  font-size: 13.5px; font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #FFFFFF;
+  padding: 5px 13px;
+  border-radius: 6px;
+  border: none;
   white-space: nowrap;
 }
-.r-rank-col-tag.tag-retr {
-  color: var(--green);
-  background: rgba(69,194,138,0.14);
-  border: 1px solid rgba(69,194,138,0.42);
-}
-.r-rank-col-tag.tag-combo {
-  color: #C9A6F0;
-  background: rgba(155,108,217,0.14);
-  border: 1px solid rgba(155,108,217,0.45);
-}
-.r-rank-col-tag.tag-master {
-  color: #4FA3F0;
-  background: rgba(79,163,240,0.14);
-  border: 1px solid rgba(79,163,240,0.45);
-}
-.r-rank-col-tag.tag-cumul {
-  color: #FFD659;
-  background: rgba(255,214,89,0.10);
-  border: 1px solid rgba(255,214,89,0.36);
-}
+.r-rank-col-tag.tag-retr   { background: #45C28A; }
+.r-rank-col-tag.tag-combo  { background: #9B6CD9; }
+.r-rank-col-tag.tag-master { background: #4FA3F0; }
+.r-rank-col-tag.tag-cumul  { background: #C8A030; }  /* 노랑은 흰 글자 가독성 떨어져 살짝 어두운 골드 */
 /* 각 카드의 점수 숫자 색을 배지 색과 통일 */
 .r-rank-card.col-retr   .r-rank-cnt { color: #5BC893; }
 .r-rank-card.col-combo  .r-rank-cnt { color: #C9A6F0; }
@@ -3993,7 +3982,7 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
 .r-rank-card.col-cumul  .r-rank-cnt { color: #FFD659; }
 .r-rank-col-sub {
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 10px;
+  font-size: 11px;
   color: rgba(255,255,255,0.38);
   letter-spacing: 0.08em;
   white-space: nowrap;
@@ -4001,7 +3990,7 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
 /* 내 랭킹이 멀리 떨어져 있을 때 사이의 ⋯ 구분자 */
 .r-rank-card .r-rank-ellipsis {
   text-align: center;
-  font-size: 14px; line-height: 1;
+  font-size: 15px; line-height: 1;
   color: rgba(255,255,255,0.28);
   padding: 6px 0 4px;
   letter-spacing: 0.5em;
@@ -4010,7 +3999,8 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
 .r-rank-card .r-rank-list {
   display: flex; flex-direction: column;
   gap: 0;
-  max-height: 260px;
+  /* podium 1·2·3 + list 4~10 = 약 7행. row ~28px → 200px */
+  max-height: 200px;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,0.18) transparent;
@@ -4026,11 +4016,19 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
 }
 .r-rank-card .r-rank-row {
   display: flex; align-items: center; gap: 8px;
-  padding: 4px 6px;
-  font-size: 12px;
+  padding: 5px 6px;          /* 행간 +2px (위·아래 padding 각 1px 증가) */
+  font-size: 13px;            /* +1px */
   border-radius: 6px;
   background: transparent;
   cursor: pointer;
+}
+/* 등수 사이 점선 — 가독성 향상.
+   첫 행에는 line 없게 인접 형제 셀렉터(+) 사용.
+   podium / list 각자 영역 내에서만 적용 → podium-list 사이는 기존 dashed 보더로 분리. */
+.r-rank-card .r-rank-podium .r-rank-row + .r-rank-row,
+.r-rank-card .r-rank-list   .r-rank-row + .r-rank-row,
+.r-rank-card .r-rank-list   .r-rank-ellipsis + .r-rank-row {
+  border-top: 1px dashed rgba(255,255,255,0.12);
 }
 .r-rank-card .r-rank-row.cumul { cursor: default; }
 .r-rank-card .r-rank-row:hover { background: rgba(255,255,255,0.04); }
@@ -4040,12 +4038,12 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
 .r-rank-card .r-rank-row.me:hover { background: rgba(var(--stage-accent-rgb), 0.26); }
 .r-rank-card .r-rank-num {
   width: 22px; flex-shrink: 0;
-  font-size: 11px; font-weight: 700;
+  font-size: 12px; font-weight: 700;
   color: rgba(255,255,255,0.40);
   text-align: center;
 }
 .r-rank-card .r-rank-num.medal {
-  font-size: 16px; line-height: 1;
+  font-size: 17px; line-height: 1;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
 }
 .r-rank-card .r-rank-row.gold   .r-rank-num { color: #FFD659; }
@@ -4054,14 +4052,14 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
 .r-rank-card .r-rank-name {
   flex: 1; min-width: 0;
   color: rgba(255,255,255,0.74);
-  font-size: 12px;
+  font-size: 13px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .r-rank-card .r-rank-row.me .r-rank-name {
   color: #FFFFFF; font-weight: 700;
 }
 .r-rank-card .r-rank-cnt {
-  font-size: 11px; font-weight: 700;
+  font-size: 12px; font-weight: 700;
   color: var(--stage-accent, var(--green));
   font-variant-numeric: tabular-nums;
 }
@@ -4072,7 +4070,7 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   min-width: 220px;
   padding: 13px 36px;
   font-size: 14px;
-  margin-top: 4px;
+  margin-top: -6px;          /* 위로 10px — 랭킹과 호흡 좁힘 */
   opacity: 0;
   transform: translateY(10px);
   transition: opacity .5s ease 1.4s, transform .5s cubic-bezier(.2,.8,.3,1) 1.4s, box-shadow .2s;
@@ -4089,24 +4087,25 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
 .score-chip.center-result {
   /* chip-anchor 내부 canvas-coords 기준 (점수판 슬롯) */
   transform: translate(-482px, 111px) scale(2.0);
+  /* 그림자 축소 — drop 22→12 / glow 14→7 / 인셋 톤 다운 */
   box-shadow:
-    0 8px 22px rgba(0,0,0,0.32),
+    0 5px 12px rgba(0,0,0,0.28),
     0 0 0 1px rgba(0,0,0,0.4),
-    0 0 14px rgba(var(--sc-rgb), 0.28),
-    inset 0 0 0 1px rgba(255,214,107,0.28),
+    0 0 7px rgba(var(--sc-rgb), 0.20),
+    inset 0 0 0 1px rgba(255,214,107,0.24),
     inset 0 1px 0 rgba(255,255,255,0.08);
 }
 .score-chip.center-result .sc-num {
   text-shadow:
-    0 0 14px rgba(255,214,107,0.7),
-    0 0 24px rgba(255,194,80,0.5),
+    0 0 10px rgba(255,214,107,0.55),
+    0 0 18px rgba(255,194,80,0.35),
     0 1px 2px rgba(0,0,0,0.55);
 }
-/* 도착 후 잔잔한 글로우 펄스 — 단계 컨셉 컬러 따라감 (그림자 축소) */
+/* 도착 후 잔잔한 글로우 펄스 — 단계 컨셉 컬러. 전체 톤 축소 */
 @keyframes chipLanded {
-  0%   { box-shadow: 0 8px 22px rgba(0,0,0,0.32), 0 0 0 1px rgba(0,0,0,0.4), 0 0 14px rgba(var(--sc-rgb), 0.28), inset 0 0 0 1px rgba(255,214,107,0.28), inset 0 1px 0 rgba(255,255,255,0.08); }
-  50%  { box-shadow: 0 10px 26px rgba(0,0,0,0.36), 0 0 0 1px rgba(0,0,0,0.4), 0 0 22px rgba(var(--sc-rgb), 0.42), inset 0 0 0 1px rgba(255,214,107,0.38), inset 0 1px 0 rgba(255,255,255,0.10); }
-  100% { box-shadow: 0 8px 22px rgba(0,0,0,0.32), 0 0 0 1px rgba(0,0,0,0.4), 0 0 14px rgba(var(--sc-rgb), 0.28), inset 0 0 0 1px rgba(255,214,107,0.28), inset 0 1px 0 rgba(255,255,255,0.08); }
+  0%   { box-shadow: 0 5px 12px rgba(0,0,0,0.28), 0 0 0 1px rgba(0,0,0,0.4), 0 0 7px rgba(var(--sc-rgb), 0.20), inset 0 0 0 1px rgba(255,214,107,0.24), inset 0 1px 0 rgba(255,255,255,0.08); }
+  50%  { box-shadow: 0 6px 14px rgba(0,0,0,0.32), 0 0 0 1px rgba(0,0,0,0.4), 0 0 12px rgba(var(--sc-rgb), 0.30), inset 0 0 0 1px rgba(255,214,107,0.32), inset 0 1px 0 rgba(255,255,255,0.10); }
+  100% { box-shadow: 0 5px 12px rgba(0,0,0,0.28), 0 0 0 1px rgba(0,0,0,0.4), 0 0 7px rgba(var(--sc-rgb), 0.20), inset 0 0 0 1px rgba(255,214,107,0.24), inset 0 1px 0 rgba(255,255,255,0.08); }
 }
 .score-chip.center-result.landed {
   animation: chipLanded 2.4s ease-in-out infinite;
