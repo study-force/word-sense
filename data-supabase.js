@@ -14,10 +14,25 @@
 
 
 // ════════════════════════════════════════
-// 설정
+// 설정 — 환경 분기 (도메인 기반)
+//   word.sfcenter.co.kr     → 운영 (word-master)
+//   word.sfos.kr            → 개발 (word-master-dev)
+//   localhost / *.vercel.app → 개발 (Vercel 임시 도메인 + 로컬)
+//   그 외(GitHub Pages 등)   → 운영 fallback
 // ════════════════════════════════════════
-const SUPABASE_URL = 'https://fokuojmzhttxfkmiutmf.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZva3Vvam16aHR0eGZrbWl1dG1mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MDYwOTksImV4cCI6MjA5MzM4MjA5OX0.FuYv59ufKteXKusvAhJktBNWntMnWmxctQoHquaPKVA';
+const _host = location.hostname;
+const IS_DEV_ENV = _host === 'word.sfos.kr'
+                || _host === 'localhost' || _host === '127.0.0.1'
+                || _host.endsWith('.vercel.app');
+
+const SUPABASE_URL = IS_DEV_ENV
+  ? 'https://xzxgsqpvtckxgvipchsy.supabase.co'   // word-master-dev (개발)
+  : 'https://fokuojmzhttxfkmiutmf.supabase.co';  // word-master (운영)
+
+const SUPABASE_ANON_KEY = IS_DEV_ENV
+  ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh6eGdzcXB2dGNreGd2aXBjaHN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5OTU0NjIsImV4cCI6MjA5NDU3MTQ2Mn0.J0OIH7pk11wwuyyJEO--RF54jf-AfxqJ19ECwAnsmSQ'  // dev
+  : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZva3Vvam16aHR0eGZrbWl1dG1mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MDYwOTksImV4cCI6MjA5MzM4MjA5OX0.FuYv59ufKteXKusvAhJktBNWntMnWmxctQoHquaPKVA';                           // prod
+console.log('[supabase] env:', IS_DEV_ENV ? 'DEV (word-master-dev)' : 'PROD (word-master)', '@', _host);
 
 // 로드할 회차 — URL 파라미터로 동적 지정 가능 (테스트 편의):
 //   ?area=biology&round=1   → 생물 1회차
