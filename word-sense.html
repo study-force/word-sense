@@ -3916,51 +3916,46 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ── 랭킹 블록 ── */
+/* ── 랭킹 ── (4종 분리 카드)
+   .r-rank-block: 단지 4개 카드 가로 배치용 flex wrapper. 어두운 박스 X.
+                  기존 id="r-rank-block"의 등장 애니메이션(.on)은 그대로 유지. */
 .r-rank-block {
   width: 100%; max-width: 940px;
-  margin-top: 15px;        /* 상단 트리오와의 간격 */
-  background: linear-gradient(180deg, #1F2638 0%, #181E2C 100%);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 14px;
-  padding: 14px 22px 14px;
-  box-shadow:
-    0 4px 14px rgba(20,25,40,0.18),
-    inset 0 1px 0 rgba(255,255,255,0.06);
+  margin-top: 15px;
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
   opacity: 0;
   transform: translateY(14px);
   transition: opacity .55s ease 1.15s, transform .55s cubic-bezier(.2,.8,.3,1) 1.15s;
 }
 .r-rank-block.on { opacity: 1; transform: translateY(0); }
-.r-rank-block-head {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 6px;
-}
-.r-rank-block-title {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 12px; font-weight: 600;
-  color: rgba(255,255,255,0.62);
-  letter-spacing: 0.10em;
-}
-/* 3열(인출 / 인출+확장 오늘 / 인출+확장 누적) 나란히 배치 */
-.r-rank-pair {
-  display: flex;
-  gap: 20px;
-  align-items: stretch;
-}
-.r-rank-col {
+
+/* 각각의 작은 카드 — 분리된 dark 박스 */
+.r-rank-card {
   flex: 1; min-width: 0;
   display: flex; flex-direction: column;
+  background: linear-gradient(180deg, #1F2638 0%, #181E2C 100%);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 10px 12px 10px;
+  box-shadow:
+    0 4px 14px rgba(20,25,40,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.06);
 }
-.r-rank-col + .r-rank-col {
-  padding-left: 20px;
-  border-left: 1px dashed rgba(255,255,255,0.10);
-  margin-left: 0;
-}
-.r-rank-col-head {
+.r-rank-card-head {
   display: flex; align-items: baseline; justify-content: space-between;
   margin-bottom: 6px;
   gap: 6px;
+}
+/* 1·2·3등 전시대 — 스크롤과 별개로 카드 상단에 고정 노출.
+   list와 시각 분리를 위해 하단에 dashed 보더. */
+.r-rank-podium {
+  display: flex; flex-direction: column;
+  gap: 0;
+  padding: 2px 0 5px;
+  border-bottom: 1px dashed rgba(255,255,255,0.14);
+  margin-bottom: 4px;
 }
 .r-rank-col-tag {
   display: inline-flex; align-items: center;
@@ -3991,11 +3986,11 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   background: rgba(255,214,89,0.10);
   border: 1px solid rgba(255,214,89,0.36);
 }
-/* 각 컬럼의 점수 숫자 색을 컬럼 배지 색과 통일 */
-.r-rank-col.col-retr   .r-rank-cnt { color: #5BC893; }
-.r-rank-col.col-combo  .r-rank-cnt { color: #C9A6F0; }
-.r-rank-col.col-master .r-rank-cnt { color: #4FA3F0; }
-.r-rank-col.col-cumul  .r-rank-cnt { color: #FFD659; }
+/* 각 카드의 점수 숫자 색을 배지 색과 통일 */
+.r-rank-card.col-retr   .r-rank-cnt { color: #5BC893; }
+.r-rank-card.col-combo  .r-rank-cnt { color: #C9A6F0; }
+.r-rank-card.col-master .r-rank-cnt { color: #4FA3F0; }
+.r-rank-card.col-cumul  .r-rank-cnt { color: #FFD659; }
 .r-rank-col-sub {
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 10px;
@@ -4004,7 +3999,7 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   white-space: nowrap;
 }
 /* 내 랭킹이 멀리 떨어져 있을 때 사이의 ⋯ 구분자 */
-.r-rank-block .r-rank-ellipsis {
+.r-rank-card .r-rank-ellipsis {
   text-align: center;
   font-size: 14px; line-height: 1;
   color: rgba(255,255,255,0.28);
@@ -4012,60 +4007,60 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   letter-spacing: 0.5em;
   user-select: none;
 }
-.r-rank-block .r-rank-list {
+.r-rank-card .r-rank-list {
   display: flex; flex-direction: column;
   gap: 0;
-  max-height: 330px;
+  max-height: 260px;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,0.18) transparent;
 }
-.r-rank-block .r-rank-list::-webkit-scrollbar { width: 6px; }
-.r-rank-block .r-rank-list::-webkit-scrollbar-track { background: transparent; }
-.r-rank-block .r-rank-list::-webkit-scrollbar-thumb {
+.r-rank-card .r-rank-list::-webkit-scrollbar { width: 6px; }
+.r-rank-card .r-rank-list::-webkit-scrollbar-track { background: transparent; }
+.r-rank-card .r-rank-list::-webkit-scrollbar-thumb {
   background: rgba(255,255,255,0.16);
   border-radius: 3px;
 }
-.r-rank-block .r-rank-list::-webkit-scrollbar-thumb:hover {
+.r-rank-card .r-rank-list::-webkit-scrollbar-thumb:hover {
   background: rgba(255,255,255,0.28);
 }
-.r-rank-block .r-rank-row {
-  display: flex; align-items: center; gap: 10px;
-  padding: 4px 8px;
+.r-rank-card .r-rank-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 6px;
   font-size: 12px;
   border-radius: 6px;
   background: transparent;
   cursor: pointer;
 }
-.r-rank-block .r-rank-row.cumul { cursor: default; }
-.r-rank-block .r-rank-row:hover { background: rgba(255,255,255,0.04); }
-.r-rank-block .r-rank-row.me {
+.r-rank-card .r-rank-row.cumul { cursor: default; }
+.r-rank-card .r-rank-row:hover { background: rgba(255,255,255,0.04); }
+.r-rank-card .r-rank-row.me {
   background: rgba(var(--stage-accent-rgb), 0.18);
 }
-.r-rank-block .r-rank-row.me:hover { background: rgba(var(--stage-accent-rgb), 0.26); }
-.r-rank-block .r-rank-num {
+.r-rank-card .r-rank-row.me:hover { background: rgba(var(--stage-accent-rgb), 0.26); }
+.r-rank-card .r-rank-num {
   width: 22px; flex-shrink: 0;
   font-size: 11px; font-weight: 700;
   color: rgba(255,255,255,0.40);
   text-align: center;
 }
-.r-rank-block .r-rank-num.medal {
+.r-rank-card .r-rank-num.medal {
   font-size: 16px; line-height: 1;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
 }
-.r-rank-block .r-rank-row.gold   .r-rank-num { color: #FFD659; }
-.r-rank-block .r-rank-row.silver .r-rank-num { color: #D8DDEA; }
-.r-rank-block .r-rank-row.bronze .r-rank-num { color: #E0A87E; }
-.r-rank-block .r-rank-name {
+.r-rank-card .r-rank-row.gold   .r-rank-num { color: #FFD659; }
+.r-rank-card .r-rank-row.silver .r-rank-num { color: #D8DDEA; }
+.r-rank-card .r-rank-row.bronze .r-rank-num { color: #E0A87E; }
+.r-rank-card .r-rank-name {
   flex: 1; min-width: 0;
   color: rgba(255,255,255,0.74);
   font-size: 12px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.r-rank-block .r-rank-row.me .r-rank-name {
+.r-rank-card .r-rank-row.me .r-rank-name {
   color: #FFFFFF; font-weight: 700;
 }
-.r-rank-block .r-rank-cnt {
+.r-rank-card .r-rank-cnt {
   font-size: 11px; font-weight: 700;
   color: var(--stage-accent, var(--green));
   font-variant-numeric: tabular-nums;
@@ -4592,27 +4587,28 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
           <div class="r-collect-list" id="r-exp-list"></div>
         </div>
       </div>
+      <!-- ══ 랭킹 — 4종 별도 카드로 분리. 각 카드 상단의 podium(1·2·3등)은 스크롤 X,
+           list(4등 이하)만 스크롤. id="r-rank-block"은 기존 등장 애니메이션 훅 유지. -->
       <div class="r-rank-block" id="r-rank-block">
-        <div class="r-rank-block-head">
-          <span class="r-rank-block-title">가족 어휘 랭킹</span>
+        <div class="r-rank-card col-retr">
+          <div class="r-rank-card-head"><span class="r-rank-col-tag tag-retr">인출</span><span class="r-rank-col-sub">오늘</span></div>
+          <div class="r-rank-podium" id="r-rank-podium-retr"></div>
+          <div class="r-rank-list"   id="r-rank-list-retr"></div>
         </div>
-        <div class="r-rank-pair">
-          <div class="r-rank-col col-retr">
-            <div class="r-rank-col-head"><span class="r-rank-col-tag tag-retr">인출</span><span class="r-rank-col-sub">오늘</span></div>
-            <div class="r-rank-list" id="r-rank-list-retr"></div>
-          </div>
-          <div class="r-rank-col col-combo">
-            <div class="r-rank-col-head"><span class="r-rank-col-tag tag-combo">인출+확장</span><span class="r-rank-col-sub">오늘</span></div>
-            <div class="r-rank-list" id="r-rank-list-combo"></div>
-          </div>
-          <div class="r-rank-col col-master">
-            <div class="r-rank-col-head"><span class="r-rank-col-tag tag-master">인출+확장+강화</span><span class="r-rank-col-sub">오늘</span></div>
-            <div class="r-rank-list" id="r-rank-list-master"></div>
-          </div>
-          <div class="r-rank-col col-cumul">
-            <div class="r-rank-col-head"><span class="r-rank-col-tag tag-cumul">인출+확장+강화</span><span class="r-rank-col-sub" id="r-rank-area">누적</span></div>
-            <div class="r-rank-list" id="r-rank-list-cumul"></div>
-          </div>
+        <div class="r-rank-card col-combo">
+          <div class="r-rank-card-head"><span class="r-rank-col-tag tag-combo">인출+확장</span><span class="r-rank-col-sub">오늘</span></div>
+          <div class="r-rank-podium" id="r-rank-podium-combo"></div>
+          <div class="r-rank-list"   id="r-rank-list-combo"></div>
+        </div>
+        <div class="r-rank-card col-master">
+          <div class="r-rank-card-head"><span class="r-rank-col-tag tag-master">인출+확장+강화</span><span class="r-rank-col-sub">오늘</span></div>
+          <div class="r-rank-podium" id="r-rank-podium-master"></div>
+          <div class="r-rank-list"   id="r-rank-list-master"></div>
+        </div>
+        <div class="r-rank-card col-cumul">
+          <div class="r-rank-card-head"><span class="r-rank-col-tag tag-cumul">인출+확장+강화</span><span class="r-rank-col-sub" id="r-rank-area">누적</span></div>
+          <div class="r-rank-podium" id="r-rank-podium-cumul"></div>
+          <div class="r-rank-list"   id="r-rank-list-cumul"></div>
         </div>
       </div>
       <button class="r-home-btn" id="r-home-btn" onclick="goArea()">나의 훈사전 보기 →</button>
@@ -7093,10 +7089,14 @@ function highlightStudent(student){
   });
 }
 
-function _renderRankCol(listId, view, extraRowClass){
-  var rl = document.getElementById(listId);
-  if(!rl) return;
-  rl.innerHTML = '';
+// 랭킹 카드 렌더 — 1·2·3등은 podium(고정), 4등 이하는 list(스크롤).
+// view에 __ellipsis 항목이 있으면 list 쪽에 ⋯ 구분자 삽입.
+function _renderRankBlock(podiumId, listId, view, extraRowClass){
+  var podium = document.getElementById(podiumId);
+  var list   = document.getElementById(listId);
+  if(!podium || !list) return;
+  podium.innerHTML = '';
+  list.innerHTML   = '';
   var medals = ['gold','silver','bronze'];
   var medalIcons = ['🥇','🥈','🥉'];
   view.forEach(function(s){
@@ -7104,7 +7104,7 @@ function _renderRankCol(listId, view, extraRowClass){
       var sep = document.createElement('div');
       sep.className = 'r-rank-ellipsis';
       sep.textContent = '⋯';
-      rl.appendChild(sep);
+      list.appendChild(sep);
       return;
     }
     var rank = s.rank;
@@ -7120,7 +7120,7 @@ function _renderRankCol(listId, view, extraRowClass){
     row.innerHTML = numHtml
       +'<span class="r-rank-name">'+s.name+(s.me?' (나)':'')+'</span>'
       +'<span class="r-rank-cnt">'+s.count+'</span>';
-    rl.appendChild(row);
+    (rank <= 3 ? podium : list).appendChild(row);
   });
 }
 
@@ -7148,16 +7148,16 @@ function renderRankList(){
   var areaSub = document.getElementById('r-rank-area');
   if(areaSub) areaSub.textContent = (SESSION.area || '') + ' · 누적';
 
-  _renderRankCol('r-rank-list-retr',   buildFullRankView(RANK_RETR));
-  _renderRankCol('r-rank-list-combo',  buildFullRankView(RANK_COMBO));
-  _renderRankCol('r-rank-list-master', buildFullRankView(RANK_MASTER));
-  _renderRankCol('r-rank-list-cumul',  buildFullRankView(RANK_CUMUL), 'cumul');
+  _renderRankBlock('r-rank-podium-retr',   'r-rank-list-retr',   buildFullRankView(RANK_RETR));
+  _renderRankBlock('r-rank-podium-combo',  'r-rank-list-combo',  buildFullRankView(RANK_COMBO));
+  _renderRankBlock('r-rank-podium-master', 'r-rank-list-master', buildFullRankView(RANK_MASTER));
+  _renderRankBlock('r-rank-podium-cumul',  'r-rank-list-cumul',  buildFullRankView(RANK_CUMUL), 'cumul');
 
   // 각 컬럼에서 "나" 행으로 자동 스크롤 — 학생이 자기 위치를 즉시 볼 수 있게.
   // renderRankList가 showPage('result') 이전에 호출되어 layout이 아직 안 잡혔을 수 있으므로
   // 두 번의 RAF 후에 실행 (페이지 활성화 + paint 완료 시점)
   function scrollToMe(){
-    ['r-rank-list-retr', 'r-rank-list-combo', 'r-rank-list-cumul'].forEach(function(id){
+    ['r-rank-list-retr', 'r-rank-list-combo', 'r-rank-list-master', 'r-rank-list-cumul'].forEach(function(id){
       var rl = document.getElementById(id);
       if(!rl) return;
       var meRow = rl.querySelector('.r-rank-row.me');
