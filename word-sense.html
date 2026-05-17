@@ -1964,8 +1964,12 @@ body.mission-mode #game .stage-nav {
 }
 @keyframes cardPop { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
 
-/* 동음이의어 자동 연속 quiz — 카드 플립 모션 (Y축 회전으로 다음 entry로 전환) */
-.quiz-card { transform-style: preserve-3d; perspective: 1200px; }
+/* 동음이의어 자동 연속 quiz — 카드 플립 모션 (X축 회전 = 상하 플립).
+   perspective는 회전 요소의 부모(.quiz-overlay)에 둬야 깊이감이 자연스럽다.
+   회전 요소(.quiz-card) 자체에 perspective를 두면 평면 스케일처럼 보여 "빔이 움직이듯" 어색해짐.
+   backface-visibility: hidden — 카드가 90° 넘어 뒷면이 비치는 깜빡임 방지. */
+.quiz-overlay { perspective: 1200px; }
+.quiz-card { transform-style: preserve-3d; backface-visibility: hidden; }
 #qc.quiz-flip-out {
   animation: qcFlipOut .3s cubic-bezier(.4,0,.2,1) forwards;
 }
@@ -1973,12 +1977,12 @@ body.mission-mode #game .stage-nav {
   animation: qcFlipIn .35s cubic-bezier(.2,1,.3,1) forwards;
 }
 @keyframes qcFlipOut {
-  from { transform: rotateY(0deg);  opacity: 1; }
-  to   { transform: rotateY(90deg); opacity: 0; }
+  from { transform: rotateX(0deg);  opacity: 1; }
+  to   { transform: rotateX(90deg); opacity: 0; }
 }
 @keyframes qcFlipIn {
-  from { transform: rotateY(-90deg); opacity: 0; }
-  to   { transform: rotateY(0deg);   opacity: 1; }
+  from { transform: rotateX(-90deg); opacity: 0; }
+  to   { transform: rotateX(0deg);   opacity: 1; }
 }
 /* 동음이의어 안내 — quiz overlay 안 상단에 잠시 등장 */
 .quiz-homonym-hint {
@@ -3061,13 +3065,50 @@ body.dark-canvas .score-chip,
 /* 셀 내용은 호버 시 페이드 — 라벨이 가운데서 잘 보이게 */
 .area-cell:not(.locked) .cell-char,
 .area-cell:not(.locked) .cell-hun,
-.area-cell:not(.locked) .cell-frac {
+.area-cell:not(.locked) .cell-frac,
+.area-cell:not(.locked) .cell-stars,
+.area-cell:not(.locked) .cell-perfect {
   transition: opacity .18s;
 }
 .area-cell:not(.locked):hover .cell-char,
 .area-cell:not(.locked):hover .cell-hun,
-.area-cell:not(.locked):hover .cell-frac {
+.area-cell:not(.locked):hover .cell-frac,
+.area-cell:not(.locked):hover .cell-stars,
+.area-cell:not(.locked):hover .cell-perfect {
   opacity: 0.18;
+}
+
+/* ── 별 표시 — 통과 카드(파랑) 하단에 채운 별/빈 별 ──────────────
+   결과 페이지의 별 시스템과 동일한 규칙(calcBadge): 어휘 10개당 별 1개, 최대 5개. */
+.area-cell .cell-stars {
+  display: flex; gap: 1px;
+  font-size: 11px; line-height: 1;
+  letter-spacing: 0.04em;
+}
+.area-cell .cell-stars .st-fill {
+  color: #FFD659;
+  text-shadow: 0 0 6px rgba(255,214,89,0.45);
+}
+.area-cell .cell-stars .st-empty {
+  color: rgba(20,25,40,0.22);
+}
+/* 오늘 통과(불투명 파랑 배경)에서는 빈 별 톤 살짝 밝게 — 가독성 확보 */
+.area-cell.current.pass .cell-stars .st-fill  { color: #FFE48F; }
+.area-cell.current.pass .cell-stars .st-empty { color: rgba(255,255,255,0.40); }
+
+/* ── PERFECT 뱃지 — 모든 어휘 발견 시 별 자리 대신 표시 ─────────
+   골드 그라디언트 + 살짝 떠오른 듯한 inset highlight. */
+.area-cell .cell-perfect {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 9px; font-weight: 800; letter-spacing: 0.10em;
+  color: #8C6212;
+  background: linear-gradient(180deg, #FFE89B 0%, #FFD659 100%);
+  padding: 2px 8px;
+  border-radius: 100px;
+  box-shadow:
+    0 1px 3px rgba(140,98,18,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.55);
+  line-height: 1;
 }
 /* 통과(과거+오늘) hover — 컨셉 컬러 글로우 */
 .area-cell.pass:hover {
@@ -3406,6 +3447,10 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   line-height: 1.15;
   text-align: center;
   margin: 4px auto 18px;
+  /* .st-body가 좌 0/우 60 비대칭 padding이라 텍스트가 30px 좌측으로 치우침.
+     타이틀은 split 본문과 달리 viewport 진짜 중앙이 자연스러우므로 좌측 60px padding으로 보정.
+     (text-align: center가 padding 안쪽 영역의 중앙을 잡으므로, padding-left 60px만큼 우측 이동) */
+  padding-left: 60px;
   opacity: 0;
   animation: ciFadeUp .6s cubic-bezier(.2,1,.3,1) .05s forwards;
 }
@@ -6739,7 +6784,7 @@ function showHomonymHint(word){
   setTimeout(function(){ if(hint.parentNode) hint.parentNode.removeChild(hint); }, 1400);
 }
 
-// 동음이의어 다음 entry로 카드 플립 (Y축 회전) 전환
+// 동음이의어 다음 entry로 카드 플립 (X축 회전 = 상하 플립) 전환
 function flipToNextQuiz(nextEntry){
   var qc = document.getElementById('qc');
   if(!qc) return;
@@ -7649,8 +7694,26 @@ function goArea(){
       var m = document.createElement('div'); m.className = 'cell-mark'; m.textContent = '✓'; cell.appendChild(m);
     }
     if(!p.locked){
-      var f = document.createElement('div'); f.className = 'cell-frac';
-      f.textContent = p.found + '/' + p.total; cell.appendChild(f);
+      // 통과/미통과·PERFECT 표시 (별 시스템) — 결과 페이지와 동일한 calcBadge 규칙
+      //   • PERFECT(전부 발견)        → "PERFECT" 골드 뱃지
+      //   • 통과(found ≥ PASS_MIN)    → 별 표시 (채운 별 N개 + 빈 별 M개)
+      //   • 미통과(found < PASS_MIN)  → 진행도 분수 "found/total"
+      var b = calcBadge(p.found, p.total);
+      if(b.isPerfect){
+        var pf = document.createElement('div'); pf.className = 'cell-perfect';
+        pf.textContent = 'PERFECT';
+        cell.appendChild(pf);
+      } else if(passed){
+        var sr = document.createElement('div'); sr.className = 'cell-stars';
+        var sh = '';
+        for(var si = 0; si < b.yellowCount; si++) sh += '<span class="st-fill">★</span>';
+        for(var se = 0; se < b.grayCount;   se++) sh += '<span class="st-empty">☆</span>';
+        sr.innerHTML = sh;
+        cell.appendChild(sr);
+      } else {
+        var f = document.createElement('div'); f.className = 'cell-frac';
+        f.textContent = p.found + '/' + p.total; cell.appendChild(f);
+      }
     }
     // 잠금 외 모든 셀(오늘 + 과거 통과·미통과) 재훈련 가능 — 클릭 시 홈으로 돌아가 새로 시작
     if(!p.locked){
