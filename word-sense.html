@@ -7087,6 +7087,10 @@ function renderRankList(){
 function goResult(){
   var sess = SESSION;
 
+  // ── 외부 진입(구서버) 학습 완료 알림 — service-back sf_study_hanja 업데이트 ──
+  //   STUDENT_INFO/TRAINING_INFO 있을 때만 호출. 멱등성 보장이라 재호출 안전.
+  if(typeof notifyStudyComplete === 'function'){ notifyStudyComplete(); }
+
   // ── 상단 메타 (영역 · 회차 · 한자 · 훈) ──
   var area = sess.area || '환경과 생물';
   var round = (sess.id || 1) + '회차';
@@ -7671,9 +7675,83 @@ document.addEventListener('keydown', function(e){
   }
 });
 
+// ─────────────────────────────────────────────────────────────
+// 외부 연동 — 구서버 진입 처리
+// ─────────────────────────────────────────────────────────────
+//   URL ?st={uuid} 파싱 → Edge Function(wordsense-session)에서 학생 데이터 조회.
+//   학생 데이터 = window.STUDENT_INFO 메모리 보관 (학습 완료 시 wordsense-complete 호출에 사용).
+//   ?st 없으면 개발/데모 모드 — 기존 mock SESSION 흐름.
+
+var STUDENT_INFO = null;    // { user_no, name, section, school_grade, academy_no }
+var TRAINING_INFO = null;   // { payment_fn, training_round, is_payment }
+
+// Edge Function base URL (Supabase 프로젝트 도메인)
+//   data-supabase.js 의 SUPABASE_URL 재사용
+var EDGE_FN_BASE = (window.SUPABASE_URL || '') + '/functions/v1';
+
+async function loadStudentFromSession(){
+  var params = new URLSearchParams(location.search);
+  var sessionId = params.get('st');
+  if(!sessionId) return false;   // 외부 진입 X → 데모 모드
+
+  try {
+    var res = await fetch(EDGE_FN_BASE + '/wordsense-session?id=' + encodeURIComponent(sessionId), {
+      method: 'GET',
+      headers: { 'apikey': window.SUPABASE_ANON_KEY || '' },
+    });
+    if(!res.ok){
+      console.warn('[student] session 조회 실패:', res.status);
+      return false;
+    }
+    var data = await res.json();
+    if(!data.success) return false;
+    STUDENT_INFO  = data.student;
+    TRAINING_INFO = data.session;
+    console.log('[student] 진입 학생:', STUDENT_INFO.name, '회차:', TRAINING_INFO.training_round);
+    return true;
+  } catch(err){
+    console.error('[student] session fetch 오류:', err);
+    return false;
+  }
+}
+
+// ── 학습 완료 콜백 — 구서버 sf_study_hanja 업데이트 ──
+//   강화 단계 통과 시 (goResult 진입 시점) 호출 권장.
+async function notifyStudyComplete(){
+  if(!TRAINING_INFO || !TRAINING_INFO.payment_fn){
+    console.log('[complete] 외부 진입 아님 — 콜백 건너뜀');
+    return;
+  }
+  try {
+    var res = await fetch(EDGE_FN_BASE + '/wordsense-complete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': window.SUPABASE_ANON_KEY || '',
+      },
+      body: JSON.stringify({
+        payment_fn:     TRAINING_INFO.payment_fn,
+        training_round: TRAINING_INFO.training_round,
+      }),
+    });
+    var data = await res.json();
+    if(res.ok && data.success){
+      console.log('[complete] service-back 알림 성공');
+    } else {
+      console.error('[complete] service-back 알림 실패:', data);
+    }
+  } catch(err){
+    console.error('[complete] 알림 오류:', err);
+  }
+}
+
 // ── 시작 ────────────────────────────────────
 // SESSION 로드 완료 후 초기 화면 진입 (Supabase fetch 비동기)
-window.SESSION_READY.then(function(){ goHome(); });
+// 외부 진입(?st)이면 학생 정보 먼저 가져오고 home 진입
+window.SESSION_READY.then(async function(){
+  await loadStudentFromSession();   // ?st 있으면 STUDENT_INFO/TRAINING_INFO 채움
+  goHome();
+});
 </script>
 </body>
 </html>

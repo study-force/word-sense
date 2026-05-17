@@ -1,0 +1,11 @@
+.claude/
+db/
+supabase/
+콘텐츠/
+기획/
+*.bak
+node_modules/
+HANDOFF.md
+validate.html
+*.upload.html
+*.backup-*.html

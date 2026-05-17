@@ -1,0 +1,3 @@
+# Supabase CLI 환경별 임시 파일 (machine-local)
+.temp/
+.branches/
