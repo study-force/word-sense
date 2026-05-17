@@ -26,3 +26,12 @@ desktop.ini
 *.swp
 *.swo
 *~
+
+# 비밀번호·시크릿 (절대 커밋 금지)
+.env.local
+.secrets.local
+
+# DB 덤프 (대용량, 일회성)
+prod_dump.sql
+dev_dump.sql
+restore.log
