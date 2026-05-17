@@ -2745,8 +2745,9 @@ body.mission-mode #game .stage-nav {
 }
 .sc-bulb {
   position: absolute;
-  width: 3.5px; height: 3.5px;
+  width: 4px; height: 4px;     /* 정확한 정원 — 모든 전구 동일 크기 */
   border-radius: 50%;
+  box-sizing: border-box;
   /* 기본 = 꺼진 전구(필라멘트 어두운 호박색) */
   background: #5A4A2A;
   box-shadow:
@@ -2754,7 +2755,7 @@ body.mission-mode #game .stage-nav {
     0 0 0 0.5px rgba(0,0,0,0.7);
   opacity: 0.85;
   transition: none;
-  /* will-change 제거: bump 시에만 GPU 레이어 활성화 → 평소엔 24개 레이어 미할당 */
+  /* will-change 제거: bump 시에만 GPU 레이어 활성화 → 평소엔 GPU 레이어 미할당 */
 }
 /* 점수 오를 때 — 전구들이 둘레를 따라 순차로 더 오래 반짝반짝 (3회 트윙클) */
 .score-chip.bump .sc-bulb {
@@ -2818,34 +2819,44 @@ body.mission-mode #game .stage-nav {
 .sc-bulb.b-mint   { background: #2A4A38; }
 .sc-bulb.b-violet { background: #3A2A4E; }
 
-/* 24개 전구 — 보더 한가운데 라인을 따라 촘촘히 분포
-   상/하: 7개씩, 좌/우: 5개씩 (코너 4개 공유 → 총 24개) */
-/* 위쪽 7개 — 코너는 16/84% 자리, 양 끝은 둥근 모서리 곡선을 비킨 안쪽 위치 */
-.sc-bulb.t1 { top: 1.5px; left: calc(16% - 1.75px);  animation-delay: 0.00s; }
-.sc-bulb.t2 { top: 1.5px; left: calc(28% - 1.75px);  animation-delay: 0.05s; }
-.sc-bulb.t3 { top: 1.5px; left: calc(40% - 1.75px);  animation-delay: 0.10s; }
-.sc-bulb.t4 { top: 1.5px; left: calc(52% - 1.75px);  animation-delay: 0.15s; }
-.sc-bulb.t5 { top: 1.5px; left: calc(64% - 1.75px);  animation-delay: 0.20s; }
-.sc-bulb.t6 { top: 1.5px; left: calc(76% - 1.75px);  animation-delay: 0.25s; }
-.sc-bulb.t7 { top: 1.5px; left: calc(88% - 1.75px);  animation-delay: 0.30s; }
-/* 오른쪽 4개 */
-.sc-bulb.r1 { right: 1.5px; top: calc(24% - 1.75px); animation-delay: 0.35s; }
-.sc-bulb.r2 { right: 1.5px; top: calc(42% - 1.75px); animation-delay: 0.40s; }
-.sc-bulb.r3 { right: 1.5px; top: calc(58% - 1.75px); animation-delay: 0.45s; }
-.sc-bulb.r4 { right: 1.5px; top: calc(76% - 1.75px); animation-delay: 0.50s; }
-/* 아래쪽 7개 — 오른쪽 → 왼쪽 sweep */
-.sc-bulb.b7 { bottom: 1.5px; right: calc(12% - 1.75px); animation-delay: 0.55s; }
-.sc-bulb.b6 { bottom: 1.5px; right: calc(24% - 1.75px); animation-delay: 0.60s; }
-.sc-bulb.b5 { bottom: 1.5px; right: calc(36% - 1.75px); animation-delay: 0.65s; }
-.sc-bulb.b4 { bottom: 1.5px; right: calc(48% - 1.75px); animation-delay: 0.70s; }
-.sc-bulb.b3 { bottom: 1.5px; right: calc(60% - 1.75px); animation-delay: 0.75s; }
-.sc-bulb.b2 { bottom: 1.5px; right: calc(72% - 1.75px); animation-delay: 0.80s; }
-.sc-bulb.b1 { bottom: 1.5px; right: calc(84% - 1.75px); animation-delay: 0.85s; }
-/* 왼쪽 4개 — 아래에서 위로 */
-.sc-bulb.l4 { left: 1.5px; bottom: calc(24% - 1.75px); animation-delay: 0.90s; }
-.sc-bulb.l3 { left: 1.5px; bottom: calc(42% - 1.75px); animation-delay: 0.95s; }
-.sc-bulb.l2 { left: 1.5px; bottom: calc(58% - 1.75px); animation-delay: 1.00s; }
-.sc-bulb.l1 { left: 1.5px; bottom: calc(76% - 1.75px); animation-delay: 1.05s; }
+/* 20개 전구 — 4면 모두 5개씩 균등 배치.
+   각 변 22% ~ 78% 범위, 14% 간격 (5개) → 22, 36, 50, 64, 78%.
+   chip border-radius(20px)가 차지하는 코너 곡선을 피해서 안쪽으로 배치. */
+/* 위쪽 5개 */
+.sc-bulb.t1 { top: 1px; left: calc(22% - 2px);  animation-delay: 0.00s; }
+.sc-bulb.t2 { top: 1px; left: calc(36% - 2px);  animation-delay: 0.06s; }
+.sc-bulb.t3 { top: 1px; left: calc(50% - 2px);  animation-delay: 0.12s; }
+.sc-bulb.t4 { top: 1px; left: calc(64% - 2px);  animation-delay: 0.18s; }
+.sc-bulb.t5 { top: 1px; left: calc(78% - 2px);  animation-delay: 0.24s; }
+/* 오른쪽 5개 — 위에서 아래로 */
+.sc-bulb.r1 { right: 1px; top: calc(22% - 2px); animation-delay: 0.30s; }
+.sc-bulb.r2 { right: 1px; top: calc(36% - 2px); animation-delay: 0.36s; }
+.sc-bulb.r3 { right: 1px; top: calc(50% - 2px); animation-delay: 0.42s; }
+.sc-bulb.r4 { right: 1px; top: calc(64% - 2px); animation-delay: 0.48s; }
+.sc-bulb.r5 { right: 1px; top: calc(78% - 2px); animation-delay: 0.54s; }
+/* 아래쪽 5개 — 오른쪽 → 왼쪽 sweep (b5가 오른쪽, b1이 왼쪽) */
+.sc-bulb.b5 { bottom: 1px; right: calc(22% - 2px); animation-delay: 0.60s; }
+.sc-bulb.b4 { bottom: 1px; right: calc(36% - 2px); animation-delay: 0.66s; }
+.sc-bulb.b3 { bottom: 1px; right: calc(50% - 2px); animation-delay: 0.72s; }
+.sc-bulb.b2 { bottom: 1px; right: calc(64% - 2px); animation-delay: 0.78s; }
+.sc-bulb.b1 { bottom: 1px; right: calc(78% - 2px); animation-delay: 0.84s; }
+/* 왼쪽 5개 — 아래에서 위로 (l5가 아래, l1이 위) */
+.sc-bulb.l5 { left: 1px; bottom: calc(22% - 2px); animation-delay: 0.90s; }
+.sc-bulb.l4 { left: 1px; bottom: calc(36% - 2px); animation-delay: 0.96s; }
+.sc-bulb.l3 { left: 1px; bottom: calc(50% - 2px); animation-delay: 1.02s; }
+.sc-bulb.l2 { left: 1px; bottom: calc(64% - 2px); animation-delay: 1.08s; }
+.sc-bulb.l1 { left: 1px; bottom: calc(78% - 2px); animation-delay: 1.14s; }
+
+/* PERFECT 모드 — 전구가 계속 둘레를 따라 깜빡임 (sweep 무한 반복) */
+.score-chip.perfect-twinkle .sc-bulb {
+  will-change: transform, box-shadow, background;
+  animation-name: bulbFlash;
+  animation-duration: 1.6s;
+  animation-timing-function: cubic-bezier(.2,.7,.3,1);
+  animation-iteration-count: infinite;
+}
+.score-chip.perfect-twinkle .sc-bulb.b-mint   { animation-name: bulbFlashMint; }
+.score-chip.perfect-twinkle .sc-bulb.b-violet { animation-name: bulbFlashViolet; }
 
 /* 점수판은 항상 진한 배경(전구 무드) — 다크 캔버스에서는 그림자만 좀 더 깊게.
    초록 프레임 글로우는 유지 */
@@ -3275,10 +3286,11 @@ body.dark-canvas .score-chip,
 ════════════════════════════════════════════ */
 .r-topbar-meta {
   position: absolute;
-  top: 30px; left: 80px;
+  top: 49px; left: 80px;       /* 30 → 45 → 49 (4px 추가 아래) */
   display: flex; align-items: baseline; gap: 8px;
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 16px; color: #5A6178;
+  font-size: 16px; line-height: 1;     /* line-height 압축 → 하단 여백 축소 */
+  color: #5A6178;
   letter-spacing: 0.04em;
   z-index: 11;
 }
@@ -3287,8 +3299,8 @@ body.dark-canvas .score-chip,
 .r-topbar-meta .r-tm-sep   { color: rgba(0,0,0,0.20); margin: 0 2px; }
 .r-topbar-meta .r-tm-han {
   font-family: var(--font-han);
-  font-size: 24px; font-weight: 400; color: var(--stage-accent, var(--green));
-  text-shadow: 0 0 12px rgba(var(--stage-accent-rgb), 0.30);
+  font-size: 16px; font-weight: 400; color: var(--stage-accent, var(--green));
+  text-shadow: 0 0 10px rgba(var(--stage-accent-rgb), 0.28);
   margin-left: 4px;
 }
 .r-topbar-meta .r-tm-hun {
@@ -3376,12 +3388,29 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   font-size: 22px;
   font-weight: 800;
   letter-spacing: 0.08em;
-  word-spacing: -6px;                        /* ⭐ ~ PERFECT 사이 간격 좁힘 */
   background: linear-gradient(135deg, #FFD700 0%, #FF8A00 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: rtb-perfect-glow 2.4s ease-in-out infinite alternate;
+  /* 글로우(filter) + 스케일 펄스(transform) 동시 — 살아있는 움직임 */
+  animation:
+    rtb-perfect-glow 2.4s ease-in-out infinite alternate,
+    rtb-perfect-pulse 1.6s ease-in-out infinite;
+  transform-origin: center;
+}
+/* ⭐ 별만 별도 wiggle — 좌우로 살짝 흔들림.
+   부모(.rtb-perfect)의 color:transparent + background-clip:text가 상속되어
+   이모지가 투명해지는 현상 방지하기 위해 색·배경 리셋. */
+.rtb-pf-star {
+  display: inline-block;
+  margin-right: 2px;
+  color: initial;
+  background: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  -webkit-text-fill-color: initial;
+  animation: rtb-pf-star-wiggle 1.4s ease-in-out infinite;
+  transform-origin: center;
 }
 .r-tier-badge.is-perfect .rtb-perfect { display: block; }
 /* PERFECT 모드는 점수판과 거리 살짝 더 두기 — 별 모드보다 위로 */
@@ -3389,19 +3418,44 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   transform: translateX(-50%) translateY(-15px);
 }
 @keyframes rtb-perfect-glow {
-  /* 글로우 부드럽게 — 12px → 5px, 강도도 톤 다운 */
   from { filter: drop-shadow(0 0 2px rgba(255,180,0,0.22)); }
   to   { filter: drop-shadow(0 0 5px rgba(255,180,0,0.40)); }
+}
+@keyframes rtb-perfect-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.06); }
+}
+@keyframes rtb-pf-star-wiggle {
+  0%, 100% { transform: rotate(-10deg); }
+  50%      { transform: rotate(10deg); }
 }
 
 .result-body-v3 {
   position: absolute; inset: 56px 0 0 0;
   display: flex; flex-direction: column;
   align-items: center;
-  padding: 46px 56px 18px;     /* 어휘판 10px 위로 (이전 56) */
+  padding: 38px 56px 18px;     /* 어휘 카드 +15px 아래 (점수판은 absolute라 영향 X) */
   gap: 12px;
   overflow: hidden;
   z-index: 1;
+}
+
+/* ── PERFECT 기념 배경 — result 페이지 전체에 황금 라디얼 글로우 + 부드러운 펄스 ──
+   페이지 전체에 ::before로 오버레이. pointer-events: none이라 클릭 방해 X. */
+#result.is-perfect::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 28%, rgba(255,215,0,0.22) 0%, rgba(255,170,0,0.10) 35%, transparent 70%),
+    radial-gradient(ellipse 90% 70% at 50% 100%, rgba(255,180,40,0.10) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+  animation: perfectBgPulse 3.6s ease-in-out infinite alternate;
+}
+@keyframes perfectBgPulse {
+  from { opacity: 0.65; }
+  to   { opacity: 1; }
 }
 
 /* ══════════════════════════════════════════════
@@ -3805,7 +3859,7 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
 }
 /* ── 트리오 행: 인출 어휘 / 점수판 / 확장 어휘 — 모두 같은 높이 ── */
 .r-trio-row {
-  display: flex; gap: 18px;
+  display: flex; gap: 28px;        /* 18 → 28: 점수판 양옆 여백 +10px → 어휘 카드 각 -10px */
   width: 100%; max-width: 940px;
   height: 187px;
   margin-top: -15px;    /* 트리오 행 전체 15px 위로 */
@@ -3822,7 +3876,9 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   background: #FFFFFF;
   border: 1px solid rgba(20,25,40,0.12);
   border-radius: 14px;
-  padding: 12px 16px 10px;       /* 원위치 — 잘림 방지는 부모 r-trio-row height로 해결 */
+  margin-top: 4px;               /* 점수판은 그대로, 양쪽 어휘 카드만 4px 아래.
+                                    height는 100% 유지 → 카드 크기는 변화 없이 위치만 이동 */
+  padding: 12px 16px 10px;       /* 잘림 방지는 부모 r-trio-row height로 해결 */
   box-shadow:
     0 4px 16px rgba(20,25,40,0.08),
     0 1px 3px rgba(20,25,40,0.05);
@@ -3918,7 +3974,7 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
                   기존 id="r-rank-block"의 등장 애니메이션(.on)은 그대로 유지. */
 .r-rank-block {
   width: 100%; max-width: 940px;
-  margin: 28px 0 24px;   /* 위·아래 바깥 여백 확장 — 어휘판/버튼과 호흡 */
+  margin: 33px 0 24px;   /* 위 43 → 33 (10px 위로) */
   display: flex;
   gap: 12px;
   align-items: stretch;
@@ -4346,10 +4402,10 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
 <div id="chip-anchor">
   <div class="score-chip" id="score-chip">
     <div class="sc-bulbs" aria-hidden="true">
-      <i class="sc-bulb t1"></i><i class="sc-bulb b-mint t2"></i><i class="sc-bulb t3"></i><i class="sc-bulb b-violet t4"></i><i class="sc-bulb t5"></i><i class="sc-bulb b-mint t6"></i><i class="sc-bulb t7"></i>
-      <i class="sc-bulb b-violet r1"></i><i class="sc-bulb r2"></i><i class="sc-bulb b-mint r3"></i><i class="sc-bulb r4"></i>
-      <i class="sc-bulb b-violet b7"></i><i class="sc-bulb b6"></i><i class="sc-bulb b-mint b5"></i><i class="sc-bulb b4"></i><i class="sc-bulb b-violet b3"></i><i class="sc-bulb b2"></i><i class="sc-bulb b-mint b1"></i>
-      <i class="sc-bulb l4"></i><i class="sc-bulb b-violet l3"></i><i class="sc-bulb l2"></i><i class="sc-bulb b-mint l1"></i>
+      <i class="sc-bulb t1"></i><i class="sc-bulb b-mint t2"></i><i class="sc-bulb t3"></i><i class="sc-bulb b-violet t4"></i><i class="sc-bulb t5"></i>
+      <i class="sc-bulb r1"></i><i class="sc-bulb b-violet r2"></i><i class="sc-bulb r3"></i><i class="sc-bulb b-mint r4"></i><i class="sc-bulb r5"></i>
+      <i class="sc-bulb b5"></i><i class="sc-bulb b-mint b4"></i><i class="sc-bulb b3"></i><i class="sc-bulb b-violet b2"></i><i class="sc-bulb b1"></i>
+      <i class="sc-bulb l5"></i><i class="sc-bulb b-violet l4"></i><i class="sc-bulb l3"></i><i class="sc-bulb b-mint l2"></i><i class="sc-bulb l1"></i>
     </div>
     <span class="sc-num" id="sc-num">0</span>
     <span class="sc-denom" id="sc-denom"></span>
@@ -4562,7 +4618,7 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
     <!-- ══ 등급 배지 (별) — JS가 calcBadge 결과 채움 ══ -->
     <div class="r-tier-badge" id="r-tier-badge">
       <div class="rtb-stars" id="rtb-stars"></div>
-      <div class="rtb-perfect">⭐ PERFECT!!</div>
+      <div class="rtb-perfect"><span class="rtb-pf-star">⭐</span>PERFECT!!</div>
       <div class="rtb-score" id="rtb-score"><em>0</em> / 0</div>
       <div class="rtb-msg" id="rtb-msg"></div>
     </div>
@@ -7324,8 +7380,12 @@ function renderTierBadge(correct, total){
   // 메시지
   msgEl.textContent = getBadgeMessage(b);
 
-  // PERFECT 토글
+  // PERFECT 토글 — badge + result 페이지 전체 (기념 배경) + 점수판 전구 무한 깜빡임
   badge.classList.toggle('is-perfect', b.isPerfect);
+  var resultEl = document.getElementById('result');
+  if(resultEl) resultEl.classList.toggle('is-perfect', b.isPerfect);
+  var scoreChip = document.getElementById('score-chip');
+  if(scoreChip) scoreChip.classList.toggle('perfect-twinkle', b.isPerfect);
 }
 
 // ══════════════════════════════════════════════
