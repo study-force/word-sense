@@ -1,6 +1,13 @@
 # 내부 기획·작업 자료 (외부 공개 금지)
 기획/
 design claude/
+콘텐츠/
+
+# Claude Code 작업 임시
+.claude/
+
+# DB 덤프 작업 폴더
+.dump/
 
 # 백업/업로드 변형
 *.upload.html
