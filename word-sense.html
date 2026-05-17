@@ -3085,14 +3085,16 @@ body.dark-canvas .score-chip,
   font-size: 11px; line-height: 1;
   letter-spacing: 0.04em;
 }
+/* 흰 배경(과거 통과)에서 노랑이 너무 옅어 가독성이 떨어지므로
+   기본 채운 별은 #E8B848(c-yel 중간 톤)로 진하게.
+   오늘 통과(불투명 파랑 배경)에서는 #FFE48F로 밝게 유지 — 배경과의 대비 위해. */
 .area-cell .cell-stars .st-fill {
-  color: #FFD659;
-  text-shadow: 0 0 6px rgba(255,214,89,0.45);
+  color: #E8B848;
+  text-shadow: 0 0 6px rgba(232,184,72,0.42);
 }
 .area-cell .cell-stars .st-empty {
   color: rgba(20,25,40,0.22);
 }
-/* 오늘 통과(불투명 파랑 배경)에서는 빈 별 톤 살짝 밝게 — 가독성 확보 */
 .area-cell.current.pass .cell-stars .st-fill  { color: #FFE48F; }
 .area-cell.current.pass .cell-stars .st-empty { color: rgba(255,255,255,0.40); }
 
