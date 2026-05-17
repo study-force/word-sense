@@ -740,7 +740,7 @@ button { font-family: inherit; color: inherit; }
 }
 #charintro .ci-splash-hun {
   font-family: var(--font-han);
-  font-size: 32px;
+  font-size: 38px;
   font-weight: 600;
   color: var(--ci-accent-deep);
   letter-spacing: 0.20em;
@@ -767,21 +767,6 @@ button { font-family: inherit; color: inherit; }
   animation: none;
 }
 
-/* 본문 단계 진행 안내 — entered 후 화면 하단에 부드럽게 깜빡이며 다음 액션 유도 */
-#charintro .ci-tap-hint {
-  position: absolute;
-  bottom: 36px; left: 50%;
-  transform: translateX(-50%);
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 12px; font-weight: 500;
-  color: rgba(0,0,0,0.42);
-  letter-spacing: 0.18em;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.5s ease;
-  animation: ciSplashHintPulse 2.2s ease-in-out 2.2s infinite;
-}
 @keyframes ciSplashCharIn {
   0%   { opacity: 0; transform: scale(0.55); }
   100% { opacity: 1; transform: scale(1); }
@@ -804,7 +789,6 @@ button { font-family: inherit; color: inherit; }
 /* ── ci-body 콘텐츠 — 기본 invisible. #charintro.entered 시 staggered fade in ──
    기존 ciFadeUp/ciHeroIn 애니메이션은 비활성.
    splash 한자가 ci-char-big 위치로 morph 완료(~1s) 후 순차 등장. */
-#charintro .ci-stage-tag,
 #charintro .ci-hero,
 #charintro .ci-hun-big,
 #charintro .ci-section,
@@ -823,24 +807,14 @@ button { font-family: inherit; color: inherit; }
 
 /* hero 컨테이너 자체는 .entered 시 즉시 visible (레이아웃 공간 유지) */
 #charintro.entered .ci-hero          { opacity: 1; transition-delay: 0s; }
-/* 단계 태그(좌상단)와 탭 안내만 entered 직후 등장 — 본문(어원/의미/시작)은 단계별 unlock */
-#charintro.entered .ci-stage-tag     { opacity: 1; transition-delay: 1.20s; }
-#charintro.entered .ci-tap-hint      { opacity: 1; transition-delay: 1.60s; }
 
-/* 1단계 탭 → 어원만 등장 */
-#charintro.entered.step-1 .ci-etymology-row { opacity: 1; transition-delay: 0.05s; }
-
-/* 2단계 탭 → 다의 카드 + 시작 버튼 등장. 안내 사라짐 */
-#charintro.entered.step-2 .ci-etymology-row { opacity: 1; }
-#charintro.entered.step-2 .ci-meanings-row  { opacity: 1; transition-delay: 0.05s; }
-#charintro.entered.step-2 .ci-start-btn     { opacity: 1; transition-delay: 0.25s; }
-#charintro.entered.step-2 .ci-tap-hint      { opacity: 0 !important; animation: none !important; }
-
-/* "오늘의 한자" 단계 태그 — 좌상단 절대 위치 */
+/* "오늘의 한자" 단계 태그 — 좌상단 절대 위치.
+   큰 한자 splash와 동시에 등장하도록 .entered 의존 없이 자체 animation으로 즉시 페이드인.
+   splash 영역(top:56px~)보다 위쪽에 있어 z-index 충돌 없음. */
 #charintro .ci-stage-tag {
   position: absolute;
   top: 24px; left: 28px;
-  z-index: 4;
+  z-index: 25;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 11px; font-weight: 700;
   color: var(--ci-accent-deep);
@@ -850,8 +824,37 @@ button { font-family: inherit; color: inherit; }
   border-radius: 100px;
   letter-spacing: 0.14em;
   opacity: 0;
-  animation: ciFadeUp .6s ease .15s forwards;
+  animation: ciFadeUp .6s ease .3s forwards;
 }
+
+/* 1단계 탭 → 어원만 등장 */
+#charintro.entered.step-1 .ci-etymology-row { opacity: 1; transition-delay: 0.05s; }
+
+/* 2단계 — 다의 카드 컨테이너 등장. 개별 카드는 nth-child stagger로 한 장씩 페이드인. */
+#charintro.entered.step-2 .ci-etymology-row { opacity: 1; }
+#charintro.entered.step-2 .ci-meanings-row  { opacity: 1; transition-delay: 0.05s; }
+
+/* 다의 카드 stagger — step-2 진입 시 nth-child별 transition-delay로 한 장씩 등장 */
+#charintro .ci-meanings-list .ci-meaning {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity .5s ease, transform .5s ease;
+}
+#charintro.entered.step-2 .ci-meanings-list .ci-meaning {
+  opacity: 1;
+  transform: translateY(0);
+}
+#charintro.entered.step-2 .ci-meanings-list .ci-meaning:nth-child(1) { transition-delay: 0s; }
+#charintro.entered.step-2 .ci-meanings-list .ci-meaning:nth-child(2) { transition-delay: 0.5s; }
+#charintro.entered.step-2 .ci-meanings-list .ci-meaning:nth-child(3) { transition-delay: 1.0s; }
+#charintro.entered.step-2 .ci-meanings-list .ci-meaning:nth-child(4) { transition-delay: 1.5s; }
+#charintro.entered.step-2 .ci-meanings-list .ci-meaning:nth-child(5) { transition-delay: 2.0s; }
+#charintro.entered.step-2 .ci-meanings-list .ci-meaning:nth-child(6) { transition-delay: 2.5s; }
+
+/* 3단계 — 시작 버튼 등장 (모든 카드 등장 완료 후) */
+#charintro.entered.step-3 .ci-etymology-row { opacity: 1; }
+#charintro.entered.step-3 .ci-meanings-row  { opacity: 1; }
+#charintro.entered.step-3 .ci-start-btn     { opacity: 1; transition-delay: 0.05s; }
 
 /* 히어로: 큰 한자 + 훈음 */
 .ci-hero {
@@ -919,11 +922,19 @@ button { font-family: inherit; color: inherit; }
   padding: 12px 14px 14px;
   background: #FFFFFF;
   border: 1px solid rgba(20,25,40,0.08);
-  border-top: 3px solid rgba(var(--ci-accent-rgb), 0.75);
+  /* 카드 상단 보더 — 게임화면 game-eum의 의미별 색과 동일. 색은 아래 nth-child가 결정.
+     기본값은 1번 의미 색(mint)로 두어, 색 미적용 케이스에도 깨지지 않게. */
+  border-top: 3px solid #6FD4C0;
   border-radius: 4px 4px 6px 6px;
   box-shadow: 0 1px 2px rgba(20,25,40,0.04);
   position: relative;
 }
+/* 의미별 보더 색 — game-eum strong:nth-child(1·3·5·7)와 동일 톤.
+   다의 카드가 4개를 넘으면 4색 사이클로 반복. */
+#charintro .ci-meanings-list .ci-meaning:nth-child(4n+1) { border-top-color: #6FD4C0; } /* 1번: mint */
+#charintro .ci-meanings-list .ci-meaning:nth-child(4n+2) { border-top-color: #2E9E6B; } /* 2번: green-deep */
+#charintro .ci-meanings-list .ci-meaning:nth-child(4n+3) { border-top-color: #B79CE9; } /* 3번: lavender */
+#charintro .ci-meanings-list .ci-meaning:nth-child(4n)   { border-top-color: #E8B589; } /* 4번: peach */
 .ci-meaning-num {
   position: absolute;
   top: 10px; right: 10px;
@@ -3224,7 +3235,7 @@ body.dark-canvas .score-chip,
   top: 30px; left: 80px;
   display: flex; align-items: baseline; gap: 8px;
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 12px; color: #5A6178;
+  font-size: 16px; color: #5A6178;
   letter-spacing: 0.04em;
   z-index: 11;
 }
@@ -3233,14 +3244,33 @@ body.dark-canvas .score-chip,
 .r-topbar-meta .r-tm-sep   { color: rgba(0,0,0,0.20); margin: 0 2px; }
 .r-topbar-meta .r-tm-han {
   font-family: var(--font-han);
-  font-size: 18px; font-weight: 400; color: var(--stage-accent, var(--green));
+  font-size: 24px; font-weight: 400; color: var(--stage-accent, var(--green));
   text-shadow: 0 0 12px rgba(var(--stage-accent-rgb), 0.30);
   margin-left: 4px;
 }
 .r-topbar-meta .r-tm-hun {
   font-family: var(--font-han);
-  font-size: 12px; color: rgba(0,0,0,0.50);
+  font-size: 16px; color: rgba(0,0,0,0.50);
   letter-spacing: 0.06em;
+}
+
+/* ── 전역 상단 메타 ────────────────────────────
+   .global-topbar-meta 변형은 #screen 직속(페이지 외부) 단일 인스턴스.
+   charintro 큰 한자 splash 시점부터 학습·결과·통계 전 과정에서 페이지 헤더로 떠 있음.
+   z-index 30 — charintro 큰 한자 splash(z:20) 위.
+   페이지 외부에 있어 --stage-accent 변수가 cascade 안 되므로, 여기서 green을 fallback으로 고정 → 컨텍스트 헤더는 페이지 색 변화와 무관하게 일관된 톤. */
+.r-topbar-meta.global-topbar-meta {
+  display: none;
+  z-index: 30;
+  --stage-accent:     var(--green);
+  --stage-accent-rgb: 69,194,138;
+}
+/* 표시: result(결과) / stats(영역 현황) 만.
+   charintro는 "오늘의 한자" 단계 태그가 그 위치를 차지하므로 메타 노출 X.
+   game·learn·inferq·fillq는 학습 UI와 위치 충돌 방지 위해 숨김. */
+body[data-page="result"]    .r-topbar-meta.global-topbar-meta,
+body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
+  display: flex;
 }
 
 /* ── 등급 배지 (별 시스템) ──────────────────────────
@@ -4288,8 +4318,20 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
 
 <div id="screen">
 
-  <!-- ══ 홈 ══ -->
-  <div class="page active" id="home">
+  <!-- ══ 전역 상단 메타 — charintro 큰 한자 등장부터 result/stats까지 페이지 헤더로 떠 있음 ══ -->
+  <div class="r-topbar-meta global-topbar-meta">
+    <span class="r-tm-area" id="r-tm-area"></span>
+    <span class="r-tm-sep">·</span>
+    <span class="r-tm-round" id="r-tm-round">1회차</span>
+    <span class="r-tm-sep">·</span>
+    <span class="r-tm-han" id="r-tm-han">生</span>
+    <span class="r-tm-hun" id="r-tm-hun">날 생</span>
+  </div>
+
+  <!-- ══ 홈 ══
+       active 클래스는 SESSION_READY 후 goHome()이 부여 — 데이터 로드 전 빈 텍스트로
+       애니메이션이 먼저 돌고, 데이터 채워질 때 다시 트리거되는 중복 방지. -->
+  <div class="page" id="home">
     <button class="home-stats-link" onclick="goStats()" title="개발용 — 통계 페이지">통계 (개발용)</button>
     <div class="home-subtitle">어휘 네트워크 강화훈련</div>
     <div class="home-hero" id="home-hero">
@@ -4340,8 +4382,6 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
 
       <button class="ci-start-btn" onclick="goGame()"><span>훈 감각 깨우러 가기</span><span class="ci-start-arrow">→</span></button>
     </div>
-    <!-- 본문 3단계 unlock 안내 — entered 후 등장, step-2에서 사라짐 -->
-    <div class="ci-tap-hint" id="ci-tap-hint">화면을 탭하면 어원이 보여요</div>
   </div>
 
   <!-- ══ 학습 (NEW) ══ -->
@@ -4477,16 +4517,7 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
 
   <!-- ══ 결과 ══ -->
   <div class="page" id="result">
-    <div class="topbar">
-      <div class="r-topbar-meta">
-        <span class="r-tm-area" id="r-tm-area"></span>
-        <span class="r-tm-sep">·</span>
-        <span class="r-tm-round" id="r-tm-round">1회차</span>
-        <span class="r-tm-sep">·</span>
-        <span class="r-tm-han" id="r-tm-han">生</span>
-        <span class="r-tm-hun" id="r-tm-hun">날 생</span>
-      </div>
-    </div>
+    <div class="topbar"></div><!-- 메타는 전역 .global-topbar-meta로 분리 (charintro부터 노출) -->
     <!-- ══ 등급 배지 (별) — JS가 calcBadge 결과 채움 ══ -->
     <div class="r-tier-badge" id="r-tier-badge">
       <div class="rtb-stars" id="rtb-stars"></div>
@@ -4627,12 +4658,19 @@ window.SESSION_READY.then(function() {
   if(hHun)   hHun.textContent   = SESSION.mainHunFull;
   if(hArea)  hArea.textContent  = SESSION.area;
   if(hRound) hRound.textContent = String(SESSION.id || 1).padStart(2, '0');
+  // 전역 상단 메타 (.global-topbar-meta) — charintro 큰 한자 등장부터 result/stats까지 공유
+  var tmA = document.getElementById('r-tm-area');   if(tmA) tmA.textContent = SESSION.area;
+  var tmR = document.getElementById('r-tm-round');  if(tmR) tmR.textContent = String(SESSION.id || 1) + '회차';
+  var tmH = document.getElementById('r-tm-han');    if(tmH) tmH.textContent = SESSION.mainChar;
+  var tmU = document.getElementById('r-tm-hun');    if(tmU) tmU.textContent = SESSION.mainHunFull || SESSION.mainHun || '';
 });
 
 // ── 페이지 ──────────────────────────────────
 function showPage(id){
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   document.getElementById(id).classList.add('active');
+  // 전역 상단 메타(.global-topbar-meta) 등 페이지별 CSS 분기 키 — body[data-page="..."] 셀렉터 사용
+  document.body.dataset.page = id;
   // 페이지별 body 테마 — 라이트(흰 캔버스): charintro/result/area, 그 외는 다크 (stats는 다크)
   // body 그라디언트가 viewport 전체를 채우므로 캔버스 가장자리 봉합 자국 없음
   var isLightPage = (id === 'charintro' || id === 'result' || id === 'area');
@@ -5682,12 +5720,14 @@ function goCharIntro(){
   var splashCh    = document.getElementById('ci-splash-char');
   var splashHun   = document.getElementById('ci-splash-hun');
   if(charintroEl){
-    charintroEl.classList.remove('entered', 'step-1', 'step-2');
-    charintroEl.removeEventListener('click', ciAdvanceStep);   // 이전 회차 핸들러 제거
+    charintroEl.classList.remove('entered', 'step-1', 'step-2', 'step-3');
   }
+  // 이전 회차의 자동 진행 타이머가 살아있으면 모두 취소 — 새 회차에 끼어들어 step 오작동하는 것 방지
+  if(window.CHARINTRO_TIMERS && window.CHARINTRO_TIMERS.length){
+    window.CHARINTRO_TIMERS.forEach(function(id){ clearTimeout(id); });
+  }
+  window.CHARINTRO_TIMERS = [];
   CHARINTRO_STEP = 0;
-  var tapHint = document.getElementById('ci-tap-hint');
-  if(tapHint) tapHint.textContent = '화면을 탭하면 어원이 보여요';
   if(splash){
     splash.classList.remove('dismissed');
     splash.style.display = '';
@@ -5715,27 +5755,10 @@ function goCharIntro(){
   showPage('charintro');
 }
 
-// charintro 본문 3단계 unlock — 한자만 → 탭 → 어원 → 탭 → 다의 카드+시작 버튼
-//   학생이 한 번에 많은 정보 부담 받지 않도록 직접 탭으로 다음 단계 노출.
+// charintro 본문 자동 진행 — splash dismiss 후 setTimeout 체인으로 step-1/2/3 자동 부여.
+//   이전엔 탭 기반 ciAdvanceStep 핸들러였으나, 학생 부담 줄이기 위해 자동 전개로 전환.
+//   타이밍·타이머 정리 로직은 dismissCharIntroSplash / goCharIntro 안에 있음.
 var CHARINTRO_STEP = 0;
-function ciAdvanceStep(e){
-  // 시작 버튼 클릭은 goGame으로 흘려보냄 (단계 진행 X)
-  if(e && e.target && e.target.closest && e.target.closest('.ci-start-btn')) return;
-  // splash 아직 떠 있으면 (dismiss 전) 무시 — splash onclick에서 처리
-  var splash = document.getElementById('ci-splash');
-  if(splash && !splash.classList.contains('dismissed')) return;
-  var charintroEl = document.getElementById('charintro');
-  if(!charintroEl) return;
-  var hint = document.getElementById('ci-tap-hint');
-  CHARINTRO_STEP++;
-  if(CHARINTRO_STEP === 1){
-    charintroEl.classList.add('step-1');
-    if(hint) hint.textContent = '화면을 탭하면 의미가 보여요';
-  } else if(CHARINTRO_STEP === 2){
-    charintroEl.classList.add('step-2');
-    charintroEl.removeEventListener('click', ciAdvanceStep);
-  }
-}
 
 // 1단계 스플래시 dismiss — FLIP 모션으로 splash 한자·훈음이 작은 자리로 정확히 morph
 function dismissCharIntroSplash(){
@@ -5790,12 +5813,33 @@ function dismissCharIntroSplash(){
   //    splash DOM은 charintro 페이지 내 유지 — showPage가 페이지 전환 시 알아서 처리
   splash.classList.add('dismissed');
 
-  // 5) 본문 3단계 unlock 준비 — morph 완료 후 ci-body 탭으로 단계 진행
-  charintroEl.classList.remove('step-1', 'step-2');
+  // 5) 본문 자동 진행 — splash dismiss 후 단계별로 자동 전개 (탭 없음)
+  //    타이밍 설계:
+  //      morph 완료(~1.1s) → step-1: 어원 fade in
+  //      어원 표시 3초 후  → step-2: 다의 카드 컨테이너 등장 + 카드 nth-child stagger(0.5s 간격) 시작
+  //      마지막 카드 등장 완료 후 → step-3: 시작 버튼 등장
+  charintroEl.classList.remove('step-1', 'step-2', 'step-3');
   CHARINTRO_STEP = 0;
-  setTimeout(function(){
-    charintroEl.addEventListener('click', ciAdvanceStep);
-  }, 1100);   // morph 1s + 약간 여유
+  window.CHARINTRO_TIMERS = window.CHARINTRO_TIMERS || [];
+  var cardCount = document.querySelectorAll('#ci-meanings .ci-meaning').length || 3;
+  var T_MORPH      = 1100;                 // 큰 한자 morph 완료
+  var T_ETY_HOLD   = 2000;                 // 어원 학습용 정지
+  var T_CARDS_DONE = cardCount * 500 + 500; // 카드 stagger(0.5s 간격) + 페이드(0.5s)
+  // step-1: 어원
+  window.CHARINTRO_TIMERS.push(setTimeout(function(){
+    charintroEl.classList.add('step-1');
+    CHARINTRO_STEP = 1;
+  }, T_MORPH));
+  // step-2: 다의 카드 — 어원 등장 후 3초 정지하고 진입
+  window.CHARINTRO_TIMERS.push(setTimeout(function(){
+    charintroEl.classList.add('step-2');
+    CHARINTRO_STEP = 2;
+  }, T_MORPH + T_ETY_HOLD));
+  // step-3: 시작 버튼 — 모든 카드 등장 완료 후
+  window.CHARINTRO_TIMERS.push(setTimeout(function(){
+    charintroEl.classList.add('step-3');
+    CHARINTRO_STEP = 3;
+  }, T_MORPH + T_ETY_HOLD + T_CARDS_DONE));
 }
 
 function goGame(){
