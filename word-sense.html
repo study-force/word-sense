@@ -3789,6 +3789,17 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
 }
 
 /* ── 우하단 끝내기 버튼 — 다크 둥근네모 + X 아이콘 ── */
+/* 출처 표기 — stats 페이지 하단 footer */
+.st-sources {
+  width: 100%;
+  margin-top: 24px;
+  text-align: center;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 11px; font-weight: 400;
+  color: rgba(255,255,255,0.32);
+  letter-spacing: 0.04em;
+}
+
 .st-finish-btn {
   position: absolute;
   bottom: 24px;
@@ -4687,6 +4698,10 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
         <div class="st-list-col">
           <div class="st-list" id="st-list"></div>
         </div>
+      </div>
+      <!-- 출처 — 어휘·의미 데이터 참고 자료 (공공누리 1유형, 출처 표기 의무) -->
+      <div class="st-sources">
+        출처: 국립국어원 한국어 기초 어휘 · 표준국어대사전
       </div>
     </div>
     <button type="button" class="st-finish-btn" onclick="goHome()"><span>끝내기</span><svg class="st-finish-x" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
