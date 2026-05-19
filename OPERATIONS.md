@@ -182,6 +182,26 @@ psql "postgresql://postgres.<ref>@aws-1-ap-northeast-2.pooler.supabase.com:5432/
 | `wordsense-session` | 학생 정보 + 회차 데이터 반환 | 클라이언트(브라우저) |
 | `wordsense-complete` | 학습 완료 → service-back 알림 | 클라이언트(브라우저) |
 
+### wordsense-start 요청 형식 (doc1 명세)
+
+⚠️ **`user_section`(학제) + `user_school_grade`(학년)은 별개 필드.** 합쳐서 (`"초3"`) 보내면 안 됨. 자세한 명세는 `INTEGRATION_GUIDE.md` 참고.
+
+```json
+{
+  "name":              "홍길동",            // string, 필수
+  "user_no":           86453,                // number, 필수
+  "user_section":      "중등",               // string (초등/중등/고등/초등(고)/N수생/일반)
+  "user_school_grade": 2,                    // number (1~6 등)
+  "academy_name":      "공부의철인(분당본원)",
+  "academy_no":        1904,
+  "is_payment":        "Y",                  // "Y" / "N"
+  "payment_fn":        "62cbf3457ddb6cf2a460692215136dac",  // string, 필수
+  "training_round":    17                    // number, 필수
+}
+```
+
+학제·학년은 `students` 테이블에 `section` (TEXT) / `school_grade` (INT) 별개 컬럼으로 저장됨.
+
 ### Supabase Secrets (Edge Function 환경 변수)
 
 Dashboard → Project Settings → Edge Functions → Secrets에서 관리:

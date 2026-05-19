@@ -72,10 +72,57 @@ supabase functions deploy wordsense-complete
 
 ### 5. 운영팀에 알려줘야 할 정보
 구서버 측에 등록할 정보:
-- **진입 POST URL**: `https://{project}.functions.supabase.co/wordsense-start`
-- **요청 형식**: doc1 그대로 (application/json, 9개 필드)
+- **진입 POST URL**:
+  - 운영: `https://fokuojmzhttxfkmiutmf.functions.supabase.co/wordsense-start`
+  - 개발: `https://xzxgsqpvtckxgvipchsy.functions.supabase.co/wordsense-start`
 - **응답**: 200 OK + `{ success, redirectUrl, sessionId }`
 - **학생 redirect 처리**: 학원 backend가 응답의 `redirectUrl`로 학생 브라우저 이동
+
+#### 요청 형식 (doc1 명세 그대로 — 9개 필드, application/json)
+
+⚠️ **주의**: `user_section`(학제)과 `user_school_grade`(학년)은 **별개 필드**입니다. `"초3"` 같이 합쳐서 보내지 마세요. 우리 쪽에서 따로 저장·처리합니다.
+
+```json
+{
+  "name":              "홍길동",
+  "user_no":           86453,
+  "user_section":      "중등",
+  "user_school_grade": 2,
+  "academy_name":      "공부의철인(분당본원)",
+  "academy_no":        1904,
+  "is_payment":        "Y",
+  "payment_fn":        "62cbf3457ddb6cf2a460692215136dac",
+  "training_round":    17
+}
+```
+
+| 필드 | 타입 | 필수 | 설명 |
+|---|---|---|---|
+| `name` | string | Y | 학생 이름 |
+| `user_no` | number | Y | 회원 번호 |
+| `user_section` | string | N | 학제 (초등 / 중등 / 고등 / 초등(고) / N수생 / 일반) |
+| `user_school_grade` | number | N | 학년 (1~6 등) |
+| `academy_name` | string | N | 학원명 |
+| `academy_no` | number | N | 학원 번호 |
+| `is_payment` | string | N | 결제 여부 (Y / N) |
+| `payment_fn` | string | Y | 암호화된 결제번호 (MD5) |
+| `training_round` | number | Y | 진행할 훈련 회차 |
+
+#### 응답 형식
+
+✅ 성공 (200 OK)
+```json
+{
+  "success": true,
+  "redirectUrl": "https://word.sfcenter.co.kr/word-sense.html?st={uuid}",
+  "sessionId": "{uuid}"
+}
+```
+
+❌ 실패 — 필수 필드 누락 (400)
+```json
+{ "success": false, "status": 400, "message": "필수 필드 누락: name" }
+```
 
 ### 6. 통합 테스트
 1. 구서버에서 테스트 학생 데이터로 POST 호출
