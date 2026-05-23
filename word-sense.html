@@ -1612,6 +1612,56 @@ button { font-family: inherit; color: inherit; }
   cursor: pointer;
   padding: 0 60px;
 }
+
+/* ══ "탭하여 시작" 풀스크린 게이트 — 자동재생 차단 우회 + BGM 시작용 ══ */
+.tap-to-start {
+  position: fixed; inset: 0;
+  z-index: 99999;
+  display: flex; align-items: center; justify-content: center;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 35%, rgba(69,194,138,0.10) 0%, transparent 60%),
+    linear-gradient(180deg, #0F1424 0%, #1A1F2E 100%);
+  cursor: pointer;
+  transition: opacity .55s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.tap-to-start.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.tts-card {
+  text-align: center;
+  color: #FFFFFF;
+  padding: 0 24px;
+}
+.tts-title {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 42px; font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, #FFE48F 0%, #FFD659 60%, #FFA500 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 2px 18px rgba(255,214,89,0.18);
+}
+.tts-sub {
+  font-size: 14px;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.06em;
+  margin-bottom: 56px;
+  font-weight: 400;
+}
+.tts-hint {
+  font-size: 16px; font-weight: 600;
+  color: rgba(255,255,255,0.78);
+  letter-spacing: 0.14em;
+  animation: ttsHintPulse 1.6s ease-in-out infinite;
+}
+@keyframes ttsHintPulse {
+  0%, 100% { opacity: 0.55; transform: translateY(0); }
+  50%      { opacity: 1;    transform: translateY(-3px); }
+}
 /* 오버레이 내부 스케일 래퍼 — 캔버스(1100×800)와 같은 비율로 카드 스케일.
    --canvas-scale 변수는 applyScale()에서 설정. */
 .ovly-scale {
@@ -4475,7 +4525,7 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
     <div class="ci-splash" id="ci-splash" onclick="dismissCharIntroSplash()">
       <div class="ci-splash-char" id="ci-splash-char">生</div>
       <div class="ci-splash-hun"  id="ci-splash-hun">날 생</div>
-      <div class="ci-splash-hint">화면을 탭해서 시작</div>
+      <!-- 탭 안내 제거 — letter001 재생 끝나면 자동 morph (수동 탭도 가능) -->
     </div>
     <span class="ci-stage-tag">오늘의 한자</span>
     <div class="ci-body">
@@ -4709,6 +4759,16 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
 
 </div><!-- /screen -->
 
+<!-- ══ "탭하여 시작" 풀스크린 오버레이 — 페이지 로드 첫 화면.
+     사용자 첫 인터랙션을 받아 자동재생 차단 우회 + BGM 시작.
+     ?st 외부 진입 / 일반 진입 모두 동일하게 등장. 클릭 시 한 번만 사라짐. ══ -->
+<div class="tap-to-start" id="tap-to-start" onclick="dismissTapToStart()">
+  <div class="tts-card">
+    <!-- 안내문은 디바이스 감지 후 JS로 동적 갱신 — PC면 F11, 태블릿이면 탭 안내. -->
+    <div class="tts-hint" id="tts-hint">화면을 탭해 훈련을 시작하세요</div>
+  </div>
+</div>
+
 <!-- ══ 모달 오버레이들 — #screen 밖, position:fixed로 viewport 전체 덮음.
      오버레이 안의 .ovly-scale 래퍼는 canvas-scale을 받아 캔버스와 같은 비율로 카드를 스케일. ══ -->
 <div class="game-intro" id="game-intro" onclick="gameIntroOverlayClick()">
@@ -4794,6 +4854,27 @@ function showPage(id){
   // body 그라디언트가 viewport 전체를 채우므로 캔버스 가장자리 봉합 자국 없음
   var isLightPage = (id === 'charintro' || id === 'result' || id === 'area');
   document.body.classList.toggle('theme-light', isLightPage);
+  // BGM 시스템 — tap-to-start 게이트 통과 후에만 작동 (페이지 첫 로드 부담 X)
+  //   게이트 전: 큰 mp3 다운로드 안 함. 게이트 dismiss 후 BGM 시작.
+  if(window.TAP_GATE_PASSED){
+    if(typeof playIntroBgm === 'function' && typeof stopIntroBgm === 'function'){
+      var bgmVol = (typeof INTRO_BGM_VOLS !== 'undefined') ? INTRO_BGM_VOLS[id] : undefined;
+      if(bgmVol === undefined){
+        stopIntroBgm();
+      } else if(bgmVol > 0){
+        playIntroBgm(bgmVol);
+      } else {
+        if(typeof INTRO_BGM !== 'undefined' && INTRO_BGM){
+          setIntroBgmVolume(0);
+        }
+      }
+    }
+    // area 전용 BGM (dict.mp3) — "나의 훈사전" 진입 시 시작, 그 외 페이지에서 stop
+    if(typeof playDictBgm === 'function' && typeof stopDictBgm === 'function'){
+      if(id === 'area') playDictBgm();
+      else stopDictBgm();
+    }
+  }
   // 결과 페이지를 떠날 때는 점수판 위치를 원위치로 복귀
   if(id !== 'result'){
     var chipBack = document.getElementById('score-chip');
@@ -4865,8 +4946,11 @@ function resetScore(){
 }
 // 인출/확장 단계 — 첫 시도 정답으로 강화 후보 어휘 +1
 function bumpCounting(){
+  var prev = COUNTING;
   COUNTING += 1;
   refreshScoreUI(true);
+  // 점수 마일스톤 나레이션 (10/20/30/40 도달 시 — 회차당 한 번)
+  checkMilestones(prev, COUNTING);
 }
 // 강화 진입 시 호출 — 카운팅 모드 → 점수 모드로 변환 (분자만 표시, 분모 미표시)
 function transitionToScoreMode(){
@@ -5217,6 +5301,589 @@ function sndCardStack(){
   clickTone(0.09, 90,  0.18, 0.20, 'sine');
 }
 
+// ════════════════════════════════════════════════════════════════
+// 마림바 톤 family — 활기차고 생동감 있는 어린 톤 (sound-lab 검증).
+// 학습 흐름의 진입·전환·발견·마일스톤 시점에 호출.
+// C 메이저 + 펜타토닉, 한 옥타브 위 영역에서 작동.
+// ════════════════════════════════════════════════════════════════
+
+// 헬퍼: 단일 tone (sound-lab의 tone 함수와 동일 시그니처)
+function sndTone(freq, dur, opts){
+  opts = opts || {};
+  var a = ac(); var dest = sndDest();
+  if(!a || !dest) return;
+  var t0 = a.currentTime + (opts.start || 0);
+  var type = opts.type || 'triangle';
+  var peak = opts.peak !== undefined ? opts.peak : 0.18;
+  var attack = opts.attack !== undefined ? opts.attack : 0.005;
+  var release = opts.release !== undefined ? opts.release : dur * 0.9;
+  var o = a.createOscillator();
+  var g = a.createGain();
+  o.type = type;
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(peak, t0 + attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + attack + release);
+  o.connect(g); g.connect(dest);
+  o.start(t0);
+  o.stop(t0 + attack + release + 0.05);
+  _autoCleanup(o, [g]);
+}
+
+// 헬퍼: frequency sweep
+function sndSweep(fStart, fEnd, dur, opts){
+  opts = opts || {};
+  var a = ac(); var dest = sndDest();
+  if(!a || !dest) return;
+  var t0 = a.currentTime;
+  var type = opts.type || 'triangle';
+  var peak = opts.peak !== undefined ? opts.peak : 0.16;
+  var o = a.createOscillator();
+  var g = a.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(fStart, t0);
+  o.frequency.exponentialRampToValueAtTime(fEnd, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(peak, t0 + 0.015);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g); g.connect(dest);
+  o.start(t0);
+  o.stop(t0 + dur + 0.05);
+  _autoCleanup(o, [g]);
+}
+
+// 헬퍼: 마림바 풍 — 본음(triangle) + 위 옥타브 sine bell.
+// 잔음 방지: bell이 본음 절반쯤에서 끝남. sparkle은 마일스톤에서만 opts.sparkle=true.
+function sndMarimba(freq, dur, opts){
+  opts = opts || {};
+  var peak = opts.peak !== undefined ? opts.peak : 0.16;
+  var start = opts.start || 0;
+  sndTone(freq, dur, { type: 'triangle', peak: peak, attack: 0.003, release: dur * 0.7, start: start });
+  sndTone(freq * 2, dur * 0.5, { type: 'sine', peak: peak * 0.35, attack: 0.003, release: dur * 0.4, start: start });
+  if(opts.sparkle === true){
+    sndTone(freq * 4, dur * 0.25, { type: 'sine', peak: peak * 0.12, attack: 0.003, release: dur * 0.2, start: start });
+  }
+}
+
+// ── 1. 진행·전환 ────────────────────────────────
+
+// 회차 진입 (charintro splash 등장 시)
+function sndEnter(){
+  var notes = [523.25, 659.25, 783.99, 1046.50]; // C5-E5-G5-C6
+  notes.forEach(function(f, i){
+    sndMarimba(f, 0.7, { peak: 0.14, start: i * 0.05 });
+  });
+  setTimeout(function(){
+    sndTone(2093.00, 0.4, { type: 'sine', peak: 0.09, attack: 0.005, release: 0.36 });
+    sndTone(2637.02, 0.3, { type: 'sine', peak: 0.06, attack: 0.005, release: 0.27, start: 0.08 });
+  }, 220);
+}
+
+// 단계 전환 (인출→확장→강화)
+function sndStageNext(){
+  sndSweep(523.25, 2093.00, 0.38, { type: 'triangle', peak: 0.16 });
+  sndMarimba(2093.00, 0.4, { peak: 0.13, start: 0.3 });
+}
+
+// 어휘 발견 (확장 단계에서 카드 깨움)
+function sndDiscover(){
+  sndMarimba(1046.50, 0.35, { peak: 0.16 });
+  sndMarimba(1318.51, 0.35, { peak: 0.13, start: 0.012 });
+  sndMarimba(1567.98, 0.35, { peak: 0.11, start: 0.024 });
+}
+
+// 결과 페이지 도착
+function sndResultArrive(){
+  var notes = [523.25, 659.25, 783.99, 1046.50];
+  notes.forEach(function(f, i){
+    sndMarimba(f, 0.85, { peak: 0.14, start: i * 0.08 });
+  });
+  setTimeout(function(){
+    sndTone(2093.00, 0.55, { type: 'sine', peak: 0.10, attack: 0.05, release: 0.5 });
+    sndTone(2637.02, 0.45, { type: 'sine', peak: 0.07, attack: 0.05, release: 0.4, start: 0.08 });
+  }, 350);
+}
+
+// 점수 +1 (점수판 증가)
+function sndScorePop(){
+  sndMarimba(1567.98, 0.18, { peak: 0.18 });
+}
+
+// 홈 hero-bubble 등장 시 "pop" — 낮은 → 높은 sweep + 짧은 marimba ping + sparkle
+function sndBubblePop(){
+  // 1) 짧은 "터지는" sweep — 저음에서 고음으로 빠르게
+  sndSweep(220, 1100, 0.07, { type: 'triangle', peak: 0.18 });
+  // 2) 정점에 마림바 ping (G6) — 버블 등장의 음정 안착
+  sndMarimba(1567.98, 0.22, { peak: 0.18, start: 0.05 });
+  // 3) 살짝 위 sparkle (E7)
+  sndTone(2637.02, 0.1, { type: 'sine', peak: 0.07, attack: 0.003, release: 0.09, start: 0.1 });
+}
+
+// 카드 플립 — 카메라 셔터 (두 번의 click)
+function sndCardFlip(){
+  var a = ac(); var dest = sndDest();
+  if(!a || !dest) return;
+  function shutterClick(offset, freqCenter, peakNoise, peakMetal){
+    // broadband mechanical noise (빠른 quadratic decay)
+    var dur = 0.022;
+    var bufSize = Math.floor(a.sampleRate * dur);
+    var buffer = a.createBuffer(1, bufSize, a.sampleRate);
+    var d = buffer.getChannelData(0);
+    for(var i = 0; i < bufSize; i++){
+      var t = 1 - i / bufSize;
+      d[i] = (Math.random() * 2 - 1) * t * t;
+    }
+    var src = a.createBufferSource(); src.buffer = buffer;
+    var bp = a.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = freqCenter; bp.Q.value = 1.0;
+    var g = a.createGain(); g.gain.value = peakNoise;
+    src.connect(bp); bp.connect(g); g.connect(dest);
+    src.start(a.currentTime + offset);
+    _autoCleanup(src, [bp, g]);
+    // 짧은 금속 ping (square)
+    var o = a.createOscillator(); var og = a.createGain();
+    o.type = 'square'; o.frequency.value = freqCenter * 1.5;
+    var t0 = a.currentTime + offset;
+    og.gain.setValueAtTime(0.0001, t0);
+    og.gain.exponentialRampToValueAtTime(peakMetal, t0 + 0.001);
+    og.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.012);
+    o.connect(og); og.connect(dest);
+    o.start(t0); o.stop(t0 + 0.015);
+    _autoCleanup(o, [og]);
+  }
+  shutterClick(0,     2800, 0.26, 0.08);   // 셔터 열림
+  shutterClick(0.055, 2200, 0.20, 0.07);   // 셔터 닫힘
+}
+
+// ── 2. 마일스톤 ────────────────────────────────
+
+// 중간 마일스톤 (10·20개 발견 등 추후)
+function sndMilestone(){
+  var arp = [523.25, 659.25, 783.99, 1046.50];
+  arp.forEach(function(f, i){
+    sndMarimba(f, 0.3, { peak: 0.17, start: i * 0.06 });
+  });
+  setTimeout(function(){
+    sndTone(2093.00, 0.45, { type: 'sine', peak: 0.14, attack: 0.005, release: 0.4 });
+    sndTone(2637.02, 0.35, { type: 'sine', peak: 0.08, attack: 0.005, release: 0.3, start: 0.05 });
+  }, 240);
+}
+
+// PERFECT 달성 — 가장 화려한 마일스톤
+function sndPerfect(){
+  var arp = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1318.51, 1567.98];
+  arp.forEach(function(f, i){
+    sndMarimba(f, 0.22, { peak: 0.18, start: i * 0.06, sparkle: true });
+  });
+  setTimeout(function(){
+    sndTone(2093.00, 0.75, { type: 'sine', peak: 0.16, attack: 0.005, release: 0.7 });
+    sndTone(2637.02, 0.65, { type: 'sine', peak: 0.10, attack: 0.005, release: 0.6, start: 0.05 });
+    sndTone(3135.96, 0.55, { type: 'sine', peak: 0.06, attack: 0.005, release: 0.5, start: 0.1 });
+  }, 480);
+}
+
+// 레벨업 (티어/배지 승급, 추후 활용)
+function sndLevelUp(){
+  var arp = [783.99, 1046.50, 1318.51, 1567.98, 2093.00];
+  arp.forEach(function(f, i){
+    sndMarimba(f, 0.32, { peak: 0.18, start: i * 0.08 });
+  });
+  setTimeout(function(){
+    sndTone(2093.00, 0.7, { type: 'sine', peak: 0.14, attack: 0.005, release: 0.65 });
+  }, 380);
+}
+
+// ════════════════════════════════════════════════════════════════
+// 외부 나레이션 — sound/ 폴더의 mp3/wav 재생.
+// 마스터 게인을 거치지 않고 HTML5 Audio로 직접 재생 (믹스 단순).
+// 회차 진입 시 SEEN_MILESTONES 리셋되어 회차당 한 번만 발화.
+// ════════════════════════════════════════════════════════════════
+
+// 짧은 효과음 재생 — 나레이션과 별도 채널 (덮어쓰지 않음).
+//   o.mp3, move.mp3 등 짧은 mp3 효과음용. 매 호출마다 새 Audio 인스턴스.
+//   audio 인스턴스를 잠시 유지(GC 방지) — ended까지 살아있도록 _SFX_POOL에 보관.
+var _SFX_POOL = [];
+function sfxPlay(file, vol){
+  if(!SND_ON) return;
+  try {
+    var audio = new Audio('sound/' + file);
+    audio.volume = (vol !== undefined) ? vol : 0.85;
+    _SFX_POOL.push(audio);   // GC 방지
+    audio.addEventListener('ended', function(){
+      var i = _SFX_POOL.indexOf(audio);
+      if(i > -1) _SFX_POOL.splice(i, 1);
+    });
+    audio.play().catch(function(err){
+      console.warn('[sfx] play failed:', file, err && err.message);
+      var i = _SFX_POOL.indexOf(audio);
+      if(i > -1) _SFX_POOL.splice(i, 1);
+    });
+  } catch(e){
+    console.warn('[sfx] error:', file, e && e.message);
+  }
+}
+
+// 재생 중인 나레이션을 부드럽게 fade out (즉시 pause가 아니라 자연스럽게 사라짐)
+function fadeOutNarration(durationMs){
+  if(typeof CURRENT_NARRATION === 'undefined' || !CURRENT_NARRATION) return;
+  var audio = CURRENT_NARRATION;
+  CURRENT_NARRATION = null;
+  var dur = durationMs || 600;
+  var startVol = audio.volume;
+  var steps = 12;
+  var step = 0;
+  var iv = setInterval(function(){
+    step++;
+    if(step >= steps){
+      try { audio.pause(); audio.currentTime = 0; } catch(e){}
+      clearInterval(iv);
+    } else {
+      try { audio.volume = Math.max(0, startVol * (1 - step / steps)); } catch(e){}
+    }
+  }, dur / steps);
+}
+
+var CURRENT_NARRATION = null;   // 현재 재생 중 Audio (다른 나레이션 시작 시 중단)
+function narrate(file, vol){
+  if(!SND_ON) return;
+  try {
+    // 이전 나레이션 중단 (겹침 방지)
+    if(CURRENT_NARRATION){
+      try { CURRENT_NARRATION.pause(); } catch(e){}
+      CURRENT_NARRATION = null;
+    }
+    var audio = new Audio('sound/' + file);
+    audio.volume = (vol !== undefined) ? vol : 0.92;
+    CURRENT_NARRATION = audio;
+    audio.play().catch(function(){
+      // 자동재생 정책 / 파일 없음 등 — 조용히 무시
+    });
+    audio.addEventListener('ended', function(){
+      if(CURRENT_NARRATION === audio) CURRENT_NARRATION = null;
+    });
+  } catch(e){}
+}
+
+// 회차별 어원 나레이션 — 1회차 = exp001.wav, 2회차 = exp002.wav ...
+function narrateEtymology(){
+  var sess = (typeof SESSION !== 'undefined') ? SESSION : null;
+  if(!sess || !sess.id) return;
+  var n = String(sess.id).padStart(3, '0');
+  // 우선 wav, 없으면 mp3 (브라우저가 wav 실패 시 silent)
+  narrate('exp' + n + '.wav');
+}
+
+// 회차별 한자 이름 나레이션 — letter001.wav 등.
+//   재생 종료(또는 실패) 시 dismissCharIntroSplash 자동 호출 → 큰 한자 작아지면서 어원 등장.
+function narrateLetterChar(){
+  var sess = (typeof SESSION !== 'undefined') ? SESSION : null;
+  if(!sess || !sess.id) return;
+  var n = String(sess.id).padStart(3, '0');
+  var file = 'letter' + n + '.wav';
+  var fired = false;
+  function fireDismiss(delay){
+    if(fired) return; fired = true;
+    setTimeout(function(){
+      if(typeof dismissCharIntroSplash === 'function') dismissCharIntroSplash();
+    }, delay || 0);
+  }
+  // 사운드 꺼졌으면 1.2초 후 자동 dismiss (큰 한자 잠시 보고 진행)
+  if(!SND_ON){ fireDismiss(1200); return; }
+  try {
+    if(CURRENT_NARRATION){ try { CURRENT_NARRATION.pause(); } catch(e){} CURRENT_NARRATION = null; }
+    var audio = new Audio('sound/' + file);
+    audio.volume = 0.95;
+    CURRENT_NARRATION = audio;
+    audio.addEventListener('ended', function(){
+      if(CURRENT_NARRATION === audio) CURRENT_NARRATION = null;
+      fireDismiss(150);   // 살짝 여유 후 morph
+    });
+    audio.addEventListener('error', function(){
+      if(CURRENT_NARRATION === audio) CURRENT_NARRATION = null;
+      fireDismiss(800);   // 파일 없으면 0.8s 후 dismiss
+    });
+    audio.play().catch(function(){
+      // 자동재생 차단 시 — 1.0s 후 dismiss (조용히 진행)
+      fireDismiss(1000);
+    });
+  } catch(e){
+    fireDismiss(800);
+  }
+}
+
+// 점수 마일스톤 나레이션 — 10/20/30/40 (변형 여러 개면 랜덤)
+var MILESTONE_VARIANTS = {
+  10: ['10.mp3', '10-1.mp3', '10-2.mp3'],
+  20: ['20.mp3', '20-1.mp3'],
+  30: ['30.mp3', '30-1.mp3'],
+  40: ['40.mp3']
+};
+var SEEN_MILESTONES = {};   // 회차당 한 번만
+
+function playMilestone(score){
+  if(SEEN_MILESTONES[score]) return;
+  SEEN_MILESTONES[score] = true;
+  var variants = MILESTONE_VARIANTS[score];
+  if(!variants || !variants.length) return;
+  var pick = variants[Math.floor(Math.random() * variants.length)];
+  // 10 마일스톤은 톤이 강해 70% 볼륨으로 톤다운, 그 외는 기본(0.92)
+  var vol = (score === 10) ? 0.7 : undefined;
+  narrate(pick, vol);
+}
+
+// 점수 변경 시 호출 — prev / current 사이 10/20/30/40 마일스톤 도달 체크
+function checkMilestones(prev, current){
+  var ms = [10, 20, 30, 40];
+  for(var i = 0; i < ms.length; i++){
+    var m = ms[i];
+    if(prev < m && current >= m){ playMilestone(m); }
+  }
+}
+
+// ── BGM (intro.mp3) — 학습 전체에서 끊김 없이 재생, 페이지마다 볼륨 ducking ──
+//   home은 큰 볼륨으로 환영, charintro/result는 어원/PERFECT 사운드 우선이라 낮게,
+//   game/learn/inferq/fillq는 잔잔한 배경음.
+//   showPage(id)가 페이지별 적정 볼륨으로 자동 조정.
+var INTRO_BGM = null;
+var INTRO_FADE_TIMER = null;
+
+// 페이지별 BGM 볼륨 — 사용자 의도:
+//   home에서 BGM 시작, charintro는 어원 나레이션 집중을 위해 무음,
+//   game(인출 초록 노드)에서 잔잔한 배경, 그 다음 확장부터는 fade-out.
+//   stats(영역별 통계 그래프)는 정의 자체에서 제외 — 완전 stop (집중 X).
+var INTRO_BGM_VOLS = {
+  'home':      0.35,
+  'charintro': 0.00,   // 어원 나레이션 집중 — 무음
+  'game':      0.08,   // 인출 단계에서만 잔잔한 배경음
+  'learn':     0.00,   // 확장 진입 시 fade-out
+  'inferq':    0.00,
+  'fillq':     0.00,
+  'result':    0.00,
+  // stats: 정의 안 함 → showPage가 stopIntroBgm 호출 (완전 정지)
+  'area':      0.00
+};
+
+function playIntroBgm(targetVol){
+  if(!SND_ON) return;
+  if(targetVol === undefined || targetVol === null) targetVol = 0.35;
+  // 이미 재생 중이면 볼륨만 조정 (페이지 전환 시)
+  if(INTRO_BGM){
+    setIntroBgmVolume(targetVol);
+    return;
+  }
+  try {
+    INTRO_BGM = new Audio('sound/intro.mp3');
+    INTRO_BGM.loop = true;
+    INTRO_BGM.volume = 0;
+    INTRO_BGM.play().catch(function(){});
+    // fade in to targetVol
+    if(INTRO_FADE_TIMER) clearInterval(INTRO_FADE_TIMER);
+    var step = 0;
+    INTRO_FADE_TIMER = setInterval(function(){
+      step += 0.04;
+      if(!INTRO_BGM){ clearInterval(INTRO_FADE_TIMER); INTRO_FADE_TIMER = null; return; }
+      try { INTRO_BGM.volume = Math.min(targetVol, step); } catch(e){}
+      if(step >= targetVol){ clearInterval(INTRO_FADE_TIMER); INTRO_FADE_TIMER = null; }
+    }, 80);
+  } catch(e){}
+}
+
+// 페이지가 hidden(탭 전환·창 최소화·미리보기 종료) 시 모든 사운드 즉시 stop.
+//   visible로 돌아오면 BGM은 자동 재개.
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState === 'hidden'){
+    if(typeof INTRO_BGM !== 'undefined' && INTRO_BGM){
+      try { INTRO_BGM.pause(); } catch(e){}
+    }
+    if(typeof DICT_BGM !== 'undefined' && DICT_BGM){
+      try { DICT_BGM.pause(); } catch(e){}
+    }
+    if(typeof CURRENT_NARRATION !== 'undefined' && CURRENT_NARRATION){
+      try { CURRENT_NARRATION.pause(); } catch(e){}
+    }
+    if(typeof AC !== 'undefined' && AC && AC.state === 'running'){
+      try { AC.suspend(); } catch(e){}
+    }
+  } else if(document.visibilityState === 'visible'){
+    if(typeof INTRO_BGM !== 'undefined' && INTRO_BGM){
+      try { INTRO_BGM.play().catch(function(){}); } catch(e){}
+    }
+    if(typeof DICT_BGM !== 'undefined' && DICT_BGM){
+      try { DICT_BGM.play().catch(function(){}); } catch(e){}
+    }
+    if(typeof AC !== 'undefined' && AC && AC.state === 'suspended'){
+      try { AC.resume(); } catch(e){}
+    }
+  }
+});
+
+// 페이지 종료(언로드·새로고침) 시 — 사운드 리소스 정리.
+//   미리보기 창이 닫혀도 백그라운드에 페이지가 남아있을 가능성 방지.
+window.addEventListener('pagehide', function(){
+  if(typeof INTRO_BGM !== 'undefined' && INTRO_BGM){
+    try { INTRO_BGM.pause(); INTRO_BGM.src = ''; } catch(e){}
+    INTRO_BGM = null;
+  }
+  if(typeof DICT_BGM !== 'undefined' && DICT_BGM){
+    try { DICT_BGM.pause(); DICT_BGM.src = ''; } catch(e){}
+    DICT_BGM = null;
+  }
+  if(typeof CURRENT_NARRATION !== 'undefined' && CURRENT_NARRATION){
+    try { CURRENT_NARRATION.pause(); CURRENT_NARRATION.src = ''; } catch(e){}
+    CURRENT_NARRATION = null;
+  }
+  if(typeof AC !== 'undefined' && AC){
+    try { AC.close(); } catch(e){}
+  }
+});
+
+// ── area 전용 BGM (dict.mp3 / dict2.mp3) ──
+//   "나의 훈사전" 진입 시 랜덤 변형 재생, 떠날 때 fade out + stop.
+//   intro.mp3 BGM과 별도 채널 (area에서는 intro 0이라 단독 재생).
+var DICT_BGM = null;
+var DICT_FADE_TIMER = null;
+var DICT_TARGET_VOL = 0.25;
+function playDictBgm(){
+  if(!SND_ON) return;
+  if(DICT_BGM) return;   // 이미 재생 중
+  try {
+    var variants = ['dict.mp3', 'dict2.mp3'];
+    var pick = variants[Math.floor(Math.random() * variants.length)];
+    DICT_BGM = new Audio('sound/' + pick);
+    DICT_BGM.loop = true;
+    DICT_BGM.volume = 0;
+    DICT_BGM.play().catch(function(err){
+      console.warn('[dict-bgm] play failed:', err && err.message);
+    });
+    if(DICT_FADE_TIMER) clearInterval(DICT_FADE_TIMER);
+    var step = 0;
+    DICT_FADE_TIMER = setInterval(function(){
+      step += 0.04;
+      if(!DICT_BGM){ clearInterval(DICT_FADE_TIMER); DICT_FADE_TIMER = null; return; }
+      try { DICT_BGM.volume = Math.min(DICT_TARGET_VOL, step); } catch(e){}
+      if(step >= DICT_TARGET_VOL){ clearInterval(DICT_FADE_TIMER); DICT_FADE_TIMER = null; }
+    }, 80);
+  } catch(e){}
+}
+function stopDictBgm(){
+  if(!DICT_BGM) return;
+  var audio = DICT_BGM;
+  DICT_BGM = null;
+  if(DICT_FADE_TIMER){ clearInterval(DICT_FADE_TIMER); DICT_FADE_TIMER = null; }
+  var step = audio.volume;
+  DICT_FADE_TIMER = setInterval(function(){
+    step -= 0.05;
+    if(step <= 0){
+      try { audio.pause(); audio.currentTime = 0; } catch(e){}
+      clearInterval(DICT_FADE_TIMER);
+      DICT_FADE_TIMER = null;
+    } else {
+      try { audio.volume = step; } catch(e){}
+    }
+  }, 60);
+}
+
+// 현재 재생 중인 BGM을 target 볼륨으로 부드럽게 ramp (페이지 전환 시)
+function setIntroBgmVolume(target){
+  if(!INTRO_BGM) return;
+  if(INTRO_FADE_TIMER){ clearInterval(INTRO_FADE_TIMER); INTRO_FADE_TIMER = null; }
+  var start = INTRO_BGM.volume;
+  var diff = target - start;
+  if(Math.abs(diff) < 0.005) return;
+  var steps = 16;     // 16 step × 50ms = 0.8s ramp
+  var step = 0;
+  INTRO_FADE_TIMER = setInterval(function(){
+    step++;
+    if(!INTRO_BGM){ clearInterval(INTRO_FADE_TIMER); INTRO_FADE_TIMER = null; return; }
+    try {
+      INTRO_BGM.volume = Math.max(0, Math.min(1, start + diff * (step / steps)));
+    } catch(e){}
+    if(step >= steps){ clearInterval(INTRO_FADE_TIMER); INTRO_FADE_TIMER = null; }
+  }, 50);
+}
+// 디바이스 감지 — 터치 가능(태블릿/모바일) vs 마우스·키보드(PC)
+//   PC: F11 풀스크린 안내, 태블릿: 화면 탭 안내.
+(function setupTapToStartHint(){
+  var hintEl = document.getElementById('tts-hint');
+  if(!hintEl) return;
+  // matchMedia로 정확히 판별 (터치 디바이스 = pointer: coarse, 마우스 = pointer: fine)
+  var isTouch = false;
+  try {
+    isTouch = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches)
+           || ('ontouchstart' in window)
+           || (navigator.maxTouchPoints > 0);
+  } catch(e){}
+  hintEl.textContent = isTouch
+    ? '화면을 탭해 훈련을 시작하세요'
+    : 'F11을 눌러 훈련을 시작하세요';
+})();
+
+// F11 또는 키 입력으로 tap-to-start dismiss (PC 사용자)
+document.addEventListener('keydown', function(e){
+  if(e.key === 'F11' || e.code === 'F11'){
+    // F11은 브라우저 풀스크린 토글 — 그것과 별개로 게이트도 dismiss
+    var el = document.getElementById('tap-to-start');
+    if(el && !el.classList.contains('hidden') && typeof dismissTapToStart === 'function'){
+      dismissTapToStart();
+    }
+  }
+});
+
+// "탭하여 시작" 게이트 dismiss — AudioContext unlock + BGM 트리거.
+//   브라우저 자동재생 정책으로 첫 페이지 로드 시 BGM이 차단되는데,
+//   이 클릭이 첫 인터랙션이므로 직후엔 자유롭게 재생 가능.
+function dismissTapToStart(){
+  var el = document.getElementById('tap-to-start');
+  if(!el || el.classList.contains('hidden')) return;
+  el.classList.add('hidden');
+  // 게이트 통과 — 이 시점부터 BGM 시스템 작동 (페이지 로드 부담 X)
+  window.TAP_GATE_PASSED = true;
+  // AudioContext unlock (이미 unlock 됐을 수도 있음 — 무해)
+  try { var a = ac(); if(a && a.state === 'suspended') a.resume(); } catch(e){}
+  // 현재 home이면 BGM 강제 시작.
+  //   showPage('home')이 먼저 호출돼 INTRO_BGM이 paused로 만들어졌을 수도 있으니 reset 후 재시도.
+  if(document.body.dataset.page === 'home'){
+    if(typeof INTRO_BGM !== 'undefined' && INTRO_BGM){
+      try { INTRO_BGM.pause(); } catch(e){}
+      INTRO_BGM = null;
+    }
+    if(typeof playIntroBgm === 'function') playIntroBgm(0.35);
+
+    // home 모션 재시작 — tap-to-start로 가려져 있던 동안 진행됐던 애니메이션을
+    //   사용자가 실제로 보는 이 시점에 다시 발동 (active 토글 → CSS animation 재실행).
+    var homeEl = document.getElementById('home');
+    if(homeEl && homeEl.classList.contains('active')){
+      homeEl.classList.remove('active');
+      void homeEl.offsetWidth;   // force reflow
+      homeEl.classList.add('active');
+    }
+    // hero-bubble pop 사운드 — heroBubblePop 애니메이션 0.55s delay에 맞춰 동기화
+    setTimeout(function(){ try { sndBubblePop(); } catch(e){} }, 550);
+  }
+  // 클릭 후 3초 뒤 DOM에서 완전 제거 (transition 끝난 뒤)
+  setTimeout(function(){
+    if(el && el.parentNode) el.parentNode.removeChild(el);
+  }, 3000);
+}
+
+function stopIntroBgm(){
+  if(!INTRO_BGM) return;
+  var audio = INTRO_BGM;
+  INTRO_BGM = null;   // 참조 해제 — 새 play 충돌 방지
+  if(INTRO_FADE_TIMER) clearInterval(INTRO_FADE_TIMER);
+  // fade out then pause
+  var step = audio.volume;
+  INTRO_FADE_TIMER = setInterval(function(){
+    step -= 0.05;
+    if(step <= 0){
+      try { audio.pause(); audio.currentTime = 0; } catch(e){}
+      clearInterval(INTRO_FADE_TIMER);
+      INTRO_FADE_TIMER = null;
+    } else {
+      try { audio.volume = step; } catch(e){}
+    }
+  }, 60);
+}
+
 // 모든 버튼/스킵 링크 클릭에 가벼운 클릭음 — 자체 SFX 가진 요소는 제외
 // 디바운스 60ms: 빠른 연타로 노드가 폭주하는 것을 방지
 var _LAST_CLICK_SND = 0;
@@ -5443,6 +6110,8 @@ function showRecapNext(){
 function goLearn(){
   var sess = SESSION;
   if(!sess) return;
+  // 사운드 — 인출 → 확장 단계 전환 (옥타브 상승)
+  try { sndStageNext(); } catch(e){}
   // 인출(게임)에서 이미 다룬 단어(first-try 정답 + 오답후정답 silent)는 모두 제외하고 탐구 대상으로
   // 첫 진입(게임 안 거친 경우)에는 isInferQuiz 단어만, 게임 후엔 안 다룬 단어 전체
   var pool;
@@ -5450,8 +6119,13 @@ function goLearn(){
                     + (S && S.attempted ? S.attempted.length : 0);
   if(handledInGame > 0){
     pool = WORD_LIST.filter(function(entry){
-      if(S.found && S.found.indexOf(entryKeyOf(entry)) > -1) return false;
+      var key = entryKeyOf(entry);
+      // 인출에서 맞춘 어휘 X
+      if(S.found && S.found.indexOf(key) > -1) return false;
+      // 인출에서 틀린 어휘 X
       if(S.attempted && S.attempted.indexOf(entry.word) > -1) return false;
+      // 힌트로 제공된 어휘 X (학생이 의미 본 어휘는 학습 노출 제외)
+      if(S.hintTargets && S.hintTargets.indexOf(key) > -1) return false;
       return true;
     });
   } else {
@@ -5523,6 +6197,8 @@ function confirmMission(e){
   var scNum = document.getElementById('sc-num');
 
   // Phase 1: 점수칩 우상단으로 비행 (920ms) + 텍스트 페이드아웃 + 점수 카운트다운 (38→0)
+  // 점수판 이동 효과음 (move.mp3) — 비행 시작과 동기
+  sfxPlay('move.mp3', 0.8);
   if(chip) chip.classList.remove('center-mission');
   msg.style.transition = 'opacity .6s ease';
   msg.style.opacity = '0';
@@ -5573,6 +6249,9 @@ function showLearnIntro(){
   var intro = document.getElementById('learn-intro');
   var msg   = document.getElementById('li-msg');
   if(!intro || !msg) return;
+  sfxPlay('balloon.mp3', 0.8);
+  sfxPlay('title02.wav', 0.9);   // 단계 타이틀 (확장)
+  if(typeof INTRO_BGM !== 'undefined' && INTRO_BGM) setIntroBgmVolume(0);
   msg.dataset.stage = '2';   // 확장 — 보라
   msg.innerHTML = buildIntroHTML(2);
   intro.classList.remove('fade-out');
@@ -5584,6 +6263,11 @@ function hideLearnIntro(){
   var intro = document.getElementById('learn-intro');
   if(!intro || !intro.classList.contains('on')) return;
   if(LEARN_INTRO_TIMER){ clearTimeout(LEARN_INTRO_TIMER); LEARN_INTRO_TIMER = null; }
+  sfxPlay('woosh.mp3', 0.7);
+  if(typeof INTRO_BGM !== 'undefined' && INTRO_BGM){
+    var vol = INTRO_BGM_VOLS[document.body.dataset.page];
+    if(vol !== undefined && vol > 0) setIntroBgmVolume(vol);
+  }
   intro.classList.add('fade-out');
   setTimeout(function(){
     intro.classList.remove('on');
@@ -5604,6 +6288,9 @@ function showFillIntro(){
   var intro = document.getElementById('fillq-intro');
   var msg   = document.getElementById('fi-msg');
   if(!intro || !msg) return;
+  sfxPlay('balloon.mp3', 0.8);
+  sfxPlay('title03.wav', 0.9);   // 단계 타이틀 (강화)
+  if(typeof INTRO_BGM !== 'undefined' && INTRO_BGM) setIntroBgmVolume(0);
   msg.dataset.stage = '3';   // 강화 — 파랑
   msg.innerHTML = buildIntroHTML(3);
   intro.classList.remove('fade-out');
@@ -5615,6 +6302,11 @@ function hideFillIntro(){
   var intro = document.getElementById('fillq-intro');
   if(!intro || !intro.classList.contains('on')) return;
   if(FILL_INTRO_TIMER){ clearTimeout(FILL_INTRO_TIMER); FILL_INTRO_TIMER = null; }
+  sfxPlay('woosh.mp3', 0.7);
+  if(typeof INTRO_BGM !== 'undefined' && INTRO_BGM){
+    var vol = INTRO_BGM_VOLS[document.body.dataset.page];
+    if(vol !== undefined && vol > 0) setIntroBgmVolume(vol);
+  }
   intro.classList.add('fade-out');
   setTimeout(function(){
     intro.classList.remove('on');
@@ -5674,6 +6366,8 @@ function setupChoiceButtons(cs, choices, ci, opts){
       if(i === ci){
         btn.className = 'choice-btn ok';
         cs.querySelectorAll('.choice-btn').forEach(function(b){ b.disabled = true; });
+        // 4지선다 정답 효과음 (확장·강화·동음이의어 quiz 공통)
+        sfxPlay('o.mp3', 0.9);
         beforeNext(wrongAttempted);
         var bub = document.createElement('div');
         bub.className = 'ans-bubble';
@@ -5707,6 +6401,7 @@ function renderLearnCard(){
   // LEARN.words는 entry[] (객체 배열). 동음이의어 시 같은 word·다른 hanja가 각각 별개 entry.
   var w = LEARN.words[LEARN.idx];
   if(!w) return;
+  // (확장 카드 quiz 효과음 제거 — 사용자 요청)
   var card = document.getElementById('lc-card');
   card.classList.remove('flying-out');
   card.classList.add('flying-in');
@@ -5729,7 +6424,7 @@ function renderLearnCard(){
   setupChoiceButtons(cs, shuf, ci, {
     bubbleText: '맞아요. 훈으로 의미를 깨웠어요 ✨',
     beforeNext: function(wrongAttempted){
-      LEARN.correct++; sndOk();
+      LEARN.correct++;   // sndOk 제거 — o.mp3 효과음(setupChoiceButtons)만 사용
       // 확장 첫 시도 정답 시에만 강화 후보 카운트 +1
       if(!wrongAttempted) bumpCounting();
     },
@@ -5749,10 +6444,12 @@ function renderLearnCard(){
       if(LEARN.idx >= LEARN.words.length - 1){
         // 마지막 카드도 발견 덱에 쌓이는 모션 + 효과음 → 환원
         card.classList.add('flying-out');
+        sfxPlay('card.mp3', 0.85);   // 카드 넘어가는 효과음
         setTimeout(function(){ sndCardStack(); }, 340);
         setTimeout(function(){ goRecap(); }, 520);
       } else {
         card.classList.add('flying-out');
+        sfxPlay('card.mp3', 0.85);   // 카드 넘어가는 효과음
         // 카드가 발견 덱에 살짝 늦게 닿을 때 효과음 (애니메이션 후반부)
         setTimeout(function(){ sndCardStack(); }, 340);
         setTimeout(function(){
@@ -5796,6 +6493,8 @@ function renderDeckStack(remaining){
 // 홈의 [시작하기]를 누르면 먼저 이 페이지를 거친 후, 사용자가 [훈 감각 깨우러 가기]를 누르면 goGame()으로 진입.
 function goCharIntro(){
   var sess = SESSION;
+  // 회차 시작 — 마일스톤 나레이션 추적 리셋
+  SEEN_MILESTONES = {};
   // 한자 + 훈
   var elChar = document.getElementById('ci-char');
   var elHun  = document.getElementById('ci-hun');
@@ -5872,6 +6571,13 @@ function goCharIntro(){
     resetSplashEl(splashHun);
   }
   showPage('charintro');
+  // 큰 한자 등장 — woosh (entrance feel)
+  sfxPlay('woosh.mp3', 0.7);
+  // 큰 한자 등장 모션(ciSplashCharIn 1.3s) 거의 끝나는 시점에 letter001.wav 재생.
+  //   재생 종료 시 자동으로 dismissCharIntroSplash 호출 → 큰 한자 작아지면서 어원 등장.
+  setTimeout(function(){
+    try { narrateLetterChar(); } catch(e){}
+  }, 1100);
 }
 
 // charintro 본문 자동 진행 — splash dismiss 후 setTimeout 체인으로 step-1/2/3 자동 부여.
@@ -5889,6 +6595,15 @@ function dismissCharIntroSplash(){
   var charintroEl = document.getElementById('charintro');
   if(!splash || !splashCh || !ciChar) return;
   if(splash.classList.contains('dismissed')) return;
+
+  // 진행 중인 letter 나레이션 중단 (사용자가 수동 탭으로 일찍 진행시킬 때)
+  if(typeof CURRENT_NARRATION !== 'undefined' && CURRENT_NARRATION){
+    try { CURRENT_NARRATION.pause(); } catch(e){}
+    CURRENT_NARRATION = null;
+  }
+
+  // 사운드 — 회차 본격 진입 (마림바 chord swell)
+  try { sndEnter(); } catch(e){}
 
   // 1) 본문 페이드인 시작 — ci-hero 컨테이너 visible (레이아웃 위치 보장)
   charintroEl.classList.add('entered');
@@ -5944,10 +6659,11 @@ function dismissCharIntroSplash(){
   var T_MORPH      = 1100;                 // 큰 한자 morph 완료
   var T_ETY_HOLD   = 2000;                 // 어원 학습용 정지
   var T_CARDS_DONE = cardCount * 500 + 500; // 카드 stagger(0.5s 간격) + 페이드(0.5s)
-  // step-1: 어원
+  // step-1: 어원 — 텍스트 등장과 동시에 나레이션 (exp{회차ID}.wav)
   window.CHARINTRO_TIMERS.push(setTimeout(function(){
     charintroEl.classList.add('step-1');
     CHARINTRO_STEP = 1;
+    try { narrateEtymology(); } catch(e){}
   }, T_MORPH));
   // step-2: 다의 카드 — 어원 등장 후 3초 정지하고 진입
   window.CHARINTRO_TIMERS.push(setTimeout(function(){
@@ -5963,6 +6679,8 @@ function dismissCharIntroSplash(){
 
 function goGame(){
   var sess = SESSION;
+  // 재생 중인 어원 나레이션 부드럽게 fade out — "훈 감각 깨우러 가기" 클릭 시
+  fadeOutNarration(500);
   resetScore();   // 새 회차 = 점수 초기화
   CONFETTI_FIRED = false;   // 새 회차 = 마일스톤 다시 발동 가능
   // 새 회차 진입 — 게임 stage-nav를 인출로 복원 (recap에서 확장으로 바뀌어 있을 수 있음)
@@ -5992,6 +6710,10 @@ function showGameIntro(){
   var intro = document.getElementById('game-intro');
   var msg   = document.getElementById('gi-msg');
   if(!intro || !msg) return;
+  // 말풍선 등장 효과음 + 단계 타이틀(인출=title01) + BGM 잠시 죽임
+  sfxPlay('balloon.mp3', 0.8);
+  sfxPlay('title01.wav', 0.9);
+  if(typeof INTRO_BGM !== 'undefined' && INTRO_BGM) setIntroBgmVolume(0);
   msg.classList.remove('gi-card');
   msg.classList.add('gi-mission');
   msg.innerHTML = buildMissionHTML();
@@ -6021,6 +6743,11 @@ function hideGameIntro(){
   if(!intro || !intro.classList.contains('on')) return;
   if(GAME_INTRO_TIMER){ clearTimeout(GAME_INTRO_TIMER); GAME_INTRO_TIMER = null; }
   document.body.classList.remove('mission-mode');   // 안전망 — 미션 단계에서 닫힐 때도 정리
+  // game-intro(첫 인출 말풍선) 사라짐 — woosh 제거 (move.mp3 점수판 비행 사운드만 사용)
+  if(typeof INTRO_BGM !== 'undefined' && INTRO_BGM){
+    var vol = INTRO_BGM_VOLS[document.body.dataset.page];
+    if(vol !== undefined && vol > 0) setIntroBgmVolume(vol);
+  }
   intro.classList.add('fade-out');
   setTimeout(function(){
     intro.classList.remove('on');
@@ -6472,6 +7199,8 @@ function spawnUnlitNodes(count){
     });
     added++;
   }
+  // 노드 생겨날 때 node 효과음 (실제로 1개 이상 추가된 경우만)
+  if(added > 0) sfxPlay('node.mp3', 0.7);
   return added;
 }
 
@@ -6512,6 +7241,8 @@ function lightUpNode(entry, fromLearn, silent){
   node.lineT = 0;
   node.fromLearn = !!fromLearn;
   node.silent = !!silent;   // true → 오답 후 정답: 검정 노드 (점수/강화 후보 X, 시각 표시만)
+  // 노드 라인 그어질 때 laser 효과음 (silent 케이스는 점수 X라 사운드도 절제). 50% 볼륨.
+  if(!silent) sfxPlay('laser.mp3', 0.3);
   // 캡슐 색 + 길이 변주 클래스를 미리 계산해 node에 저장 — 라인이 도착하면 한 번에 chip으로 변환
   var mainCap = document.querySelector('.g-center .game-cap');
   var capCls = 'c-green';
@@ -6575,7 +7306,8 @@ function finishWord(entry, opts){
   if(S.hintTargets.indexOf(key) > -1){ S.hintFound.push(key); }
   lightUpNode(entry);
   setFb('ok', '"' + entry.word + '" 찾았어요!', 3000);
-  sndOk();
+  // sndOk() 제거 — "찾았어요!" 메시지 동반 효과음 거슬림 (사용자 요청).
+  //   bumpCounting 안에서 점수 마일스톤 나레이션은 그대로.
   // 인출 첫 시도 정답 시에만 강화 후보 카운트 +1
   bumpCounting();
   updateGameCounter();
@@ -6812,6 +7544,8 @@ function showQuiz(){
   // S.solvingRemaining: 같은 word의 잔여 entry[] (동음이의어 자동 연속 quiz용)
   var entry = S.solving;
   if(!entry) return;
+  // 인출 동음이의어 quiz 팝업 등장 — quiz 효과음
+  sfxPlay('quiz.mp3', 0.7);
   var d = entry;   // entry 자체가 char1/hun1/char2/hun2/choices/meaning 보유
   var correct = d.choices[0];
   var shuf = shuffle(d.choices);
@@ -6862,6 +7596,8 @@ function showHomonymHint(word){
 function flipToNextQuiz(nextEntry){
   var qc = document.getElementById('qc');
   if(!qc) return;
+  // 사운드 — 카메라 셔터 (찰칵 × 2)
+  try { sndCardFlip(); } catch(e){}
   qc.classList.add('quiz-flip-out');
   setTimeout(function(){
     // 카드 절반 회전 시점에 내용물 교체 후 들어오기
@@ -6939,6 +7675,7 @@ function renderIQDots(){
 }
 
 function renderIQCard(word){
+  // (inferq 카드 quiz 효과음 제거 — 사용자 요청 "확장에서는 quiz 제거")
   var d = WORD_MAP[word];
   var correct = d.choices[0], shuf = shuffle(d.choices), ci = shuf.indexOf(correct);
   var card = document.getElementById('iq-card');
@@ -6951,7 +7688,7 @@ function renderIQCard(word){
   setupChoiceButtons(cs, shuf, ci, {
     bubbleText: '맞아요. 뜻이 보였네요',
     beforeNext: function(){
-      IQ.correct++; sndOk();
+      IQ.correct++;   // sndOk 제거 — o.mp3 효과음만
     },
     onCorrect: function(){
       IQ.idx++; renderIQDots();
@@ -6970,6 +7707,8 @@ function renderIQCard(word){
 // 빈칸 채우기 (FillQ)
 // ══════════════════════════════════════════════
 function goFillQ(){
+  // 사운드 — 확장 → 강화 단계 전환 (옥타브 상승)
+  try { sndStageNext(); } catch(e){}
   // 강화 = 인출(S.found) + 탐구(LEARN.collected) 모두 — entry 단위로 통합
   var pool = [];
   if(S && S.found){
@@ -7038,7 +7777,8 @@ function renderFQCard(entry){
     btn.onclick = function(){
       var ok = (i === ci);
       if(ok){
-        FQ.correct++; sndOk();
+        FQ.correct++;
+        sfxPlay('o.mp3', 0.9);   // 4지선다 정답 — o 사운드만 (sndOk 제거)
         if(!wrongAttempted) addScore('reinforce');   // 첫 시도 정답만 점수 +0.5
         cs.querySelectorAll('.fill-btn').forEach(function(b, bi){
           b.disabled = true;
@@ -7254,6 +7994,22 @@ function renderRankList(){
 function goResult(){
   var sess = SESSION;
 
+  // 사운드 — 결과 페이지 도착 (4-tone 마림바 + bell).
+  // PERFECT는 calcBadge 판정 후 renderTierBadge에서 별도 호출 (sndPerfect).
+  try { sndResultArrive(); } catch(e){}
+
+  // 랭킹 카드 등장(.r-rank-block.on transition-delay 1.15s) 시점에 rank3 사운드.
+  setTimeout(function(){
+    sfxPlay('rank3.mp3', 0.85);
+  }, 1150);
+
+  // 점수별 박수 — rank3 직후 layer. 30점 이상은 강한 박수(Applause2), 20점 이상은 일반(Applause).
+  setTimeout(function(){
+    var score = (typeof FQ !== 'undefined' && FQ) ? (FQ.correct || 0) : 0;
+    if(score >= 30)      sfxPlay('Applause2.mp3', 0.8);
+    else if(score >= 20) sfxPlay('Applause.mp3',  0.8);
+  }, 1500);
+
   // ── 외부 진입(구서버) 학습 완료 알림 — service-back sf_study_hanja 업데이트 ──
   //   STUDENT_INFO/TRAINING_INFO 있을 때만 호출. 멱등성 보장이라 재호출 안전.
   if(typeof notifyStudyComplete === 'function'){ notifyStudyComplete(); }
@@ -7407,6 +8163,17 @@ function renderTierBadge(correct, total){
   if(resultEl) resultEl.classList.toggle('is-perfect', b.isPerfect);
   var scoreChip = document.getElementById('score-chip');
   if(scoreChip) scoreChip.classList.toggle('perfect-twinkle', b.isPerfect);
+
+  // 사운드 — PERFECT 시각 모션 페이드인 시작 시점에 맞춰 발화.
+  //   .r-tier-badge.on transition-delay 0.9s + RAF×2(~32ms) → 약 930ms 후 모션 시작.
+  //   perfect.mp3 / perfect2.mp3 / perfect3.mp3 중 랜덤 변형.
+  if(b.isPerfect){
+    setTimeout(function(){
+      var variants = ['perfect.mp3', 'perfect2.mp3', 'perfect3.mp3'];
+      var pick = variants[Math.floor(Math.random() * variants.length)];
+      sfxPlay(pick, 0.95);
+    }, 900);
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -7747,6 +8514,7 @@ function showTomorrowSplash(){
 }
 
 function goArea(){
+  // 한자어 사전(area) — 진입 효과음 제거, dict BGM(playDictBgm)만 (showPage 자동 호출)
   // area 페이지 진입 시 내일의 한자 splash는 닫혀있어야 — 재진입 시 잔존 방지
   var tom = document.getElementById('tomorrow-splash');
   if(tom) tom.classList.remove('on');
