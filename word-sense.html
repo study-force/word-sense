@@ -5502,6 +5502,36 @@ function sndLevelUp(){
 //   o.mp3, move.mp3 등 짧은 mp3 효과음용. 매 호출마다 새 Audio 인스턴스.
 //   audio 인스턴스를 잠시 유지(GC 방지) — ended까지 살아있도록 _SFX_POOL에 보관.
 var _SFX_POOL = [];
+
+// 여러 사운드 파일을 순차 재생 (한 파일 끝나면 다음). title → subtitle 등.
+function playSequence(files, vol){
+  if(!SND_ON) return;
+  var idx = 0;
+  function next(){
+    if(idx >= files.length) return;
+    try {
+      var audio = new Audio('sound/' + files[idx]);
+      audio.volume = (vol !== undefined) ? vol : 0.9;
+      _SFX_POOL.push(audio);
+      var fired = false;
+      function advance(){
+        if(fired) return; fired = true;
+        var i = _SFX_POOL.indexOf(audio);
+        if(i > -1) _SFX_POOL.splice(i, 1);
+        idx++; next();
+      }
+      audio.addEventListener('ended', advance);
+      audio.addEventListener('error', advance);
+      audio.play().catch(function(err){
+        console.warn('[seq] play failed:', files[idx], err && err.message);
+        advance();
+      });
+    } catch(e){
+      idx++; next();
+    }
+  }
+  next();
+}
 function sfxPlay(file, vol){
   if(!SND_ON) return;
   try {
@@ -6227,6 +6257,11 @@ function confirmMission(e){
     msg.innerHTML = buildIntroHTML(1);
     msg.style.transition = '';
     msg.style.opacity = '';
+    // 인출 단계 타이틀+서브타이틀 — gi-card(말풍선) 등장 직후 순차 재생
+    sfxPlay('balloon.mp3', 0.8);
+    setTimeout(function(){
+      playSequence(['title01.wav', 'subtitle01.wav'], 0.9);
+    }, 500);
     GAME_INTRO_CARD_AT = Date.now();
     if(GAME_INTRO_TIMER) clearTimeout(GAME_INTRO_TIMER);
     GAME_INTRO_TIMER = setTimeout(hideGameIntro, 3600);
@@ -6250,7 +6285,7 @@ function showLearnIntro(){
   var msg   = document.getElementById('li-msg');
   if(!intro || !msg) return;
   sfxPlay('balloon.mp3', 0.8);
-  sfxPlay('title02.wav', 0.9);   // 단계 타이틀 (확장)
+  playSequence(['title02.wav', 'subtitle02.wav'], 0.9);   // 확장 단계 타이틀 + 서브타이틀
   if(typeof INTRO_BGM !== 'undefined' && INTRO_BGM) setIntroBgmVolume(0);
   msg.dataset.stage = '2';   // 확장 — 보라
   msg.innerHTML = buildIntroHTML(2);
@@ -6289,7 +6324,7 @@ function showFillIntro(){
   var msg   = document.getElementById('fi-msg');
   if(!intro || !msg) return;
   sfxPlay('balloon.mp3', 0.8);
-  sfxPlay('title03.wav', 0.9);   // 단계 타이틀 (강화)
+  playSequence(['title03.wav', 'subtitle03.wav'], 0.9);   // 강화 단계 타이틀 + 서브타이틀
   if(typeof INTRO_BGM !== 'undefined' && INTRO_BGM) setIntroBgmVolume(0);
   msg.dataset.stage = '3';   // 강화 — 파랑
   msg.innerHTML = buildIntroHTML(3);
@@ -6710,9 +6745,8 @@ function showGameIntro(){
   var intro = document.getElementById('game-intro');
   var msg   = document.getElementById('gi-msg');
   if(!intro || !msg) return;
-  // 말풍선 등장 효과음 + 단계 타이틀(인출=title01) + BGM 잠시 죽임
+  // mission 화면 등장 효과음 (balloon만 — title01은 가족 어휘 수 화면 다음 gi-card에서)
   sfxPlay('balloon.mp3', 0.8);
-  sfxPlay('title01.wav', 0.9);
   if(typeof INTRO_BGM !== 'undefined' && INTRO_BGM) setIntroBgmVolume(0);
   msg.classList.remove('gi-card');
   msg.classList.add('gi-mission');
@@ -7998,9 +8032,9 @@ function goResult(){
   // PERFECT는 calcBadge 판정 후 renderTierBadge에서 별도 호출 (sndPerfect).
   try { sndResultArrive(); } catch(e){}
 
-  // 랭킹 카드 등장(.r-rank-block.on transition-delay 1.15s) 시점에 rank3 사운드.
+  // 랭킹 카드 등장(.r-rank-block.on transition-delay 1.15s) 시점에 ranking 사운드.
   setTimeout(function(){
-    sfxPlay('rank3.mp3', 0.85);
+    sfxPlay('ranking.wav', 0.85);
   }, 1150);
 
   // 점수별 박수 — rank3 직후 layer. 30점 이상은 강한 박수(Applause2), 20점 이상은 일반(Applause).
