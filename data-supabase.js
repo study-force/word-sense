@@ -14,25 +14,19 @@
 
 
 // ════════════════════════════════════════
-// 설정 — 환경 분기 (도메인 기반)
-//   word.sfcenter.co.kr     → 운영 (word-master)
-//   word.sfos.kr            → 개발 (word-master-dev)
-//   localhost / *.vercel.app → 개발 (Vercel 임시 도메인 + 로컬)
-//   그 외(GitHub Pages 등)   → 운영 fallback
+// 설정 — 현재 단일 환경 (PROD 전용)
+//   모든 도메인(word.sfcenter.co.kr / word.sfos.kr / *.vercel.app / localhost)이
+//   동일하게 word-master (PROD)를 바라봄.
+//
+//   ⚠️ 원래는 word.sfos.kr / localhost를 word-master-dev 로 분기하도록 작성되어 있었으나,
+//      dev Supabase 프로젝트가 아직 생성되지 않은 상태라 분기를 임시로 제거.
+//      dev 프로젝트 생성 후 환경 분기 복구 예정. (TODO: dev 환경 구축 시 IS_DEV_ENV 부활)
 // ════════════════════════════════════════
 const _host = location.hostname;
-const IS_DEV_ENV = _host === 'word.sfos.kr'
-                || _host === 'localhost' || _host === '127.0.0.1'
-                || _host.endsWith('.vercel.app');
 
-const SUPABASE_URL = IS_DEV_ENV
-  ? 'https://xzxgsqpvtckxgvipchsy.supabase.co'   // word-master-dev (개발)
-  : 'https://fokuojmzhttxfkmiutmf.supabase.co';  // word-master (운영)
-
-const SUPABASE_ANON_KEY = IS_DEV_ENV
-  ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh6eGdzcXB2dGNreGd2aXBjaHN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5OTU0NjIsImV4cCI6MjA5NDU3MTQ2Mn0.J0OIH7pk11wwuyyJEO--RF54jf-AfxqJ19ECwAnsmSQ'  // dev
-  : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZva3Vvam16aHR0eGZrbWl1dG1mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MDYwOTksImV4cCI6MjA5MzM4MjA5OX0.FuYv59ufKteXKusvAhJktBNWntMnWmxctQoHquaPKVA';                           // prod
-console.log('[supabase] env:', IS_DEV_ENV ? 'DEV (word-master-dev)' : 'PROD (word-master)', '@', _host);
+const SUPABASE_URL = 'https://fokuojmzhttxfkmiutmf.supabase.co';   // word-master (운영)
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZva3Vvam16aHR0eGZrbWl1dG1mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MDYwOTksImV4cCI6MjA5MzM4MjA5OX0.FuYv59ufKteXKusvAhJktBNWntMnWmxctQoHquaPKVA';
+console.log('[supabase] env: PROD (word-master) @', _host);
 
 // 로드할 회차 — URL 파라미터로 동적 지정 가능 (테스트 편의):
 //   ?area=biology&round=1   → 생물 1회차
