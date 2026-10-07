@@ -7668,9 +7668,20 @@ function useHint(){
   S.hints--; updateHints();
   sndHint();
   var hb = document.getElementById('hbtn'); if(hb) hb.classList.remove('shake');
+  // 이미 노드에 점등된 어휘(초록·검정·보라 모두)는 힌트 후보에서 제외
+  var nodeKeys = {};
+  if(typeof GNODES !== 'undefined' && GNODES){
+    for(var gi=0; gi<GNODES.length; gi++){
+      var gn = GNODES[gi];
+      if(gn && gn.lit && gn.entry) nodeKeys[entryKeyOf(gn.entry)] = true;
+    }
+  }
   var remaining = WORD_LIST.filter(function(entry){
     var key = entryKeyOf(entry);
-    return !entry.isInferQuiz && S.found.indexOf(key) === -1 && S.hintTargets.indexOf(key) === -1;
+    return !entry.isInferQuiz
+        && S.found.indexOf(key) === -1
+        && S.hintTargets.indexOf(key) === -1
+        && !nodeKeys[key];
   });
   if(remaining.length > 0){
     var entry = remaining[Math.floor(Math.random() * remaining.length)];
