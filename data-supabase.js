@@ -114,9 +114,26 @@ window.SESSION_READY = (async function loadSession() {
         return { word: w.word, feedback: w.feedback };
       }),
 
-      // nextPreview는 추후 sessions.next_session_id FK 추가 시 채움
+      // nextPreview — 아래에서 다음 회차(round+1) 조회로 채움 (내일의 한자)
       nextPreview: null
     };
+
+    // 다음 회차 미리보기 (내일의 한자) — 같은 영역 round+1. 없으면 null 유지.
+    try {
+      const { data: nextSess } = await client
+        .from('sessions')
+        .select('main_char, main_char_hangul, main_etymology')
+        .eq('area_id', areaRow.id)
+        .eq('round_no', TARGET_ROUND_NO + 1)
+        .single();
+      if (nextSess) {
+        window.SESSION.nextPreview = {
+          char:      nextSess.main_char,
+          hunFull:   nextSess.main_char_hangul,
+          etymology: nextSess.main_etymology
+        };
+      }
+    } catch (e) { /* 다음 회차 미존재 — nextPreview null 유지 */ }
 
     console.log('[Supabase] SESSION loaded —',
       window.SESSION.area, window.SESSION.id + '회차',

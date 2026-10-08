@@ -6069,8 +6069,16 @@ function goRecap(){
   if(!hasNormal && !hasSilent){ goFillQ(); return; }
   showPage('game');
   document.body.classList.add('recap-mode');   // 하단 흰 입력 블록 숨김
-  // 레이아웃 변경 후(다음 프레임)에 노드 재배치 — 캡슐이 아래로 이동한 만큼 노드도 이동
-  requestAnimationFrame(function(){ rebalanceNodesToCap(); });
+  // 레이아웃 변경 후(다음 프레임)에: ① 확장에서 합류할 노드까지 미리 확보 → ② 전체 기준 중심 재배치.
+  //   (recap 도중 노드가 새로 생성되면 centroid가 바뀌어 캡슐이 구름 밖으로 밀리므로,
+  //    모든 노드를 먼저 확보한 뒤 한 번에 정렬해야 중심이 맞음)
+  requestAnimationFrame(function(){
+    var toLight = (LEARN.collected ? LEARN.collected.length : 0)
+                + (LEARN.silentCollected ? LEARN.silentCollected.length : 0);
+    var unlit = GNODES.filter(function(n){ return !n.lit; }).length;
+    if(toLight > unlit) spawnUnlitNodes(toLight - unlit);
+    rebalanceNodesToCap();
+  });
   // 환원 화면은 "확장 단계의 결과 합류"를 보여주므로 상단 네비도 확장으로 점등
   var gameNav = document.querySelector('#game .stage-nav');
   if(gameNav) gameNav.setAttribute('data-stage', '확장');

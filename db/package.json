@@ -1,0 +1,12 @@
+{
+  "name": "word-sense-db-tools",
+  "private": true,
+  "version": "1.0.0",
+  "description": "훈감각 익히기 — 콘텐츠 엑셀 → DB 임포트 SQL 생성 도구",
+  "scripts": {
+    "migrate": "node migrate.js"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  }
+}

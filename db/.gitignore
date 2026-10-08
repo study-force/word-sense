@@ -1,0 +1,4 @@
+# 임포트 도구 의존성 / 생성 산출물 (커밋 제외)
+node_modules/
+_*.sql
+migration_generated.sql
