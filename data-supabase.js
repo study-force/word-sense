@@ -35,6 +35,7 @@ console.log('[supabase] env: PROD (word-master) @', _host);
 const _params = new URLSearchParams(location.search);
 const TARGET_AREA_SLUG = _params.get('area') || 'biology';
 const TARGET_ROUND_NO  = parseInt(_params.get('round'), 10) || 1;
+const TARGET_LEVEL     = _params.get('level') || '초등';   // 학제: 초등 | 중등
 
 
 // ════════════════════════════════════════
@@ -62,6 +63,7 @@ window.SESSION_READY = (async function loadSession() {
       .select('id, round_no, main_char, main_char_hangul, main_hun_short, main_eum, main_etymology, main_meanings')
       .eq('area_id', areaRow.id)
       .eq('round_no', TARGET_ROUND_NO)
+      .eq('level', TARGET_LEVEL)
       .single();
     if (e2) throw e2;
 
@@ -83,6 +85,7 @@ window.SESSION_READY = (async function loadSession() {
     // 5. data.js의 SESSION 형식으로 변환
     window.SESSION = {
       id: sess.round_no,
+      level: TARGET_LEVEL,
       area: areaRow.name_ko,
       mainChar: sess.main_char,
       mainHun:  sess.main_hun_short,
@@ -125,6 +128,7 @@ window.SESSION_READY = (async function loadSession() {
         .select('main_char, main_char_hangul, main_etymology')
         .eq('area_id', areaRow.id)
         .eq('round_no', TARGET_ROUND_NO + 1)
+        .eq('level', TARGET_LEVEL)
         .single();
       if (nextSess) {
         window.SESSION.nextPreview = {
