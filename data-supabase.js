@@ -70,7 +70,7 @@ window.SESSION_READY = (async function loadSession() {
     // 2b. 主字 콘텐츠 — 정규화된 main_chars에서 읽음 (SSOT: 한 곳에서 고치면 전 회차 반영)
     const { data: mc, error: e2b } = await client
       .from('main_chars')
-      .select('char_hangul, hun_short, eum, etymology, meanings')
+      .select('char_hangul, eum, etymology, meanings')
       .eq('char', sess.main_char)
       .single();
     if (e2b) throw e2b;
@@ -96,7 +96,6 @@ window.SESSION_READY = (async function loadSession() {
       level: TARGET_LEVEL,
       area: areaRow.name_ko,
       mainChar: sess.main_char,
-      mainHun:  mc.hun_short,
       mainHunFull: mc.char_hangul,
       mainEum:  mc.eum,
       mainEtymology: mc.etymology,

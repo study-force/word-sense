@@ -4827,7 +4827,7 @@ window.SESSION_READY.then(function() {
   var tmA = document.getElementById('r-tm-area');   if(tmA) tmA.textContent = SESSION.area;
   var tmR = document.getElementById('r-tm-round');  if(tmR) tmR.textContent = String(SESSION.id || 1) + '회차';
   var tmH = document.getElementById('r-tm-han');    if(tmH) tmH.textContent = SESSION.mainChar;
-  var tmU = document.getElementById('r-tm-hun');    if(tmU) tmU.textContent = SESSION.mainHunFull || SESSION.mainHun || '';
+  var tmU = document.getElementById('r-tm-hun');    if(tmU) tmU.textContent = SESSION.mainHunFull || '';
 });
 
 // ── 페이지 ──────────────────────────────────
@@ -6202,7 +6202,7 @@ function buildIntroHTML(stage){
 
 // ── 오늘의 미션 화면 (인출 진입 직전, 카드 인트로 이전 단계) ──
 function buildMissionHTML(){
-  var hun  = (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.mainHunFull || SESSION.mainHun || '') : '';
+  var hun  = (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.mainHunFull || '') : '';
   var char = (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.mainChar || '') : '';
   return ''
     + '<div class="gm-line">오늘 만날 <span class="gm-hun">'+hun+'</span> <span class="gm-han">'+char+'</span>의 가족 어휘</div>'
@@ -8000,7 +8000,7 @@ function goResult(){
   var tmA = document.getElementById('r-tm-area');   if(tmA) tmA.textContent = area;
   var tmR = document.getElementById('r-tm-round');  if(tmR) tmR.textContent = round;
   var tmH = document.getElementById('r-tm-han');    if(tmH) tmH.textContent = sess.mainChar;
-  var tmU = document.getElementById('r-tm-hun');    if(tmU) tmU.textContent = sess.mainHunFull || sess.mainHun || '';
+  var tmU = document.getElementById('r-tm-hun');    if(tmU) tmU.textContent = sess.mainHunFull || '';
 
   // ── 인출 어휘 (게임 단계에서 발견) ──
   //   S.found는 entry key 배열 → entry로 변환해 word 표시
