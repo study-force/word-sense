@@ -5567,7 +5567,7 @@ function narrate(file, vol){
       try { CURRENT_NARRATION.pause(); } catch(e){}
       CURRENT_NARRATION = null;
     }
-    var audio = new Audio('sound/' + file);
+    var audio = new Audio(/^https?:\/\//.test(file) ? file : 'sound/' + file);
     audio.volume = (vol !== undefined) ? vol : 0.92;
     CURRENT_NARRATION = audio;
     audio.play().catch(function(){
@@ -5582,10 +5582,9 @@ function narrate(file, vol){
 // 회차별 어원 나레이션 — 1회차 = exp001.wav, 2회차 = exp002.wav ...
 function narrateEtymology(){
   var sess = (typeof SESSION !== 'undefined') ? SESSION : null;
-  if(!sess || !sess.id) return;
-  var n = String(sess.id).padStart(3, '0');
-  // 우선 wav, 없으면 mp3 (브라우저가 wav 실패 시 silent)
-  narrate('exp' + n + '.wav');
+  if(!sess) return;
+  // 어원 나레이션 — main_chars.narration_url (Storage 공개 mp3). 없으면(중등 전용 등) 조용히 생략.
+  if(sess.narrationUrl){ narrate(sess.narrationUrl); }
 }
 
 // 회차별 한자 이름 나레이션 — letter001.wav 등.

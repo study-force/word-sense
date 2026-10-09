@@ -70,7 +70,7 @@ window.SESSION_READY = (async function loadSession() {
     // 2b. 主字 콘텐츠 — 정규화된 main_chars에서 읽음 (SSOT: 한 곳에서 고치면 전 회차 반영)
     const { data: mc, error: e2b } = await client
       .from('main_chars')
-      .select('char_hangul, eum, etymology, meanings')
+      .select('char_hangul, eum, etymology, meanings, narration_url')
       .eq('char', sess.main_char)
       .single();
     if (e2b) throw e2b;
@@ -100,6 +100,7 @@ window.SESSION_READY = (async function loadSession() {
       mainEum:  mc.eum,
       mainEtymology: mc.etymology,
       mainMeanings:  mc.meanings || [],
+      narrationUrl:  mc.narration_url || null,   // 어원 나레이션 (Storage 공개 URL)
 
       // DB choices: [{text, is_correct}, ...] → 앱 형식: [정답, 오답1, 오답2, 오답3]
       words: wordRows.map(function(r) {
