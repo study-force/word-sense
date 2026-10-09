@@ -6705,6 +6705,7 @@ function dismissCharIntroSplash(){
 
 function goGame(){
   var sess = SESSION;
+  if(!TRAIN_STARTED_AT) TRAIN_STARTED_AT = Date.now();   // 훈련 시작 시각 (결과 저장 duration용)
   // 재생 중인 어원 나레이션 부드럽게 fade out — "훈 감각 깨우러 가기" 클릭 시
   fadeOutNarration(500);
   resetScore();   // 새 회차 = 점수 초기화
@@ -7813,6 +7814,26 @@ function renderFQCard(entry){
 // 결과
 // ══════════════════════════════════════════════
 var RANK_RETR = [], RANK_COMBO = [], RANK_MASTER = [], RANK_CUMUL = [];
+var SERVER_RANK = null;   // wordsense-rank 집계 결과(실제 학생 모드). null이면 데모 → mock fallback.
+
+// 서버 랭킹 집계 fetch — 실제 학생(STUDENT_INFO)일 때만. 실패/데모면 SERVER_RANK=null 유지.
+async function fetchRankings(){
+  SERVER_RANK = null;
+  if(typeof STUDENT_INFO === 'undefined' || !STUDENT_INFO || !STUDENT_INFO.user_no) return;
+  try {
+    var res = await fetch(EDGE_FN_BASE + '/wordsense-rank', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY || '' },
+      body: JSON.stringify({
+        user_no: STUDENT_INFO.user_no,
+        area_id: (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.areaId || null) : null,
+      }),
+    });
+    var data = await res.json();
+    if(res.ok && data.success) SERVER_RANK = data;
+    else console.error('[rank] 집계 실패:', data);
+  } catch(e){ console.error('[rank] fetch 오류:', e); }
+}
 var MOCK_NAMES = (function(){
   var family = ['김','이','박','최','정','한','윤','강','오','임','서','홍','노','조','신','장','권','문','양','손','배','백','허','유','남','심','전','고','문','진'];
   var given  = ['민준','서연','지호','예은','도윤','수아','시우','나윤','하준','도현','지안','채린','건우','하린','우진','서아','준서','지유','연우','시현','은우','지민','다은','윤호','서준','민서','채원','지원','승현','하은'];
@@ -7835,26 +7856,41 @@ function _sortRank(list){
 }
 // 인출어휘 랭킹 (오늘) — game 단계에서 발견한 가족 어휘
 function buildRetrieveRank(){
+  var me = { name:'나', count: (S && S.found) ? S.found.length : 0, me:true };
+  if(SERVER_RANK && SERVER_RANK.others){
+    var o = SERVER_RANK.others.retrToday.map(function(x){ return { name:x.name, count:x.count, me:false }; });
+    return _sortRank(o.concat([me]));
+  }
   var others = MOCK_NAMES.map(function(name){
     return { name:name, count: 4 + Math.floor(Math.random() * 18), me:false };
   });
-  var me = { name:'나', count: (S && S.found) ? S.found.length : 0, me:true };
   return _sortRank(others.concat([me]));
 }
 // 인출+확장어휘 랭킹 (오늘) — 인출 + 학습/탐구 단계에서 깨운 어휘 합산
 function buildComboRank(){
+  var myRetr = (S && S.found) ? S.found.length : 0;
+  var myExp  = (typeof LEARN !== 'undefined' && LEARN && LEARN.collected) ? LEARN.collected.length : 0;
+  var me = { name:'나', count: myRetr + myExp, me:true };
+  if(SERVER_RANK && SERVER_RANK.others){
+    var o = SERVER_RANK.others.comboToday.map(function(x){ return { name:x.name, count:x.count, me:false }; });
+    return _sortRank(o.concat([me]));
+  }
   var others = MOCK_NAMES.map(function(name){
     var retr = 4 + Math.floor(Math.random() * 18);
     var exp  = Math.floor(Math.random() * 9);
     return { name:name, count: retr + exp, me:false };
   });
-  var myRetr = (S && S.found) ? S.found.length : 0;
-  var myExp  = (typeof LEARN !== 'undefined' && LEARN && LEARN.collected) ? LEARN.collected.length : 0;
-  var me = { name:'나', count: myRetr + myExp, me:true };
   return _sortRank(others.concat([me]));
 }
 // 인출+확장+강화 랭킹 (오늘) — 적용까지 통과해 "내 어휘"로 자리잡은 어휘 합산
 function buildMasterRank(){
+  // 본인 = FQ.correct (강화 첫시도 정답 어휘 수)
+  var myMaster = (typeof FQ !== 'undefined' && FQ) ? (FQ.correct || 0) : 0;
+  var me = { name:'나', count: myMaster, me:true };
+  if(SERVER_RANK && SERVER_RANK.others){
+    var o = SERVER_RANK.others.masterToday.map(function(x){ return { name:x.name, count:x.count, me:false }; });
+    return _sortRank(o.concat([me]));
+  }
   var others = MOCK_NAMES.map(function(name){
     var retr = 4 + Math.floor(Math.random() * 18);
     var exp  = Math.floor(Math.random() * 9);
@@ -7863,13 +7899,17 @@ function buildMasterRank(){
     var master = Math.floor(Math.random() * (combo + 1));
     return { name:name, count: master, me:false };
   });
-  // 본인 = FQ.correct (강화 첫시도 정답 어휘 수)
-  var myMaster = (typeof FQ !== 'undefined' && FQ) ? (FQ.correct || 0) : 0;
-  var me = { name:'나', count: myMaster, me:true };
   return _sortRank(others.concat([me]));
 }
 // 인출+확장 누적 랭킹 (회차 누적, 영역 내)
 function buildCumulRank(myTodayCombo){
+  if(SERVER_RANK && SERVER_RANK.others){
+    var myCombo = ((S && S.found) ? S.found.length : 0)
+                + ((typeof LEARN !== 'undefined' && LEARN && LEARN.collected) ? LEARN.collected.length : 0);
+    var me = { name:'나', count: (SERVER_RANK.me_cumul_past || 0) + myCombo, me:true };
+    var o = SERVER_RANK.others.cumulArea.map(function(x){ return { name:x.name, count:x.count, me:false }; });
+    return _sortRank(o.concat([me]));
+  }
   var others = MOCK_NAMES.map(function(name){
     return { name:name, count: 30 + Math.floor(Math.random() * 80), me:false };
   });
@@ -8036,14 +8076,20 @@ function goResult(){
   var total   = (typeof WORD_LIST !== 'undefined' && WORD_LIST) ? WORD_LIST.length : 0;
   renderTierBadge(correct, total);
 
-  // ── 랭킹 (4종: 인출 / 인출+확장 / 인출+확장+강화 / 인출+확장+강화 누적) ──
-  RANK_RETR   = buildRetrieveRank();
-  RANK_COMBO  = buildComboRank();
-  RANK_MASTER = buildMasterRank();
-  // 누적 = 인출+확장+강화의 회차 누적 — 오늘 기여분 = 강화 첫시도 정답 어휘 수
+  // ── 랭킹 (4종) — 실제 학생이면 서버 집계(전체) 후 렌더, 데모면 mock 즉시 ──
   var myMasterToday = (typeof FQ !== 'undefined' && FQ) ? (FQ.correct || 0) : 0;
-  RANK_CUMUL = buildCumulRank(myMasterToday);
-  renderRankList();
+  var _buildAndRenderRanks = function(){
+    RANK_RETR   = buildRetrieveRank();
+    RANK_COMBO  = buildComboRank();
+    RANK_MASTER = buildMasterRank();
+    RANK_CUMUL  = buildCumulRank(myMasterToday);
+    renderRankList();
+  };
+  if(typeof STUDENT_INFO !== 'undefined' && STUDENT_INFO && STUDENT_INFO.user_no){
+    fetchRankings().then(_buildAndRenderRanks);   // 서버 집계 → 렌더
+  } else {
+    _buildAndRenderRanks();                         // 데모 — mock 즉시
+  }
 
   buildAreaProgress();
 
@@ -8620,6 +8666,7 @@ document.addEventListener('keydown', function(e){
 
 var STUDENT_INFO = null;    // { user_no, name, section, school_grade, academy_no }
 var TRAINING_INFO = null;   // { payment_fn, training_round, is_payment }
+var TRAIN_STARTED_AT = null; // 훈련 시작 시각(ms) — goGame 첫 진입 시 세팅. 결과 duration_sec 계산용.
 
 // Edge Function base URL (Supabase 프로젝트 도메인)
 //   data-supabase.js 의 SUPABASE_URL 재사용
@@ -8658,6 +8705,30 @@ async function notifyStudyComplete(){
     console.log('[complete] 외부 진입 아님 — 콜백 건너뜀');
     return;
   }
+  // ── 학습 결과 집계 (Supabase attempts 저장용) ──
+  var retr = (typeof S !== 'undefined' && S && S.found) ? S.found.length : 0;        // 인출
+  var exp  = (typeof LEARN !== 'undefined' && LEARN && LEARN.collected) ? LEARN.collected.length : 0; // 확장
+  var corr = (typeof FQ !== 'undefined' && FQ) ? (FQ.correct || 0) : 0;              // 강화 정답
+  var fqTot= (typeof FQ !== 'undefined' && FQ) ? (FQ.total || 0) : 0;                // 강화 총문항
+  var totW = (typeof SESSION !== 'undefined' && SESSION && SESSION.words) ? SESSION.words.length : 0;
+  var tier = 0;
+  try { tier = calcBadge(corr, fqTot).yellowCount; } catch(e){}
+  var startMs = TRAIN_STARTED_AT || Date.now();
+  var result = {
+    user_no:        STUDENT_INFO ? STUDENT_INFO.user_no : null,
+    academy_no:     STUDENT_INFO ? STUDENT_INFO.academy_no : null,
+    session_id:     (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.dbId  || null) : null,
+    area_id:        (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.areaId || null) : null,
+    retrieve_count: retr,
+    extend_count:   exp,
+    correct_words:  corr,
+    total_words:    totW,
+    reinforce_total:fqTot,
+    tier_level:     tier,
+    started_at:     new Date(startMs).toISOString(),
+    finished_at:    new Date().toISOString(),
+    duration_sec:   Math.max(0, Math.round((Date.now() - startMs) / 1000)),
+  };
   try {
     var res = await fetch(EDGE_FN_BASE + '/wordsense-complete', {
       method: 'POST',
@@ -8668,11 +8739,12 @@ async function notifyStudyComplete(){
       body: JSON.stringify({
         payment_fn:     TRAINING_INFO.payment_fn,
         training_round: TRAINING_INFO.training_round,
+        result:         result,   // ← Edge Function이 attempts에 INSERT
       }),
     });
     var data = await res.json();
     if(res.ok && data.success){
-      console.log('[complete] service-back 알림 성공');
+      console.log('[complete] service-back 알림 성공' + (data.saved ? ' · 결과저장 OK' : ' · (결과 미저장)'));
     } else {
       console.error('[complete] service-back 알림 실패:', data);
     }

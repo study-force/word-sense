@@ -68,6 +68,40 @@ Deno.serve(async (req) => {
     auth: { persistSession: false }
   });
 
+  // ── (신규) 학습 결과 저장 — attempts INSERT (service_role → RLS 우회) ──
+  //   body.result 있으면 저장. 실패해도 완료 콜백은 계속 진행(fire-safe) — 저장 실패가 완료 처리를 막지 않음.
+  let saved = false;
+  const r = body.result;
+  if (r && r.user_no && r.session_id) {
+    try {
+      // attempt_no = 같은 학생·회차의 기존 시도 수 + 1
+      const { count } = await supabase.from('attempts')
+        .select('id', { count: 'exact', head: true })
+        .eq('member_no', r.user_no)
+        .eq('session_id', r.session_id);
+      const attemptNo = (count || 0) + 1;
+      const { error: insErr } = await supabase.from('attempts').insert({
+        member_no:      r.user_no,
+        session_id:     r.session_id,
+        area_id:        r.area_id ?? null,
+        started_at:     r.started_at ?? null,
+        finished_at:    r.finished_at ?? new Date().toISOString(),
+        duration_sec:   r.duration_sec ?? null,
+        total_words:    r.total_words ?? null,
+        attempt_no:     attemptNo,
+        current_stage:  'done',
+        retrieve_count: r.retrieve_count ?? 0,
+        extend_count:   r.extend_count ?? 0,
+        correct_words:  r.correct_words ?? 0,
+        tier_level:     r.tier_level ?? null,
+      });
+      if (insErr) console.error('[wordsense-complete] attempts INSERT 오류:', insErr);
+      else saved = true;
+    } catch (e) {
+      console.error('[wordsense-complete] 결과 저장 실패(무시하고 계속):', e);
+    }
+  }
+
   try {
     // ── service-back 토큰 가져오기 (캐시 또는 발급) ──
     let token = await getCachedToken(supabase);
@@ -96,6 +130,7 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
+      saved,
       service_back: resBody,
     }), {
       status: 200,

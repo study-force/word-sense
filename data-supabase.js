@@ -43,6 +43,10 @@ const TARGET_LEVEL     = _params.get('level') || '초등';   // 학제: 초등 |
 // ════════════════════════════════════════
 // 글로벌 Supabase 클라이언트 — 다른 곳(예: classify_word_input RPC)에서 재사용
 window.SUPABASE_CLIENT = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Edge Function 호출(wordsense-session / wordsense-complete)에서 사용 — const는 window에 안 붙어
+// 기존엔 window.SUPABASE_URL/ANON_KEY가 undefined라 외부 연동 fetch가 끊겨 있었음(→ 데모 모드 fallback).
+window.SUPABASE_URL = SUPABASE_URL;
+window.SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
 
 window.SESSION_READY = (async function loadSession() {
   // Supabase 클라이언트 — 위에서 생성한 전역 인스턴스 사용
@@ -93,6 +97,8 @@ window.SESSION_READY = (async function loadSession() {
     // 5. data.js의 SESSION 형식으로 변환
     window.SESSION = {
       id: sess.round_no,
+      dbId: sess.id,          // DB sessions.id — 결과 저장(attempts.session_id)용
+      areaId: areaRow.id,     // areas.id — attempts.area_id용
       level: TARGET_LEVEL,
       area: areaRow.name_ko,
       mainChar: sess.main_char,
