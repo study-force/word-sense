@@ -83,7 +83,7 @@
   --stage-accent-light:#8FC4F8;
   --stage-accent-rgb:  79,163,240;
 }
-#learn, #inferq {       /* 확장 — 보라 */
+#learn {       /* 확장 — 보라 */
   --stage-accent:      #9B6CD9;
   --stage-accent-deep: #7C4FB8;
   --stage-accent-light:#C9A6F0;
@@ -4607,20 +4607,6 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
     </div>
   </div>
 
-  <!-- ══ 미발견 추론 ══ -->
-  <div class="page" id="inferq">
-    <div class="topbar">
-      <div class="stage-nav" data-stage="확장"><span class="sn-meta">나의 어휘 네트워크</span><div class="sn-track"><div class="sn-step" data-st="인출"><span class="sn-dot"></span><span class="sn-label">인출</span></div><span class="sn-link"></span><div class="sn-step" data-st="확장"><span class="sn-dot"></span><span class="sn-label">확장</span></div><span class="sn-link"></span><div class="sn-step" data-st="강화"><span class="sn-dot"></span><span class="sn-label">강화</span></div></div></div>
-      <div class="cnt-label" id="iq-cnt"></div>
-    </div>
-    <div class="qpage-body">
-      <div class="intro-banner ib-sky" id="iq-banner"></div>
-      <div class="qcard" id="iq-card"></div>
-      <div class="progress-row" id="iq-dots"></div>
-    </div>
-    <button class="skip-link" onclick="goFillQ()">건너뛰고 빈칸 퀴즈로 →</button>
-  </div>
-
   <!-- ══ 빈칸 채우기 ══ -->
   <div class="page" id="fillq">
     <div class="topbar">
@@ -4884,13 +4870,13 @@ function showPage(id){
   updateScoreVisibility(id);
   var chipForColor = document.getElementById('score-chip');
   if(chipForColor){
-    var stageVal = (id === 'learn' || id === 'inferq') ? '2'
+    var stageVal = (id === 'learn') ? '2'
                  : (id === 'fillq' || id === 'result' || id === 'area') ? '3'
                  : '1';
     chipForColor.dataset.stage = stageVal;
-    // 카운팅 모드(회색): home/game/learn/inferq 단계 (강화 후보 어휘 누적 중)
+    // 카운팅 모드(회색): home/game/learn 단계 (강화 후보 어휘 누적 중)
     // 점수 모드(파랑): fillq/result (분자 = 마스터 어휘 점수)
-    var inCountingPhase = (id === 'home' || id === 'game' || id === 'learn' || id === 'inferq');
+    var inCountingPhase = (id === 'home' || id === 'game' || id === 'learn');
     if(inCountingPhase && !chipForColor.classList.contains('has-denom')){
       chipForColor.classList.add('counting-mode');
     }
@@ -5685,7 +5671,6 @@ var INTRO_BGM_VOLS = {
   'charintro': 0.00,   // 어원 나레이션 집중 — 무음
   'game':      0.08,   // 인출 단계에서만 잔잔한 배경음
   'learn':     0.00,   // 확장 진입 시 fade-out
-  'inferq':    0.00,
   'fillq':     0.00,
   'result':    0.00,
   // stats: 정의 안 함 → showPage가 stopIntroBgm 호출 (완전 정지)
@@ -5979,7 +5964,6 @@ function resetHintNudge(){
     }, 18000);
   }
 }
-var IQ   = { words:[], idx:0, correct:0 };
 var FQ   = { words:[], idx:0, correct:0, total:0 };
 
 // ══════════════════════════════════════════════
@@ -6167,7 +6151,7 @@ function goLearn(){
       return true;
     });
   } else {
-    pool = WORD_LIST.filter(function(entry){ return entry.isInferQuiz; });
+    pool = [];
   }
   LEARN.words  = shuffle(pool.slice());
   LEARN.idx = 0;
@@ -7686,8 +7670,7 @@ function useHint(){
   }
   var remaining = WORD_LIST.filter(function(entry){
     var key = entryKeyOf(entry);
-    return !entry.isInferQuiz
-        && S.found.indexOf(key) === -1
+    return S.found.indexOf(key) === -1
         && S.hintTargets.indexOf(key) === -1
         && !nodeKeys[key];
   });
@@ -7698,62 +7681,6 @@ function useHint(){
   }
   resetHintNudge();
   document.getElementById('wi').focus();
-}
-
-// ══════════════════════════════════════════════
-// 미발견 추론 (InferQ)
-// ══════════════════════════════════════════════
-function goInferQ(){
-  if(HINT_NUDGE_TIMER){ clearTimeout(HINT_NUDGE_TIMER); HINT_NUDGE_TIMER = null; }
-  var eligible = WORD_LIST.filter(function(entry){
-    return entry.isInferQuiz && S.found.indexOf(entryKeyOf(entry)) === -1;
-  });
-  eligible = shuffle(eligible).slice(0, 3);
-  if(eligible.length === 0){ goFillQ(); return; }
-  IQ = { words:eligible, idx:0, correct:0 };
-  document.getElementById('iq-banner').innerHTML =
-    '오늘 못 찾은 단어예요. 훈을 보고 뜻을 추론해 보세요!';
-  showPage('inferq');
-  renderIQDots(); renderIQCard(IQ.words[0]);
-}
-
-function renderIQDots(){
-  var el = document.getElementById('iq-dots'); el.innerHTML = '';
-  document.getElementById('iq-cnt').textContent = (IQ.idx+1) + ' / ' + IQ.words.length;
-  IQ.words.forEach(function(_,i){
-    var d = document.createElement('div');
-    d.className = 'dot' + (i < IQ.idx ? ' done' : i === IQ.idx ? ' curr' : '');
-    el.appendChild(d);
-  });
-}
-
-function renderIQCard(word){
-  // (inferq 카드 quiz 효과음 제거 — 사용자 요청 "확장에서는 quiz 제거")
-  var d = WORD_MAP[word];
-  var correct = d.choices[0], shuf = shuffle(d.choices), ci = shuf.indexOf(correct);
-  var card = document.getElementById('iq-card');
-  card.innerHTML = buildIqHead(word, d)
-   +'<div class="choices-col" id="iq-ch"></div>'
-   +'<div class="reveal-msg" id="iq-rev"></div>'
-   +'<div style="display:flex;justify-content:center">'
-   +'<button class="next-btn c-sky" id="iq-nb">다음 →</button></div>';
-  var cs = document.getElementById('iq-ch');
-  setupChoiceButtons(cs, shuf, ci, {
-    bubbleText: '맞아요. 뜻이 보였네요',
-    beforeNext: function(){
-      IQ.correct++;   // sndOk 제거 — o.mp3 효과음만
-    },
-    onCorrect: function(){
-      IQ.idx++; renderIQDots();
-      if(IQ.idx >= IQ.words.length) goFillQ();
-      else renderIQCard(IQ.words[IQ.idx]);
-    }
-  });
-  document.getElementById('iq-nb').onclick = function(){
-    IQ.idx++; renderIQDots();
-    if(IQ.idx >= IQ.words.length) goFillQ();
-    else renderIQCard(IQ.words[IQ.idx]);
-  };
 }
 
 // ══════════════════════════════════════════════

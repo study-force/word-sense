@@ -67,10 +67,18 @@ window.SESSION_READY = (async function loadSession() {
       .single();
     if (e2) throw e2;
 
+    // 2b. 主字 콘텐츠 — 정규화된 main_chars에서 읽음 (SSOT: 한 곳에서 고치면 전 회차 반영)
+    const { data: mc, error: e2b } = await client
+      .from('main_chars')
+      .select('char_hangul, hun_short, eum, etymology, meanings')
+      .eq('char', sess.main_char)
+      .single();
+    if (e2b) throw e2b;
+
     // 3. 회차 어휘 (view 활용 — 한 번에 통합 조회)
     const { data: wordRows, error: e3 } = await client
       .from('v_session_word_full')
-      .select('word, hanja, char1, hun1, char2, hun2, meaning, fill_sentence, choices, is_infer_quiz, order_in_session')
+      .select('word, hanja, char1, hun1, char2, hun2, meaning, fill_sentence, choices, order_in_session')
       .eq('session_id', sess.id)
       .order('order_in_session');
     if (e3) throw e3;
@@ -88,11 +96,11 @@ window.SESSION_READY = (async function loadSession() {
       level: TARGET_LEVEL,
       area: areaRow.name_ko,
       mainChar: sess.main_char,
-      mainHun:  sess.main_hun_short,
-      mainHunFull: sess.main_char_hangul,
-      mainEum:  sess.main_eum,
-      mainEtymology: sess.main_etymology,
-      mainMeanings:  sess.main_meanings || [],
+      mainHun:  mc.hun_short,
+      mainHunFull: mc.char_hangul,
+      mainEum:  mc.eum,
+      mainEtymology: mc.etymology,
+      mainMeanings:  mc.meanings || [],
 
       // DB choices: [{text, is_correct}, ...] → 앱 형식: [정답, 오답1, 오답2, 오답3]
       words: wordRows.map(function(r) {
@@ -105,7 +113,6 @@ window.SESSION_READY = (async function loadSession() {
           char2: r.char2, hun2: r.hun2,
           meaning: r.meaning,
           choices: [correct ? correct.text : ''].concat(wrongChoices.map(function(c){ return c.text; })),
-          isInferQuiz: r.is_infer_quiz,
           fillSentence: r.fill_sentence,
           // sentenceText/Choices는 현재 스키마에 없음 (필요 시 컬럼 추가)
           sentenceText: null,
@@ -125,16 +132,21 @@ window.SESSION_READY = (async function loadSession() {
     try {
       const { data: nextSess } = await client
         .from('sessions')
-        .select('main_char, main_char_hangul, main_etymology')
+        .select('main_char')
         .eq('area_id', areaRow.id)
         .eq('round_no', TARGET_ROUND_NO + 1)
         .eq('level', TARGET_LEVEL)
         .single();
       if (nextSess) {
+        const { data: nmc } = await client
+          .from('main_chars')
+          .select('char_hangul, etymology')
+          .eq('char', nextSess.main_char)
+          .single();
         window.SESSION.nextPreview = {
           char:      nextSess.main_char,
-          hunFull:   nextSess.main_char_hangul,
-          etymology: nextSess.main_etymology
+          hunFull:   nmc ? nmc.char_hangul : null,
+          etymology: nmc ? nmc.etymology : null
         };
       }
     } catch (e) { /* 다음 회차 미존재 — nextPreview null 유지 */ }
