@@ -7195,8 +7195,10 @@ function renderHintLog(){
   if(!S.hintLog || S.hintLog.length === 0){ box.className = 'hint-log'; box.innerHTML = ''; return; }
   // 아직 못 찾은 힌트를 왼쪽(최신 먼저), 찾은 힌트는 그 뒤(최신 먼저)
   var rev = S.hintLog.slice().reverse();
-  var open = rev.filter(function(h){ return S.found.indexOf(h.key) === -1; });
-  var done = rev.filter(function(h){ return S.found.indexOf(h.key) > -1; });
+  // 찾음 = 바로 맞힘(S.found) 또는 오답 후 맞힘(S.attempted, entry key)
+  var isDone = function(h){ return S.found.indexOf(h.key) > -1 || (S.attempted && S.attempted.indexOf(h.key) > -1); };
+  var open = rev.filter(function(h){ return !isDone(h); });
+  var done = rev.filter(isDone);
   var chip = function(h, found){
     return '<span class="hl-chip' + (found ? ' found' : '') + '" data-key="' + escHtml(h.key) + '" title="' + escHtml(h.meaning) + '">' + escHtml(h.meaning) + '</span>';
   };
@@ -7484,6 +7486,7 @@ function finishWord(entry, opts){
   if(opts.silent){
     S.attempted.push(key);   // entry 단위 silent 기록 (재진행 방지)
     S.okCount++;
+    if(S.hintTargets.indexOf(key) > -1) renderHintLog();   // 힌트 어휘를 (오답 후) 맞힌 경우도 딤드
     // 검정 노드로 시각 표시 — 점수/강화 후보엔 반영 X, "내가 적었다"는 흔적만 남김
     lightUpNode(entry, false, true);
     setFb('ok', '또 다른 가족 어휘를 찾아볼까요?', 2400);
