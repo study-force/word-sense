@@ -7832,6 +7832,7 @@ async function submit(){
       case 'native':            // 고유어
       case 'foreign':           // 외래어
       case 'hybrid':            // 혼종어
+      case 'root':              // 어근 — 혼자 안 쓰이는 말 (예: 생생 → 생생하다·생생히), v7
         fbType = 'info'; fbSound = sndUnknown; break;
       case 'not_found':
       default:
