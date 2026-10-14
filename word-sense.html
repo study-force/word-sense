@@ -4927,7 +4927,18 @@ window.SESSION_READY.then(function() {
 });
 
 // ── 페이지 ──────────────────────────────────
+// 더블클릭 보호 — 화면이 바뀐 직후(0.8초) 새 화면의 버튼 클릭은 무시.
+//   예) 인출 '완료'(우하단)를 더블클릭 → 두 번째 클릭이 확장 화면 같은 자리의 '확장 끝내고 강화 →'를 눌러 강화로 건너뛰던 문제
+var PAGE_SHOWN_AT = 0;
+document.addEventListener('click', function(e){
+  if(Date.now() - PAGE_SHOWN_AT > 800) return;
+  var b = e.target && e.target.closest ? e.target.closest('button') : null;
+  if(b){ e.stopPropagation(); e.preventDefault(); }
+}, true);
+document.addEventListener('dblclick', function(e){ e.preventDefault(); }, true);
+
 function showPage(id){
+  PAGE_SHOWN_AT = Date.now();
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   document.getElementById(id).classList.add('active');
   // 전역 상단 메타(.global-topbar-meta) 등 페이지별 CSS 분기 키 — body[data-page="..."] 셀렉터 사용
