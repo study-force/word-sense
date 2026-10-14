@@ -9101,6 +9101,14 @@ async function loadStudentFromSession(){
   var sessionId = params.get('st');
   if(!sessionId) return false;   // 외부 진입 X → 데모 모드
 
+  // data-supabase.js가 콘텐츠를 불러오며 이미 입장권을 조회했으면 그 결과 재사용
+  if(window.__ST_SESSION && window.__ST_SESSION.success){
+    STUDENT_INFO  = window.__ST_SESSION.student;
+    TRAINING_INFO = window.__ST_SESSION.session;
+    console.log('[student] 진입 학생:', STUDENT_INFO.name, '·', TRAINING_INFO.training_area, TRAINING_INFO.training_round + '회차');
+    return true;
+  }
+
   try {
     var res = await fetch(EDGE_FN_BASE + '/wordsense-session?id=' + encodeURIComponent(sessionId), {
       method: 'GET',
@@ -9172,7 +9180,8 @@ async function notifyStudyComplete(){
         'apikey': window.SUPABASE_ANON_KEY || '',
       },
       body: JSON.stringify({
-        payment_fn:     TRAINING_INFO.payment_fn,
+        sessionId:      TRAINING_INFO.id,              // 서버가 이 입장권으로 결제번호·회차·study_token을 직접 읽음
+        payment_fn:     TRAINING_INFO.payment_fn,      // (구버전 호환용)
         training_round: TRAINING_INFO.training_round,
         result:         result,   // ← Edge Function이 attempts에 INSERT
       }),

@@ -1,21 +1,24 @@
 // ════════════════════════════════════════════════════════════════
 // Edge Function: wordsense-complete
 //
-// 역할: 학생 학습 완료 시 호출 — 두 가지 작업
-//   1) (선택) 학습 결과 Supabase attempts/word_results INSERT (Phase 2와 통합 시)
-//   2) service-back complete API 호출 (sf_study_hanja 업데이트)
+// 역할: 학생 학습 완료 시 호출 — 두 가지 작업 (성효민 대리 확정: 둘 다 기록)
+//   1) Supabase에 훈련 상세 저장 — attempts(+학원 회차 정보) / word_results   ← 원장
+//   2) 학원 완료 API 호출 — service-back POST /api/public/hanja/study/complete
+//      body { payment_fn, training_round, study_token }  (API v4: study_token 필수, 1회만 완료)
+//      응답 training_end_success(false면 학원 쪽 수기 처리) → attempts에 기록
 //
 // 입력 (POST application/json):
-//   { sessionId, payment_fn, training_round,
-//     score?, tier_level?, ... 학습 결과 메타 (선택) }
+//   { sessionId, result{...} }
+//     sessionId 가 있으면 payment_fn·training_round·study_token 은 서버(session_init)에서 읽음 — 브라우저 값 신뢰 X
+//     (구버전 호환: sessionId 없이 payment_fn·training_round 를 보내면 그대로 사용, study_token 없음)
 //
 // secrets:
-//   EXTERNAL_JWT_SECRET     — service-back 토큰 발급용 (X-External-Secret)
-//   SERVICE_BACK_BASE_URL   — 'https://www.futuretraining.co.kr:8143/service-back' (상용)
-//                              또는 ':8193/service-back' (개발)
+//   EXTERNAL_JWT_SECRET     — service-back 토큰 발급용 (X-External-Secret) — 테섭=개발키, 실섭=상용키
+//   SERVICE_BACK_BASE_URL   — 실섭 'https://www.futuretraining.co.kr:8143/service-back'
+//                              테섭 'https://www.futuretraining.co.kr:8193/service-back'
 //
-// 멱등성: service-back이 보장 — 재호출 시 study_end_date만 갱신
-// 토큰: 1회 발급 후 service_back_token 테이블에 영구 캐시
+// 중복 방지: session_init.completed_at 이 있으면 학원 API를 다시 부르지 않음 (같은 토큰은 1회만 완료)
+// 토큰: 1회 발급 후 service_back_token 테이블에 영구 캐시 (401이면 재발급)
 // ════════════════════════════════════════════════════════════════
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -26,90 +29,76 @@ const EXTERNAL_JWT_SECRET = Deno.env.get('EXTERNAL_JWT_SECRET')!;
 const SERVICE_BACK_BASE_URL = Deno.env.get('SERVICE_BACK_BASE_URL')
   || 'https://www.futuretraining.co.kr:8143/service-back';
 
+function safeHost(url: string) { try { return new URL(url).hostname; } catch { return ''; } }
 function corsHeaders(origin: string | null): Record<string, string> {
-  const isAllowed = origin && (
-    /\.sfcenter\.co\.kr$/.test(safeHost(origin)) ||
-    /\.sfos\.kr$/.test(safeHost(origin)) ||
-    safeHost(origin) === 'localhost' ||
-    safeHost(origin) === '127.0.0.1'
-  );
+  const h = origin ? safeHost(origin) : '';
+  const isAllowed = !!h && (/\.sfcenter\.co\.kr$/.test(h) || /\.sfos\.kr$/.test(h) || h === 'localhost' || h === '127.0.0.1');
   return {
     'Access-Control-Allow-Origin': isAllowed ? origin! : '',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, apikey, authorization',
   };
 }
-function safeHost(url: string) { try { return new URL(url).hostname; } catch { return ''; } }
 
 Deno.serve(async (req) => {
-  const origin = req.headers.get('Origin');
-  const cors = corsHeaders(origin);
+  const cors = corsHeaders(req.headers.get('Origin'));
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
+  if (req.method !== 'POST') return jsonErr(405, 'Method not allowed', cors);
 
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: cors });
+  let body: any;
+  try { body = await req.json(); } catch { return jsonErr(400, '입력 JSON 파싱 실패', cors); }
+
+  const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+
+  // ── 진입 세션에서 학원 정보 읽기 (있으면 브라우저 값보다 우선) ──
+  let sess: any = null;
+  if (body.sessionId) {
+    const { data } = await supabase.from('session_init').select('*').eq('id', body.sessionId).maybeSingle();
+    sess = data;
+    if (!sess) return jsonErr(404, '진입 세션을 찾을 수 없습니다', cors);
   }
-  if (req.method !== 'POST') {
-    return jsonErr(405, 'Method not allowed', cors);
+  const payment_fn: string = sess ? sess.payment_fn : body.payment_fn;
+  const training_round: number = sess ? Number(sess.training_round) : Number(body.training_round);
+  const study_token: string | null = sess ? (sess.study_token || null) : (body.study_token || null);
+  if (!payment_fn || !Number.isFinite(training_round)) {
+    return jsonErr(400, '필수 정보 누락: payment_fn, training_round', cors);
   }
 
-  let body;
-  try {
-    body = await req.json();
-  } catch {
-    return jsonErr(400, '입력 JSON 파싱 실패', cors);
-  }
-
-  const { payment_fn, training_round } = body;
-  if (!payment_fn || typeof training_round !== 'number') {
-    return jsonErr(400, '필수 필드: payment_fn, training_round (number)', cors);
-  }
-
-  const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-    auth: { persistSession: false }
-  });
-
-  // ── (신규) 학습 결과 저장 — attempts INSERT (service_role → RLS 우회) ──
-  //   body.result 있으면 저장. 실패해도 완료 콜백은 계속 진행(fire-safe) — 저장 실패가 완료 처리를 막지 않음.
-  let saved = false;
+  // ── 1) 훈련 상세 저장 (실패해도 학원 완료 처리는 계속) ──
+  let attemptId: number | null = null;
   const r = body.result;
   if (r && r.user_no && r.session_id) {
     try {
-      // attempt_no = 같은 학생·회차의 기존 시도 수 + 1
       const { count } = await supabase.from('attempts')
         .select('id', { count: 'exact', head: true })
-        .eq('member_no', r.user_no)
-        .eq('session_id', r.session_id);
-      const attemptNo = (count || 0) + 1;
+        .eq('member_no', r.user_no).eq('session_id', r.session_id);
       const { data: att, error: insErr } = await supabase.from('attempts').insert({
-        member_no:      r.user_no,
-        session_id:     r.session_id,
-        area_id:        r.area_id ?? null,
-        started_at:     r.started_at ?? undefined,   // NOT NULL(default now) — null 보내면 실패
-        finished_at:    r.finished_at ?? new Date().toISOString(),
-        duration_sec:   r.duration_sec ?? null,
-        total_words:    r.total_words ?? 0,
-        attempt_no:     attemptNo,
-        current_stage:  'done',
-        retrieve_count: r.retrieve_count ?? 0,
-        extend_count:   r.extend_count ?? 0,
-        correct_words:  r.correct_words ?? 0,
-        tier_level:     r.tier_level ?? 0,
+        member_no:       r.user_no,
+        session_id:      r.session_id,
+        area_id:         r.area_id ?? null,
+        started_at:      r.started_at ?? undefined,   // NOT NULL(default now) — null 보내면 실패
+        finished_at:     r.finished_at ?? new Date().toISOString(),
+        duration_sec:    r.duration_sec ?? null,
+        total_words:     r.total_words ?? 0,
+        attempt_no:      (count || 0) + 1,
+        current_stage:   'done',
+        retrieve_count:  r.retrieve_count ?? 0,
+        extend_count:    r.extend_count ?? 0,
+        correct_words:   r.correct_words ?? 0,
+        tier_level:      r.tier_level ?? 0,
+        session_init_id: sess ? sess.id : null,
+        payment_fn,
+        training_round,
       }).select('id').single();
       if (insErr) console.error('[wordsense-complete] attempts INSERT 오류:', insErr);
       else {
-        saved = true;
-        // 어휘별 결과 — 통계(영역별 현황·등급별 습득률)의 원천
-        const words = Array.isArray(r.words) ? r.words : [];
-        const rows = words
+        attemptId = att.id;
+        const rows = (Array.isArray(r.words) ? r.words : [])
           .filter((w: any) => w && Number.isFinite(Number(w.word_master_id)) && Number.isFinite(Number(w.session_word_id)))
           .map((w: any) => ({
-            attempt_id:       att.id,
-            member_no:        r.user_no,
-            session_word_id:  Number(w.session_word_id),
-            word_master_id:   Number(w.word_master_id),
-            retrieve_passed:  !!w.retrieve_passed,
-            extend_passed:    !!w.extend_passed,
-            reinforce_passed: !!w.reinforce_passed,
+            attempt_id: att.id, member_no: r.user_no,
+            session_word_id: Number(w.session_word_id), word_master_id: Number(w.word_master_id),
+            retrieve_passed: !!w.retrieve_passed, extend_passed: !!w.extend_passed, reinforce_passed: !!w.reinforce_passed,
           }));
         if (rows.length) {
           const { error: wrErr } = await supabase.from('word_results').insert(rows);
@@ -121,91 +110,83 @@ Deno.serve(async (req) => {
     }
   }
 
+  // ── 2) 학원 완료 API — 이미 완료한 세션이면 다시 부르지 않음 ──
+  if (sess && sess.completed_at) {
+    return ok({ success: true, saved: !!attemptId, service_back: { skipped: 'already_completed' } }, cors);
+  }
+
+  let status = 0, sbBody: any = {};
   try {
-    // ── service-back 토큰 가져오기 (캐시 또는 발급) ──
     let token = await getCachedToken(supabase);
-    if (!token) {
-      token = await issueNewToken();
-      await cacheToken(supabase, token);
-    }
-
-    // ── service-back complete API 호출 ──
-    let res = await callComplete(token, payment_fn, training_round);
-
-    // 401이면 토큰 만료/회수 가능성 — 재발급 후 1회 재시도
+    if (!token) { token = await issueNewToken(); await cacheToken(supabase, token); }
+    let res = await callComplete(token, payment_fn, training_round, study_token);
     if (res.status === 401) {
       console.warn('[wordsense-complete] 토큰 401 — 재발급 후 재시도');
-      token = await issueNewToken();
-      await cacheToken(supabase, token);
-      res = await callComplete(token, payment_fn, training_round);
+      token = await issueNewToken(); await cacheToken(supabase, token);
+      res = await callComplete(token, payment_fn, training_round, study_token);
     }
-
-    const resBody = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      console.error('[wordsense-complete] service-back 응답:', res.status, resBody);
-      return jsonErr(res.status, resBody.message || 'service-back 호출 실패', cors);
-    }
-
-    return new Response(JSON.stringify({
-      success: true,
-      saved,
-      service_back: resBody,
-    }), {
-      status: 200,
-      headers: { ...cors, 'Content-Type': 'application/json' },
-    });
-
+    status = res.status;
+    sbBody = await res.json().catch(() => ({}));
   } catch (err) {
-    console.error('[wordsense-complete] 실패:', err);
-    return jsonErr(500, '서버 오류: ' + (err as Error).message, cors);
+    console.error('[wordsense-complete] service-back 호출 실패:', err);
+    status = 0; sbBody = { message: String((err as Error).message || err) };
   }
+
+  const trainingEndSuccess = typeof sbBody.training_end_success === 'boolean' ? sbBody.training_end_success : null;
+  // 학원 응답을 원장에 남김 (training_end_success=false → 학원 쪽 수기 처리 필요)
+  if (attemptId) {
+    await supabase.from('attempts').update({
+      service_back_status: status, service_back_message: sbBody.message ?? null, training_end_success: trainingEndSuccess,
+    }).eq('id', attemptId);
+  }
+  if (trainingEndSuccess === false) console.warn('[wordsense-complete] training_end_success=false — 학원 수기 처리 필요', { payment_fn, training_round });
+
+  // 완료됐거나(200) 이미 처리된 회차(400 '이미 처리된')면 세션에 완료 표시 → 재호출 방지
+  const already = status === 400 && /이미 처리된/.test(String(sbBody.message || ''));
+  if (sess && (status === 200 || already)) {
+    await supabase.from('session_init').update({ completed_at: new Date().toISOString() }).eq('id', sess.id);
+  }
+
+  if (status !== 200) {
+    console.error('[wordsense-complete] service-back 응답:', status, sbBody);
+    return jsonErr(status || 502, sbBody.message || 'service-back 호출 실패', cors, { saved: !!attemptId });
+  }
+  return ok({ success: true, saved: !!attemptId, service_back: sbBody }, cors);
 });
 
-// ── service-back 토큰 발급 ──
 async function issueNewToken(): Promise<string> {
   const res = await fetch(`${SERVICE_BACK_BASE_URL}/api/public/external/token`, {
-    method: 'POST',
-    headers: { 'X-External-Secret': EXTERNAL_JWT_SECRET },
+    method: 'POST', headers: { 'X-External-Secret': EXTERNAL_JWT_SECRET },
   });
-  if (!res.ok) {
-    const errBody = await res.text();
-    throw new Error(`토큰 발급 실패 ${res.status}: ${errBody}`);
-  }
+  if (!res.ok) throw new Error(`토큰 발급 실패 ${res.status}: ${await res.text()}`);
   const data = await res.json();
   if (!data.token) throw new Error('토큰 응답에 token 필드 없음');
   return data.token;
 }
 
-// ── service-back complete API 호출 ──
-async function callComplete(token: string, payment_fn: string, training_round: number) {
+async function callComplete(token: string, payment_fn: string, training_round: number, study_token: string | null) {
+  const payload: Record<string, unknown> = { payment_fn, training_round };
+  if (study_token) payload.study_token = study_token;   // API v4 필수
   return await fetch(`${SERVICE_BACK_BASE_URL}/api/public/hanja/study/complete`, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type':  'application/json',
-    },
-    body: JSON.stringify({ payment_fn, training_round }),
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
   });
 }
 
-// ── 토큰 캐시 (Supabase 테이블) ──
 async function getCachedToken(supabase: any): Promise<string | null> {
-  const { data } = await supabase
-    .from('service_back_token')
-    .select('token')
-    .eq('id', 'singleton')
-    .maybeSingle();
+  const { data } = await supabase.from('service_back_token').select('token').eq('id', 'singleton').maybeSingle();
   return data?.token || null;
 }
 async function cacheToken(supabase: any, token: string) {
-  await supabase.from('service_back_token')
-    .upsert({ id: 'singleton', token, issued_at: new Date().toISOString() },
-            { onConflict: 'id' });
+  await supabase.from('service_back_token').upsert({ id: 'singleton', token, issued_at: new Date().toISOString() }, { onConflict: 'id' });
 }
 
-function jsonErr(status: number, message: string, cors: Record<string, string>) {
-  return new Response(JSON.stringify({ success: false, status, message }), {
+function ok(obj: unknown, cors: Record<string, string>) {
+  return new Response(JSON.stringify(obj), { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } });
+}
+function jsonErr(status: number, message: string, cors: Record<string, string>, extra: Record<string, unknown> = {}) {
+  return new Response(JSON.stringify({ success: false, status, message, ...extra }), {
     status, headers: { ...cors, 'Content-Type': 'application/json' },
   });
 }

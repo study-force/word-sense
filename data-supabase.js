@@ -24,18 +24,29 @@
 // ════════════════════════════════════════
 const _host = location.hostname;
 
-const SUPABASE_URL = 'https://fokuojmzhttxfkmiutmf.supabase.co';   // word-master (운영)
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZva3Vvam16aHR0eGZrbWl1dG1mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MDYwOTksImV4cCI6MjA5MzM4MjA5OX0.FuYv59ufKteXKusvAhJktBNWntMnWmxctQoHquaPKVA';
-console.log('[supabase] env: PROD (word-master) @', _host);
+// ── 테섭/실섭 분기 (2026-10-15) ──
+//   테섭 word.sfos.kr · localhost → 테스트 DB(word-master-dev)
+//   그 외(실섭 word.sfcenter.co.kr 등)  → 운영 DB(word-master)
+//   ※ 테스트 DB 정보(DEV_*)가 비어 있으면 운영 DB를 그대로 씀 (테스트 DB 준비 전 안전장치)
+const PROD_SUPABASE_URL = 'https://fokuojmzhttxfkmiutmf.supabase.co';   // word-master (운영)
+const PROD_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZva3Vvam16aHR0eGZrbWl1dG1mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MDYwOTksImV4cCI6MjA5MzM4MjA5OX0.FuYv59ufKteXKusvAhJktBNWntMnWmxctQoHquaPKVA';
+const DEV_SUPABASE_URL = '';        // word-master-dev — 테스트 DB 준비 후 채움
+const DEV_SUPABASE_ANON_KEY = '';
+const IS_TEST_HOST = _host === 'word.sfos.kr' || _host === 'localhost' || _host === '127.0.0.1';
+const USE_DEV = IS_TEST_HOST && !!DEV_SUPABASE_URL && !!DEV_SUPABASE_ANON_KEY;
+const SUPABASE_URL = USE_DEV ? DEV_SUPABASE_URL : PROD_SUPABASE_URL;
+const SUPABASE_ANON_KEY = USE_DEV ? DEV_SUPABASE_ANON_KEY : PROD_SUPABASE_ANON_KEY;
+console.log('[supabase] env:', USE_DEV ? 'DEV (word-master-dev)' : 'PROD (word-master)', '@', _host);
 
 // 로드할 회차 — URL 파라미터로 동적 지정 가능 (테스트 편의):
 //   ?area=biology&round=1   → 생물 1회차
 //   ?round=2                → 현재 영역 그대로, 2회차
 //   파라미터 없으면 default(생물 1회차)
 const _params = new URLSearchParams(location.search);
-const TARGET_AREA_SLUG = _params.get('area') || 'biology';
-const TARGET_ROUND_NO  = parseInt(_params.get('round'), 10) || 1;
-const TARGET_LEVEL     = _params.get('level') || '초등';   // 학제: 초등 | 중등
+let TARGET_AREA_SLUG = _params.get('area') || 'biology';
+let TARGET_ROUND_NO  = parseInt(_params.get('round'), 10) || 1;
+let TARGET_LEVEL     = _params.get('level') || '초등';   // 학제: 초등 | 중등
+// 학원 시스템 진입(?st=입장권)이면 위 주소 값 대신 입장권에 저장된 영역·회차·과정을 씀 (아래 loadSession 0단계)
 
 
 // ════════════════════════════════════════
@@ -77,6 +88,23 @@ window.SESSION_READY = (async function loadSession() {
   const client = window.SUPABASE_CLIENT;
 
   try {
+    // 0. 학원 진입(?st) — 입장권으로 학생·영역·회차 조회 (학생이 주소를 바꿔 다른 회차로 가는 것 방지)
+    const st = _params.get('st');
+    if (st) {
+      try {
+        const sr = await fetch(SUPABASE_URL + '/functions/v1/wordsense-session?id=' + encodeURIComponent(st), { headers: { apikey: SUPABASE_ANON_KEY } });
+        const sd = sr.ok ? await sr.json() : null;
+        if (sd && sd.success) {
+          window.__ST_SESSION = sd;   // word-sense.html의 loadStudentFromSession이 다시 부르지 않고 재사용
+          if (sd.session.training_area) TARGET_AREA_SLUG = sd.session.training_area;
+          if (sd.session.training_round) TARGET_ROUND_NO = Number(sd.session.training_round);
+          if (sd.session.training_level) TARGET_LEVEL = sd.session.training_level;
+        } else {
+          console.warn('[supabase] 입장권 조회 실패 — 만료되었거나 잘못된 입장권', sr.status);
+        }
+      } catch (e) { console.warn('[supabase] 입장권 조회 오류', e); }
+    }
+
     // 1. 영역 ID 조회
     const { data: areaRow, error: e1 } = await client
       .from('areas')

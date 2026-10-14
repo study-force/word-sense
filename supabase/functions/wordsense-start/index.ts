@@ -3,15 +3,16 @@
 //
 // 역할: 구서버에서 학생 진입 POST를 받아 학습 페이지로 리다이렉트.
 //
-// 입력 (POST application/json — doc1 명세):
-//   { name, user_no, user_section, user_school_grade,
-//     academy_name, academy_no, is_payment, payment_fn, training_round }
+// 입력 (POST application/json — 연동방법_20261014 문서):
+//   { user_name(또는 name), user_no, user_section, user_school_grade,
+//     academy_name, academy_no, payment_fn, training_round, training_area, study_token,
+//     training_level?(초등/중등, 없으면 초등), is_payment? }
 //
 // 처리:
 //   1) 입력 검증 (필수 필드)
 //   2) academies / students upsert (캐시 갱신)
 //   3) session_init INSERT → UUID 생성 (TTL 10분)
-//   4) 302 redirect → https://word.sfcenter.co.kr/word-sense.html?st={uuid}
+//   4) 응답 redirectUrl = {STUDENT_REDIRECT_BASE}?st={uuid}  (테섭 word.sfos.kr / 실섭 word.sfcenter.co.kr)
 //
 // 호출:
 //   POST https://{project}.functions.supabase.co/wordsense-start
@@ -68,15 +69,20 @@ Deno.serve(async (req) => {
     return jsonErr(400, '입력 JSON 파싱 실패', cors);
   }
 
-  const required = ['name', 'user_no', 'payment_fn', 'training_round'];
-  for (const f of required) {
-    if (body[f] === undefined || body[f] === null || body[f] === '') {
-      return jsonErr(400, `필수 필드 누락: ${f}`, cors);
-    }
-  }
-  if (typeof body.user_no !== 'number' || typeof body.training_round !== 'number') {
-    return jsonErr(400, 'user_no/training_round는 숫자여야 합니다', cors);
-  }
+  // 이름: 연동 문서는 user_name, 옛 명세는 name — 둘 다 받음
+  const userName = String(body.user_name ?? body.name ?? '').trim();
+  const userNo = Number(body.user_no);
+  const round = Number(body.training_round);
+  const area = String(body.training_area ?? '').trim();
+  const level = body.training_level === '중등' ? '중등' : '초등';
+  const studyToken = String(body.study_token ?? '').trim();
+  const AREAS = ['biology', 'society', 'history', 'science', 'culture', 'economy'];
+  if (!userName) return jsonErr(400, '필수 필드 누락: user_name', cors);
+  if (!Number.isFinite(userNo)) return jsonErr(400, '필수 필드 누락/형식 오류: user_no', cors);
+  if (!body.payment_fn) return jsonErr(400, '필수 필드 누락: payment_fn', cors);
+  if (!Number.isInteger(round) || round < 1) return jsonErr(400, '필수 필드 누락/형식 오류: training_round', cors);
+  if (!AREAS.includes(area)) return jsonErr(400, 'training_area는 ' + AREAS.join('/') + ' 중 하나여야 합니다', cors);
+  if (!studyToken) return jsonErr(400, '필수 필드 누락: study_token', cors);
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
     auth: { persistSession: false }
@@ -86,18 +92,18 @@ Deno.serve(async (req) => {
     // ── 학원 upsert ──
     if (body.academy_no) {
       await supabase.from('academies')
-        .upsert({ academy_no: body.academy_no, name: body.academy_name || '' },
+        .upsert({ academy_no: Number(body.academy_no), name: body.academy_name || '' },
                 { onConflict: 'academy_no' });
     }
 
     // ── 학생 upsert ──
     await supabase.from('students')
       .upsert({
-        user_no: body.user_no,
-        name: body.name,
+        user_no: userNo,
+        name: userName,
         section: body.user_section || null,
-        school_grade: body.user_school_grade || null,
-        academy_no: body.academy_no || null,
+        school_grade: body.user_school_grade != null ? Number(body.user_school_grade) : null,
+        academy_no: body.academy_no != null ? Number(body.academy_no) : null,
         last_seen_at: new Date().toISOString(),
       }, { onConflict: 'user_no' });
 
@@ -105,11 +111,14 @@ Deno.serve(async (req) => {
     const { data: session, error: sErr } = await supabase
       .from('session_init')
       .insert({
-        user_no: body.user_no,
-        payment_fn: body.payment_fn,
-        training_round: body.training_round,
+        user_no: userNo,
+        payment_fn: String(body.payment_fn),
+        training_round: round,
+        training_area: area,
+        training_level: level,
+        study_token: studyToken,
         is_payment: body.is_payment || 'N',
-        academy_no: body.academy_no || null,
+        academy_no: body.academy_no != null ? Number(body.academy_no) : null,
       })
       .select('id')
       .single();

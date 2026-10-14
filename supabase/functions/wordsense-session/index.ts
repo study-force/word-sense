@@ -10,7 +10,7 @@
 //   1) session_init 조회 (expires_at > NOW(), used_at IS NULL)
 //   2) students JOIN → 학생 정보
 //   3) used_at = NOW() 마크 (1회 사용)
-//   4) 응답: { user_no, name, section, school_grade, academy_no, payment_fn, training_round, is_payment }
+//   4) 응답: { student{…}, session{ id, payment_fn, training_round, training_area, training_level, is_payment } }
 //
 // 호출: word-sense.html에서 fetch
 // ════════════════════════════════════════════════════════════════
@@ -90,9 +90,13 @@ Deno.serve(async (req) => {
       academy_no: session.academy_no,
     },
     session: {
+      id: session.id,
       payment_fn: session.payment_fn,
       training_round: session.training_round,
+      training_area: session.training_area || null,     // 앱이 이 영역·회차로 콘텐츠를 불러옴
+      training_level: session.training_level || '초등',
       is_payment: session.is_payment,
+      // study_token은 브라우저로 보내지 않음 — 완료 시 서버(wordsense-complete)가 session_init에서 직접 읽음
     },
   }), {
     status: 200,
