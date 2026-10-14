@@ -6243,7 +6243,8 @@ function goLearn(){
       var key = entryKeyOf(entry);
       // 인출에서 맞춘 어휘 X
       if(S.found && S.found.indexOf(key) > -1) return false;
-      // 인출에서 틀린 어휘 X
+      // 인출에서 가족 어휘가 아닌 말로 입력한 단어(원문 word)만 제외.
+      // 뜻 퀴즈를 틀렸다가 맞힌 어휘(S.attempted에 entry key로 기록)는 확장에서 한 번 더 연습 — 의도된 동작(대표님 확정 2026-10-14)
       if(S.attempted && S.attempted.indexOf(entry.word) > -1) return false;
       // 힌트로 제공된 어휘 X (학생이 의미 본 어휘는 학습 노출 제외)
       if(S.hintTargets && S.hintTargets.indexOf(key) > -1) return false;
