@@ -89,33 +89,36 @@ window.SESSION_READY = (async function loadSession() {
 
     // 3b. 중등 = 초등 누적 — 같은 主字의 초등 회차 어휘도 합침 (중등 어휘 뒤에, word+hanja 중복 제외)
     //     DB 복사 없이 읽을 때 합치므로 초등 어휘를 고치면 중등에도 그대로 반영됨
+    // 3b. 중등 = 초등 누적 — 主字가 들어간 초등 어휘를 모두 합침 (대표님 2026-10-15 확장)
+    //     우선순위: 같은 主字 초등 회차 어휘 → 그 외 主字가 들어간 초등 어휘. word+hanja 중복 제외.
+    //     DB 복사 없이 읽을 때 합치므로 초등 어휘를 고치면 중등에도 그대로 반영됨
     let elemIds = [];
     if (TARGET_LEVEL === '중등') {
       const { data: elemSess, error: e3a } = await client
         .from('sessions')
-        .select('id')
-        .eq('level', '초등')
-        .eq('main_char', sess.main_char)
-        .order('id');
+        .select('id, main_char')
+        .eq('level', '초등');
       if (e3a) throw e3a;
-      elemIds = (elemSess || []).map(function(s){ return s.id; });
-      if (elemIds.length) {
-        const { data: elemRows, error: e3b } = await client
-          .from('v_session_word_full')
-          .select('session_id, session_word_id, word_master_id, word, hanja, char1, hun1, char2, hun2, meaning, fill_sentence, choices, order_in_session, grade')
-          .in('session_id', elemIds)
-          .order('session_id')
-          .order('order_in_session');
-        if (e3b) throw e3b;
-        const seen = {};
-        wordRows.forEach(function(r){ seen[r.word + '|' + r.hanja] = true; });
-        (elemRows || []).forEach(function(r){
-          const k = r.word + '|' + r.hanja;
-          if (seen[k]) return;
-          seen[k] = true;
-          wordRows.push(r);
-        });
-      }
+      const elemSet = {}, sameChar = {};
+      (elemSess || []).forEach(function(s){ elemSet[s.id] = true; if (s.main_char === sess.main_char) sameChar[s.id] = true; });
+      elemIds = Object.keys(sameChar).map(Number);   // 오답 피드백은 같은 主字 회차 것만
+      const { data: elemRows, error: e3b } = await client
+        .from('v_session_word_full')
+        .select('session_id, session_word_id, word_master_id, word, hanja, char1, hun1, char2, hun2, meaning, fill_sentence, choices, order_in_session, grade')
+        .like('hanja', '%' + sess.main_char + '%')
+        .order('session_id')
+        .order('order_in_session');
+      if (e3b) throw e3b;
+      const cand = (elemRows || []).filter(function(r){ return elemSet[r.session_id]; });
+      cand.sort(function(a, b){ return (sameChar[b.session_id] ? 1 : 0) - (sameChar[a.session_id] ? 1 : 0); });   // 같은 主字 회차 먼저 (안정 정렬)
+      const seen = {};
+      wordRows.forEach(function(r){ seen[r.word + '|' + r.hanja] = true; });
+      cand.forEach(function(r){
+        const k = r.word + '|' + r.hanja;
+        if (seen[k]) return;
+        seen[k] = true;
+        wordRows.push(r);
+      });
     }
 
     // 4. 회차 오답 피드백
