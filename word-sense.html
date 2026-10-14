@@ -8331,17 +8331,21 @@ function goResult(){
   // PERFECT는 calcBadge 판정 후 renderTierBadge에서 별도 호출 (sndPerfect).
   try { sndResultArrive(); } catch(e){}
 
-  // 랭킹 카드 등장(.r-rank-block.on transition-delay 1.15s) 시점에 ranking 사운드.
-  setTimeout(function(){
-    sfxPlay('ranking.wav', 0.85);
-  }, 1150);
-
-  // 점수별 박수 — rank3 직후 layer. 30점 이상은 강한 박수(Applause2), 20점 이상은 일반(Applause).
-  setTimeout(function(){
-    var score = (typeof FQ !== 'undefined' && FQ) ? (FQ.correct || 0) : 0;
-    if(score >= 30)      sfxPlay('Applause2.mp3', 0.8);
-    else if(score >= 20) sfxPlay('Applause.mp3',  0.8);
-  }, 1500);
+  // 결과 사운드는 한 가지만 (겹침 방지, 대표님 2026-10-14) — 우선순위:
+  //   ① PERFECT → perfect 음성만 (renderTierBadge에서 재생)  ② 20점 이상 → 점수 박수만  ③ 그 외 → ranking 사운드
+  var fqScore = (typeof FQ !== 'undefined' && FQ) ? (FQ.correct || 0) : 0;
+  var fqTotal = (typeof WORD_LIST !== 'undefined' && WORD_LIST) ? WORD_LIST.length : 0;   // renderTierBadge와 같은 기준
+  var willPerfect = false;
+  try { willPerfect = calcBadge(fqScore, fqTotal).isPerfect; } catch(e){}
+  if(!willPerfect){
+    if(fqScore >= 20){
+      // 점수별 박수 — 30점 이상은 강한 박수(Applause2), 20점 이상은 일반(Applause)
+      setTimeout(function(){ sfxPlay(fqScore >= 30 ? 'Applause2.mp3' : 'Applause.mp3', 0.8); }, 1500);
+    } else {
+      // 랭킹 카드 등장(.r-rank-block.on transition-delay 1.15s) 시점에 ranking 사운드
+      setTimeout(function(){ sfxPlay('ranking.wav', 0.85); }, 1150);
+    }
+  }
 
   // ── 외부 진입(구서버) 학습 완료 알림 — service-back sf_study_hanja 업데이트 ──
   //   STUDENT_INFO/TRAINING_INFO 있을 때만 호출. 멱등성 보장이라 재호출 안전.
