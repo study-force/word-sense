@@ -6155,9 +6155,14 @@ function goRecap(){
   // 레이아웃 변경 후(다음 프레임)에: ① 확장에서 합류할 노드까지 미리 확보 → ② 전체 기준 중심 재배치.
   //   (recap 도중 노드가 새로 생성되면 centroid가 바뀌어 캡슐이 구름 밖으로 밀리므로,
   //    모든 노드를 먼저 확보한 뒤 한 번에 정렬해야 중심이 맞음)
+  // 이미 네트워크에 칩이 있는 어휘(인출 단계 검정 칩 등) — 새 칩을 만들지 않고 기존 칩을 바꾼다
+  var nodeByKey = {};
+  GNODES.forEach(function(n){ if(n.lit && n.entry) nodeByKey[entryKeyOf(n.entry)] = n; });
+  var collected = LEARN.collected.filter(function(w){ return !nodeByKey[entryKeyOf(w)] || nodeByKey[entryKeyOf(w)].silent; });
+  var upgrades  = collected.filter(function(w){ return !!nodeByKey[entryKeyOf(w)]; });
+  var silentCollected = (LEARN.silentCollected || []).filter(function(w){ return !nodeByKey[entryKeyOf(w)]; });
   requestAnimationFrame(function(){
-    var toLight = (LEARN.collected ? LEARN.collected.length : 0)
-                + (LEARN.silentCollected ? LEARN.silentCollected.length : 0);
+    var toLight = (collected.length - upgrades.length) + silentCollected.length;
     var unlit = GNODES.filter(function(n){ return !n.lit; }).length;
     if(toLight > unlit) spawnUnlitNodes(toLight - unlit);
     rebalanceNodesToCap();
@@ -6182,14 +6187,14 @@ function goRecap(){
   }
 
   var baseFound = (S && S.found) ? S.found.length : 0;
-  var collected = LEARN.collected.slice();
-  var silentCollected = (LEARN.silentCollected || []).slice();
   var startDelay = 700;
   var stepDelay  = 520;
 
   collected.forEach(function(w, i){
     setTimeout(function(){
-      lightUpNode(w, true);   // fromLearn = true → 보라색
+      var old = nodeByKey[entryKeyOf(w)];
+      if(old) upgradeNodeToLearn(old);   // 인출 검정 칩 → 보라 칩 (같은 자리)
+      else lightUpNode(w, true);         // fromLearn = true → 보라색
       try{ sndOk(); }catch(e){}
       var newCount = baseFound + (i + 1);
       var wf = document.getElementById('wi-found');
@@ -6209,6 +6214,15 @@ function goRecap(){
   var totalCount = collected.length + silentCollected.length;
   var btnT = startDelay + totalCount * stepDelay + 900;
   setTimeout(function(){ showRecapNext(); }, btnT);
+}
+
+// 인출에서 검정(오답 후 정답)이던 칩을 확장 정답으로 보라색 전환 — 새 칩 생성 X
+function upgradeNodeToLearn(node){
+  node.silent = false;
+  node.fromLearn = true;
+  if(node.lineT < 1) return;   // 아직 라인 진행 중이면 도착 시 showNodeChip이 보라로 그림
+  node.chipShown = false;
+  showNodeChip(node);          // pop 애니메이션과 함께 클래스 갱신
 }
 
 function showRecapNext(){
@@ -7281,7 +7295,31 @@ function spawnUnlitNodes(count){
     return worst;
   }
 
+  // 화면 UI 회피 — 좌상단 제목·단계 탭, 우상단 점수 박스, 하단 안내문·다음 버튼 위에 칩이 놓이지 않게
+  var uiRects = [];
+  (function(){
+    var sR = stage.getBoundingClientRect();
+    if(!(sR.width > 0)) return;
+    var k = sR.width / W;
+    var toLocal = function(el){
+      if(!el) return null;
+      var r = el.getBoundingClientRect();
+      if(!(r.width > 0)) return null;
+      return { l:(r.left - sR.left)/k - 10, r:(r.right - sR.left)/k + 10, t:(r.top - sR.top)/k - 8, b:(r.bottom - sR.top)/k + 8 };
+    };
+    var nav = toLocal(document.querySelector('#game .stage-nav'));
+    if(nav) uiRects.push(nav);
+    var sc = document.querySelector('.score-chip');
+    var scR = (sc && !sc.classList.contains('center-mission')) ? toLocal(sc) : null;
+    uiRects.push(scR || { l: W - 150, r: W, t: 0, b: 115 });          // 우상단 점수 박스(미션 연출 중이면 최종 자리 예약)
+    uiRects.push({ l: W/2 - 230, r: W/2 + 230, t: H - 44, b: H });     // 하단 안내 문구
+    uiRects.push({ l: W - 140, r: W, t: H - 80, b: H });                // 우하단 다음/완료 버튼
+  })();
   function avoidsCenter(x, y){
+    for(var u=0;u<uiRects.length;u++){
+      var q = uiRects[u];
+      if((x + 50 > q.l) && (x - 50 < q.r) && (y + 16 > q.t) && (y - 16 < q.b)) return false;
+    }
     if(!hasAvoid) return true;
     var hit = (x + 50 > avoidL) && (x - 50 < avoidR)
            && (y + 16 > avoidT) && (y - 16 < avoidB);
@@ -7337,12 +7375,37 @@ function spawnUnlitNodes(count){
     return bestMid;
   }
 
+  // 노드가 많을 때(링이 꽉 참) — 스테이지 전체에서 이웃과 가장 먼 빈 자리 (best-candidate 샘플링)
+  //   거리 = 이웃 칩 크기로 정규화한 타원 거리. 1 이상이면 겹침 없음.
+  function farthestFreeSpot(){
+    var best = null, bestD = -1;
+    for(var s=0;s<160;s++){
+      var x = 40 + Math.random() * (W - 80);
+      var y = 22 + Math.random() * (H - 44);
+      if(!avoidsCenter(x, y)) continue;
+      var dMin = Infinity;
+      for(var j=0;j<GNODES.length;j++){
+        var n = GNODES[j], sp = sepFor(n);
+        var dx = (x - n.baseX) / sp.x, dy = (y - n.baseY) / sp.y;
+        var d = Math.sqrt(dx*dx + dy*dy);
+        if(d < dMin) dMin = d;
+      }
+      if(dMin > bestD){ bestD = dMin; best = { x: x, y: y }; }
+    }
+    return best;
+  }
+  var RING_LIMIT = 16;   // 이 개수까지는 기존 원형(들쑥날쑥) 배치, 이후엔 빈 자리 채우기
+
   var added = 0;
   for(var i=0;i<count;i++){
     var bestX = 0, bestY = 0, bestScore = Infinity, ok = false;
-    var targetAng = pickGapAngle();
+    if(GNODES.length >= RING_LIMIT){
+      var spot = farthestFreeSpot();
+      if(spot){ bestX = spot.x; bestY = spot.y; ok = true; }
+    }
+    var targetAng = ok ? 0 : pickGapAngle();
     // 1) 갭 중앙을 우선 시도, 안 되면 작은 지터로 흔들면서 80번
-    for(var t=0;t<80 && !ok;t++){
+    for(var t=0;t<80 && !ok;t++){   // (링 배치 단계)
       var jitter;
       if(t === 0) jitter = 0;
       else if(t < 30) jitter = (Math.random()-.5) * 0.35; // ±10°
