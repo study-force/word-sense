@@ -134,6 +134,19 @@ window.SESSION_READY = (async function loadSession() {
       nextPreview: null
     };
 
+    // 영역 전체 회차 main_chars — 훈사전 그리드용 (영역마다 다른 50글자)
+    try {
+      const { data: areaSessions } = await client
+        .from('sessions')
+        .select('round_no, main_char, main_char_hangul')
+        .eq('area_id', areaRow.id)
+        .eq('level', TARGET_LEVEL)
+        .order('round_no');
+      window.SESSION.areaChars = (areaSessions || []).map(function(s) {
+        return { round: s.round_no, char: s.main_char, hun: s.main_char_hangul || '' };
+      });
+    } catch (e) { window.SESSION.areaChars = []; }
+
     // 다음 회차 미리보기 (내일의 한자) — 같은 영역 round+1. 없으면 null 유지.
     try {
       const { data: nextSess } = await client

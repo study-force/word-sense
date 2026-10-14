@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>훈감각 훈련결과</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&family=Noto+Serif+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gray-h:#a3a3a3; --gray-h2:#999999; --ink:#2b2f36; --mut:#8b929c; --line:#e4e7ec; --rose:#d87878; --accent:#cd5a29;
+    --biology:#5EBE7E; --society:#A87BD6; --history:#E5C257; --science:#8FA0BD; --culture:#E889A8; --economy:#7BB6E6;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:#dfe2e6;font-family:'Noto Sans CJK KR','Noto Sans KR','Malgun Gothic',sans-serif;color:var(--ink);display:flex;align-items:center;justify-content:center;overflow:auto}
+  .stage{position:relative;flex:0 0 auto}
+  .sheet{position:absolute;top:0;left:0;width:760px;height:1085px;background:#fff;box-shadow:0 6px 30px rgba(0,0,0,.18);display:flex;flex-direction:column;transform-origin:top left}
+  .hd{position:relative;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,var(--gray-h),var(--gray-h2));color:#fff;height:74px;padding:0 24px;flex:0 0 auto}
+  .hd .htitle{font-size:22px;font-weight:600;letter-spacing:.01em;white-space:nowrap;line-height:1}
+  .hd .htitle .hk{color:#FFE08A}
+  .hd .course{position:absolute;left:50%;transform:translateX(-50%);font-size:16px;opacity:.95;font-weight:600;white-space:nowrap}
+  .hd .stu .sch{font-size:13.5px;opacity:.9} .hd .stu .nm{font-size:25px;font-weight:600;letter-spacing:.04em;margin-left:10px}
+  .title{text-align:center;font-size:29px;font-weight:600;color:#666666;padding:3px 0 2px;letter-spacing:.02em}
+  .title:empty{display:none}
+  .title .mk{color:#9aa0a8;font-size:19px;margin-right:6px}
+  .dots{display:flex;justify-content:center;gap:8px;padding-bottom:6px}
+  .dots .d{width:26px;height:26px;border-radius:50%;background:#e4e7ec;color:#9aa0a8;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .dots .d.on{background:#6f757e;color:#fff}
+  .body{flex:1 1 auto;min-height:0;padding:54px 22px 16px;display:flex;flex-direction:column;justify-content:flex-start}
+  .pg{display:none} .pg.on{display:block}
+  /* page1 훈사전 탭 */
+  .tabs{grid-column:1;grid-row:1;display:flex;gap:5px;justify-content:space-between;flex-wrap:wrap;margin:0;align-self:center}
+  .tab{padding:5px 9px;border-radius:999px;border:1.5px solid #e2e6ea;background:#fff;font-size:12px;font-weight:700;color:#8b929c;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap}
+  .tab .dt{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+  .tab.on{color:#fff;border-color:transparent}
+  .p1row{display:grid;grid-template-columns:396px 216px;gap:32px 30px;align-items:stretch;justify-content:center}
+  .agrid{grid-column:1;grid-row:2;display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+  .ipanel{grid-column:2;grid-row:2;min-width:0;margin-top:-3px;padding-top:2px;display:flex;flex-direction:column}
+  .iahead{grid-column:2;grid-row:1;align-self:center;position:relative;top:7px;font-size:26px;font-weight:600;color:#3b414a}
+  .iahead .at{display:block;white-space:nowrap}
+  .iahead .aperiod{display:block;margin-top:5px;font-size:12px;font-weight:600;color:var(--mut);white-space:nowrap}
+  .itotal{margin:2px 0 16px;padding:14px 15px;background:#5a616b;border-radius:11px;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .itotal .tl{font-size:12.5px;color:rgba(255,255,255,.82);font-weight:700;margin-bottom:6px}
+  .itotal .tnum{font-size:48px;font-weight:800;line-height:1;letter-spacing:-.01em}
+  .itotal .ttot{font-size:14px;color:rgba(255,255,255,.72);font-weight:700;margin-top:6px}
+  .ac{position:relative;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:5px 2px;height:72px;border:1px solid transparent;overflow:hidden}
+  .ac .ch{font-size:28px;font-weight:400;line-height:1;font-family:'Noto Serif CJK KR','Noto Serif KR',serif}
+  .ac .hn{font-size:9px;color:#5A6178;line-height:1;letter-spacing:.02em;text-align:center}
+  .ac.lock{background:rgba(0,0,0,.02);border:1px dashed rgba(20,25,40,.18)}
+  .ac.lock .ch{color:rgba(20,25,40,.24)} .ac.lock .hn{color:rgba(20,25,40,.2)}
+  .ac.pass{background:#fff;border:1.5px solid var(--ac,#5EBE7E);box-shadow:0 0 0 1px rgba(0,0,0,.02)}
+  .ac.pass.perfect{background:color-mix(in srgb, var(--ac) 16%, #fff)}
+  .ac.fail{background:rgba(216,120,120,.10);border:1.5px solid rgba(216,120,120,.7)}
+  .ac .frac{font-size:11px;font-weight:800;color:rgba(216,120,120,.95);letter-spacing:.01em}
+  .ac .rt{position:absolute;top:3px;right:4px;font-size:8.5px;font-weight:800;color:#aab0b8;line-height:1}
+  .ac .star{position:absolute;top:3px;left:4px;font-size:11px;line-height:1;color:#F2B01E}
+  .sum{display:flex;flex-direction:column;gap:9px}
+  .sum .sitem{display:flex;justify-content:space-between;align-items:center;padding:10px 13px;background:#eaedf1;border-radius:9px;font-size:13.5px;color:#6b727b;font-weight:600}
+  .sum .sitem .v{font-weight:800;font-size:18px;color:#3b414a}
+  .sum .sitem .v .u{font-size:12px;font-weight:600;color:var(--mut)}
+  .sum .period{display:flex;flex-direction:column;gap:3px;padding:10px 13px;background:#f7f8fa;border-radius:9px}
+  .sum .period .pl{font-size:12.5px;color:var(--mut);font-weight:700}
+  .sum .period .pv{font-size:13.5px;font-weight:800;color:#3b414a}
+  .sum .brk{display:flex;gap:6px}
+  .sum .brk .b{flex:1;text-align:center;padding:8px 4px;border-radius:8px;font-weight:700;font-size:12px}
+  .sum .brk .b .n{display:block;font-size:19px;font-weight:800;margin-top:2px}
+  .leg1{display:flex;flex-direction:column;gap:7px;font-size:12.5px;color:#6b727b;margin-top:auto;padding-top:16px;border-top:1px solid var(--line)}
+  .leg1 .sw{width:13px;height:13px;border-radius:3px;display:inline-block;vertical-align:-2px;margin-right:5px;border:1.5px solid transparent}
+  /* page2 통계 */
+  .kpi{text-align:center;margin:7px 0 6px}
+  .kpi .lab{font-size:13px;color:var(--mut);letter-spacing:.1em;margin-bottom:5px} .kpi .big{font-size:33px;font-weight:800;letter-spacing:-.01em} .kpi .big .t{color:var(--mut);font-size:21px;font-weight:700}
+  /* 영역별 현황 표 전체 — 너비 75%, 가운데 정렬 */
+  .stable{width:75%;margin:0 auto}
+  .shead,.srow{display:grid;grid-template-columns:60px 1fr 84px 52px 52px;gap:9px;align-items:center}
+  .shead{font-size:11px;color:var(--mut);font-weight:700;padding-bottom:4px;border-bottom:2px solid #d9dde2} .shead .c{text-align:center}
+  #statRows{margin:5px 0 30px}   /* 상단선 아래 5px · 하단선 아래 30px */
+  .srow{padding:6px 0}
+  #statRows .srow:last-child{border-bottom:1px solid var(--line);padding-bottom:11px}   /* 하단선 위 +5px */
+  .srow .an{font-size:15px;font-weight:700}
+  /* 막대 — 앱과 동일 비율(얇은 캡슐 15px, 숫자는 바깥 열로 분리) */
+  .bar{height:15px;background:#eef0f2;border-radius:7.5px;position:relative;overflow:hidden}
+  .bar .fill{height:100%;border-radius:7.5px}
+  .sfrac{text-align:right;white-space:nowrap;font-size:12px;font-weight:600;color:#9099a3;font-feature-settings:'tnum' on;font-variant-numeric:tabular-nums}
+  .sfrac .fa{font-size:15px;font-weight:800} .sfrac .fp{font-size:11px}
+  .scell{text-align:center} .scell .v{font-size:18px;font-weight:800} .scell .u{font-size:10px;color:var(--mut)}
+  .src{font-size:10.5px;color:#aeb4bc;text-align:center;padding:12px 0 2px}
+  /* page2 하단 — 등급별 어휘 학습 현황 (세로 막대: x축=등급 가로배열, 높이=습득률) */
+  .st-donut{margin:0 auto 0;padding-top:30px}
+  .gr-title{text-align:center;font-size:17px;font-weight:600;color:#3b414a;margin:0 0 3px;letter-spacing:.01em}
+  .gr-note{display:block;text-align:center;font-size:12.5px;color:#9099a3;font-weight:600;margin-bottom:20px}
+  .gc-chart{display:flex;justify-content:center;align-items:flex-end;gap:26px;max-width:470px;margin:0 auto;padding:0 6px 10px;border-bottom:1.5px solid #e2e6ea}
+  .gc-col{display:flex;flex-direction:column;align-items:center;width:54px}
+  .gc-pct{font-size:24px;font-weight:800;line-height:1;margin-bottom:9px;letter-spacing:-.02em;color:#2f8468}
+  .gc-pct .gc-sign{font-size:14px;font-weight:700;margin-left:1px}
+  .gc-track{width:42px;height:132px;background:#eef0f2;border-radius:10px;position:relative;overflow:hidden}
+  .gc-fill{position:absolute;left:0;right:0;bottom:0;border-radius:10px;background:#3f9d7e}
+  .gc-g{font-size:15px;font-weight:700;color:#3b414a;margin-top:10px}
+  .gc-n{font-size:12.5px;color:#9099a3;margin-top:3px;font-feature-settings:'tnum' on;font-variant-numeric:tabular-nums}
+  .gc-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 18px;max-width:470px;margin:15px auto 0}
+  .gc-legend .gl-cap{flex-basis:100%;text-align:center;font-size:12.5px;color:#aeb4bc;font-weight:600;margin-bottom:3px;letter-spacing:.02em}
+  .gc-legend .gl-item{font-size:13px;color:#9099a3;letter-spacing:.01em}
+  .gc-legend .gl-item b{font-weight:600;color:#5a616b;margin-right:3px}
+  /* foot + nav */
+  .footbar{display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 24px 16px;flex:0 0 auto}
+  .footbar .btn{background:#5a616b;color:#fff;border:none;border-radius:4px;padding:7px 18px;font-size:13.5px;font-weight:600;cursor:pointer}
+  .footbar .pgnav{display:flex;align-items:center;gap:14px}
+  .footbar .pa{box-sizing:content-box;width:0;height:0;background:none;border-style:solid;cursor:pointer;padding:0}
+  .footbar .pa.l{border-width:19px 28px 19px 0;border-color:transparent #666666 transparent transparent}
+  .footbar .pa.r{border-width:19px 0 19px 28px;border-color:transparent transparent transparent #cd5a29}
+  .foot{background:#cccccc;display:flex;align-items:center;justify-content:center;height:29px;padding:0 24px;flex:0 0 auto}
+  .foot .ac2{font-size:16px;line-height:1;color:#333333;font-weight:600;position:relative;top:-2px}
+  @media print{
+    body{background:#fff;display:block;height:auto;margin:0}
+    .stage{position:static!important;transform:none!important;width:auto!important;height:auto!important;display:block}
+    /* ↓↓↓ 인쇄 크기 조절: zoom 숫자를 바꾸면 전체가 커지고/작아짐 (1=100%, 0.96=96%). 낮추면 작아져 아래 여백↑ ↓↓↓ */
+    .sheet{position:static!important;transform:none!important;box-shadow:none;width:100%;height:auto;zoom:1;margin:0;display:flex;flex-direction:column;overflow:hidden;page-break-after:always;break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .print-sheet2{page-break-after:auto}
+    .noprint,.footbar{display:none!important}
+    /* ↓ 푸터 위치: 숫자↑ = 푸터 아래로 내려감(내용~푸터 사이 여백↑), 음수 = 위로 올림. 38px≈10mm ↓ */
+    .foot{margin-top:38px}
+    @page{size:A4 portrait;margin:5mm}
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+  <div class="sheet" id="sheet">
+    <div class="hd">
+      <div class="htitle">한자어<span class="hk">[훈]</span>독해</div>
+      <div class="course" id="course"></div>
+      <div class="stu"><span class="sch" id="sch"></span><span class="nm" id="nm"></span></div>
+    </div>
+    <div class="body">
+      <div class="pg on" id="pg1">
+        <div class="p1row">
+          <div class="tabs" id="tabs"></div>
+          <div class="iahead"><span class="at" id="atName"></span><span class="aperiod" id="atPeriod"></span></div>
+          <div class="agrid" id="agrid"></div>
+          <div class="ipanel">
+            <div class="itotal"><div class="tl">습득 어휘</div><b class="tnum" id="atAcq">0</b><div class="ttot">총 <span id="atTotal">0</span>개</div></div>
+            <div class="sum" id="sum"></div>
+            <div class="leg1">
+              <span><span class="sw" style="border-color:var(--biology);background:#fff"></span>통과 (수집 어휘 / 총 어휘)</span>
+              <span><span class="sw" style="border-color:rgba(216,120,120,.7);background:rgba(216,120,120,.12)"></span>미통과 (수집 / 총 어휘)</span>
+              <span><span class="sw" style="border:1px dashed rgba(20,25,40,.25);background:#fff"></span>미훈련(잠금)</span>
+              <span><span class="sw" style="border-color:var(--biology);background:color-mix(in srgb,var(--biology) 16%,#fff)"></span><span style="color:#F2B01E;margin-right:2px">★</span>PERFECT (전 어휘 수집)</span>
+              <span><b style="color:#8b929c">×</b> 숫자 = 회차별 재시도 횟수</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pg" id="pg2">
+        <div class="title">영역별 훈련 현황</div>
+        <div class="kpi"><div class="lab">전체 습득 어휘</div><div class="big"><span id="accT">0</span><span class="t"> / <span id="totT">0</span>개</span></div></div>
+        <div class="stable">
+          <div class="shead"><div>영역</div><div style="grid-column:span 2">습득 어휘</div><div class="c">통과 회차</div><div class="c">PERFECT</div></div>
+          <div id="statRows"></div>
+        </div>
+        <div class="st-donut" id="st-donut"></div>
+        <div class="src">출처: 국립국어원 한국어 기초 어휘 · 표준국어대사전</div>
+      </div>
+    </div>
+    <div class="footbar noprint">
+      <button class="btn print" onclick="window.print()">선택 출력</button>
+      <div class="pgnav">
+        <button class="pa l" id="navL" onclick="go(-1)" aria-label="이전"></button>
+        <button class="pa r" id="navR" onclick="go(1)" aria-label="다음"></button>
+      </div>
+    </div>
+    <div class="foot">
+      <div class="ac2" id="academy"></div>
+    </div>
+  </div>
+  </div>
+<script>
+const CH={"생물":[{"c":"生","h":"날 생"},{"c":"體","h":"몸 체"},{"c":"天","h":"하늘 천"},{"c":"開","h":"열 개"},{"c":"動","h":"움직일 동"},{"c":"親","h":"친할 친"},{"c":"行","h":"다닐 행"},{"c":"中","h":"가운데 중"},{"c":"上","h":"위 상"},{"c":"來","h":"올 래"},{"c":"食","h":"먹을 식"},{"c":"性","h":"성품 성"},{"c":"特","h":"특별할 특"},{"c":"能","h":"능할 능"},{"c":"化","h":"될 화"},{"c":"水","h":"물 수"},{"c":"過","h":"지날 과"},{"c":"養","h":"기를 양"},{"c":"通","h":"통할 통"},{"c":"産","h":"낳을 산"},{"c":"收","h":"거둘 수"},{"c":"習","h":"익힐 습"},{"c":"形","h":"모양 형"},{"c":"藥","h":"약 약"},{"c":"質","h":"바탕 질"},{"c":"官","h":"벼슬 관"},{"c":"症","h":"증세 증"},{"c":"重","h":"무거울 중"},{"c":"便","h":"똥오줌 변"},{"c":"復","h":"회복할 복"},{"c":"處","h":"곳 처"},{"c":"亂","h":"어지러울 란"},{"c":"的","h":"과녁 적"},{"c":"細","h":"가늘 세"},{"c":"洋","h":"큰바다 양"},{"c":"節","h":"마디 절"},{"c":"長","h":"길 장"},{"c":"製","h":"지을 제"},{"c":"貴","h":"귀할 귀"},{"c":"料","h":"헤아릴 료"},{"c":"警","h":"경계할 경"},{"c":"度","h":"법도 도"},{"c":"計","h":"셀 계"},{"c":"古","h":"옛 고"},{"c":"運","h":"옮길 운"},{"c":"任","h":"맡길 임"},{"c":"故","h":"연고 고"},{"c":"常","h":"항상 상"},{"c":"保","h":"지킬 보"},{"c":"排","h":"밀칠 배"}],"사회":[{"c":"出","h":"날 출"},{"c":"人","h":"사람 인"},{"c":"自","h":"스스로 자"},{"c":"白","h":"흰 백"},{"c":"反","h":"돌이킬 반"},{"c":"理","h":"다스릴 리"},{"c":"下","h":"아래 하"},{"c":"力","h":"힘 력"},{"c":"安","h":"편안 안"},{"c":"內","h":"안 내"},{"c":"團","h":"둥글 단"},{"c":"道","h":"길 도"},{"c":"車","h":"수레 차"},{"c":"手","h":"손 수"},{"c":"信","h":"믿을 신"},{"c":"器","h":"그릇 기"},{"c":"方","h":"모 방"},{"c":"進","h":"나아갈 진"},{"c":"記","h":"기록할 기"},{"c":"法","h":"법 법"},{"c":"不","h":"아니 불"},{"c":"最","h":"가장 최"},{"c":"視","h":"볼 시"},{"c":"同","h":"한가지 동"},{"c":"時","h":"때 시"},{"c":"支","h":"지탱할 지"},{"c":"會","h":"모일 회"},{"c":"難","h":"어려울 난"},{"c":"格","h":"격식 격"},{"c":"適","h":"맞을 적"},{"c":"校","h":"학교 교"},{"c":"目","h":"눈 목"},{"c":"服","h":"옷 복"},{"c":"近","h":"가까울 근"},{"c":"族","h":"겨레 족"},{"c":"室","h":"집 실"},{"c":"想","h":"생각 상"},{"c":"女","h":"계집 녀"},{"c":"話","h":"말씀 화"},{"c":"說","h":"말씀 설"},{"c":"世","h":"인간 세"},{"c":"味","h":"맛 미"},{"c":"加","h":"더할 가"},{"c":"設","h":"베풀 설"},{"c":"裝","h":"꾸밀 장"},{"c":"案","h":"책상 안"},{"c":"補","h":"기울 보"},{"c":"參","h":"참여할 참"},{"c":"證","h":"증거 증"},{"c":"多","h":"많을 다"}],"역사":[{"c":"一","h":"한 일"},{"c":"國","h":"나라 국"},{"c":"金","h":"쇠 금"},{"c":"物","h":"물건 물"},{"c":"直","h":"곧을 직"},{"c":"心","h":"마음 심"},{"c":"合","h":"합할 합"},{"c":"敎","h":"가르칠 교"},{"c":"身","h":"몸 신"},{"c":"強","h":"굳셀 강"},{"c":"立","h":"설 립"},{"c":"北","h":"북녘 북"},{"c":"要","h":"요긴할 요"},{"c":"王","h":"임금 왕"},{"c":"海","h":"바다 해"},{"c":"木","h":"나무 목"},{"c":"字","h":"글자 자"},{"c":"軍","h":"군사 군"},{"c":"工","h":"장인 공"},{"c":"代","h":"대신할 대"},{"c":"業","h":"일 업"},{"c":"禮","h":"예도 례"},{"c":"書","h":"글 서"},{"c":"文","h":"글월 문"},{"c":"土","h":"흙 토"},{"c":"對","h":"대할 대"},{"c":"機","h":"틀 기"},{"c":"農","h":"농사 농"},{"c":"統","h":"거느릴 통"},{"c":"東","h":"동녘 동"},{"c":"公","h":"공평할 공"},{"c":"決","h":"결단할 결"},{"c":"交","h":"사귈 교"},{"c":"權","h":"권세 권"},{"c":"約","h":"묶을 약"},{"c":"初","h":"처음 초"},{"c":"韓","h":"한국 한"},{"c":"獨","h":"홀로 독"},{"c":"規","h":"법 규"},{"c":"兵","h":"병사 병"},{"c":"神","h":"귀신 신"},{"c":"密","h":"빽빽할 밀"},{"c":"言","h":"말씀 언"},{"c":"眞","h":"참 진"},{"c":"監","h":"볼 감"},{"c":"南","h":"남녘 남"},{"c":"彈","h":"탄알 탄"},{"c":"離","h":"떠날 리"},{"c":"口","h":"입 구"},{"c":"命","h":"목숨 명"}],"과학":[{"c":"學","h":"배울 학"},{"c":"地","h":"땅 지"},{"c":"發","h":"필 발"},{"c":"定","h":"정할 정"},{"c":"感","h":"느낄 감"},{"c":"分","h":"나눌 분"},{"c":"有","h":"있을 유"},{"c":"溫","h":"따뜻할 온"},{"c":"素","h":"본디 소"},{"c":"氣","h":"기운 기"},{"c":"間","h":"사이 간"},{"c":"變","h":"변할 변"},{"c":"明","h":"밝을 명"},{"c":"冷","h":"찰 냉"},{"c":"大","h":"큰 대"},{"c":"房","h":"방 방"},{"c":"知","h":"알 지"},{"c":"電","h":"번개 전"},{"c":"結","h":"맺을 결"},{"c":"論","h":"논할 론"},{"c":"壓","h":"누를 압"},{"c":"報","h":"갚을 보"},{"c":"正","h":"바를 정"},{"c":"備","h":"갖출 비"},{"c":"期","h":"기약할 기"},{"c":"火","h":"불 화"},{"c":"山","h":"메 산"},{"c":"空","h":"빌 공"},{"c":"石","h":"돌 석"},{"c":"破","h":"깨뜨릴 파"},{"c":"極","h":"지극할 극"},{"c":"惡","h":"악할 악"},{"c":"害","h":"해로울 해"},{"c":"集","h":"모일 집"},{"c":"高","h":"높을 고"},{"c":"新","h":"새 신"},{"c":"着","h":"붙을 착"},{"c":"關","h":"관계할 관"},{"c":"流","h":"흐를 유"},{"c":"遺","h":"남길 유"},{"c":"覺","h":"깨달을 각"},{"c":"材","h":"재목 재"},{"c":"走","h":"달릴 주"},{"c":"務","h":"힘쓸 무"},{"c":"治","h":"다스릴 치"},{"c":"可","h":"옳을 가"},{"c":"夫","h":"지아비 부"},{"c":"線","h":"줄 선"},{"c":"答","h":"대답할 답"},{"c":"波","h":"물결 파"}],"문화":[{"c":"事","h":"일 사"},{"c":"原","h":"근원 원"},{"c":"士","h":"선비 사"},{"c":"色","h":"빛 색"},{"c":"面","h":"낯 면"},{"c":"外","h":"바깥 외"},{"c":"情","h":"뜻 정"},{"c":"實","h":"열매 실"},{"c":"所","h":"바 소"},{"c":"作","h":"지을 작"},{"c":"名","h":"이름 명"},{"c":"月","h":"달 월"},{"c":"曲","h":"굽을 곡"},{"c":"鐵","h":"쇠 철"},{"c":"圖","h":"그림 도"},{"c":"平","h":"평평할 평"},{"c":"無","h":"없을 무"},{"c":"現","h":"나타날 현"},{"c":"優","h":"넉넉할 우"},{"c":"家","h":"집 가"},{"c":"觀","h":"볼 관"},{"c":"樂","h":"즐길 락"},{"c":"風","h":"바람 풍"},{"c":"議","h":"의논할 의"},{"c":"傳","h":"전할 전"},{"c":"路","h":"길 로"},{"c":"表","h":"겉 표"},{"c":"稱","h":"일컬을 칭"},{"c":"後","h":"뒤 후"},{"c":"場","h":"마당 장"},{"c":"相","h":"서로 상"},{"c":"式","h":"법 식"},{"c":"向","h":"향할 향"},{"c":"接","h":"이을 접"},{"c":"語","h":"말씀 어"},{"c":"單","h":"홑 단"},{"c":"音","h":"소리 음"},{"c":"餘","h":"남을 여"},{"c":"洗","h":"씻을 세"},{"c":"戰","h":"싸움 전"},{"c":"脫","h":"벗을 탈"},{"c":"姓","h":"성씨 성"},{"c":"肥","h":"살찔 비"},{"c":"紙","h":"종이 지"},{"c":"雜","h":"섞일 잡"},{"c":"調","h":"고를 조"},{"c":"速","h":"빠를 속"},{"c":"逸","h":"숨을 일"},{"c":"良","h":"어질 양"},{"c":"在","h":"있을 재"}],"경제":[{"c":"民","h":"백성 민"},{"c":"用","h":"쓸 용"},{"c":"點","h":"점 점"},{"c":"別","h":"다를 별"},{"c":"入","h":"들 입"},{"c":"子","h":"아들 자"},{"c":"部","h":"거느릴 부"},{"c":"當","h":"마땅할 당"},{"c":"主","h":"주인 주"},{"c":"配","h":"짝 배"},{"c":"問","h":"물을 문"},{"c":"制","h":"절제할 제"},{"c":"成","h":"이룰 성"},{"c":"意","h":"뜻 의"},{"c":"少","h":"적을 소"},{"c":"告","h":"알릴 고"},{"c":"數","h":"셈 수"},{"c":"落","h":"떨어질 락"},{"c":"全","h":"온전 전"},{"c":"解","h":"풀 해"},{"c":"位","h":"자리 위"},{"c":"造","h":"지을 조"},{"c":"商","h":"헤아릴 상"},{"c":"活","h":"살 활"},{"c":"門","h":"문 문"},{"c":"者","h":"놈 자"},{"c":"斷","h":"끊을 단"},{"c":"選","h":"가릴 선"},{"c":"品","h":"물건 품"},{"c":"類","h":"무리 류"},{"c":"消","h":"사라질 소"},{"c":"等","h":"무리 등"},{"c":"年","h":"해 년"},{"c":"末","h":"끝 말"},{"c":"本","h":"근본 본"},{"c":"術","h":"재주 술"},{"c":"勞","h":"일할 로"},{"c":"失","h":"잃을 실"},{"c":"價","h":"값 가"},{"c":"日","h":"날 일"},{"c":"量","h":"헤아릴 량"},{"c":"達","h":"통달할 달"},{"c":"抗","h":"겨룰 항"},{"c":"取","h":"가질 취"},{"c":"科","h":"과목 과"},{"c":"擊","h":"칠 격"},{"c":"三","h":"석 삼"},{"c":"半","h":"반 반"},{"c":"船","h":"배 선"},{"c":"職","h":"직분 직"}]};
+const AREAS=[["생물","biology","🌿"],["사회","society","⚖️"],["역사","history","📜"],["과학","science","🔬"],["문화","culture","🎭"],["경제","economy","💰"]];
+const COLOR={biology:"#5EBE7E",society:"#A87BD6",history:"#E5C257",science:"#8FA0BD",culture:"#E889A8",economy:"#7BB6E6"};
+const PASS_MIN=10, TOTS=[44,51,20,17,35,20,32,48,15,30,22,40];
+// 데모: 영역별 통과 회차수로 회차별 결과 생성
+function genRounds(ko,cleared){ return CH[ko].map((x,i)=>{ const r=i+1,total=TOTS[i%TOTS.length];
+  if(r<=cleared){ const found=(r%5===0)?total:Math.max(PASS_MIN,total-(r%4)*4); return {r,c:x.c,h:x.h,total,found,st:"pass",retry:r%3}; }
+  if(r<=cleared+3){ return {r,c:x.c,h:x.h,total,found:3+(r%6),st:"fail",retry:1+(r%3)}; }  /* 미통과 = PASS_MIN(10) 미만 */
+  return {r,c:x.c,h:x.h,total:0,found:0,st:"lock",retry:0}; }); }
+const DEMO={ student:{name:"김건희",school:"초등학교",grade:6,academy:"공부의철인(분당본원)",course:"초등과정"},
+  areas:{biology:{cleared:12,acq:850,tot:1932,perfect:5,retries:6,first:"2026-08-27",last:"2026-10-10"},society:{cleared:8,acq:320,tot:1756,perfect:1,retries:3,first:"2026-09-02",last:"2026-10-08"},history:{cleared:4,acq:95,tot:1800,perfect:0,retries:2,first:"2026-09-15",last:"2026-10-01"},science:{cleared:0,acq:0,tot:1820,perfect:0,retries:0},culture:{cleared:7,acq:410,tot:1650,perfect:2,retries:4,first:"2026-08-20",last:"2026-10-05"},economy:{cleared:0,acq:0,tot:1500,perfect:0,retries:0}},
+  totalAcq:1230,totalTot:4432,
+  grades:[{g:1,acq:580,prov:620},{g:2,acq:390,prov:560},{g:3,acq:190,prov:520},{g:4,acq:70,prov:480}] };
+let D=DEMO, curArea="biology", page=1;
+function renderArea(){
+  const [ko,slug]=AREAS.find(a=>a[1]===curArea); const col=COLOR[slug];
+  const rounds=genRounds(ko,(D.areas[slug]||{}).cleared||0);
+  const tabs=document.getElementById("tabs"); tabs.innerHTML="";
+  AREAS.forEach(([k,s])=>tabs.insertAdjacentHTML("beforeend",'<div class="tab'+(s===curArea?' on':'')+'" onclick="curArea=\''+s+'\';renderArea()" style="'+(s===curArea?'background:'+COLOR[s]:'')+'"><span class="dt" style="background:'+(s===curArea?'#fff':COLOR[s])+'"></span>'+k+'</div>'));
+  document.getElementById("atName").textContent=ko+" 영역";
+  const pass=rounds.filter(r=>r.st==="pass").length, fail=rounds.filter(r=>r.st==="fail").length, lock=rounds.filter(r=>r.st==="lock").length;
+  const g=document.getElementById("agrid"); g.innerHTML="";
+  rounds.forEach(r=>{ let inner='<div class="ch">'+r.c+'</div><div class="hn">'+r.h+'</div>';
+    const perf=(r.st==="pass"&&r.found>=r.total&&r.total>0);
+    if(r.st==="pass") inner+='<div class="frac" style="color:'+col+'">'+r.found+'/'+r.total+'</div>';
+    else if(r.st==="fail") inner+='<div class="frac">'+r.found+'/'+r.total+'</div>';
+    const rt=(r.st!=="lock"&&r.retry>0)?'<span class="rt">×'+r.retry+'</span>':'';
+    const star=perf?'<span class="star">★</span>':'';
+    g.insertAdjacentHTML("beforeend",'<div class="ac '+r.st+(perf?' perfect':'')+'" style="--ac:'+col+'">'+rt+star+inner+'</div>'); });
+  let pf=0; rounds.forEach(r=>{ if(r.st==="pass"&&r.found>=r.total)pf++; });
+  const ar=D.areas[slug]||{}, acq=ar.acq||0, totW=ar.tot||0, retries=ar.retries||0;
+  const aa=document.getElementById("atAcq"); aa.textContent=acq.toLocaleString(); aa.style.color=col;
+  document.getElementById("atTotal").textContent=totW.toLocaleString();
+  document.getElementById("atPeriod").textContent=(ar.first&&ar.last)?(ar.first+" ~ "+ar.last):"";
+  document.getElementById("sum").innerHTML=
+    '<div class="brk">'+
+      '<div class="b" style="background:color-mix(in srgb,'+col+' 14%,#fff);border:1.5px solid '+col+';color:'+col+'">통과<span class="n">'+pass+'</span></div>'+
+      '<div class="b" style="background:rgba(216,120,120,.12);border:1.5px solid rgba(216,120,120,.7);color:var(--rose)">미통과<span class="n">'+fail+'</span></div>'+
+      '<div class="b" style="background:rgba(0,0,0,.02);border:1px dashed rgba(20,25,40,.18);color:#8b929c">미훈련<span class="n">'+lock+'</span></div>'+
+    '</div>'+
+    '<div class="sitem"><span>PERFECT <span style="color:#F2B01E">★</span></span><span class="v">'+pf+'<span class="u"> 회</span></span></div>'+
+    '<div class="sitem"><span>총 재시도 횟수</span><span class="v">'+retries+'<span class="u"> 회</span></span></div>';
+}
+function renderStats(){
+  document.getElementById("accT").textContent=D.totalAcq.toLocaleString();
+  document.getElementById("totT").textContent=D.totalTot.toLocaleString();
+  const sr=document.getElementById("statRows"); sr.innerHTML="";
+  AREAS.forEach(([ko,slug,em])=>{ const a=D.areas[slug]||{acq:0,tot:1,cleared:0,perfect:0}; const pct=Math.round(a.acq/a.tot*100);
+    sr.insertAdjacentHTML("beforeend",'<div class="srow"><div class="an">'+ko+'</div><div class="bar"><div class="fill" style="width:'+Math.max(pct,2)+'%;background:'+COLOR[slug]+'"></div></div><div class="sfrac"><span class="fa" style="color:'+(a.acq?COLOR[slug]:'#c2c8cf')+'">'+a.acq.toLocaleString()+'</span> / '+a.tot.toLocaleString()+'</div><div class="scell"><span class="v">'+a.cleared+'</span><span class="u"> /50</span></div><div class="scell"><span class="v" style="color:'+(a.perfect?COLOR[slug]:'#c2c8cf')+'">'+a.perfect+'</span><span class="u"> 회</span></div></div>'); });
+  // ── 등급별 어휘 학습 현황 (세로 막대: x축=등급 가로배열, 높이=습득률) ──
+  const dn=document.getElementById("st-donut");
+  if(dn){
+    // 국립국어원 기초어휘 등급별 습득 시기 (2023 최종보고서 2.1~2.2)
+    const GRADE_YR={1:'취학 전',2:'초1~2',3:'초3~4',4:'초5~6',5:'중1~3'};
+    const grades=(D.grades||[]).filter(g=>(g.prov||0)>0);
+    const cols=grades.map(g=>{
+      const prov=g.prov||0, acq=g.acq||0, pct=prov>0?Math.round(acq/prov*100):0;
+      const barC = pct>=70?'#2f9e73':pct>=45?'#5cb795':'#9ac9b9';   // 습득률 구간별 농도
+      const pctC = pct>=70?'#277e5c':pct>=45?'#3c8f74':'#7aa698';
+      return '<div class="gc-col">'
+        +'<div class="gc-pct" style="color:'+pctC+'">'+pct+'<span class="gc-sign">%</span></div>'
+        +'<div class="gc-track"><div class="gc-fill" style="height:'+Math.max(pct,2)+'%;background:'+barC+'"></div></div>'
+        +'<div class="gc-g">'+g.g+'급</div>'
+        +'<div class="gc-n">'+acq.toLocaleString()+' / '+prov.toLocaleString()+'</div>'
+        +'</div>';
+    }).join('');
+    // 급수별 학년 설명 — 그래프 하단 별도 표기 (표시된 급수만)
+    const legend=grades.map(g=>'<span class="gl-item"><b>'+g.g+'급</b> '+(GRADE_YR[g.g]||'')+'</span>').join('');
+    dn.innerHTML='<div class="gr-title">등급별 어휘 습득률</div>'
+      +'<span class="gr-note">현재 회차까지 제공된 어휘 기준</span>'
+      +'<div class="gc-chart">'+cols+'</div>'
+      +'<div class="gc-legend"><div class="gl-cap">급수별 습득 시기</div>'+legend+'</div>';
+  }
+}
+function paint(){ document.getElementById("pg1").classList.toggle("on",page===1); document.getElementById("pg2").classList.toggle("on",page===2);
+  navL.style.borderRightColor=page>1?"#666666":"#cccccc"; navR.style.borderLeftColor=page<2?"#cd5a29":"#cccccc"; }
+function setPage(p){ page=Math.min(2,Math.max(1,p)); paint(); } function go(d){ setPage(page+d); }
+function render(){ const s=D.student; course.textContent=s.course||((s.school||"").includes("중")?"중등과정":"초등과정"); sch.textContent=s.school+" "+s.grade+"학년"; nm.textContent=s.name; academy.textContent=s.academy; renderArea(); renderStats(); paint(); }
+// 창 크기에 맞춰 가로세로 비율(760:1085) 유지하며 전체 스케일
+const SHEET_W=760, SHEET_H=1085, FIT_PAD=16;
+function fit(){ const sh=document.getElementById("sheet"),st=document.getElementById("stage"); if(!sh||!st)return;
+  const s=Math.max(.2,Math.min((window.innerWidth-FIT_PAD*2)/SHEET_W,(window.innerHeight-FIT_PAD*2)/SHEET_H));
+  sh.style.transform="scale("+s+")"; st.style.width=(SHEET_W*s)+"px"; st.style.height=(SHEET_H*s)+"px"; }
+window.addEventListener("resize",fit);
+// 인쇄: 팝업 시트 그대로 — 페이지마다 완전한 시트 1장씩(aspect-ratio로 팝업과 동일 비율)
+let printClone=null;
+function setupPrint(){ teardownPrint(); const sheet=document.getElementById("sheet"); if(!sheet)return;
+  const pgs=sheet.querySelectorAll(".pg"); pgs.forEach((p,i)=>p.classList.toggle("on",i===0)); // 원본=1페이지
+  printClone=sheet.cloneNode(true); printClone.removeAttribute("id"); printClone.classList.add("print-sheet2");
+  printClone.querySelectorAll("[id]").forEach(e=>e.removeAttribute("id"));
+  const cpgs=printClone.querySelectorAll(".pg"); cpgs.forEach((p,i)=>p.classList.toggle("on",i===1)); // 클론=2페이지
+  printClone.style.transform="none"; sheet.parentNode.appendChild(printClone); }
+function teardownPrint(){ if(printClone){ printClone.remove(); printClone=null; } paint(); }
+window.addEventListener("beforeprint",setupPrint);
+window.addEventListener("afterprint",teardownPrint);
+(async function(){ const q=new URLSearchParams(location.search),m=q.get("member_no");
+  if(m){ try{ const r=await fetch("/api/teacher-result?member_no="+encodeURIComponent(m)); if(r.ok){ D=await r.json(); } }catch(e){} }
+  // 가장 진척 높은 영역을 기본 탭으로
+  let best="biology",bc=-1; AREAS.forEach(([k,s])=>{ const c=(D.areas[s]||{}).cleared||0; if(c>bc){bc=c;best=s;} }); curArea=best;
+  render(); fit(); })();
+</script>
+</body>
+</html>

@@ -955,6 +955,7 @@ button { font-family: inherit; color: inherit; }
   letter-spacing: 0.02em;
   line-height: 1.35;
 }
+.ci-meaning-hun .cm-hun-pad { visibility: hidden; }   /* 빈 줄 — 높이만 차지(예시 시작선 정렬) */
 .ci-meaning-divider {
   height: 1px;
   background: rgba(20,25,40,0.08);
@@ -1026,6 +1027,12 @@ button { font-family: inherit; color: inherit; }
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+/* 도넛 라벨 전용 — translate(-50%,-50%) 중심 정렬을 애니메이션이 덮어쓰지 않도록 보존
+   (ciFadeUp 를 쓰면 to 의 translateY(0) 가 중심정렬 transform 을 지워 라벨이 좌상단 기준으로 밀림) */
+@keyframes ciLabelIn {
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 10px)); }
+  to   { opacity: 1; transform: translate(-50%, -50%); }
+}
 @keyframes ciHeroIn {
   0%   { opacity: 0; transform: scale(0.86); }
   60%  { opacity: 1; transform: scale(1.02); }
@@ -1090,6 +1097,24 @@ button { font-family: inherit; color: inherit; }
   80% { transform: translate(2px, -50%) rotate(2deg); }
 }
 .hint-btn.shake { animation: hintShake 1s ease-in-out infinite; }
+
+/* 힌트 내역 스트립 — 흰색 하단 도크 위에 고정. 받은 힌트 뜻을 계속 보여줌(지나가는 메시지 X). */
+/* 비어 있으면 접힘(공간 0 → 입력창 안 밀림). 힌트가 생기면 한 줄로 표시(넘치면 가로 스크롤).
+   칩은 flex-shrink:0으로 줄바꿈/찌그러짐 방지. */
+.hint-log {
+  display: none; flex-wrap: nowrap; overflow-x: auto; align-items: center; gap: 6px;
+  margin: 0 auto; max-width: 820px; padding: 5px 12px;
+  background: #EAF7F0; border: 1px solid #BFE6D3; border-radius: 12px;
+  scrollbar-width: none;
+}
+.hint-log.on { display: flex; }
+.hint-log::-webkit-scrollbar { display: none; }
+.hint-log .hl-title { flex-shrink: 0; font-size: 12px; font-weight: 800; color: #1F9D63; letter-spacing: 0.03em; margin-right: 2px; white-space: nowrap; }
+/* 힌트는 받는 순간 소모 → 칩은 '이미 쓴 힌트'로 딤드 표시(가로줄 X). 찾은 건 조금 더 흐리게. */
+.hint-log .hl-chip { flex-shrink: 0; white-space: nowrap; font-size: 13px; font-weight: 500; color: #DCF0E6; background: #2E6B4E; border: 1px solid #23543E; border-radius: 100px; padding: 3px 12px; }
+.hint-log .hl-chip.found { color: #B3C4BB; background: #49594F; border-color: #3A4740; }  /* 찾은/쓴 힌트 — 진한 회녹색 */
+.hint-log .hl-chip.new { animation: hlPop .55s ease; }
+@keyframes hlPop { 0%{ transform: scale(.7); opacity:0; } 60%{ transform: scale(1.08); } 100%{ transform: scale(1); opacity:1; } }
 
 .cnt-label {
   font-size: 12px; font-weight: 500;
@@ -3377,6 +3402,8 @@ body[data-page="result"]    .r-topbar-meta.global-topbar-meta,
 body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   display: flex;
 }
+/* 통계(전체 현황)에선 '오늘의 한자(入 들입)'는 불필요 → 한자 메타 숨김. 영역·회차만 남김. */
+body[data-page="stats"] .r-topbar-meta.global-topbar-meta .r-tm-char { display: none; }
 
 /* ── 등급 배지 (별 시스템) ──────────────────────────
    결과 페이지 상단, 회차 메타 아래 중앙.
@@ -3535,8 +3562,8 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   position: absolute; inset: 56px 0 0 0;
   display: flex; flex-direction: column;
   align-items: center;
-  /* 본문 무게중심 좌측 30px 이동 — 좌/우 padding 비대칭 (좌 0 / 우 60) */
-  padding: 24px 60px 24px 0px;
+  /* 중앙영역 전체를 우측 20px 이동 — 좌 50 / 우 10 (총 60 유지, 중심 +20px) */
+  padding: 24px 10px 24px 50px;
   overflow-y: auto;
   z-index: 1;
   font-family: 'Noto Sans KR', sans-serif;
@@ -3554,10 +3581,6 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   line-height: 1.15;
   text-align: center;
   margin: 4px auto 18px;
-  /* .st-body가 좌 0/우 60 비대칭 padding이라 텍스트가 30px 좌측으로 치우침.
-     타이틀은 split 본문과 달리 viewport 진짜 중앙이 자연스러우므로 좌측 60px padding으로 보정.
-     (text-align: center가 padding 안쪽 영역의 중앙을 잡으므로, padding-left 60px만큼 우측 이동) */
-  padding-left: 60px;
   opacity: 0;
   animation: ciFadeUp .6s cubic-bezier(.2,1,.3,1) .05s forwards;
 }
@@ -3567,7 +3590,7 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   width: 100%;
   max-width: 980px;
   display: flex;
-  flex-direction: row;
+  flex-direction: row-reverse;   /* 좌우 교체: 리스트(좌) · 도넛(우) */
   align-items: center;       /* 도넛과 카드 그리드 세로 중앙선 맞춤 */
   justify-content: center;
   gap: 16px;
@@ -3582,6 +3605,7 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   max-width: 500px;
   display: flex;
   flex-direction: column;
+  transform: translateX(30px);   /* 막대그래프만 우측 30px 이동(도넛 고정 — flex 흐름 영향 없음) */
 }
 /* ── 메인 KPI — 도넛 + 중앙 숫자 통합 (좌측 블록) ── */
 .st-headline {
@@ -3595,6 +3619,38 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   opacity: 0;
   animation: ciFadeUp .7s cubic-bezier(.2,1,.3,1) .12s forwards;
 }
+/* 관심 1위 한 줄 메시지 — 도넛 아래 */
+.st-donut-lead {
+  text-align: center;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--st-text);
+  margin-top: -30px;   /* 도넛 프레임(440) 하단 여백 안으로 당겨 그래프에 더 가깝게 */
+  opacity: 0;
+  animation: ciFadeUp .6s cubic-bezier(.2,1,.3,1) .55s forwards;
+}
+.st-donut-lead b { font-weight: 800; }
+
+/* ── 등급별 어휘 습득률 — 세로 막대(앱: 다크 + 입체감) ── */
+.gc-title { text-align: center; font-size: 20px; font-weight: 600; color: var(--st-text-deep); margin: 0 0 4px; letter-spacing: .02em; }
+.gc-note { text-align: center; font-size: 14px; color: var(--st-dim); font-weight: 500; margin-bottom: 28px; }
+.gc-chart { display: flex; justify-content: center; align-items: flex-end; gap: 30px; padding: 0 10px 16px; border-bottom: 1.5px solid rgba(255,255,255,0.14); }
+.gc-col { display: flex; flex-direction: column; align-items: center; width: 62px; }
+.gc-pct { font-size: 30px; font-weight: 800; line-height: 1; margin-bottom: 12px; letter-spacing: -.02em; }
+.gc-pct .gc-sign { font-size: 17px; font-weight: 700; margin-left: 1px; }
+.gc-track { width: 46px; height: 172px; background: rgba(255,255,255,0.07); border-radius: 13px; position: relative; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.35); }
+.gc-fill { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 13px; box-shadow: 0 3px 10px rgba(0,0,0,0.3); }
+.gc-fill::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 42%; background: linear-gradient(to bottom, rgba(255,255,255,0.45), rgba(255,255,255,0)); border-radius: 13px 13px 0 0; }
+.gc-fill::after { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 36%; background: linear-gradient(to right, rgba(255,255,255,0.22), rgba(255,255,255,0)); border-radius: 13px 0 0 13px; }
+.gc-g { font-size: 17px; font-weight: 600; color: var(--st-text-deep); margin-top: 14px; letter-spacing: .08em; }
+.gc-n { font-size: 13.5px; color: var(--st-dim); margin-top: 4px; font-variant-numeric: tabular-nums; }
+.gc-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--st-line, rgba(255,255,255,.08)); }
+.gc-legend .gl-cap { flex-basis: 100%; text-align: center; font-size: 13px; color: var(--st-dim); opacity: .75; font-weight: 600; margin-bottom: 4px; letter-spacing: .02em; }
+.gc-legend .gl-item { font-size: 13.5px; color: var(--st-dim); letter-spacing: .01em; }
+.gc-legend .gl-item b { font-weight: 600; color: var(--st-text-deep); margin-right: 3px; }
+.gc-fill.gc-hi { background: #36d79b; } .gc-pct.gc-hi { color: #4fe0ab; }
+.gc-fill.gc-mid { background: #45b98a; } .gc-pct.gc-mid { color: #6fcaa6; }
+.gc-fill.gc-lo { background: #5f9a8c; } .gc-pct.gc-lo { color: #95bfb2; }
 .st-headline-label {
   font-size: 10px; font-weight: 700;
   color: var(--st-dim-strong);
@@ -3650,7 +3706,7 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   pointer-events: none;
   transform: translate(-50%, -50%);
   opacity: 0;
-  animation: ciFadeUp .55s ease forwards;
+  animation: ciLabelIn .55s ease forwards;   /* ciFadeUp 금지 — to 의 translateY 가 중심정렬을 덮어써 라벨이 밀림 */
   white-space: nowrap;
 }
 .st-donut-label .st-lbl-name {
@@ -3734,6 +3790,8 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   gap: 8px; /* 기본 간격 14px → 8px (약 43% 축소) — 영역명↔막대, 막대↔분수 공통 */
   min-width: 0;
   box-sizing: border-box;
+  position: relative;            /* '오늘' 배지 absolute 기준 */
+  padding: 3px 38px 3px 0;       /* 오른쪽 38px = 모든 행 공통 배지 자리 → 막대 트랙 폭 동일(비교 정확) */
   opacity: 0;
   animation: ciFadeUp .55s ease forwards;
   transition: opacity .25s ease;
@@ -3741,6 +3799,12 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
 .st-row.empty { opacity: 0.45; }
 /* 미시작 영역 — 영역명 추가 딤드 (행 opacity 외에 텍스트 색까지 약화) */
 .st-row.empty .st-row-name { color: rgba(255,255,255,0.40); }
+
+/* 오늘 진행 중인 영역 — 강조: 은은한 배경 + 흰색 볼드 이름 + 우측 '오늘' 배지(막대 밀지 않음) */
+.st-row.current { opacity: 1; background: rgba(255,255,255,0.055); border-radius: 10px; padding-left: 9px; margin-left: -9px; }
+.st-row.current .st-row-name { color: #FFFFFF; font-weight: 600; }
+/* '오늘' 배지 — absolute로 예약 공간(오른쪽 38px)에 띄움 → 어느 행도 막대 길이에 영향 없음 */
+.st-today-badge { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 10.5px; font-weight: 800; letter-spacing: 0.02em; color: #0B241B; background: #4FD1A0; border-radius: 5px; padding: 2px 6px; white-space: nowrap; }
 
 .st-row-name {
   font-size: 20px; font-weight: 400;
@@ -4104,6 +4168,18 @@ body[data-page="stats"]     .r-topbar-meta.global-topbar-meta {
   letter-spacing: 0.08em;
   white-space: nowrap;
 }
+/* 내 등수 — 각 랭킹 카드 타이틀 우측에 명확히 표시 */
+.r-rank-head-right { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.r-rank-myrank {
+  font-family: 'Noto Sans KR', sans-serif; font-size: 12px; font-weight: 800;
+  color: rgba(255,255,255,0.92); letter-spacing: 0.01em; white-space: nowrap; line-height: 1.1;
+}
+.r-rank-myrank.hidden { display: none; }
+.r-rank-myrank .mr-num { font-size: 15px; }
+.r-rank-card.col-retr   .r-rank-myrank .mr-num { color: #5BC893; }
+.r-rank-card.col-combo  .r-rank-myrank .mr-num { color: #C9A6F0; }
+.r-rank-card.col-master .r-rank-myrank .mr-num { color: #4FA3F0; }
+.r-rank-card.col-cumul  .r-rank-myrank .mr-num { color: #FFD659; }
 /* 내 랭킹이 멀리 떨어져 있을 때 사이의 ⋯ 구분자 */
 .r-rank-card .r-rank-ellipsis {
   text-align: center;
@@ -4377,12 +4453,10 @@ body.recap-mode .g-node.lit.is-silent {
   box-shadow: 0 9999px 0 9999px #FFFFFF !important;
 }
 /* 환원 모드: 탐구 후 어휘망 점등 화면에서는 하단 흰 도크 숨김 */
+/* 확장: 도크를 완전히 제거(display:none) → 캔버스가 전체 높이. 고정 보정 없이 top:50%로 두면
+   네트워크가 '그 스테이지의 자기 공간' 중앙에 자연스럽게 배치됨(하단 빈 공간/상단 뜸 없음).
+   인출은 도크 위 공간의 중앙, 확장은 전체의 중앙 — 각자 균형. */
 body.recap-mode .game-bottom { display: none !important; }
-/* 환원 모드에서는 stage가 100px 더 커지므로 (top:50%가 50px 아래로 이동),
-   캡슐 위치를 인출 모드와 동일하게 유지하려면 추가 -50px 보정 */
-body.recap-mode .g-center {
-  transform: translate(-50%, calc(-50% + 20px - 50px)) !important;   /* 인출과 동일한 시각적 위치 */
-}
 
 /* ─── 환원 모드 컨셉 컬러 — 확장(보라)으로 ─────────────────
    인출에서 맞힌 노드는 .from-learn 없이 그대로 녹색 유지.
@@ -4487,9 +4561,7 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
     <span class="r-tm-area" id="r-tm-area"></span>
     <span class="r-tm-sep">·</span>
     <span class="r-tm-round" id="r-tm-round">1회차</span>
-    <span class="r-tm-sep">·</span>
-    <span class="r-tm-han" id="r-tm-han">生</span>
-    <span class="r-tm-hun" id="r-tm-hun">날 생</span>
+    <span class="r-tm-char"><span class="r-tm-sep">·</span><span class="r-tm-han" id="r-tm-han">生</span><span class="r-tm-hun" id="r-tm-hun">날 생</span></span>
   </div>
 
   <!-- ══ 홈 ══
@@ -4595,6 +4667,7 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
       <div class="fb-zone"><div id="fb"></div></div>
     </div>
     <div class="game-bottom">
+      <div class="hint-log" id="hint-log"></div>
       <div class="input-row">
         <div class="input-wrap">
           <span class="wi-counter" aria-hidden="true"><em id="wi-found">0</em><span class="wi-slash">/</span><span class="wi-total" id="wi-total">38</span></span>
@@ -4645,7 +4718,7 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
         <div class="area-master-msg" id="area-master-msg"></div>
       </div>
     </div>
-    <button class="area-back-btn area-back-btn-floating" onclick="showTomorrowSplash()">다음 →</button>
+    <button class="area-back-btn area-back-btn-floating" onclick="goStats()">다음 →</button>
 
     <!-- ══ 내일의 한자 overlay — area "다음" 클릭 시 등장. "다음 →" 버튼으로 통계 이동.
          charintro 본문 톤(한자 158px + 훈음) + 다음 훈련 준비 안내 메시지 ══ -->
@@ -4661,7 +4734,7 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
       <p class="ts-guide" id="ts-guide">
         다음번 훈련을 위해 <em id="ts-guide-hun">'몸 체'</em> 한자가 들어간 어휘를 최대한 찾아보세요!
       </p>
-      <button class="ts-next" onclick="goStats()"><span>다음</span><span class="ts-next-arrow">→</span></button>
+      <button class="ts-next" onclick="goHome()"><span>끝내기</span></button>
     </div>
   </div>
 
@@ -4699,22 +4772,22 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
            list(4등 이하)만 스크롤. id="r-rank-block"은 기존 등장 애니메이션 훅 유지. -->
       <div class="r-rank-block" id="r-rank-block">
         <div class="r-rank-card col-retr">
-          <div class="r-rank-card-head"><span class="r-rank-col-tag tag-retr">인출</span><span class="r-rank-col-sub">오늘</span></div>
+          <div class="r-rank-card-head"><span class="r-rank-col-tag tag-retr">인출</span><div class="r-rank-head-right"><span class="r-rank-col-sub">오늘</span><span class="r-rank-myrank hidden" id="r-myrank-retr"></span></div></div>
           <div class="r-rank-podium" id="r-rank-podium-retr"></div>
           <div class="r-rank-list"   id="r-rank-list-retr"></div>
         </div>
         <div class="r-rank-card col-combo">
-          <div class="r-rank-card-head"><span class="r-rank-col-tag tag-combo">인출+확장</span><span class="r-rank-col-sub">오늘</span></div>
+          <div class="r-rank-card-head"><span class="r-rank-col-tag tag-combo">인출+확장</span><div class="r-rank-head-right"><span class="r-rank-col-sub">오늘</span><span class="r-rank-myrank hidden" id="r-myrank-combo"></span></div></div>
           <div class="r-rank-podium" id="r-rank-podium-combo"></div>
           <div class="r-rank-list"   id="r-rank-list-combo"></div>
         </div>
         <div class="r-rank-card col-master">
-          <div class="r-rank-card-head"><span class="r-rank-col-tag tag-master">인출+확장+강화</span><span class="r-rank-col-sub">오늘</span></div>
+          <div class="r-rank-card-head"><span class="r-rank-col-tag tag-master">인출+확장+강화</span><div class="r-rank-head-right"><span class="r-rank-col-sub">오늘</span><span class="r-rank-myrank hidden" id="r-myrank-master"></span></div></div>
           <div class="r-rank-podium" id="r-rank-podium-master"></div>
           <div class="r-rank-list"   id="r-rank-list-master"></div>
         </div>
         <div class="r-rank-card col-cumul">
-          <div class="r-rank-card-head"><span class="r-rank-col-tag tag-cumul">인출+확장+강화</span><span class="r-rank-col-sub" id="r-rank-area">누적</span></div>
+          <div class="r-rank-card-head"><span class="r-rank-col-tag tag-cumul">인출+확장+강화</span><div class="r-rank-head-right"><span class="r-rank-col-sub" id="r-rank-area">누적</span><span class="r-rank-myrank hidden" id="r-myrank-cumul"></span></div></div>
           <div class="r-rank-podium" id="r-rank-podium-cumul"></div>
           <div class="r-rank-list"   id="r-rank-list-cumul"></div>
         </div>
@@ -4740,7 +4813,7 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
         출처: 국립국어원 한국어 기초 어휘 · 표준국어대사전
       </div>
     </div>
-    <button type="button" class="st-finish-btn" onclick="goHome()"><span>끝내기</span><svg class="st-finish-x" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
+    <button type="button" class="st-finish-btn" onclick="goTomorrow()"><span>다음 →</span></button>
   </div>
 
 </div><!-- /screen -->
@@ -5950,7 +6023,7 @@ function shuffle(arr){
 }
 
 // ── 상태 ────────────────────────────────────
-var S = { found:[], attempted:[], attemptedFb:{}, hints:5, okCount:0, hintTargets:[], hintFound:[] };
+var S = { found:[], attempted:[], attemptedFb:{}, hints:5, okCount:0, hintTargets:[], hintFound:[], hintLog:[] };
 var HINT_NUDGE_TIMER = null;
 function resetHintNudge(){
   if(HINT_NUDGE_TIMER){ clearTimeout(HINT_NUDGE_TIMER); HINT_NUDGE_TIMER = null; }
@@ -5984,7 +6057,9 @@ function pad2(n){ n = String(n); while(n.length < 2) n = '0' + n; return n; }
 
 function goHome(){
   var sess = SESSION;
-  S = { found:[], attempted:[], attemptedFb:{}, hints:5, okCount:0, hintTargets:[], hintFound:[] };
+  S = { found:[], attempted:[], attemptedFb:{}, hints:5, okCount:0, hintTargets:[], hintFound:[], hintLog:[] };
+  renderHintLog();
+  var _tom = document.getElementById('tomorrow-splash'); if(_tom) _tom.classList.remove('on');
   CONFETTI_FIRED = false;
   if(HINT_NUDGE_TIMER){ clearTimeout(HINT_NUDGE_TIMER); HINT_NUDGE_TIMER = null; }
   document.getElementById('g-nodes').innerHTML = '';
@@ -6535,11 +6610,15 @@ function goCharIntro(){
   var elMeans = document.getElementById('ci-meanings');
   if(elMeans){
     var meanings = sess.mainMeanings || [];
+    // 뜻 줄 수 최댓값 — 뜻이 적은 카드는 빈 줄로 패딩해 예시 시작 위치를 카드끼리 통일
+    var splitHun = function(h){ h = (h || '').trim(); return h ? h.split(/[,，·•/]/).map(function(s){ return s.trim(); }).filter(Boolean) : []; };
+    var maxHunLines = Math.max.apply(null, [1].concat(meanings.map(function(m){ return splitHun(m.hun).length; })));
     elMeans.innerHTML = meanings.map(function(m, i){
       // 의미 라인들 — 콤마/·/슬래시로 분리해서 각각 한 줄
-      var hunStr = (m.hun || '').trim();
-      var hunLines = hunStr ? hunStr.split(/[,，·•/]/).map(function(s){ return s.trim(); }).filter(Boolean) : [];
+      var hunLines = splitHun(m.hun);
       var hunHtml  = hunLines.map(function(line){ return '<span class="cm-hun-line">'+line+'</span>'; }).join('');
+      // 부족한 줄은 빈(숨김) 줄로 채워 예시 시작선을 맞춤
+      for(var _p = hunLines.length; _p < maxHunLines; _p++){ hunHtml += '<span class="cm-hun-line cm-hun-pad">&nbsp;</span>'; }
 
       // 예시 어휘
       var exs = (m.examples || []).filter(Boolean);
@@ -7054,6 +7133,28 @@ function updateHints(){
   btn.disabled = S.hints <= 0;
 }
 
+// ── 힌트 내역 (지난 힌트 누적 표시) — 지나가는 메시지와 달리 입력창 위에 계속 남음 ──
+function addHintLog(entry){
+  if(!entry) return;
+  S.hintLog.push({ key: entryKeyOf(entry), meaning: entry.meaning });
+  renderHintLog();
+  // 새로 추가된 칩만 살짝 강조 (found 재렌더에는 안 붙음)
+  var chips = document.querySelectorAll('#hint-log .hl-chip');
+  if(chips.length) chips[chips.length - 1].classList.add('new');
+}
+function renderHintLog(){
+  var box = document.getElementById('hint-log');
+  if(!box) return;
+  if(!S.hintLog || S.hintLog.length === 0){ box.className = 'hint-log'; box.innerHTML = ''; return; }
+  var html = '<span class="hl-title">💡 받은 힌트</span>';
+  S.hintLog.forEach(function(h){
+    var found = S.found.indexOf(h.key) > -1;
+    html += '<span class="hl-chip' + (found ? ' found' : '') + '">' + h.meaning + '</span>';
+  });
+  box.innerHTML = html;
+  box.className = 'hint-log on';
+}
+
 // ── 미점등 노드 동적 생성 — 10개 다 점등되면 새 노드가 페이드인으로 등장 ──
 function spawnUnlitNodes(count){
   var stage = document.getElementById('g-stage');
@@ -7329,7 +7430,7 @@ function finishWord(entry, opts){
   }
 
   S.found.push(key); S.okCount++;
-  if(S.hintTargets.indexOf(key) > -1){ S.hintFound.push(key); }
+  if(S.hintTargets.indexOf(key) > -1){ S.hintFound.push(key); renderHintLog(); }
   lightUpNode(entry);
   setFb('ok', '"' + entry.word + '" 찾았어요!', 3000);
   // sndOk() 제거 — "찾았어요!" 메시지 동반 효과음 거슬림 (사용자 요청).
@@ -7657,8 +7758,6 @@ function flipToNextQuiz(nextEntry){
 
 function useHint(){
   if(S.hints <= 0) return;
-  S.hints--; updateHints();
-  sndHint();
   var hb = document.getElementById('hbtn'); if(hb) hb.classList.remove('shake');
   // 이미 노드에 점등된 어휘(초록·검정·보라 모두)는 힌트 후보에서 제외
   var nodeKeys = {};
@@ -7674,11 +7773,19 @@ function useHint(){
         && S.hintTargets.indexOf(key) === -1
         && !nodeKeys[key];
   });
-  if(remaining.length > 0){
-    var entry = remaining[Math.floor(Math.random() * remaining.length)];
-    S.hintTargets.push(entryKeyOf(entry));
-    setFb('hint', '힌트: ' + entry.meaning);
+  // 줄 힌트가 없으면 — 힌트 소모 X, 안내만 (거의 다 찾은 상태)
+  if(remaining.length === 0){
+    setFb('hint', '힌트로 알려줄 어휘가 더 없어요. 거의 다 왔어요! 👍');
+    resetHintNudge();
+    document.getElementById('wi').focus();
+    return;
   }
+  // 후보가 있을 때만 힌트 소모
+  S.hints--; updateHints();
+  sndHint();
+  var entry = remaining[Math.floor(Math.random() * remaining.length)];
+  S.hintTargets.push(entryKeyOf(entry));
+  addHintLog(entry);                               // 받은 힌트 스트립에만 표시 (노드 위 지나가는 메시지 제거)
   resetHintNudge();
   document.getElementById('wi').focus();
 }
@@ -7953,7 +8060,7 @@ function _renderRankBlock(podiumId, listId, view, extraRowClass){
       ? '<span class="r-rank-num medal">'+icon+'</span>'
       : '<span class="r-rank-num">'+rank+'</span>';
     row.innerHTML = numHtml
-      +'<span class="r-rank-name">'+s.name+(s.me?' (나)':'')+'</span>'
+      +'<span class="r-rank-name">'+(s.me ? (myName()+' (나)') : s.name)+'</span>'
       +'<span class="r-rank-cnt">'+s.count+'</span>';
     (rank <= 3 ? podium : list).appendChild(row);
   });
@@ -7978,15 +8085,38 @@ function buildFullRankView(list){
     .concat([{ __ellipsis: true }, ranked[meIdx]]);
 }
 
+// 랭킹에 표시할 내 이름 — 실제 학생이면 그 이름, 데모면 '나'
+function myName(){ return (typeof STUDENT_INFO !== 'undefined' && STUDENT_INFO && STUDENT_INFO.name) ? STUDENT_INFO.name : '나'; }
+
+// 카드 타이틀 우측 '내 순위' 설정 — view에서 me 행의 실제 rank 사용
+function setMyRank(elId, view){
+  var el = document.getElementById(elId);
+  if(!el) return;
+  var meEntry = null;
+  for(var i=0;i<view.length;i++){ if(view[i] && view[i].me){ meEntry = view[i]; break; } }
+  if(meEntry && meEntry.rank){
+    el.innerHTML = '내 순위 <span class="mr-num">' + meEntry.rank + '</span>위';
+    el.classList.remove('hidden');
+  } else {
+    el.innerHTML = '';
+    el.classList.add('hidden');
+  }
+}
+
 function renderRankList(){
   // 영역명 서브라벨 (누적 컬럼)
   var areaSub = document.getElementById('r-rank-area');
   if(areaSub) areaSub.textContent = (SESSION.area || '') + ' · 누적';
 
-  _renderRankBlock('r-rank-podium-retr',   'r-rank-list-retr',   buildFullRankView(RANK_RETR));
-  _renderRankBlock('r-rank-podium-combo',  'r-rank-list-combo',  buildFullRankView(RANK_COMBO));
-  _renderRankBlock('r-rank-podium-master', 'r-rank-list-master', buildFullRankView(RANK_MASTER));
-  _renderRankBlock('r-rank-podium-cumul',  'r-rank-list-cumul',  buildFullRankView(RANK_CUMUL), 'cumul');
+  var vR = buildFullRankView(RANK_RETR), vC = buildFullRankView(RANK_COMBO),
+      vM = buildFullRankView(RANK_MASTER), vU = buildFullRankView(RANK_CUMUL);
+  _renderRankBlock('r-rank-podium-retr',   'r-rank-list-retr',   vR);
+  _renderRankBlock('r-rank-podium-combo',  'r-rank-list-combo',  vC);
+  _renderRankBlock('r-rank-podium-master', 'r-rank-list-master', vM);
+  _renderRankBlock('r-rank-podium-cumul',  'r-rank-list-cumul',  vU, 'cumul');
+  // 각 카드 타이틀 우측에 '내 등수' 표시
+  setMyRank('r-myrank-retr', vR); setMyRank('r-myrank-combo', vC);
+  setMyRank('r-myrank-master', vM); setMyRank('r-myrank-cumul', vU);
 
   // 각 컬럼에서 "나" 행으로 자동 스크롤 — 학생이 자기 위치를 즉시 볼 수 있게.
   // renderRankList가 showPage('result') 이전에 호출되어 layout이 아직 안 잡혔을 수 있으므로
@@ -7997,14 +8127,15 @@ function renderRankList(){
       if(!rl) return;
       var meRow = rl.querySelector('.r-rank-row.me');
       if(!meRow) return;
-      // offsetTop은 부모(rl) 기준 — display:none이어도 정확
-      var offset = meRow.offsetTop - (rl.clientHeight - meRow.offsetHeight) / 2;
-      rl.scrollTop = Math.max(0, offset);
+      // 브라우저 기본 중앙 스크롤 — 리스트 안에서 me를 중앙에. (window는 안 움직임 — 검증됨)
+      try { meRow.scrollIntoView({ block: 'center', inline: 'nearest' }); } catch(e){}
     });
   }
-  requestAnimationFrame(function(){
-    requestAnimationFrame(scrollToMe);
-  });
+  requestAnimationFrame(function(){ requestAnimationFrame(scrollToMe); });
+  // 랭킹 카드는 ≈1.15s 페이드인 → 그 전엔 리스트 높이가 0이라 스크롤이 빗나감.
+  // 애니메이션으로 레이아웃 확정된 뒤 재실행 (중간 순위도 포디움에 안 가리게).
+  setTimeout(scrollToMe, 1250);
+  setTimeout(scrollToMe, 1650);
 
   var me = RANK_RETR.filter(function(s){ return s.me; })[0];
   if(me) highlightStudent(me);
@@ -8252,6 +8383,14 @@ var STATS_MOCK_TOTAL = {
   total_distinct:    4432
 };
 
+// 등급별 습득 (현재 회차까지 제공 기준) — 초등 1~4급 (중등은 1~5급)
+var STATS_MOCK_GRADES = [
+  { g:1, acquired:580, provided:620 },
+  { g:2, acquired:390, provided:560 },
+  { g:3, acquired:190, provided:520 },
+  { g:4, acquired:70,  provided:480 }
+];
+
 // 영역별 도넛 색상 — CSS 변수와 동일 (한 군데 관리는 CSS, 여기는 SVG 인라인용)
 var STATS_AREA_COLORS = {
   biology: '#5EBE7E',
@@ -8285,6 +8424,8 @@ function goStats(){
   var totalAcquiredDistinct = STATS_MOCK_TOTAL.acquired_distinct;
   var totalDistinct         = STATS_MOCK_TOTAL.total_distinct;
   var totalPct              = (totalDistinct > 0) ? Math.round((totalAcquiredDistinct / totalDistinct) * 100) : 0;
+  // 파이(관심 분포)의 전체 = 영역별 습득 합 (미습득 제외 → 100% 채움)
+  var totalAcquired         = stats.reduce(function(a, ar){ return a + ar.acquired; }, 0);
 
   // ── 도넛 SVG 파라미터 ──
   // wrap 480x480 안에 도넛 외곽지름 300, 두께 34 → 반지름 = (300-34)/2 = 133
@@ -8301,7 +8442,7 @@ function goStats(){
   // mock에서는 영역별 acquired 합산해도 OK (안내문 기준)
   // 미습득(0) 영역도 라벨을 위해 균등한 가상 슬롯을 잡아 표시 위치를 계산
   var areaSegs = stats.map(function(area){
-    var ratio = (totalDistinct > 0) ? (area.acquired / totalDistinct) : 0;
+    var ratio = (totalAcquired > 0) ? (area.acquired / totalAcquired) : 0;
     return {
       slug: area.slug,
       name_ko: area.name_ko,
@@ -8371,8 +8512,8 @@ function goStats(){
   // 라벨 박스는 translate(-50%,-50%) 로 중심 정렬되어 모든 각도에서 동일 반경에 놓이지만,
   // 12시/6시 방향(생물 등)은 시각적으로 도넛에 더 붙어 보이는 현상 → 각도별 추가 offset 으로 보정.
   // |sin(angle)| 이 클수록(상/하 위치) 더 멀리 밀어내어 4개 라벨의 시각적 간격을 균등화한다.
-  var TEXT_R_BASE = DONUT_OUT / 2 + 10;   // 160 (이전 점 위치, 기본 반경)
-  var LBL_VERT_PAD = 8;                    // 12시/6시 추가 여백 — 시각적 균등을 위한 보정값
+  var TEXT_R_BASE = DONUT_OUT / 2 + 28;   // 178 — 중심정렬(ciLabelIn) 복구 후 링 외곽서 균등 ~10px 여백
+  var LBL_VERT_PAD = 0;                    // 전 라벨 동일 반경 (ciLabelIn 으로 translate(-50%,-50%) 보존됨)
   var labelHtml = labelData.map(function(L, i){
     // SVG 12시=0, 시계방향. CSS 좌표계에서 각도 → 위치
     var rad = (L.angle - 90) * Math.PI / 180;
@@ -8390,41 +8531,38 @@ function goStats(){
       + '</span>';
   }).join('');
 
-  // ── 메인 KPI — 도넛 + 중앙 통합 + 방사형 라벨 ──
+  // ── 등급별 어휘 습득률 (세로 막대, 입체감 · 현재 회차까지 제공 기준) ──
+  // 국립국어원 기초어휘 등급별 습득 시기 (2023 최종보고서 2.1~2.2)
+  var GRADE_YR = {1:'취학 전', 2:'초1~2', 3:'초3~4', 4:'초5~6', 5:'중1~3'};
+  var gGrades = (typeof STATS_MOCK_GRADES !== 'undefined' ? STATS_MOCK_GRADES : []).filter(function(g){ return (g.provided||0) > 0; });
+  var gCols = gGrades.map(function(g){
+    var prov = g.provided||0, acq = g.acquired||0, pct = prov>0 ? Math.round(acq/prov*100) : 0;
+    var tier = pct>=70 ? 'hi' : (pct>=45 ? 'mid' : 'lo');
+    return '<div class="gc-col">'
+      + '<div class="gc-pct gc-'+tier+'">'+pct+'<span class="gc-sign">%</span></div>'
+      + '<div class="gc-track"><div class="gc-fill gc-'+tier+'" data-h="'+Math.max(pct,2)+'" style="height:0%"></div></div>'
+      + '<div class="gc-g">'+g.g+'급</div>'
+      + '<div class="gc-n">'+fmtNum(acq)+' / '+fmtNum(prov)+'</div>'
+      + '</div>';
+  }).join('');
+  // 급수별 학년 설명 — 그래프 하단 별도 표기 (표시된 급수만)
+  var gLegend = gGrades.map(function(g){
+    return '<span class="gl-item"><b>'+g.g+'급</b> '+(GRADE_YR[g.g]||'')+'</span>';
+  }).join('');
   headlineEl.innerHTML =
-      '<div class="st-donut-frame">'
-    + '<div class="st-donut-wrap">'
-    +   '<svg class="st-donut-svg" viewBox="0 0 ' + SVG_SIZE + ' ' + SVG_SIZE + '" aria-hidden="true">'
-    +     trackSvg
-    +     segSvg
-    +   '</svg>'
-    +   labelHtml
-    +   '<div class="st-donut-center">'
-    +     '<div class="st-donut-caplabel">습득 어휘 수</div>'
-    +     '<div class="st-donut-num">' + fmtNum(totalAcquiredDistinct) + '</div>'
-    +     '<div class="st-donut-subtotal">총 ' + fmtNum(totalDistinct) + '개 중</div>'
-    +   '</div>'
-    + '</div>'
-    + '</div>';
+      '<div class="gc-title">등급별 어휘 습득률</div>'
+    + '<div class="gc-note">현재 회차까지 제공된 어휘 기준</div>'
+    + '<div class="gc-chart">'+gCols+'</div>'
+    + '<div class="gc-legend"><div class="gl-cap">급수별 습득 시기</div>'+gLegend+'</div>';
 
-  // ── 도넛 채움 애니메이션 — segment 의 dasharray 를 0 → 목표 길이로 트랜지션 ──
+  // ── 등급 막대 채움 애니메이션 — height 0 → 목표(%) ──
   requestAnimationFrame(function(){
     requestAnimationFrame(function(){
-      var segs = headlineEl.querySelectorAll('.st-donut-seg');
-      segs.forEach(function(seg, i){
-        var target = seg.getAttribute('data-target-dasharray');
-        // dasharray 트랜지션은 일부 브라우저에서 보장 안되므로
-        // dashoffset 트릭 사용: 최종 dasharray 미리 적용 + offset 으로 길이 0 부터 채움
-        var visibleLen = parseFloat(seg.getAttribute('data-final-len')) || 0;
-        var startOff   = parseFloat(seg.getAttribute('stroke-dashoffset')) || 0;
-        seg.setAttribute('stroke-dasharray', target);
-        // 시작: offset 을 startOff - visibleLen 로 → 보이는 부분 길이 0
-        seg.style.transition = 'none';
-        seg.setAttribute('stroke-dashoffset', String(startOff - visibleLen));
-        // 강제 reflow
-        seg.getBoundingClientRect();
-        seg.style.transition = 'stroke-dashoffset 1.0s cubic-bezier(.2,.9,.2,1) ' + (0.15 + i*0.06) + 's';
-        seg.setAttribute('stroke-dashoffset', String(startOff));
+      var fills = headlineEl.querySelectorAll('.gc-fill');
+      fills.forEach(function(f, i){
+        var h = f.getAttribute('data-h') || '0';
+        f.style.transition = 'height 0.9s cubic-bezier(.2,.9,.2,1) ' + (0.2 + i*0.1) + 's';
+        setTimeout(function(){ f.style.height = h + '%'; }, 30);
       });
     });
   });
@@ -8433,9 +8571,10 @@ function goStats(){
   listEl.innerHTML = stats.map(function(area, i){
     var pct = (area.total > 0) ? Math.round((area.acquired / area.total) * 100) : 0;
     var emptyCls = (area.acquired === 0) ? ' empty' : '';
+    var isCur    = (typeof SESSION !== 'undefined' && SESSION && area.name_ko === SESSION.area);  // 오늘 진행 영역
     var delay    = (0.40 + i * 0.06).toFixed(2);
 
-    return '<div class="st-row' + emptyCls + '" data-area="' + area.slug + '" style="animation-delay:' + delay + 's">'
+    return '<div class="st-row' + emptyCls + (isCur ? ' current' : '') + '" data-area="' + area.slug + '" style="animation-delay:' + delay + 's">'
          +   '<span class="st-row-name">' + area.name_ko + '</span>'
          +   '<div class="st-row-bar">'
          +     '<div class="st-bar-track"><div class="st-bar-fill" data-pct="' + pct + '"></div></div>'
@@ -8445,6 +8584,7 @@ function goStats(){
          +     '<span class="st-row-total"> / ' + fmtNum(area.total) + '</span>'
          +   '</span>'
          +   '<span class="st-row-pct">(' + pct + '%)</span>'
+         +   (isCur ? '<span class="st-today-badge">오늘</span>' : '')
          + '</div>';
   }).join('');
 
@@ -8504,21 +8644,28 @@ function isPass(p){ return !p.locked && p.found >= PASS_MIN; }
 
 function buildAreaProgress(){
   // 학습 기록 DB(Phase 2) 미구축 상태 — 현재 회차만 활성, 나머지는 모두 잠금.
-  // Phase 2 완료 시 attempts 테이블 query로 교체될 함수.
-  // 현재 회차 인덱스 = SESSION.id(round_no) - 1 (round_no 1-based, AREA_HANJA 0-based)
-  var currentIdx = (SESSION && SESSION.id) ? (SESSION.id - 1) : 0;
-  AREA_PROGRESS = AREA_HANJA.map(function(ch, i){
-    if(i === currentIdx){
+  // 글자 목록은 현재 영역의 실제 main_chars(SESSION.areaChars). 없으면 하드코딩(생물) 폴백.
+  var list = (SESSION && SESSION.areaChars && SESSION.areaChars.length)
+    ? SESSION.areaChars
+    : AREA_HANJA.map(function(c, i){ return { round:i+1, char:c, hun:(AREA_HUN[c]||'') }; });
+  var curRound = (SESSION && SESSION.id) ? SESSION.id : 1;
+  AREA_PROGRESS = list.map(function(item){
+    if(item.round === curRound){
       // 오늘의 회차 — 인출(S.found) + 확장(LEARN.collected) 합산
       var foundFromGame = (S && S.found) ? S.found.length : 0;
       var foundFromLearn = (LEARN && LEARN.collected) ? LEARN.collected.length : 0;
-      var foundTotal = foundFromGame + foundFromLearn;
-      return { char:ch, total:WORD_LIST.length, found:foundTotal, locked:false, current:true };
+      return { char:item.char, hun:item.hun, total:WORD_LIST.length, found:foundFromGame+foundFromLearn, locked:false, current:true };
     }
     // 그 외 회차는 모두 잠금 (학습 기록 미존재)
-    return { char:ch, total:0, found:0, locked:true, current:false };
+    return { char:item.char, hun:item.hun, total:0, found:0, locked:true, current:false };
   });
   return AREA_PROGRESS;
+}
+
+// 통계 → 내일의 한자. 오버레이가 area 페이지에 속하므로 area를 활성화한 뒤 오버레이 표시.
+function goTomorrow(){
+  if(typeof showPage === 'function') showPage('area');
+  showTomorrowSplash();
 }
 
 // area 페이지의 "다음 →" 버튼 핸들러 — 내일의 한자 overlay 등장
@@ -8546,7 +8693,7 @@ function goArea(){
 
   var prog = AREA_PROGRESS || buildAreaProgress();
   var passes = prog.filter(isPass).length;
-  var totalSessions = AREA_HANJA.length;
+  var totalSessions = prog.length;
 
   document.getElementById('area-title-name').textContent = SESSION.area || '환경과 생물';
   document.getElementById('area-pass-count').textContent = passes;
@@ -8563,7 +8710,7 @@ function goArea(){
     var cc = document.createElement('div'); cc.className = 'cell-char'; cc.textContent = p.char;
     cell.appendChild(cc);
     var ch = document.createElement('div'); ch.className = 'cell-hun';
-    ch.textContent = AREA_HUN[p.char] || '';
+    ch.textContent = p.hun || '';
     cell.appendChild(ch);
     if(passed){
       var m = document.createElement('div'); m.className = 'cell-mark'; m.textContent = '✓'; cell.appendChild(m);
