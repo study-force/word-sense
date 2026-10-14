@@ -1904,8 +1904,9 @@ body.mission-mode #game .stage-nav {
 .game-intro .gi-msg.gi-mission .gm-confirm {
   margin-top: 4px;
   padding: 14px 56px;
-  font-family: 'Inter', 'Noto Sans KR', sans-serif;
-  font-size: 20px; font-weight: 800;
+  /* 'Inter'는 웹폰트로 불러오지 않아 기기에 설치된 엉뚱한 'Inter'(아이콘/깨진 폰트)로 그려지는 경우가 있었음 → 로드되는 Noto Sans KR만 사용 */
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 20px; font-weight: 700;
   color: #1F2238;
   background: var(--green);
   border: none;
