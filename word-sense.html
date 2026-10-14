@@ -7809,7 +7809,8 @@ async function submit(){
     if(!window.SUPABASE_CLIENT) throw new Error('SUPABASE_CLIENT 미초기화');
     const { data, error } = await window.SUPABASE_CLIENT.rpc('classify_word_input', {
       p_word: val,
-      p_main_char: SESSION.mainChar
+      p_main_char: SESSION.mainChar,
+      p_level: SESSION.level || '초등'   // 학제별 "다른 회차/중등 과정에서 만나요/훌륭해요" 분기 (v6)
     });
     if(error) throw error;
 
