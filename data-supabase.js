@@ -83,6 +83,23 @@ function regenChoicesGoldilocks(rows){
   });
 }
 
+// 빈칸 오답 고르기 — 골디락스 풀(fill_pools)이 있으면 그 안에서 매번 무작위로 3개
+//   적합도: 1 골디락스(우선) → 0 말 안 됨 → 2 거의 맞음 순으로 채움. 3(정답 중복)은 절대 안 씀,
+//   -1(조사·받침 안 맞음)은 위로 모자랄 때만. 풀이 없으면 null → 기존 방식
+window.pickFillOthers = function(entry, list){
+  const pool = entry && entry.fillPool;
+  if (!pool) return null;
+  const mix = function(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
+  const cands = (list || []).filter(function(e){ return e !== entry && e.word !== entry.word && e.meaning !== entry.meaning && pool[e.wmId] !== undefined && pool[e.wmId] !== 3; });
+  const picked = [], used = {}; used[entry.word] = true;
+  [1, 0, 2, -1].forEach(function(fit){
+    mix(cands.filter(function(e){ return pool[e.wmId] === fit; })).forEach(function(e){
+      if (picked.length < 3 && !used[e.word]) { used[e.word] = true; picked.push(e); }
+    });
+  });
+  return picked;
+};
+
 window.SESSION_READY = (async function loadSession() {
   // Supabase 클라이언트 — 위에서 생성한 전역 인스턴스 사용
   const client = window.SUPABASE_CLIENT;
@@ -210,6 +227,17 @@ window.SESSION_READY = (async function loadSession() {
       }
     }
 
+    // 3e. 빈칸 오답 골디락스 풀 (fill_pools, 2026-10-15) — 없거나 오류면 기존 방식으로 출제
+    const fillPools = {};
+    try {
+      const { data: fp, error: e3e } = await client
+        .from('fill_pools')
+        .select('session_word_id, pool')
+        .eq('context_session_id', sess.id);
+      if (e3e) throw e3e;
+      (fp || []).forEach(function(r){ fillPools[r.session_word_id] = r.pool; });
+    } catch (e) { console.warn('[supabase] 빈칸 오답 풀 없음 — 기존 방식', e && e.message); }
+
     // 4. 회차 오답 피드백
     const { data: wrongs, error: e4 } = await client
       .from('wrong_words')
@@ -246,6 +274,7 @@ window.SESSION_READY = (async function loadSession() {
           meaning: r.meaning,
           choices: [correct ? correct.text : ''].concat(wrongChoices.map(function(c){ return c.text; })),
           fillSentence: r.fill_sentence,
+          fillPool: fillPools[r.session_word_id] || null,   // { 후보 wmId: 적합도 } — pickFillOthers 참고
           // sentenceText/Choices는 현재 스키마에 없음 (필요 시 컬럼 추가)
           sentenceText: null,
           sentenceChoices: null
