@@ -150,7 +150,7 @@ window.SESSION_READY = (async function loadSession() {
     }
 
     // 3c. 민감 어휘(word_master.sensitive, 대표님 2026-10-15)
-    //   slur(비하어): 학습 대상 제외 / body·adult: 초등은 제외, 중등은 '보너스'(직접 입력 시 정답, 퀴즈·힌트·확장·강화·분모 제외)
+    //   slur(비하어): 학습 대상 제외 / body·adult: 초등은 제외, 중등은 입력 시 '이 어휘도 알고 있군요' 피드백만(정답·점수 X)
     let bonusRows = [];
     if (wordRows.length) {
       const ids = wordRows.map(function(r){ return r.word_master_id; });
@@ -207,7 +207,7 @@ window.SESSION_READY = (async function loadSession() {
         };
       }),
 
-      // 민감 어휘(중등) — 직접 입력하면 바로 정답 처리 (퀴즈·힌트·확장·강화·분모 제외)
+      // 민감 어휘(중등) — 직접 입력하면 '알고 있군요' 피드백만 (정답·점수·퀴즈·힌트·확장·강화·분모 제외)
       bonusWords: bonusRows.map(function(r){ return { word: r.word, hanja: r.hanja, meaning: r.meaning, wmId: r.word_master_id, char1: r.char1, hun1: r.hun1, char2: r.char2, hun2: r.hun2 }; }),
 
       wrongAnswers: (wrongs || []).map(function(w) {

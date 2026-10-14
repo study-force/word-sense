@@ -7781,14 +7781,11 @@ async function submit(){
     else    { setFb('miss', '표준국어대사전에 등록된 어휘가 아니에요.'); }
     sndDup(); return;
   }
-  // 민감 어휘(중등 보너스) — 퀴즈 없이 바로 정답 칩, 뜻만 짧게 안내. 점수·분모·강화에는 넣지 않음
+  // 민감 어휘(중등) — 정답 처리하지 않음(칩·점수·랭킹 X, 대표님 2026-10-15). 알고 있다는 피드백만 주고 넘어감
   var bonus = (SESSION && SESSION.bonusWords || []).filter(function(b){ return b.word === val; })[0];
   if(bonus){
-    S.bonus = S.bonus || [];
-    if(S.bonus.indexOf(val) > -1){ setFb('miss', '"'+val+'"'+eunNeun(val)+' 이미 찾았어요!'); sndDup(); return; }
-    S.bonus.push(val);
-    lightUpNode({ word: bonus.word, hanja: bonus.hanja, meaning: bonus.meaning, char1: bonus.char1, hun1: bonus.hun1, char2: bonus.char2, hun2: bonus.hun2 });
-    setFb('ok', '맞아요! "' + val + '" — ' + bonus.meaning, 3200);
+    setFb('info', '이 어휘도 알고 있군요.', 2400);
+    sndUnknown();
     return;
   }
   var wr = WRONG_MAP[val];
