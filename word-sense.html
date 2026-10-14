@@ -8030,7 +8030,18 @@ function renderFQDots(){
 function renderFQCard(entry){
   // entry: word + hanja 객체. fillSentence 보유. 동음이의어 entry도 별개 카드로 처리.
   var sentence = entry.fillSentence;
-  var others = shuffle(FQ.words.filter(function(e){ return e !== entry; })).slice(0, 3);
+  // 오답 버튼 고르기 (2026-10-15):
+  //   ① 이 어휘의 뜻 퀴즈 오답(의미 점검을 거친 = 정답과 뜻이 확실히 다른 어휘)을 우선 사용
+  //   ② 모자라면 강화 대상 중에서 — 같은 글자(동음이의어)·같은 뜻은 제외 (같은 텍스트 버튼 두 개 방지)
+  var others = [];
+  var used = {}; used[entry.word] = true;
+  var vetted = (entry.choices || []).slice(1);   // [정답, 오답1, 오답2, 오답3] — 오답 뜻
+  shuffle((typeof WORD_LIST !== 'undefined' ? WORD_LIST : []).filter(function(e){
+    return e !== entry && vetted.indexOf(e.meaning) > -1;
+  })).forEach(function(e){ if(others.length < 3 && !used[e.word]){ used[e.word] = true; others.push(e); } });
+  shuffle(FQ.words.filter(function(e){ return e !== entry; })).forEach(function(e){
+    if(others.length < 3 && !used[e.word] && e.meaning !== entry.meaning){ used[e.word] = true; others.push(e); }
+  });
   var choices = shuffle([entry].concat(others));   // entry 객체 4지선다
   var ci = choices.indexOf(entry);
   var display = sentence.replace('___', '<span class="fill-blank" id="fb-blank">　　　</span>');
