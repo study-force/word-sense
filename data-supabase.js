@@ -48,6 +48,29 @@ window.SUPABASE_CLIENT = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANO
 window.SUPABASE_URL = SUPABASE_URL;
 window.SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
 
+// 골디락스 오답 선정 (어드민 lib/synonyms.js와 같은 기준) — 뜻 2-gram 자카드
+//   0.1~0.3 > 0.05~0.1 > 0~0.05 > 0.3~0.5 > 0 순으로, 0.5 이상(거의 같은 뜻)·같은 낱말·같은 뜻 문장은 제외
+function _bigrams(x){ const s = String(x || '').replace(/s+/g, ''); const g = new Set(); if (s.length <= 1) { if (s) g.add(s); return g; } for (let i = 0; i < s.length - 1; i++) g.add(s.slice(i, i + 2)); return g; }
+function _jaccard(a, b){ const s1 = _bigrams(a), s2 = _bigrams(b); if (!s1.size && !s2.size) return 0; let inter = 0; s1.forEach(function(x){ if (s2.has(x)) inter++; }); const uni = new Set([...s1, ...s2]).size; return uni ? inter / uni : 0; }
+function _goldRank(j){ return j >= 0.1 && j <= 0.3 ? 0 : j >= 0.05 && j < 0.1 ? 1 : j > 0 && j < 0.05 ? 2 : j > 0.3 ? 3 : 4; }
+function regenChoicesGoldilocks(rows){
+  rows.forEach(function(r){
+    if (!r._regenChoices) return;
+    const pool = rows.filter(function(c){ return c !== r && c.word !== r.word && String(c.meaning).trim() !== String(r.meaning).trim(); })
+      .map(function(c){ return { c: c, j: _jaccard(c.meaning, r.meaning) }; })
+      .filter(function(x){ return x.j < 0.5; })
+      .sort(function(a, b){ return _goldRank(a.j) - _goldRank(b.j) || Math.abs(a.j - 0.2) - Math.abs(b.j - 0.2) || String(a.c.word).localeCompare(String(b.c.word)); });
+    const pick = [];
+    pool.forEach(function(x){
+      if (pick.length >= 3) return;
+      if (pick.some(function(y){ return y.c.word === x.c.word || String(y.c.meaning).trim() === String(x.c.meaning).trim(); })) return;
+      pick.push(x);
+    });
+    if (pick.length < 3) return;   // 후보 부족하면 원래 보기 유지
+    r.choices = [{ text: r.meaning, is_correct: true }].concat(pick.map(function(x){ return { text: x.c.meaning, is_correct: false }; }));
+  });
+}
+
 window.SESSION_READY = (async function loadSession() {
   // Supabase 클라이언트 — 위에서 생성한 전역 인스턴스 사용
   const client = window.SUPABASE_CLIENT;
@@ -117,8 +140,12 @@ window.SESSION_READY = (async function loadSession() {
         const k = r.word + '|' + r.hanja;
         if (seen[k]) return;
         seen[k] = true;
+        // 다른 主字 초등 회차에서 온 어휘는 원래 보기(그 회차 어휘 뜻)가 이 회차와 안 맞음
+        //   예) 未 회차의 미달 ← 達 회차 보기(달성·도달 = 정반대 뜻) → 아래에서 이 회차 어휘로 다시 고름
+        if (!sameChar[r.session_id]) r._regenChoices = true;
         wordRows.push(r);
       });
+      regenChoicesGoldilocks(wordRows);
     }
 
     // 4. 회차 오답 피드백
