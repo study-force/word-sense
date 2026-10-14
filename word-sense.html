@@ -8344,8 +8344,8 @@ function goResult(){
   // PERFECT는 calcBadge 판정 후 renderTierBadge에서 별도 호출 (sndPerfect).
   try { sndResultArrive(); } catch(e){}
 
-  // 결과 사운드는 한 가지만 (겹침 방지, 대표님 2026-10-14) — 우선순위:
-  //   ① PERFECT → perfect 음성만 (renderTierBadge에서 재생)  ② 20점 이상 → 점수 박수만  ③ 그 외 → ranking 사운드
+  // 결과 사운드 우선순위 (대표님 2026-10-14):
+  //   ① PERFECT → perfect 음성 + 박수(Applause) 동시 (renderTierBadge에서 재생)  ② 20점 이상 → 점수 박수만  ③ 그 외 → ranking 사운드
   var fqScore = (typeof FQ !== 'undefined' && FQ) ? (FQ.correct || 0) : 0;
   var fqTotal = (typeof WORD_LIST !== 'undefined' && WORD_LIST) ? WORD_LIST.length : 0;   // renderTierBadge와 같은 기준
   var willPerfect = false;
@@ -8528,6 +8528,7 @@ function renderTierBadge(correct, total){
     setTimeout(function(){
       var variants = ['perfect.mp3', 'perfect2.mp3', 'perfect3.mp3'];
       var pick = variants[Math.floor(Math.random() * variants.length)];
+      sfxPlay('Applause.mp3', 0.6);   // 박수소리 — 퍼펙트 나레이션과 동시 재생 (별도 채널)
       sfxPlay(pick, 0.95);
     }, 900);
   }
