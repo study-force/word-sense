@@ -1099,19 +1099,34 @@ button { font-family: inherit; color: inherit; }
 .hint-btn.shake { animation: hintShake 1s ease-in-out infinite; }
 
 /* 힌트 내역 스트립 — 흰색 하단 도크 위에 고정. 받은 힌트 뜻을 계속 보여줌(지나가는 메시지 X). */
-/* 비어 있으면 접힘(공간 0 → 입력창 안 밀림). 힌트가 생기면 한 줄로 표시(넘치면 가로 스크롤).
-   칩은 flex-shrink:0으로 줄바꿈/찌그러짐 방지. */
+/* 비어 있으면 접힘(공간 0 → 입력창 안 밀림). 힌트가 생기면 한 줄로 표시.
+   순서: 아직 못 찾은 힌트(최신 먼저) → 찾은 힌트(최신 먼저). 넘치면 좌우 화살표·휠로 이동, 가장자리 페이드. */
 .hint-log {
-  display: none; flex-wrap: nowrap; overflow-x: auto; align-items: center; gap: 6px;
-  margin: 0 auto; max-width: 820px; padding: 5px 12px;
+  display: none; flex-wrap: nowrap; align-items: center; gap: 6px;
+  margin: 0 auto; max-width: 820px; padding: 5px 8px 5px 12px;
   background: #EAF7F0; border: 1px solid #BFE6D3; border-radius: 12px;
-  scrollbar-width: none;
 }
 .hint-log.on { display: flex; }
-.hint-log::-webkit-scrollbar { display: none; }
+.hint-log .hl-track {
+  flex: 1; min-width: 0; display: flex; flex-wrap: nowrap; align-items: center; gap: 6px;
+  overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none;
+}
+.hint-log .hl-track::-webkit-scrollbar { display: none; }
+.hint-log.more-r .hl-track { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
+.hint-log.more-l .hl-track { -webkit-mask-image: linear-gradient(90deg, transparent, #000 28px); mask-image: linear-gradient(90deg, transparent, #000 28px); }
+.hint-log.more-l.more-r .hl-track { -webkit-mask-image: linear-gradient(90deg, transparent, #000 28px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
+.hint-log .hl-arrow {
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; padding: 0; cursor: pointer;
+  display: none; align-items: center; justify-content: center;
+  background: #fff; border: 1px solid #BFE6D3; color: #1F9D63;
+}
+.hint-log .hl-arrow svg { width: 12px; height: 12px; }
+.hint-log.scrollable .hl-arrow { display: flex; }
+.hint-log .hl-arrow:disabled { opacity: .35; cursor: default; }
+.hint-log .hl-arrow:not(:disabled):hover { background: #DDF2E7; }
 .hint-log .hl-title { flex-shrink: 0; font-size: 12px; font-weight: 800; color: #1F9D63; letter-spacing: 0.03em; margin-right: 2px; white-space: nowrap; }
 /* 힌트는 받는 순간 소모 → 칩은 '이미 쓴 힌트'로 딤드 표시(가로줄 X). 찾은 건 조금 더 흐리게. */
-.hint-log .hl-chip { flex-shrink: 0; white-space: nowrap; font-size: 13px; font-weight: 500; color: #DCF0E6; background: #2E6B4E; border: 1px solid #23543E; border-radius: 100px; padding: 3px 12px; }
+.hint-log .hl-chip { flex-shrink: 0; white-space: nowrap; max-width: 340px; overflow: hidden; text-overflow: ellipsis; font-size: 13px; font-weight: 500; color: #DCF0E6; background: #2E6B4E; border: 1px solid #23543E; border-radius: 100px; padding: 3px 12px; }
 .hint-log .hl-chip.found { color: #B3C4BB; background: #49594F; border-color: #3A4740; }  /* 찾은/쓴 힌트 — 진한 회녹색 */
 .hint-log .hl-chip.new { animation: hlPop .55s ease; }
 @keyframes hlPop { 0%{ transform: scale(.7); opacity:0; } 60%{ transform: scale(1.08); } 100%{ transform: scale(1); opacity:1; } }
@@ -7146,24 +7161,65 @@ function updateHints(){
 // ── 힌트 내역 (지난 힌트 누적 표시) — 지나가는 메시지와 달리 입력창 위에 계속 남음 ──
 function addHintLog(entry){
   if(!entry) return;
-  S.hintLog.push({ key: entryKeyOf(entry), meaning: entry.meaning });
+  var key = entryKeyOf(entry);
+  S.hintLog.push({ key: key, meaning: entry.meaning });
   renderHintLog();
-  // 새로 추가된 칩만 살짝 강조 (found 재렌더에는 안 붙음)
-  var chips = document.querySelectorAll('#hint-log .hl-chip');
-  if(chips.length) chips[chips.length - 1].classList.add('new');
+  // 새로 추가된 칩만 살짝 강조 (found 재렌더에는 안 붙음) — 맨 앞(왼쪽)에 놓임
+  var chip = document.querySelector('#hint-log .hl-chip[data-key="' + key.replace(/"/g, '\\"') + '"]');
+  if(chip) chip.classList.add('new');
+}
+function escHtml(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+// 화살표·페이드 상태 갱신 (넘칠 때만 화살표 표시, 끝에서는 비활성)
+function updateHintLogNav(){
+  var box = document.getElementById('hint-log');
+  var tr = box && box.querySelector('.hl-track');
+  if(!tr) return;
+  var max = tr.scrollWidth - tr.clientWidth;
+  var canL = tr.scrollLeft > 2, canR = tr.scrollLeft < max - 2;
+  box.classList.toggle('scrollable', max > 2);
+  box.classList.toggle('more-l', canL);
+  box.classList.toggle('more-r', canR);
+  var bl = box.querySelector('.hl-prev'), br = box.querySelector('.hl-next');
+  if(bl) bl.disabled = !canL;
+  if(br) br.disabled = !canR;
+}
+function scrollHintLog(dir){
+  var tr = document.querySelector('#hint-log .hl-track');
+  if(!tr) return;
+  tr.scrollBy({ left: dir * Math.max(120, tr.clientWidth * 0.7), behavior: 'smooth' });
+  setTimeout(updateHintLogNav, 450);   // 스크롤 이벤트 누락 대비
 }
 function renderHintLog(){
   var box = document.getElementById('hint-log');
   if(!box) return;
   if(!S.hintLog || S.hintLog.length === 0){ box.className = 'hint-log'; box.innerHTML = ''; return; }
-  var html = '<span class="hl-title">💡 받은 힌트</span>';
-  S.hintLog.forEach(function(h){
-    var found = S.found.indexOf(h.key) > -1;
-    html += '<span class="hl-chip' + (found ? ' found' : '') + '">' + h.meaning + '</span>';
-  });
+  // 아직 못 찾은 힌트를 왼쪽(최신 먼저), 찾은 힌트는 그 뒤(최신 먼저)
+  var rev = S.hintLog.slice().reverse();
+  var open = rev.filter(function(h){ return S.found.indexOf(h.key) === -1; });
+  var done = rev.filter(function(h){ return S.found.indexOf(h.key) > -1; });
+  var chip = function(h, found){
+    return '<span class="hl-chip' + (found ? ' found' : '') + '" data-key="' + escHtml(h.key) + '" title="' + escHtml(h.meaning) + '">' + escHtml(h.meaning) + '</span>';
+  };
+  var arrow = function(cls, dir, pts, label){
+    return '<button type="button" class="hl-arrow ' + cls + '" aria-label="' + label + '" onclick="scrollHintLog(' + dir + ')">'
+         + '<svg viewBox="0 0 12 12" aria-hidden="true"><polyline points="' + pts + '" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>';
+  };
+  var html = '<span class="hl-title">💡 받은 힌트</span>'
+    + arrow('hl-prev', -1, '7.5,2 3.5,6 7.5,10', '이전 힌트')
+    + '<div class="hl-track">' + open.map(function(h){ return chip(h, false); }).join('') + done.map(function(h){ return chip(h, true); }).join('') + '</div>'
+    + arrow('hl-next', 1, '4.5,2 8.5,6 4.5,10', '다음 힌트');
   box.innerHTML = html;
   box.className = 'hint-log on';
+  var tr = box.querySelector('.hl-track');
+  tr.scrollLeft = 0;   // 항상 최신·미해결 힌트부터 보이게
+  tr.addEventListener('scroll', updateHintLogNav, { passive: true });
+  // 마우스 휠(세로)로도 가로 이동
+  tr.addEventListener('wheel', function(e){
+    if(Math.abs(e.deltaY) > Math.abs(e.deltaX) && tr.scrollWidth > tr.clientWidth){ tr.scrollLeft += e.deltaY; e.preventDefault(); }
+  }, { passive: false });
+  updateHintLogNav();
 }
+window.addEventListener('resize', function(){ if(typeof updateHintLogNav === 'function') updateHintLogNav(); });
 
 // ── 미점등 노드 동적 생성 — 10개 다 점등되면 새 노드가 페이드인으로 등장 ──
 function spawnUnlitNodes(count){
