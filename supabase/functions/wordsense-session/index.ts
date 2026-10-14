@@ -30,7 +30,7 @@ function corsHeaders(origin: string | null): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': isAllowed ? origin! : '',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, apikey, authorization',
   };
 }
 function safeHost(url: string) { try { return new URL(url).hostname; } catch { return ''; } }

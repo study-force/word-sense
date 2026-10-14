@@ -30,8 +30,8 @@ const _host = location.hostname;
 //   ※ 테스트 DB 정보(DEV_*)가 비어 있으면 운영 DB를 그대로 씀 (테스트 DB 준비 전 안전장치)
 const PROD_SUPABASE_URL = 'https://fokuojmzhttxfkmiutmf.supabase.co';   // word-master (운영)
 const PROD_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZva3Vvam16aHR0eGZrbWl1dG1mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MDYwOTksImV4cCI6MjA5MzM4MjA5OX0.FuYv59ufKteXKusvAhJktBNWntMnWmxctQoHquaPKVA';
-const DEV_SUPABASE_URL = '';        // word-master-dev — 테스트 DB 준비 후 채움
-const DEV_SUPABASE_ANON_KEY = '';
+const DEV_SUPABASE_URL = 'https://xzxgsqpvtckxgvipchsy.supabase.co';   // word-master-dev (테스트)
+const DEV_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh6eGdzcXB2dGNreGd2aXBjaHN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5OTU0NjIsImV4cCI6MjA5NDU3MTQ2Mn0.J0OIH7pk11wwuyyJEO--RF54jf-AfxqJ19ECwAnsmSQ';
 const IS_TEST_HOST = _host === 'word.sfos.kr' || _host === 'localhost' || _host === '127.0.0.1';
 const USE_DEV = IS_TEST_HOST && !!DEV_SUPABASE_URL && !!DEV_SUPABASE_ANON_KEY;
 const SUPABASE_URL = USE_DEV ? DEV_SUPABASE_URL : PROD_SUPABASE_URL;
