@@ -6113,8 +6113,26 @@ function goHome(){
 // ══════════════════════════════════════════════
 // 게임
 // ══════════════════════════════════════════════
-function updateGameCounter(){
+// 인출에서 다룬 가족 어휘 수 = 바로 맞힘(S.found) + 뜻을 틀렸다 맞힘(S.attempted 안의 entry key)
+//   (정답 수는 우측 상단 점수판에서 따로 확인 가능)
+function handledEntryCount(){
   var n = S.found.length;
+  (S.attempted || []).forEach(function(k){ if(WORD_KEY_MAP[k]) n++; });
+  return n;
+}
+// 가족 어휘를 모두 찾으면 축하 피드백 후 자동으로 다음 단계(확장)로
+function checkAllFound(){
+  if(S.allDoneFired) return;
+  var total = (typeof WORD_LIST !== 'undefined') ? WORD_LIST.length : 0;
+  if(!total || handledEntryCount() < total) return;
+  S.allDoneFired = true;   // submit()이 이 값을 보고 추가 입력을 막음 (input은 비활성화하지 않음 — 다음 게임에 남지 않게)
+  var input = document.getElementById('wi'); if(input){ input.value = ''; input.blur(); }
+  setTimeout(function(){ setFb('ok', '🎉 가족 어휘를 모두 찾았어요! 다음 단계로 넘어갈게요.', 3200); }, 900);
+  setTimeout(function(){ goLearn(); }, 3400);   // 마지막 칩 등장 애니메이션 여유 후 진행
+}
+
+function updateGameCounter(){
+  var n = handledEntryCount();
   var t = (SESSION && SESSION.words) ? SESSION.words.length : 0;
   // 인풋박스 내부 좌측 카운터
   var wf = document.getElementById('wi-found');
@@ -7563,6 +7581,7 @@ function finishWord(entry, opts){
     lightUpNode(entry, false, true);
     setFb('ok', '또 다른 가족 어휘를 찾아볼까요?', 2400);
     updateGameCounter();
+    checkAllFound();
     if(S.okCount >= 1){
       var dbtn = document.getElementById('dbtn');
       if(dbtn) dbtn.className = 'btn-done on';
@@ -7585,6 +7604,7 @@ function finishWord(entry, opts){
   resetHintNudge();
   // ── 마일스톤 축하 (인출 + 탐구 누적) ──
   checkCelebrate();
+  checkAllFound();
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -7717,6 +7737,7 @@ function eunNeun(s){
 }
 
 async function submit(){
+  if(S && S.allDoneFired) return;   // 모두 찾음 → 자동 진행 대기 중
   var val = document.getElementById('wi').value.trim();
   if(!val) return;
   document.getElementById('wi').value = '';
