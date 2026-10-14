@@ -7425,13 +7425,28 @@ function spawnUnlitNodes(count){
     return bestMid;
   }
 
-  // 노드가 많을 때(링이 꽉 참) — 스테이지 전체에서 이웃과 가장 먼 빈 자리 (best-candidate 샘플링)
+  // 노드가 많을 때(링이 꽉 참) — 이웃과 가장 먼 빈 자리 (best-candidate 샘플링)
   //   거리 = 이웃 칩 크기로 정규화한 타원 거리. 1 이상이면 겹침 없음.
+  //   ⚠️ 후보는 "스테이지 전체 사각형"이 아니라 캡슐 중심 기준 **타원 띠(ring band)** 안에서만 뽑는다.
+  //      (전체 사각형에서 뽑으면 코너·가장자리가 '이웃에서 가장 먼 자리'로 선택돼 칩이 구석으로 튕겨 나감)
+  //      노드가 16개를 넘는 만큼 바깥 띠를 넓히되, 스테이지 안전 반경을 넘지 않게 클램프 → 코너/하단 잘림 방지.
   function farthestFreeSpot(){
     var best = null, bestD = -1;
-    for(var s=0;s<160;s++){
-      var x = 40 + Math.random() * (W - 80);
-      var y = 22 + Math.random() * (H - 44);
+    var TAU = Math.PI * 2;
+    var over   = Math.max(0, GNODES.length - RING_LIMIT);  // RING_LIMIT 초과분
+    var safeRx = Math.max(rBase, W/2 - 70);                // 스테이지 밖으로 안 나가는 안전 반경
+    var safeRy = Math.max(rBase * 0.9, H/2 - 40);
+    var grow   = 1.18 + over * 0.10;                       // 넘친 만큼 바깥으로 (한 칸씩)
+    var rxMax  = Math.min(rBase * grow, safeRx);
+    var ryMax  = Math.min(rBase * grow * 0.92, safeRy);
+    var rxMin  = rBase * 0.82, ryMin = rBase * 0.82 * 0.92;
+    for(var s=0;s<220;s++){
+      var ang = Math.random() * TAU;
+      var u   = Math.sqrt(Math.random());                 // 바깥쪽에 더 고르게 분포(면적 균등)
+      var x = cx + Math.cos(ang) * (rxMin + u * (rxMax - rxMin));
+      var y = cy + Math.sin(ang) * (ryMin + u * (ryMax - ryMin));
+      x = Math.max(40, Math.min(W-40, x));
+      y = Math.max(22, Math.min(H-22, y));
       if(!avoidsCenter(x, y)) continue;
       var dMin = Infinity;
       for(var j=0;j<GNODES.length;j++){
