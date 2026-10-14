@@ -165,6 +165,23 @@ window.SESSION_READY = (async function loadSession() {
       });
     }
 
+    // 3d. 보기 문구 SSOT — 각 보기는 어휘 사전(word_master) 연결(entry_id)을 가지며,
+    //     화면에는 저장된 문구 대신 '지금 어휘 사전의 뜻'을 보여준다 (뜻을 고치면 모든 보기가 자동 반영, 2026-10-15)
+    {
+      const eids = {};
+      wordRows.forEach(function(r){ (r.choices || []).forEach(function(c){ if (c && c.entry_id != null) eids[c.entry_id] = true; }); });
+      const idList = Object.keys(eids).map(Number);
+      if (idList.length) {
+        const { data: ms } = await client.from('word_master').select('id, meaning').in('id', idList);
+        const M = {};
+        (ms || []).forEach(function(m){ M[m.id] = m.meaning; });
+        wordRows.forEach(function(r){
+          if (!Array.isArray(r.choices)) return;
+          r.choices = r.choices.map(function(c){ return (c && c.entry_id != null && M[c.entry_id]) ? Object.assign({}, c, { text: M[c.entry_id] }) : c; });
+        });
+      }
+    }
+
     // 4. 회차 오답 피드백
     const { data: wrongs, error: e4 } = await client
       .from('wrong_words')
