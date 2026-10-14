@@ -7781,6 +7781,16 @@ async function submit(){
     else    { setFb('miss', '표준국어대사전에 등록된 어휘가 아니에요.'); }
     sndDup(); return;
   }
+  // 민감 어휘(중등 보너스) — 퀴즈 없이 바로 정답 칩, 뜻만 짧게 안내. 점수·분모·강화에는 넣지 않음
+  var bonus = (SESSION && SESSION.bonusWords || []).filter(function(b){ return b.word === val; })[0];
+  if(bonus){
+    S.bonus = S.bonus || [];
+    if(S.bonus.indexOf(val) > -1){ setFb('miss', '"'+val+'"'+eunNeun(val)+' 이미 찾았어요!'); sndDup(); return; }
+    S.bonus.push(val);
+    lightUpNode({ word: bonus.word, hanja: bonus.hanja, meaning: bonus.meaning, char1: bonus.char1, hun1: bonus.hun1, char2: bonus.char2, hun2: bonus.hun2 });
+    setFb('ok', '맞아요! "' + val + '" — ' + bonus.meaning, 3200);
+    return;
+  }
   var wr = WRONG_MAP[val];
   if(wr){ setFb('no', wr); sndErr(); return; }
   // 가족 어휘 — 동음이의어 지원: 같은 word에 entry가 2+개일 수 있음

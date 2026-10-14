@@ -104,7 +104,7 @@ window.SESSION_READY = (async function loadSession() {
     if (e2b) throw e2b;
 
     // 3. 회차 어휘 (view 활용 — 한 번에 통합 조회)
-    const { data: wordRows, error: e3 } = await client
+    let { data: wordRows, error: e3 } = await client
       .from('v_session_word_full')
       .select('session_word_id, word_master_id, word, hanja, char1, hun1, char2, hun2, meaning, fill_sentence, choices, order_in_session, grade')
       .eq('session_id', sess.id)
@@ -149,6 +149,22 @@ window.SESSION_READY = (async function loadSession() {
       regenChoicesGoldilocks(wordRows);
     }
 
+    // 3c. 민감 어휘(word_master.sensitive, 대표님 2026-10-15)
+    //   slur(비하어): 학습 대상 제외 / body·adult: 초등은 제외, 중등은 '보너스'(직접 입력 시 정답, 퀴즈·힌트·확장·강화·분모 제외)
+    let bonusRows = [];
+    if (wordRows.length) {
+      const ids = wordRows.map(function(r){ return r.word_master_id; });
+      const { data: sens } = await client.from('word_master').select('id, sensitive').in('id', ids).not('sensitive', 'is', null);
+      const flag = {};
+      (sens || []).forEach(function(s){ flag[s.id] = s.sensitive; });
+      wordRows = wordRows.filter(function(r){
+        const f = flag[r.word_master_id];
+        if (!f) return true;
+        if (f !== 'slur' && TARGET_LEVEL === '중등') bonusRows.push(r);
+        return false;
+      });
+    }
+
     // 4. 회차 오답 피드백
     const { data: wrongs, error: e4 } = await client
       .from('wrong_words')
@@ -190,6 +206,9 @@ window.SESSION_READY = (async function loadSession() {
           sentenceChoices: null
         };
       }),
+
+      // 민감 어휘(중등) — 직접 입력하면 바로 정답 처리 (퀴즈·힌트·확장·강화·분모 제외)
+      bonusWords: bonusRows.map(function(r){ return { word: r.word, hanja: r.hanja, meaning: r.meaning, wmId: r.word_master_id, char1: r.char1, hun1: r.hun1, char2: r.char2, hun2: r.hun2 }; }),
 
       wrongAnswers: (wrongs || []).map(function(w) {
         return { word: w.word, feedback: w.feedback };
