@@ -8008,6 +8008,7 @@ function renderFQCard(entry){
       var ok = (i === ci);
       if(ok){
         FQ.correct++;
+        if(!wrongAttempted){ (FQ.okKeys = FQ.okKeys || []).push(entryKeyOf(entry)); }   // 어휘별 결과(word_results.reinforce_passed)
         sfxPlay('o.mp3', 0.9);   // 4지선다 정답 — o 사운드만 (sndOk 제거)
         if(!wrongAttempted) addScore('reinforce');   // 첫 시도 정답만 점수 +0.5
         cs.querySelectorAll('.fill-btn').forEach(function(b, bi){
@@ -8305,7 +8306,8 @@ function goResult(){
 
   // ── 외부 진입(구서버) 학습 완료 알림 — service-back sf_study_hanja 업데이트 ──
   //   STUDENT_INFO/TRAINING_INFO 있을 때만 호출. 멱등성 보장이라 재호출 안전.
-  if(typeof notifyStudyComplete === 'function'){ notifyStudyComplete(); }
+  //   통계 화면이 방금 저장된 결과까지 반영하도록 promise 보관 (goStats가 잠깐 기다림)
+  if(typeof notifyStudyComplete === 'function'){ window.__COMPLETE_P = notifyStudyComplete(); }
 
   // ── 상단 메타 (영역 · 회차 · 한자 · 훈) ──
   var area = sess.area || '환경과 생물';
@@ -8544,11 +8546,35 @@ var STATS_AREA_COLORS = {
   economy: '#7BB6E6'
 };
 
+// 실데이터 — 외부 진입 학생(STUDENT_INFO.user_no)이면 wordsense-stats에서 받아 채움. 없으면(데모/테스트) mock.
+var STATS_REAL = null;
+async function loadRealStats(){
+  STATS_REAL = null;
+  var userNo = (typeof STUDENT_INFO !== 'undefined' && STUDENT_INFO) ? STUDENT_INFO.user_no : null;
+  if(!userNo || !window.SUPABASE_URL) return;
+  // 방금 끝난 훈련 결과 저장이 끝나길 잠깐 기다림 (최대 4초)
+  if(window.__COMPLETE_P){
+    try { await Promise.race([window.__COMPLETE_P, new Promise(function(r){ setTimeout(r, 4000); })]); } catch(e){}
+  }
+  try {
+    var res = await fetch(EDGE_FN_BASE + '/wordsense-stats', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY || '' },
+      body: JSON.stringify({ user_no: userNo, level: (SESSION && SESSION.level) || '초등' }),
+    });
+    var d = await res.json();
+    if(res.ok && d.success) STATS_REAL = d;
+    else console.error('[stats] 조회 실패:', d);
+  } catch(err){ console.error('[stats] 조회 오류:', err); }
+}
+
 function fetchAreaStats(){
-  // TODO Phase 2 frontend 통합: 위 SQL로 실데이터 fetch
+  var real = STATS_REAL && STATS_REAL.areas ? STATS_REAL.areas : null;
   return STATS_AREAS.map(function(area){
-    var stat = STATS_MOCK[area.slug] || { acquired:0, total:0, cleared:0, perfect:0 };
-    return Object.assign({}, area, stat);
+    var stat = real
+      ? (real.filter(function(r){ return r.slug === area.slug; })[0] || { acquired:0, total:0, cleared:0 })
+      : (STATS_MOCK[area.slug] || { acquired:0, total:0, cleared:0, perfect:0 });
+    return Object.assign({}, area, { acquired: Number(stat.acquired)||0, total: Number(stat.total)||0, cleared: Number(stat.cleared)||0, perfect: Number(stat.perfect)||0 });
   });
 }
 
@@ -8558,14 +8584,18 @@ function fmtNum(n){
 }
 
 function goStats(){
+  // 실데이터 먼저 불러온 뒤 그림 (데모/테스트 진입은 바로 mock)
+  loadRealStats().then(renderStats, renderStats);
+}
+function renderStats(){
   var stats = fetchAreaStats();
   var headlineEl = document.getElementById('st-headline');
   var listEl     = document.getElementById('st-list');
   if(!listEl || !headlineEl) return;
 
   // ── 메인 KPI 분모/분자 — distinct (SSOT: word_master) ──
-  var totalAcquiredDistinct = STATS_MOCK_TOTAL.acquired_distinct;
-  var totalDistinct         = STATS_MOCK_TOTAL.total_distinct;
+  var totalAcquiredDistinct = STATS_REAL ? (Number(STATS_REAL.acquired_distinct)||0) : STATS_MOCK_TOTAL.acquired_distinct;
+  var totalDistinct         = STATS_REAL ? (Number(STATS_REAL.total_distinct)||0)    : STATS_MOCK_TOTAL.total_distinct;
   var totalPct              = (totalDistinct > 0) ? Math.round((totalAcquiredDistinct / totalDistinct) * 100) : 0;
   // 파이(관심 분포)의 전체 = 영역별 습득 합 (미습득 제외 → 100% 채움)
   var totalAcquired         = stats.reduce(function(a, ar){ return a + ar.acquired; }, 0);
@@ -8677,7 +8707,9 @@ function goStats(){
   // ── 등급별 어휘 습득률 (세로 막대, 입체감 · 현재 회차까지 제공 기준) ──
   // 국립국어원 기초어휘 등급별 습득 시기 (2023 최종보고서 2.1~2.2)
   var GRADE_YR = {1:'취학 전', 2:'초1~2', 3:'초3~4', 4:'초5~6', 5:'중1~3'};
-  var gGrades = (typeof STATS_MOCK_GRADES !== 'undefined' ? STATS_MOCK_GRADES : []).filter(function(g){ return (g.provided||0) > 0; });
+  var gSrc = STATS_REAL ? (STATS_REAL.grades || []).map(function(g){ return { g:Number(g.g), acquired:Number(g.acquired)||0, provided:Number(g.provided)||0 }; })
+                        : (typeof STATS_MOCK_GRADES !== 'undefined' ? STATS_MOCK_GRADES : []);
+  var gGrades = gSrc.filter(function(g){ return (g.provided||0) > 0; });
   var gCols = gGrades.map(function(g){
     var prov = g.provided||0, acq = g.acquired||0, pct = prov>0 ? Math.round(acq/prov*100) : 0;
     var tier = pct>=70 ? 'hi' : (pct>=45 ? 'mid' : 'lo');
@@ -9018,6 +9050,17 @@ async function notifyStudyComplete(){
     started_at:     new Date(startMs).toISOString(),
     finished_at:    new Date().toISOString(),
     duration_sec:   Math.max(0, Math.round((Date.now() - startMs) / 1000)),
+    // 어휘별 결과 → word_results (통계 화면 원천). 습득 = 인출 또는 확장에서 맞힘(검정 칩 제외)
+    words: (typeof WORD_LIST !== 'undefined' ? WORD_LIST : []).map(function(e){
+      var k = entryKeyOf(e);
+      return {
+        session_word_id:  e.swId,
+        word_master_id:   e.wmId,
+        retrieve_passed:  !!(S && S.found && S.found.indexOf(k) > -1),
+        extend_passed:    !!(LEARN && LEARN.collected && LEARN.collected.some(function(c){ return entryKeyOf(c) === k; })),
+        reinforce_passed: !!(FQ && FQ.okKeys && FQ.okKeys.indexOf(k) > -1),
+      };
+    }),
   };
   try {
     var res = await fetch(EDGE_FN_BASE + '/wordsense-complete', {

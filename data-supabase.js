@@ -82,7 +82,7 @@ window.SESSION_READY = (async function loadSession() {
     // 3. 회차 어휘 (view 활용 — 한 번에 통합 조회)
     const { data: wordRows, error: e3 } = await client
       .from('v_session_word_full')
-      .select('word, hanja, char1, hun1, char2, hun2, meaning, fill_sentence, choices, order_in_session')
+      .select('session_word_id, word_master_id, word, hanja, char1, hun1, char2, hun2, meaning, fill_sentence, choices, order_in_session, grade')
       .eq('session_id', sess.id)
       .order('order_in_session');
     if (e3) throw e3;
@@ -102,7 +102,7 @@ window.SESSION_READY = (async function loadSession() {
       if (elemIds.length) {
         const { data: elemRows, error: e3b } = await client
           .from('v_session_word_full')
-          .select('session_id, word, hanja, char1, hun1, char2, hun2, meaning, fill_sentence, choices, order_in_session')
+          .select('session_id, session_word_id, word_master_id, word, hanja, char1, hun1, char2, hun2, meaning, fill_sentence, choices, order_in_session, grade')
           .in('session_id', elemIds)
           .order('session_id')
           .order('order_in_session');
@@ -144,6 +144,9 @@ window.SESSION_READY = (async function loadSession() {
         const correct = (r.choices || []).find(function(c){ return c.is_correct; });
         const wrongChoices = (r.choices || []).filter(function(c){ return !c.is_correct; });
         return {
+          swId: r.session_word_id,      // 결과 저장(word_results)용
+          wmId: r.word_master_id,
+          grade: r.grade,
           word: r.word,
           hanja: r.hanja,
           char1: r.char1, hun1: r.hun1,

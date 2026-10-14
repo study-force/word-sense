@@ -80,23 +80,42 @@ Deno.serve(async (req) => {
         .eq('member_no', r.user_no)
         .eq('session_id', r.session_id);
       const attemptNo = (count || 0) + 1;
-      const { error: insErr } = await supabase.from('attempts').insert({
+      const { data: att, error: insErr } = await supabase.from('attempts').insert({
         member_no:      r.user_no,
         session_id:     r.session_id,
         area_id:        r.area_id ?? null,
-        started_at:     r.started_at ?? null,
+        started_at:     r.started_at ?? undefined,   // NOT NULL(default now) — null 보내면 실패
         finished_at:    r.finished_at ?? new Date().toISOString(),
         duration_sec:   r.duration_sec ?? null,
-        total_words:    r.total_words ?? null,
+        total_words:    r.total_words ?? 0,
         attempt_no:     attemptNo,
         current_stage:  'done',
         retrieve_count: r.retrieve_count ?? 0,
         extend_count:   r.extend_count ?? 0,
         correct_words:  r.correct_words ?? 0,
-        tier_level:     r.tier_level ?? null,
-      });
+        tier_level:     r.tier_level ?? 0,
+      }).select('id').single();
       if (insErr) console.error('[wordsense-complete] attempts INSERT 오류:', insErr);
-      else saved = true;
+      else {
+        saved = true;
+        // 어휘별 결과 — 통계(영역별 현황·등급별 습득률)의 원천
+        const words = Array.isArray(r.words) ? r.words : [];
+        const rows = words
+          .filter((w: any) => w && Number.isFinite(Number(w.word_master_id)) && Number.isFinite(Number(w.session_word_id)))
+          .map((w: any) => ({
+            attempt_id:       att.id,
+            member_no:        r.user_no,
+            session_word_id:  Number(w.session_word_id),
+            word_master_id:   Number(w.word_master_id),
+            retrieve_passed:  !!w.retrieve_passed,
+            extend_passed:    !!w.extend_passed,
+            reinforce_passed: !!w.reinforce_passed,
+          }));
+        if (rows.length) {
+          const { error: wrErr } = await supabase.from('word_results').insert(rows);
+          if (wrErr) console.error('[wordsense-complete] word_results INSERT 오류:', wrErr);
+        }
+      }
     } catch (e) {
       console.error('[wordsense-complete] 결과 저장 실패(무시하고 계속):', e);
     }
