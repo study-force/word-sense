@@ -8852,7 +8852,10 @@ var AREA_HUN = {
 var AREA_PROGRESS = null;
 
 var PASS_MIN = 10;
-function isPass(p){ return !p.locked && p.found >= PASS_MIN; }
+// 통과 = 10개 이상 수집. 단, 가족 어휘가 10개 미만인 회차는 전부 찾으면 통과
+//   (예전엔 어휘 3~9개 회차는 다 찾아도 영원히 미통과였음 — 초등 32·중등 18회차)
+function passNeed(p){ return Math.min(PASS_MIN, Math.max(1, p.total || 0)); }
+function isPass(p){ return !p.locked && p.total > 0 && p.found >= passNeed(p); }
 
 function buildAreaProgress(){
   // 학습 기록 DB(Phase 2) 미구축 상태 — 현재 회차만 활성, 나머지는 모두 잠금.
@@ -8970,7 +8973,7 @@ function goArea(){
   } else {
     master.className = 'area-master';
     icon.textContent = '';
-    msg.innerHTML = '※ 회차당 가족 어휘 ' + PASS_MIN + '개 이상 수집 시 패스';
+    msg.innerHTML = '※ 회차당 가족 어휘 ' + PASS_MIN + '개 이상 수집 시 패스 (' + PASS_MIN + '개 미만 회차는 모두 찾으면 패스)';
   }
   showPage('area');
 }
