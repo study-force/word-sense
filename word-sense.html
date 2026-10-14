@@ -4587,10 +4587,10 @@ body.pmode .ci-meaning { flex: 0 0 calc(50% - 5px); max-width: none; }
 
 /* 인출: 가운데 한자 캡슐 축소 + 뜻 한 줄 */
 body.pmode #g-stage .game-cap { zoom: 0.7; }
-body.pmode #g-stage .g-center { gap: 8px; }
-body.pmode .game-eum { white-space: nowrap; font-size: 14px; }
+body.pmode #g-stage .g-center { gap: 8px; transform: translate(-50%, calc(-50% + 48px)); }
+body.pmode .game-eum { white-space: nowrap; font-size: 16px; }
 body.pmode .stage-nav { left: 18px; top: 18px; gap: 8px; }
-body.pmode .sn-meta { font-size: 15px; }
+body.pmode .sn-meta { font-size: 17px; }
 /* 인출 하단 입력줄: [입력칸(가변) | 확인] 한 줄, 완료 버튼은 도크 위 오른쪽에 띄움 */
 body.pmode .game-bottom { padding: 12px 14px 14px; gap: 8px; }
 body.pmode .input-row { gap: 8px; }
@@ -4616,7 +4616,7 @@ body.pmode #fq-card .fill-sentence { white-space: normal; word-break: keep-all; 
 body.pmode .fill-choices-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
 body.pmode .fill-btn { padding: 16px 14px 16px 16px; }
 /* 결과: [점수판] / [인출 어휘 | 확장 어휘] / 순위표 2×2 — 남는 높이는 순위표가 채움(카드 안에서만 스크롤) */
-body.pmode .r-topbar-meta { top: 22px; left: 18px; font-size: 14px; }
+body.pmode .r-topbar-meta { top: 20px; left: 18px; font-size: 16px; }
 body.pmode .r-tier-badge { top: 48px; }
 body.pmode .result-body-v3 { padding: 30px 14px 18px; gap: 12px; }
 body.pmode .r-trio-row { flex-wrap: wrap; height: auto; margin-top: 0; gap: 10px; }
@@ -4629,13 +4629,46 @@ body.pmode .score-chip.center-result { transform: translate(-172px, 120px) scale
 /* 나의 훈사전: 10열 → 5열(10줄) */
 body.pmode .area-grid { grid-template-columns: repeat(5, 1fr); grid-auto-rows: minmax(0, 1fr); min-height: 0; gap: 5px; }
 body.pmode .area-cell .cell-char { font-size: 32px; }
-body.pmode .area-cell .cell-hun { font-size: 11px; }
 /* 통계: 좌우 2단 → 위(급수 막대)·아래(영역 목록) 세로 쌓기 */
 body.pmode .st-body { padding: 16px 16px 90px; }
 body.pmode .st-page-title { font-size: 32px; }
 body.pmode .st-split { flex-direction: column; gap: 22px; }
 body.pmode .st-headline { flex: 0 0 auto; width: 100%; max-width: 440px; }
 body.pmode .st-list-col { width: 100%; transform: none; }
+
+/* ── 휴대폰 글자 크기 보정 — 캔버스가 약 0.78배로 줄어드므로 작은 글자를 키움
+      (목표: 실제 화면 최소 12.5px ≈ 캔버스 16px, 본문 14px ≈ 18px) ── */
+body.pmode .g-node.lit { font-size: 16px; }
+body.pmode .hint-log .hl-chip { font-size: 16px; }
+body.pmode .hint-log .hl-title { font-size: 15px; }
+body.pmode .ci-meaning-num { font-size: 14px; }
+body.pmode .cm-ex { font-size: 17px; }
+body.pmode .ci-etymology-body { font-size: 19px; }
+body.pmode .iq-grade { font-size: 14px; }
+body.pmode .num-badge { font-size: 14px; width: 24px; height: 24px; }
+body.pmode .fill-btn .fb-hj { font-size: 15px; }
+body.pmode .r-collect-word { font-size: 16px; }
+body.pmode .r-collect-tag { font-size: 17px; }
+body.pmode .r-collect-cnt { font-size: 16px; }
+body.pmode .mr-num { font-size: 17px; }
+body.pmode .r-rank-col-tag { font-size: 16px; }
+body.pmode .r-rank-col-sub { font-size: 14px; }
+body.pmode .r-rank-myrank { font-size: 15px; }
+body.pmode .r-rank-name { font-size: 17px; }
+body.pmode .r-rank-num, body.pmode .r-rank-cnt { font-size: 16px; }
+body.pmode .r-rank-ellipsis { font-size: 17px; }
+body.pmode .r-rank-card-head { flex-wrap: wrap; row-gap: 6px; }
+body.pmode .r-rank-head-right { margin-left: auto; }
+body.pmode .area-cell .cell-hun { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+body.pmode .area-cell .cell-frac { font-size: 12px; top: 4px; right: 5px; bottom: auto; left: auto; }
+body.pmode .area-legend { flex-wrap: wrap; gap: 6px 14px; }
+body.pmode .al-item { font-size: 14px; white-space: nowrap; }
+body.pmode .area-back-btn { font-size: 14px; }
+body.pmode .area-master-msg, body.pmode .area-progress-stat { font-size: 15px; }
+body.pmode .gc-n, body.pmode .gc-note, body.pmode .gl-cap, body.pmode .gl-item { font-size: 16px; }
+body.pmode .st-row-pct, body.pmode .st-row-total { font-size: 15px; }
+body.pmode .st-sources { font-size: 13px; }
+body.pmode .st-today-badge { font-size: 13px; }
 </style>
 </head>
 <body>
@@ -7166,6 +7199,8 @@ function setupGameStage(){
   var cc = getCapCenter(stage);
   if(cc){ cx = cc.cx; cy = cc.cy; }
   var rBase = Math.min(W, H*1.6) * 0.24;
+  // 휴대폰 세로: 무대가 세로로 길어 원을 크게 — 위아래 빈 공간까지 칩이 퍼지게
+  if(document.body.classList.contains('pmode')) rBase = Math.min(W * 0.36, H * 0.34);
   // 들쑥날쑥 패턴 + 정원(ry=rx) 배치 — 위·아래·좌·우 라인 길이 균형
   var rScale = [0.85, 1.15, 0.85, 1.15, 0.85, 1.15, 0.85, 1.15, 0.85, 1.15];
   // 기본 10개 — 가족 어휘가 10개 미만인 회차는 어휘 수만큼만 (빈 노드가 남지 않게)
@@ -7474,6 +7509,8 @@ function spawnUnlitNodes(count){
   var cc = getCapCenter(stage);
   if(cc){ cx = cc.cx; cy = cc.cy; }
   var rBase = Math.min(W, H*1.6) * 0.24;
+  // 휴대폰 세로: 무대가 세로로 길어 원을 크게 — 위아래 빈 공간까지 칩이 퍼지게
+  if(document.body.classList.contains('pmode')) rBase = Math.min(W * 0.36, H * 0.34);
 
   // 主字(캡슐 + 뜻 텍스트) 회피 — .g-center 전체를 회피 박스로
   var capForAvoid = stage.querySelector('.g-center');
@@ -7494,12 +7531,18 @@ function spawnUnlitNodes(count){
   // 이웃 노드별 분리 반경 (이웃의 칩 종류에 따라 가변) — 두 중심 간 최소 거리
   // 미점등(lit=false): 노드끼리 ~62
   // lit + len-s : ~92,  len-m : ~108,  len-l : ~126  (이웃의 칩 폭 기준)
+  // 휴대폰 세로는 칩 글자를 키웠으므로(11→16px) 간격도 같이 넓힘
+  var SEP_K = document.body.classList.contains('pmode') ? { x: 1.3, y: 1.2 } : { x: 1, y: 1 };
   function sepFor(other){
-    if(!other.lit) return { x: 62, y: 38 };
-    var lc = other.lenCls || 'len-m';
-    if(lc === 'len-s') return { x: 92,  y: 42 };
-    if(lc === 'len-l') return { x: 126, y: 46 };
-    return                  { x: 108, y: 44 };
+    var r;
+    if(!other.lit) r = { x: 62, y: 38 };
+    else {
+      var lc = other.lenCls || 'len-m';
+      if(lc === 'len-s')      r = { x: 92,  y: 42 };
+      else if(lc === 'len-l') r = { x: 126, y: 46 };
+      else                    r = { x: 108, y: 44 };
+    }
+    return { x: r.x * SEP_K.x, y: r.y * SEP_K.y };
   }
 
   // 한 점(x,y)에 대해 모든 이웃과의 "겹침 정도"를 점수로 (0이면 안 겹침, 양수일수록 더 겹침)
@@ -7633,7 +7676,8 @@ function spawnUnlitNodes(count){
     }
     return best;
   }
-  var RING_LIMIT = 16;   // 이 개수까지는 기존 원형(들쑥날쑥) 배치, 이후엔 빈 자리 채우기
+  // 이 개수까지는 기존 원형(들쑥날쑥) 배치, 이후엔 빈 자리 채우기 (휴대폰 세로는 무대가 좁아 원이 10개면 꽉 참)
+  var RING_LIMIT = document.body.classList.contains('pmode') ? 10 : 16;
 
   var added = 0;
   for(var i=0;i<count;i++){
