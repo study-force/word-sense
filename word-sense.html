@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,interactive-widget=resizes-visual">
 <title>훈감각 익히기</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4564,6 +4564,78 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
   border-color: var(--green) !important;
   box-shadow: 0 0 0 4px rgba(69,194,138,0.18) !important;
 }
+
+/* ════════════════════════════════════════════════════════════════
+   휴대폰 세로 모드 (body.pmode) — 캔버스 폭 480, 높이는 화면에 맞춤 (applyPhoneScale)
+   PC/태블릿 가로에는 영향 없음
+   ════════════════════════════════════════════════════════════════ */
+#rotate-hint { position: fixed; inset: 0; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: #0E121B; color: #F2F4FA; font-family: 'Noto Sans KR', sans-serif; }
+#rotate-hint .rh-icon { font-size: 44px; animation: rhTurn 1.8s ease-in-out infinite; }
+#rotate-hint .rh-text { font-size: 18px; font-weight: 500; }
+#rotate-hint .rh-text b { color: var(--green); font-weight: 600; }
+@keyframes rhTurn { 0%,30% { transform: rotate(-90deg); } 60%,100% { transform: rotate(0deg); } }
+/* 인출: 아래를 키보드 자리로 비움 (흰 도크가 그 자리까지 이어짐) */
+body.pmode #game { padding-bottom: var(--kb-reserve, 360px); }
+
+/* 홈: 히어로(훈감각 生 익히기, 폭 720)를 폭 안에 들어오게 축소 */
+body.pmode .home-hero { transform: scale(0.62); margin: -100px 0 -40px; }
+body.pmode .home-subtitle { font-size: 15px; }
+
+/* 한자 소개: 뜻 카드 2×2 */
+body.pmode .ci-meanings-list { flex-wrap: wrap; }
+body.pmode .ci-meaning { flex: 0 0 calc(50% - 5px); max-width: none; }
+
+/* 인출: 가운데 한자 캡슐 축소 + 뜻 한 줄 */
+body.pmode #g-stage .game-cap { zoom: 0.7; }
+body.pmode #g-stage .g-center { gap: 8px; }
+body.pmode .game-eum { white-space: nowrap; font-size: 14px; }
+body.pmode .stage-nav { left: 18px; top: 18px; gap: 8px; }
+body.pmode .sn-meta { font-size: 15px; }
+/* 인출 하단 입력줄: [입력칸(가변) | 확인] 한 줄, 완료 버튼은 도크 위 오른쪽에 띄움 */
+body.pmode .game-bottom { padding: 12px 14px 14px; gap: 8px; }
+body.pmode .input-row { gap: 8px; }
+body.pmode .input-wrap { width: auto; flex: 1 1 auto; min-width: 0; }
+body.pmode .btn-ok { flex: 0 0 auto; padding-left: 18px; padding-right: 18px; }
+body.pmode .btn-done { top: auto; bottom: calc(100% + 10px); right: 14px; transform: none; height: 40px; width: 88px; white-space: nowrap; }
+body.pmode .word-input { font-size: 19px; padding: 12px 128px 12px 84px; }
+body.pmode .wi-counter { left: 16px; font-size: 16px; }
+body.pmode .hint-btn { right: 8px; padding: 6px 9px 6px 11px; font-size: 13px; }
+/* 점수판: 미션 화면 중앙·결과 중앙 이동 좌표를 폭 480 기준으로 (우상단 칩 중심 x=412 → 화면 중앙 240) */
+body.pmode .score-chip.center-mission { transform: translate(-172px, calc(var(--pm-half, 520px) - 162px)) scale(2.0); }
+/* 뜻 고르기 창(인출 퀴즈)·확장 카드 — 폭 620 → 폭 안에 맞춤 */
+body.pmode .quiz-card, body.pmode .learn-card { width: 456px; padding: 22px 20px 20px; }
+body.pmode .quiz-card .iq-head { padding: 22px 12px; }
+/* 확장: 양옆의 카드 묶음(남은 카드/모은 카드)을 카드 아래 한 줄로 */
+body.pmode .learn-deck, body.pmode .learn-coll { top: auto; bottom: 64px; transform: none; flex-direction: row; gap: 12px; }
+body.pmode .learn-deck { right: 44px; }
+body.pmode .learn-coll { left: 44px; }
+/* 강화(빈칸): 좌우 여백 줄이고, 문장은 줄바꿈 허용, 보기는 2×2 */
+body.pmode .qpage-body { padding: 20px 16px 90px; }
+body.pmode #fq-card .fq-sentence-box { padding: 40px 20px 32px; }
+body.pmode #fq-card .fill-sentence { white-space: normal; word-break: keep-all; font-size: 22px; line-height: 1.9; }
+body.pmode .fill-choices-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+body.pmode .fill-btn { padding: 16px 14px 16px 16px; }
+/* 결과: [점수판] / [인출 어휘 | 확장 어휘] / 순위표 2×2 — 남는 높이는 순위표가 채움(카드 안에서만 스크롤) */
+body.pmode .r-topbar-meta { top: 22px; left: 18px; font-size: 14px; }
+body.pmode .r-tier-badge { top: 48px; }
+body.pmode .result-body-v3 { padding: 30px 14px 18px; gap: 12px; }
+body.pmode .r-trio-row { flex-wrap: wrap; height: auto; margin-top: 0; gap: 10px; }
+body.pmode .r-score-cell { flex: 0 0 100%; height: 196px; order: -1; }
+body.pmode .r-collect-col { flex: 1 1 calc(50% - 5px); height: 138px; margin-top: 0; }
+body.pmode .r-rank-block { flex: 1 1 auto; min-height: 0; margin: 4px 0 8px; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: minmax(0, 1fr); gap: 10px; }
+body.pmode .r-rank-card { min-height: 0; overflow: hidden; }
+body.pmode .r-home-btn { flex: 0 0 auto; width: auto; font-size: 15px; padding: 13px 34px; }
+body.pmode .score-chip.center-result { transform: translate(-172px, 120px) scale(1.9); }
+/* 나의 훈사전: 10열 → 5열(10줄) */
+body.pmode .area-grid { grid-template-columns: repeat(5, 1fr); grid-auto-rows: minmax(0, 1fr); min-height: 0; gap: 5px; }
+body.pmode .area-cell .cell-char { font-size: 32px; }
+body.pmode .area-cell .cell-hun { font-size: 11px; }
+/* 통계: 좌우 2단 → 위(급수 막대)·아래(영역 목록) 세로 쌓기 */
+body.pmode .st-body { padding: 16px 16px 90px; }
+body.pmode .st-page-title { font-size: 32px; }
+body.pmode .st-split { flex-direction: column; gap: 22px; }
+body.pmode .st-headline { flex: 0 0 auto; width: 100%; max-width: 440px; }
+body.pmode .st-list-col { width: 100%; transform: none; }
 </style>
 </head>
 <body>
@@ -4904,7 +4976,71 @@ function visibleBox(){
   }
   return { w: w, h: h, top: top };
 }
+// ── 휴대폰 세로 모드(body.pmode) ──
+//   폭 480 기준의 세로로 긴 캔버스로 바꿔 그림(높이 = 화면 높이에 맞춤).
+//   인출 화면은 아래 --kb-reserve 만큼을 키보드 자리로 비워 둠 → 키보드가 떠도 레이아웃 안 움직임.
+//   키보드 실제 높이는 처음 뜰 때 재서 저장(다음부터 그 값 사용). 시험용: ?pmode=1
+var PHONE_W = 480;
+var FORCE_PMODE = /[?&]pmode=1/.test(location.search);
+function isPhonePortrait(){
+  if(FORCE_PMODE) return true;
+  return IS_TOUCH_DEVICE && window.innerWidth < 600 && window.innerHeight > window.innerWidth;
+}
+function kbReserveRatio(){
+  var r = 0;
+  try { r = parseFloat(localStorage.getItem('ws_kb_ratio')) || 0; } catch(e){}
+  return (r > 0.25 && r < 0.6) ? r : 0.43;   // 첫 실행 추정치: 한글 자판+추천줄 ≈ 화면의 43%
+}
+function applyPhoneScale(){
+  var W = window.innerWidth, H = window.innerHeight;
+  var s = W / PHONE_W;
+  if(!(s > 0)){ setTimeout(applyScale, 300); return; }
+  var designH = H / s;
+  var kbPx = Math.round(H * kbReserveRatio());
+  document.body.classList.add('pmode');
+  document.documentElement.style.setProperty('--kb-reserve', Math.round(kbPx / s) + 'px');
+  document.documentElement.style.setProperty('--pm-half', Math.round(designH / 2) + 'px');
+  // 키보드가 예상보다 크면 그만큼만 위로 밀어 입력창이 가려지지 않게
+  var shift = 0, vv = window.visualViewport;
+  var typing = document.activeElement && document.activeElement.id === 'wi';
+  if(typing && vv){
+    var realKb = H - vv.height;
+    if(realKb > 80){
+      try { localStorage.setItem('ws_kb_ratio', (realKb / H).toFixed(3)); } catch(e){}
+      if(realKb > kbPx) shift = realKb - kbPx;
+    }
+  }
+  var t = 'translate(-50%,-50%) scale('+s+')';
+  var cy = (H/2 - shift) + 'px';
+  [document.getElementById('screen'), document.getElementById('chip-anchor')].forEach(function(el){
+    if(!el) return;
+    el.style.width = PHONE_W + 'px';
+    el.style.height = designH + 'px';
+    el.style.transform = t;
+    el.style.top = cy;
+  });
+  document.documentElement.style.setProperty('--canvas-scale', s);
+  if(typeof CAP_CENTER !== 'undefined') CAP_CENTER = null;
+}
+// 휴대폰 가로: 키보드가 뜨면 화면이 너무 작아져 → 세로로 돌리라는 안내
+function updateRotateHint(){
+  var on = IS_TOUCH_DEVICE && !FORCE_PMODE && window.innerWidth > window.innerHeight && window.innerHeight < 500;
+  var el = document.getElementById('rotate-hint');
+  if(on && !el){
+    el = document.createElement('div');
+    el.id = 'rotate-hint';
+    el.innerHTML = '<div class="rh-icon">📱</div><div class="rh-text">휴대폰을 <b>세로</b>로 돌려 주세요</div>';
+    document.body.appendChild(el);
+  }
+  if(el) el.style.display = on ? 'flex' : 'none';
+}
 function applyScale(){
+  updateRotateHint();
+  if(isPhonePortrait()){ applyPhoneScale(); return; }
+  if(document.body.classList.contains('pmode')){
+    document.body.classList.remove('pmode');
+    ['screen','chip-anchor'].forEach(function(id){ var el = document.getElementById(id); if(el){ el.style.width = ''; el.style.height = ''; } });
+  }
   var box = visibleBox();
   var s = Math.min(box.w/1100, box.h/800);
   // 화면 크기를 아직 못 받은 순간(숨은 탭 등)이면 잠시 뒤 다시 — scale(0)으로 굳는 것 방지
@@ -6922,7 +7058,8 @@ function goGame(){
   document.getElementById('g-eum').innerHTML      = eumToPills(sess.mainEum);
   // 인풋 placeholder를 회차의 訓에 맞춰 동적으로 채움
   var wi = document.getElementById('wi');
-  if(wi) wi.placeholder = "'" + sess.mainHunFull + "'의 가족 어휘";
+  // 휴대폰 세로는 입력칸이 좁아 짧게
+  if(wi) wi.placeholder = document.body.classList.contains('pmode') ? '가족 어휘 입력' : ("'" + sess.mainHunFull + "'의 가족 어휘");
   updateGameCounter();
   // 미션 모드 활성화 — 게임 캔버스 숨기고 페이지 전환 시 깜빡임 제거
   document.body.classList.add('mission-mode');
@@ -8092,14 +8229,16 @@ function renderFQCard(entry){
   // 오답 버튼 고르기 (2026-10-15):
   //   ① 이 어휘의 뜻 퀴즈 오답(의미 점검을 거친 = 정답과 뜻이 확실히 다른 어휘)을 우선 사용
   //   ② 모자라면 강화 대상 중에서 — 같은 글자(동음이의어)·같은 뜻은 제외 (같은 텍스트 버튼 두 개 방지)
-  var others = [];
+  //   ⓪ 골디락스 풀(fill_pools)이 있으면 그것만 사용 — 매번 무작위 (data-supabase.js pickFillOthers)
+  var others = (window.pickFillOthers && window.pickFillOthers(entry, typeof WORD_LIST !== 'undefined' ? WORD_LIST : [])) || [];
   var used = {}; used[entry.word] = true;
-  var vetted = (entry.choices || []).slice(1);   // [정답, 오답1, 오답2, 오답3] — 오답 뜻
+  others.forEach(function(e){ used[e.word] = true; });
+  var vetted = entry.fillPool ? [] : (entry.choices || []).slice(1);   // [정답, 오답1, 오답2, 오답3] — 오답 뜻
   shuffle((typeof WORD_LIST !== 'undefined' ? WORD_LIST : []).filter(function(e){
     return e !== entry && vetted.indexOf(e.meaning) > -1;
   })).forEach(function(e){ if(others.length < 3 && !used[e.word]){ used[e.word] = true; others.push(e); } });
   shuffle(FQ.words.filter(function(e){ return e !== entry; })).forEach(function(e){
-    if(others.length < 3 && !used[e.word] && e.meaning !== entry.meaning){ used[e.word] = true; others.push(e); }
+    if(others.length < 3 && !used[e.word] && e.meaning !== entry.meaning && !(entry.fillPool && entry.fillPool[e.wmId] === 3)){ used[e.word] = true; others.push(e); }
   });
   var choices = shuffle([entry].concat(others));   // entry 객체 4지선다
   var ci = choices.indexOf(entry);
