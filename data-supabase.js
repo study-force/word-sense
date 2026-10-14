@@ -49,17 +49,18 @@ window.SUPABASE_URL = SUPABASE_URL;
 window.SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
 
 // 골디락스 오답 선정 (어드민 lib/synonyms.js와 같은 기준) — 뜻 2-gram 자카드
-//   0.1~0.3 > 0.05~0.1 > 0~0.05 > 0.3~0.5 > 0 순으로, 0.5 이상(거의 같은 뜻)·같은 낱말·같은 뜻 문장은 제외
+//   덜 헷갈리는 쪽 우선 — 아래 _goldRank 참고. 같은 낱말·같은 뜻 문장은 제외
 function _bigrams(x){ const s = String(x || '').replace(/s+/g, ''); const g = new Set(); if (s.length <= 1) { if (s) g.add(s); return g; } for (let i = 0; i < s.length - 1; i++) g.add(s.slice(i, i + 2)); return g; }
 function _jaccard(a, b){ const s1 = _bigrams(a), s2 = _bigrams(b); if (!s1.size && !s2.size) return 0; let inter = 0; s1.forEach(function(x){ if (s2.has(x)) inter++; }); const uni = new Set([...s1, ...s2]).size; return uni ? inter / uni : 0; }
-function _goldRank(j){ return j >= 0.1 && j <= 0.3 ? 0 : j >= 0.05 && j < 0.1 ? 1 : j > 0 && j < 0.05 ? 2 : j > 0.3 ? 3 : 4; }
+// 덜 헷갈리게 (대표님 2026-10-15): 0.05~0.15 > 0~0.05 > 0.15~0.25 > 0 > 0.25~0.35(후보 없을 때만), 0.35 이상 제외
+function _goldRank(j){ return j >= 0.05 && j < 0.15 ? 0 : j > 0 && j < 0.05 ? 1 : j >= 0.15 && j < 0.25 ? 2 : j === 0 ? 3 : 4; }
 function regenChoicesGoldilocks(rows){
   rows.forEach(function(r){
     if (!r._regenChoices) return;
     const pool = rows.filter(function(c){ return c !== r && c.word !== r.word && String(c.meaning).trim() !== String(r.meaning).trim(); })
       .map(function(c){ return { c: c, j: _jaccard(c.meaning, r.meaning) }; })
-      .filter(function(x){ return x.j < 0.5; })
-      .sort(function(a, b){ return _goldRank(a.j) - _goldRank(b.j) || Math.abs(a.j - 0.2) - Math.abs(b.j - 0.2) || String(a.c.word).localeCompare(String(b.c.word)); });
+      .filter(function(x){ return x.j < 0.35; })
+      .sort(function(a, b){ return _goldRank(a.j) - _goldRank(b.j) || Math.abs(a.j - 0.1) - Math.abs(b.j - 0.1) || String(a.c.word).localeCompare(String(b.c.word)); });
     const pick = [];
     pool.forEach(function(x){
       if (pick.length >= 3) return;
