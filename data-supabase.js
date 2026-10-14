@@ -87,11 +87,42 @@ window.SESSION_READY = (async function loadSession() {
       .order('order_in_session');
     if (e3) throw e3;
 
+    // 3b. 중등 = 초등 누적 — 같은 主字의 초등 회차 어휘도 합침 (중등 어휘 뒤에, word+hanja 중복 제외)
+    //     DB 복사 없이 읽을 때 합치므로 초등 어휘를 고치면 중등에도 그대로 반영됨
+    let elemIds = [];
+    if (TARGET_LEVEL === '중등') {
+      const { data: elemSess, error: e3a } = await client
+        .from('sessions')
+        .select('id')
+        .eq('level', '초등')
+        .eq('main_char', sess.main_char)
+        .order('id');
+      if (e3a) throw e3a;
+      elemIds = (elemSess || []).map(function(s){ return s.id; });
+      if (elemIds.length) {
+        const { data: elemRows, error: e3b } = await client
+          .from('v_session_word_full')
+          .select('session_id, word, hanja, char1, hun1, char2, hun2, meaning, fill_sentence, choices, order_in_session')
+          .in('session_id', elemIds)
+          .order('session_id')
+          .order('order_in_session');
+        if (e3b) throw e3b;
+        const seen = {};
+        wordRows.forEach(function(r){ seen[r.word + '|' + r.hanja] = true; });
+        (elemRows || []).forEach(function(r){
+          const k = r.word + '|' + r.hanja;
+          if (seen[k]) return;
+          seen[k] = true;
+          wordRows.push(r);
+        });
+      }
+    }
+
     // 4. 회차 오답 피드백
     const { data: wrongs, error: e4 } = await client
       .from('wrong_words')
       .select('word, feedback')
-      .eq('session_id', sess.id);
+      .in('session_id', [sess.id].concat(elemIds));   // 중등이면 초등 같은 主字 회차 오답 피드백도
     if (e4) throw e4;
 
     // 5. data.js의 SESSION 형식으로 변환
