@@ -6983,8 +6983,10 @@ function setupGameStage(){
   var rBase = Math.min(W, H*1.6) * 0.24;
   // 들쑥날쑥 패턴 + 정원(ry=rx) 배치 — 위·아래·좌·우 라인 길이 균형
   var rScale = [0.85, 1.15, 0.85, 1.15, 0.85, 1.15, 0.85, 1.15, 0.85, 1.15];
-  for(var i=0;i<NODE_COUNT;i++){
-    var ang = (i/NODE_COUNT)*Math.PI*2 - Math.PI/2 + Math.PI/NODE_COUNT + (Math.random()-.5)*0.12;
+  // 기본 10개 — 가족 어휘가 10개 미만인 회차는 어휘 수만큼만 (빈 노드가 남지 않게)
+  var nodeCount = (typeof WORD_LIST !== 'undefined' && WORD_LIST.length > 0) ? Math.min(NODE_COUNT, WORD_LIST.length) : NODE_COUNT;
+  for(var i=0;i<nodeCount;i++){
+    var ang = (i/nodeCount)*Math.PI*2 - Math.PI/2 + Math.PI/nodeCount + (Math.random()-.5)*0.12;
     var sc = rScale[i % rScale.length];
     var rx = rBase * sc + (Math.random()-.5)*3;
     var ry = rBase * sc       + (Math.random()-.5)*3;   /* 0.92 → 1.0 (정원) — 위·아래·좌·우 균등 */
