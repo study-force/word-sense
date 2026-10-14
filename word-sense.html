@@ -8594,7 +8594,8 @@ var STATS_REAL = null;
 async function loadRealStats(){
   STATS_REAL = null;
   var userNo = (typeof STUDENT_INFO !== 'undefined' && STUDENT_INFO) ? STUDENT_INFO.user_no : null;
-  if(!userNo || !window.SUPABASE_URL) return;
+  if(!window.SUPABASE_URL) return;
+  // 학생 정보 없음(회차 테스트 등) → 예시 숫자 대신 실제 분모 + 습득 0 (대표님 2026-10-14)
   // 방금 끝난 훈련 결과 저장이 끝나길 잠깐 기다림 (최대 4초)
   if(window.__COMPLETE_P){
     try { await Promise.race([window.__COMPLETE_P, new Promise(function(r){ setTimeout(r, 4000); })]); } catch(e){}
@@ -8606,7 +8607,15 @@ async function loadRealStats(){
       body: JSON.stringify({ user_no: userNo, level: (SESSION && SESSION.level) || '초등' }),
     });
     var d = await res.json();
-    if(res.ok && d.success) STATS_REAL = d;
+    if(res.ok && d.success){
+      // 기록 없는 진입이면 등급별 그래프는 오늘 회차 어휘 기준(습득 0)으로 — 빈 그래프 방지
+      if(!userNo && (!d.grades || !d.grades.length) && SESSION && SESSION.words){
+        var gm = {};
+        SESSION.words.forEach(function(w){ if(w.grade){ gm[w.grade] = (gm[w.grade] || 0) + 1; } });
+        d.grades = Object.keys(gm).sort().map(function(g){ return { g:Number(g), provided:gm[g], acquired:0 }; });
+      }
+      STATS_REAL = d;
+    }
     else console.error('[stats] 조회 실패:', d);
   } catch(err){ console.error('[stats] 조회 오류:', err); }
 }

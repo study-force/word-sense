@@ -4,7 +4,7 @@
 // 역할: 통계 화면(영역별 훈련 현황 · 등급별 어휘 습득률) 실데이터.
 //   service_role로 DB 함수 wordsense_student_stats(member_no, level) 호출 (anon은 실행 불가).
 //
-// 입력 (POST application/json): { user_no, level }   level = '초등' | '중등'
+// 입력 (POST application/json): { user_no?, level }   user_no 없으면 습득 0·분모만   level = '초등' | '중등'
 // 응답: { success, areas:[{slug,total,acquired,cleared}], total_distinct, acquired_distinct, grades:[{g,provided,acquired}] }
 // ════════════════════════════════════════════════════════════════
 
@@ -37,9 +37,9 @@ Deno.serve(async (req) => {
 
   let body: any;
   try { body = await req.json(); } catch { return jsonErr(400, '입력 JSON 파싱 실패', cors); }
-  const userNo = Number(body.user_no);
+  // user_no 없음(회차 테스트 등 학생 정보 없는 진입) → 기록 없는 학생으로 계산: 분모는 실제, 습득은 0
+  const userNo = (body.user_no != null && Number.isFinite(Number(body.user_no))) ? Number(body.user_no) : -1;
   const level = body.level === '중등' ? '중등' : '초등';
-  if (!Number.isFinite(userNo)) return jsonErr(400, 'user_no 필요', cors);
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
   const { data, error } = await supabase.rpc('wordsense_student_stats', { p_member_no: userNo, p_level: level });
