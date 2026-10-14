@@ -169,15 +169,28 @@ window.SESSION_READY = (async function loadSession() {
     };
 
     // 영역 전체 회차 main_chars — 훈사전 그리드용 (영역마다 다른 50글자)
+    // 훈음은 SSOT인 main_chars에서 읽음 (sessions.main_char_hangul 복사본 미사용 — 레슨 화면과 동일 출처)
     try {
       const { data: areaSessions } = await client
         .from('sessions')
-        .select('round_no, main_char, main_char_hangul')
+        .select('round_no, main_char')
         .eq('area_id', areaRow.id)
         .eq('level', TARGET_LEVEL)
         .order('round_no');
-      window.SESSION.areaChars = (areaSessions || []).map(function(s) {
-        return { round: s.round_no, char: s.main_char, hun: s.main_char_hangul || '' };
+      const areaChars2 = areaSessions || [];
+      const charSet = {};
+      areaChars2.forEach(function(s) { if (s.main_char) charSet[s.main_char] = 1; });
+      const uniqChars = Object.keys(charSet);
+      const hunMap = {};
+      if (uniqChars.length) {
+        const { data: mcs } = await client
+          .from('main_chars')
+          .select('char, char_hangul')
+          .in('char', uniqChars);
+        (mcs || []).forEach(function(m) { hunMap[m.char] = m.char_hangul || ''; });
+      }
+      window.SESSION.areaChars = areaChars2.map(function(s) {
+        return { round: s.round_no, char: s.main_char, hun: hunMap[s.main_char] || '' };
       });
     } catch (e) { window.SESSION.areaChars = []; }
 
