@@ -2525,7 +2525,9 @@ body.mission-mode #game .stage-nav {
   transform: translateY(-1px);    /* 배지 위치 — 선지 버튼 안에서 살짝 위로 */
   transition: all .2s;
 }
-.choice-btn .num-badge { vertical-align: middle; margin-right: 10px; }
+.choice-btn .num-badge { vertical-align: middle; margin-right: 10px; flex-shrink: 0; }
+/* 번호 배지와 보기 글자를 옆으로 나란히 — 글자가 두 줄이 되면 둘째 줄도 글자 시작 위치에서 시작 */
+.choice-btn { display: flex; align-items: center; }
 .choice-btn:hover .num-badge {
   background: var(--stage-accent, var(--green));
   border-color: var(--stage-accent, var(--green));
@@ -4576,6 +4578,12 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
 @keyframes rhTurn { 0%,30% { transform: rotate(-90deg); } 60%,100% { transform: rotate(0deg); } }
 /* 인출: 아래를 키보드 자리로 비움 (흰 도크가 그 자리까지 이어짐) */
 body.pmode #game { padding-bottom: var(--kb-reserve, 360px); }
+/* 확장(환원) 화면은 입력이 없으므로 키보드 자리 없이 전체 높이 사용 */
+body.pmode.recap-mode #game { padding-bottom: 0; }
+/* 네트워크 칩: 칸 방식 배치 — 칸이 모자라면 --pm-chip-k로 함께 축소, 재배치 시 부드럽게 이동 */
+body.pmode .g-node { transition: left .45s ease, top .45s ease; }
+/* 확장 화면 안내 문구는 "다음" 버튼 위로 올려 겹치지 않게 */
+body.pmode.recap-mode .fb-zone { bottom: 84px; max-width: 92%; }
 
 /* 홈: 히어로(훈감각 生 익히기, 폭 720)를 폭 안에 들어오게 축소 */
 body.pmode .home-hero { transform: scale(0.62); margin: -100px 0 -40px; }
@@ -4586,9 +4594,9 @@ body.pmode .ci-meanings-list { flex-wrap: wrap; }
 body.pmode .ci-meaning { flex: 0 0 calc(50% - 5px); max-width: none; }
 
 /* 인출: 가운데 한자 캡슐 축소 + 뜻 한 줄 */
-body.pmode #g-stage .game-cap { zoom: 0.7; }
-body.pmode #g-stage .g-center { gap: 8px; transform: translate(-50%, calc(-50% + 48px)); }
-body.pmode .game-eum { white-space: nowrap; font-size: 16px; }
+body.pmode #g-stage .game-cap { zoom: 0.58; }
+body.pmode #g-stage .g-center { gap: 6px; transform: translate(-50%, calc(-50% + 18px)); }
+body.pmode .game-eum { white-space: nowrap; font-size: 15px; }
 body.pmode .stage-nav { left: 18px; top: 18px; gap: 8px; }
 body.pmode .sn-meta { font-size: 17px; }
 /* 인출 하단 입력줄: [입력칸(가변) | 확인] 한 줄, 완료 버튼은 도크 위 오른쪽에 띄움 */
@@ -4604,7 +4612,17 @@ body.pmode .hint-btn { right: 8px; padding: 6px 9px 6px 11px; font-size: 13px; }
 body.pmode .score-chip.center-mission { transform: translate(-172px, calc(var(--pm-half, 520px) - 162px)) scale(2.0); }
 /* 뜻 고르기 창(인출 퀴즈)·확장 카드 — 폭 620 → 폭 안에 맞춤 */
 body.pmode .quiz-card, body.pmode .learn-card { width: 456px; padding: 22px 20px 20px; }
-body.pmode .quiz-card .iq-head { padding: 22px 12px; }
+body.pmode .quiz-card .iq-head { padding: 16px 12px; }
+/* 팝업 위 단어·한자·훈음·급수 — 휴대폰에서 한 단계 작게 (보기 공간 확보) */
+body.pmode .iq-head { gap: 20px; padding: 16px 12px; margin-bottom: 12px; }
+body.pmode .iq-word { font-size: 32px; }
+body.pmode .iq-divider { height: 50px; }
+body.pmode .iq-decomp { gap: 14px; }
+body.pmode .db-block { gap: 6px; }
+body.pmode .db-char { font-size: 42px; }
+body.pmode .db-hun { font-size: 15px; }
+body.pmode .db-sep { font-size: 26px; }
+body.pmode .choice-btn { font-size: 17px; padding: 12px 12px; letter-spacing: 0; }
 /* 확장: 양옆의 카드 묶음(남은 카드/모은 카드)을 카드 아래 한 줄로 */
 body.pmode .learn-deck, body.pmode .learn-coll { top: auto; bottom: 64px; transform: none; flex-direction: row; gap: 12px; }
 body.pmode .learn-deck { right: 44px; }
@@ -4638,13 +4656,13 @@ body.pmode .st-list-col { width: 100%; transform: none; }
 
 /* ── 휴대폰 글자 크기 보정 — 캔버스가 약 0.78배로 줄어드므로 작은 글자를 키움
       (목표: 실제 화면 최소 12.5px ≈ 캔버스 16px, 본문 14px ≈ 18px) ── */
-body.pmode .g-node.lit { font-size: 16px; }
+body.pmode .g-node.lit { font-size: calc(16px * var(--pm-chip-k, 1)); }
 body.pmode .hint-log .hl-chip { font-size: 16px; }
 body.pmode .hint-log .hl-title { font-size: 15px; }
 body.pmode .ci-meaning-num { font-size: 14px; }
 body.pmode .cm-ex { font-size: 17px; }
 body.pmode .ci-etymology-body { font-size: 19px; }
-body.pmode .iq-grade { font-size: 14px; }
+body.pmode .iq-grade { font-size: 12px; }
 body.pmode .num-badge { font-size: 14px; width: 24px; height: 24px; }
 body.pmode .fill-btn .fb-hj { font-size: 15px; }
 body.pmode .r-collect-word { font-size: 16px; }
@@ -6430,7 +6448,7 @@ function goRecap(){
     var toLight = (collected.length - upgrades.length) + silentCollected.length;
     var unlit = GNODES.filter(function(n){ return !n.lit; }).length;
     if(toLight > unlit) spawnUnlitNodes(toLight - unlit);
-    rebalanceNodesToCap();
+    if(isPm()) pmRelayoutAll(); else rebalanceNodesToCap();
   });
   // 환원 화면은 "확장 단계의 결과 합류"를 보여주므로 상단 네비도 확장으로 점등
   var gameNav = document.querySelector('#game .stage-nav');
@@ -7199,6 +7217,92 @@ function getCapCenter(stage){
   return CAP_CENTER;
 }
 
+// ── 휴대폰 세로(pmode) 네트워크 배치 — 칸(슬롯) 방식 ──
+//   무작위 자리 찾기 대신, 가운데 한자 둘레에 엇갈린 바둑판 칸을 깔고 가까운 칸부터 차례로 채움.
+//   → 칩끼리 겹치지 않고, 한쪽으로 쏠리지 않으며, 이미 놓인 칩은 그 자리에 머묾.
+//   칸이 모자라면 칩 크기(--pm-chip-k)를 조금씩 줄여 다시 깔음.
+var PM_K = 1;
+function isPm(){ return document.body.classList.contains('pmode'); }
+function pmBuildSlots(stage){
+  var W = stage.clientWidth, H = stage.clientHeight;
+  var sr = stage.getBoundingClientRect();
+  if(!(W > 0 && H > 0 && sr.width > 0)) return [];
+  var scl = sr.width / W;
+  CAP_CENTER = null;
+  var cc = getCapCenter(stage) || { cx: W/2, cy: H/2 };
+  function toStage(r, pad){ return { l:(r.left-sr.left)/scl-pad, r:(r.right-sr.left)/scl+pad, t:(r.top-sr.top)/scl-pad, b:(r.bottom-sr.top)/scl+pad }; }
+  var avoid = [];
+  ['.g-center'].forEach(function(sel){ var e = stage.querySelector(sel); if(e) avoid.push(toStage(e.getBoundingClientRect(), 8)); });
+  ['#game .stage-nav', '#score-chip'].forEach(function(sel){
+    var e = document.querySelector(sel); if(!e) return;
+    var r = e.getBoundingClientRect(); if(r.width > 0) avoid.push(toStage(r, 6));
+  });
+  avoid.push({ l: W - 130, r: W, t: H - 64, b: H });   // 오른쪽 아래: 완료 / 다음 버튼 자리
+  var best = [];
+  for(var k = 1; k >= 0.5; k -= 0.05){   // 매번 원래 크기부터 — 확장 화면처럼 무대가 커지면 칩도 다시 커짐
+    var SX = 94 * k, SY = 46 * k, hw = 42 * k, hh = 15 * k;
+    var slots = [];
+    var iMin = Math.ceil((24 + hh - cc.cy) / SY), iMax = Math.floor((H - 24 - hh - cc.cy) / SY);
+    for(var i = iMin; i <= iMax; i++){
+      var y = cc.cy + i * SY, off = (Math.abs(i) % 2) ? SX / 2 : 0;
+      for(var j = -6; j <= 6; j++){
+        var x = cc.cx + off + j * SX;
+        if(x - hw < 4 || x + hw > W - 4) continue;
+        var hit = avoid.some(function(a){ return x + hw > a.l && x - hw < a.r && y + hh > a.t && y - hh < a.b; });
+        if(!hit) slots.push({ x: x, y: y, d: Math.hypot(x - cc.cx, (y - cc.cy) * 1.15) });
+      }
+    }
+    slots.sort(function(a, b){ return a.d - b.d; });
+    best = slots; PM_K = k;
+    if(slots.length >= GNODES.length + 2) break;
+  }
+  document.documentElement.style.setProperty('--pm-chip-k', PM_K.toFixed(2));
+  return best;
+}
+// 모든 노드를 칸에 다시 앉힘 (GNODES 순서 = 안쪽 칸부터) + 캔버스 크기 맞춤
+function pmRelayoutAll(){
+  var stage = document.getElementById('g-stage');
+  if(!stage) return;
+  var slots = pmBuildSlots(stage);
+  if(!slots.length) return;
+  GNODES.forEach(function(n, i){
+    var s = slots[Math.min(i, slots.length - 1)];
+    n.baseX = s.x; n.baseY = s.y;
+    n.ampX = Math.min(n.ampX, 2.5); n.ampY = Math.min(n.ampY, 2);   // 흔들림 줄임
+    n.el.style.left = s.x + 'px';
+    n.el.style.top  = s.y + 'px';
+  });
+  var cv = document.getElementById('g-canvas');
+  var W = stage.clientWidth, H = stage.clientHeight, dpr = window.devicePixelRatio || 1;
+  if(cv && (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr))){
+    cv.width = W * dpr; cv.height = H * dpr;
+    cv.style.width = W + 'px'; cv.style.height = H + 'px';
+    cv.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+}
+// 빈 노드 추가 (휴대폰) — 다음 칸에 생성
+function pmSpawn(count){
+  var holder = document.getElementById('g-nodes');
+  if(!holder) return 0;
+  for(var i = 0; i < count; i++){
+    var el = document.createElement('div');
+    el.className = 'g-node fade-in';
+    el.style.setProperty('--gt', 'translate(-50%, -50%)');
+    holder.appendChild(el);
+    GNODES.push({
+      el: el, baseX: 0, baseY: 0, lit: false, word: '',
+      phase: Math.random() * Math.PI * 2,
+      ampX: 2.5, ampY: 2,
+      speedX: .35 + Math.random() * .25,
+      speedY: .30 + Math.random() * .22,
+      lineT: 0
+    });
+  }
+  pmRelayoutAll();
+  if(count > 0) sfxPlay('node.mp3', 0.7);
+  return count;
+}
+
 function setupGameStage(){
   var stage = document.getElementById('g-stage');
   var holder = document.getElementById('g-nodes');
@@ -7379,6 +7483,7 @@ function setupGameStage(){
   cv.style.height = H+'px';
   var ctx = cv.getContext('2d');
   ctx.setTransform(dpr,0,0,dpr,0,0);
+  if(isPm()) pmRelayoutAll();   // 휴대폰 세로: 칸 방식으로 다시 앉힘
   if(GANIM) cancelAnimationFrame(GANIM);
   GANIM = requestAnimationFrame(drawGameStage);
 }
@@ -7395,6 +7500,7 @@ function drawGameStage(){
   var cc = getCapCenter(stage);
   if(cc){ cx = cc.cx; cy = cc.cy; }
   var now = Date.now()/1000;
+  var PMD = isPm();   // 휴대폰: 선을 옅게 — 칩이 촘촘해 선이 겹쳐 보이지 않게
   GNODES.forEach(function(n){
     var dx = Math.sin(now*n.speedX + n.phase) * n.ampX;
     var dy = Math.cos(now*n.speedY + n.phase + 1) * n.ampY;
@@ -7418,8 +7524,8 @@ function drawGameStage(){
         ctx.lineWidth = 2;
         ctx.setLineDash([]);
       } else {
-        ctx.strokeStyle = fromLearn ? 'rgba(155,108,217,0.42)' : 'rgba(91,170,91,0.34)';
-        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = fromLearn ? 'rgba(155,108,217,' + (PMD ? 0.26 : 0.42) + ')' : 'rgba(91,170,91,' + (PMD ? 0.22 : 0.34) + ')';
+        ctx.lineWidth = PMD ? 1 : 1.2;
         ctx.setLineDash([]);
       }
     } else {
@@ -7513,6 +7619,7 @@ window.addEventListener('resize', function(){ if(typeof updateHintLogNav === 'fu
 
 // ── 미점등 노드 동적 생성 — 10개 다 점등되면 새 노드가 페이드인으로 등장 ──
 function spawnUnlitNodes(count){
+  if(isPm()) return pmSpawn(count);
   var stage = document.getElementById('g-stage');
   var holder = document.getElementById('g-nodes');
   if(!stage || !holder) return 0;
@@ -7775,7 +7882,9 @@ function lightUpNode(entry, fromLearn, silent){
   }
   if(!unlit.length) return;
   var node = null;
-  if(lit.length === 0){
+  if(isPm()){
+    node = unlit[0];   // 휴대폰: GNODES 순서 = 안쪽 칸부터 → 가장 안쪽 빈 칸
+  } else if(lit.length === 0){
     // 첫 번째는 임의(인덱스 0) 선택 — 이후 모두 이로부터 멀어지는 방향으로 채워짐
     node = unlit[0];
   } else {
