@@ -2357,15 +2357,22 @@ body.mission-mode #game .stage-nav {
 }
 /* 못 찾은 어휘 목록 (강화 직전) */
 /* 강화 이전 문제 다시 보기 */
-.fq-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; max-width: 960px; margin: 18px auto 0; }   /* #fq-card 폭과 같게 */
-body.pmode .fq-nav { max-width: var(--pm-card-w, 456px); }
-.fq-nav-btn {
-  padding: 9px 18px; border-radius: 100px; cursor: pointer;
-  border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.06); color: #E8ECF6;
-  font-family: 'Noto Sans KR', sans-serif; font-size: 14px; font-weight: 500;
+.fq-foot {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 64px; z-index: 3;
+  display: flex; align-items: center; justify-content: center;
+  border-top: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03);
 }
-.fq-nav-btn:hover { background: rgba(255,255,255,0.14); }
-.fq-viewlbl { font-size: 13px; color: #F2C94C; }
+.fq-nav { display: flex; align-items: center; gap: 14px; }
+.fq-nav-btn {
+  width: 40px; height: 40px; border-radius: 50%; padding: 0; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(255,255,255,0.28); background: rgba(255,255,255,0.08); color: #E8ECF6;
+  transition: background .2s, opacity .2s;
+}
+.fq-nav-btn svg { width: 16px; height: 16px; }
+.fq-nav-btn:hover:not(:disabled) { background: rgba(255,255,255,0.18); }
+.fq-nav-btn:disabled { opacity: 0.25; cursor: default; }
+.fq-viewlbl { min-width: 150px; text-align: center; font-size: 13px; color: #F2C94C; }
 #fq-card.fq-review { opacity: 0.92; }
 #fq-card.fq-review .ans-bubble { animation: none; }
 .miss-card { text-align: center; }
@@ -4900,10 +4907,13 @@ body.pmode .st-today-badge { font-size: 13px; }
     </div>
     <div class="qpage-body">
       <div class="qcard" id="fq-card"></div>
+    </div>
+    <!-- 하단 풋터: 지난 문제 다시 보기 (쓸 수 없을 땐 딤드) — 대표님 2026-10-16 -->
+    <div class="fq-foot">
       <div class="fq-nav">
-        <button class="fq-nav-btn" id="fq-prev" onclick="fqPrev()" style="visibility:hidden">← 이전 문제</button>
+        <button class="fq-nav-btn" id="fq-prev" onclick="fqPrev()" disabled aria-label="이전 문제" title="이전 문제"><svg viewBox="0 0 18 18" aria-hidden="true"><polyline points="11.5,3 5.5,9 11.5,15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <span class="fq-viewlbl" id="fq-viewlbl"></span>
-        <button class="fq-nav-btn" id="fq-next" onclick="fqNext()" style="visibility:hidden">다음 →</button>
+        <button class="fq-nav-btn" id="fq-next" onclick="fqNext()" disabled aria-label="다음 문제" title="다음 문제"><svg viewBox="0 0 18 18" aria-hidden="true"><polyline points="6.5,3 12.5,9 6.5,15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
     </div>
     <button class="skip-link" onclick="goResult()">건너뛰고 결과 보기 →</button>
@@ -8740,10 +8750,9 @@ function updateFQNav(){
   var p = document.getElementById('fq-prev'), n = document.getElementById('fq-next'), l = document.getElementById('fq-viewlbl');
   if(!p || !n || !FQ) return;
   var cur = (FQ.view != null) ? FQ.view : FQ.idx;
-  p.style.visibility = (cur > 0) ? 'visible' : 'hidden';
-  n.style.visibility = (FQ.view != null) ? 'visible' : 'hidden';
-  n.textContent = (FQ.view != null && FQ.view + 1 >= FQ.idx) ? '지금 문제로 →' : '다음 →';
-  if(l) l.textContent = (FQ.view != null) ? '지난 문제 다시 보기' : '';
+  p.disabled = !(cur > 0);
+  n.disabled = (FQ.view == null);
+  if(l) l.textContent = (FQ.view != null) ? '지난 문제 다시 보기 · ' + (FQ.view + 1) + '번' : '';
 }
 
 // ══════════════════════════════════════════════
