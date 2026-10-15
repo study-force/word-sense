@@ -8317,6 +8317,7 @@ async function submit(){
       case 'hybrid':            // 혼종어
       case 'sensitive':         // 학습 목록에서 뺀 신체·성 관련 가족 어휘 — 서버 문구 그대로, 점수 X (2026-10-15)
       case 'same_hun':          // 主字와 훈이 같은 다른 한자 (예: 不 회차의 부인=否) — 서버 문구 그대로
+      case 'same_eum':          // 主字와 소리만 같은 한자 (예: 不 회차의 농부=夫) — 서버 문구 그대로
       case 'slur':              // 비하어 — 쓰지 않는 게 좋다는 안내
       case 'root':              // 어근 — 혼자 안 쓰이는 말 (예: 생생 → 생생하다·생생히), v7
         fbType = 'info'; fbSound = sndUnknown; break;
