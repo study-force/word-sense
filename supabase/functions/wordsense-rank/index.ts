@@ -68,16 +68,14 @@ Deno.serve(async (req) => {
     // 오늘(KST) attempts — 전체
     const { data: today } = await supabase.from('attempts')
       .select('member_no, retrieve_count, extend_count, correct_words')
-      .gte('finished_at', startOfTodayKST())
-      .eq('is_retry', false);   // 재훈련은 순위에서 제외
+      .gte('finished_at', startOfTodayKST());   // 재훈련(is_retry) 포함 — 대표님 결정
 
     // 영역 누적 attempts — 전체
     let cumulRows: any[] = [];
     if (areaId != null) {
       const { data: ca } = await supabase.from('attempts')
         .select('member_no, retrieve_count, extend_count')
-        .eq('area_id', areaId)
-        .eq('is_retry', false);
+        .eq('area_id', areaId);
       cumulRows = ca || [];
     }
 
