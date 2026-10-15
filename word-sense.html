@@ -6320,7 +6320,7 @@ function shuffle(arr){
 }
 
 // ── 상태 ────────────────────────────────────
-var S = { found:[], attempted:[], attemptedFb:{}, hints:5, okCount:0, hintTargets:[], hintFound:[], hintLog:[], recall2:[] };
+var S = { found:[], attempted:[], attemptedFb:{}, hints:5, okCount:0, hintTargets:[], hintFound:[], hintLog:[], recall2:[], recall2Silent:[] };
 var HINT_NUDGE_TIMER = null;
 function resetHintNudge(){
   if(HINT_NUDGE_TIMER){ clearTimeout(HINT_NUDGE_TIMER); HINT_NUDGE_TIMER = null; }
@@ -6378,7 +6378,7 @@ function finishTraining(){
 }
 function goHome(){
   var sess = SESSION;
-  S = { found:[], attempted:[], attemptedFb:{}, hints:5, okCount:0, hintTargets:[], hintFound:[], hintLog:[], recall2:[] };
+  S = { found:[], attempted:[], attemptedFb:{}, hints:5, okCount:0, hintTargets:[], hintFound:[], hintLog:[], recall2:[], recall2Silent:[] };
   renderHintLog();
   var _tom = document.getElementById('tomorrow-splash'); if(_tom) _tom.classList.remove('on');
   CONFETTI_FIRED = false;
@@ -6408,6 +6408,7 @@ function handledEntryCount(){
   S.found.forEach(function(k){ seen[k] = 1; });
   (S.attempted || []).forEach(function(k){ if(WORD_KEY_MAP[k]) seen[k] = 1; });
   (S.recall2 || []).forEach(function(k){ seen[k] = 1; });
+  (S.recall2Silent || []).forEach(function(k){ seen[k] = 1; });
   return Object.keys(seen).length;
 }
 // ── 4단계 훈련 (대표님 2026-10-15): 1 인출 → 2 학습 → 3 다시 인출 → 4 강화 ──
@@ -6425,7 +6426,7 @@ function checkAllFound(){
   var total = todayTotal();
   // 3 다시 인출에서는 실제로 떠올린 것(1 인출 정답 + 다시 인출)만 셈
   var done = isRecall2()
-    ? (function(){ var o = {}; S.found.concat(S.recall2 || []).forEach(function(k){ o[k] = 1; }); return Object.keys(o).length; })()
+    ? (function(){ var o = {}; S.found.concat(S.recall2 || [], S.recall2Silent || []).forEach(function(k){ o[k] = 1; }); return Object.keys(o).length; })()
     : handledEntryCount();
   if(!total || done < total) return;
   if(isRecall2()){
@@ -6502,7 +6503,7 @@ function goRecap(){
   if(gameNav) gameNav.setAttribute('data-stage', '인출');
   var input = document.getElementById('wi'); if(input){ input.disabled = false; input.value = ''; }
   var dbtn  = document.getElementById('dbtn'); if(dbtn){ dbtn.style.visibility = ''; dbtn.className = 'btn-done on'; }
-  var hbtn  = document.getElementById('hbtn'); if(hbtn) hbtn.disabled = true;   // 방금 배웠으므로 힌트 없음
+  updateHints();   // 1 인출에서 아낀 힌트를 그대로 이어서 사용
   var prev = document.getElementById('recap-next'); if(prev) prev.remove();
   updateGameCounter();
   setFb('ok', '✦ 방금 배운 어휘를 떠올려 입력해 보세요!', 4000);
@@ -6527,6 +6528,7 @@ function showRecall2Intro(){
 function recall2Word(entry){
   var key = entryKeyOf(entry);
   S.recall2.push(key);
+  resetHintNudge();
   var node = null;
   GNODES.forEach(function(n){ if(n.lit && n.entry && entryKeyOf(n.entry) === key) node = n; });
   if(node) upgradeNodeToLearn(node);
@@ -8017,6 +8019,23 @@ function finishWord(entry, opts){
   //   다만 게임 진행 표시는 위해 entry key 단위로 기록.
   opts = opts || {};
   var key = entryKeyOf(entry);
+  // 3 다시 인출 — 첫 시도 정답이면 보라 칩 +1, 틀렸다 맞히면 검정 칩만(점수·강화 X)
+  if(isRecall2()){
+    if(S.recall2.indexOf(key) > -1 || (S.recall2Silent || []).indexOf(key) > -1) return;
+    if(opts.silent){
+      (S.recall2Silent = S.recall2Silent || []).push(key);
+      var hasNode = GNODES.some(function(n){ return n.lit && n.entry && entryKeyOf(n.entry) === key; });
+      if(!hasNode) lightUpNode(entry, false, true);
+      if(S.hintTargets.indexOf(key) > -1) renderHintLog();
+      setFb('ok', '또 다른 어휘를 떠올려 볼까요?', 2400);
+      updateGameCounter();
+      checkAllFound();
+      return;
+    }
+    if(S.hintTargets.indexOf(key) > -1){ S.hintFound.push(key); renderHintLog(); }
+    recall2Word(entry);
+    return;
+  }
   if(S.found.indexOf(key) > -1) return;
   if(S.attempted.indexOf(key) > -1) return;   // entry 단위 silent 차단
 
@@ -8222,14 +8241,16 @@ async function submit(){
       setFb('info', '"' + val + '"' + eunNeun(val) + ' 이미 내 어휘예요! ⭐', 2400);
       sndDup(); return;
     }
-    // 3 다시 인출 — 뜻 퀴즈 없이 바로 떠올린 것으로 인정 (방금 배웠으므로)
+    // 3 다시 인출 — 1 인출과 같은 조건: 떠올린 어휘 + 뜻 퀴즈 첫 시도 정답 (대표님 2026-10-15)
     if(isRecall2()){
       var cand = notKnown.filter(function(e){
         var k = entryKeyOf(e);
-        return S.found.indexOf(k) === -1 && S.recall2.indexOf(k) === -1;
+        return S.found.indexOf(k) === -1 && S.recall2.indexOf(k) === -1 && (S.recall2Silent || []).indexOf(k) === -1;
       });
       if(cand.length === 0){ setFb('miss', '"' + val + '"' + eunNeun(val) + ' 이미 떠올렸어요!'); sndDup(); return; }
-      recall2Word(cand[0]);
+      S.solving = cand[0];
+      S.solvingRemaining = cand.slice(1);   // 동음이의어 연속 퀴즈
+      showQuiz();
       return;
     }
     // 미발견 entry 추출 (S.found 정답 발견 + S.attempted silent 처리 모두 제외)
