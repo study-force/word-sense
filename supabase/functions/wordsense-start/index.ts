@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
 
   try {
     // ── 재훈련 제한: 이 회차를 PERFECT(모든 어휘 습득)로 끝낸 적이 있으면 결제 기간 내라도 재훈련 불가 (대표님 결정) ──
-    //   PERFECT = 강화 정답 수(correct_words) ≥ 회차 어휘 수(total_words) — 앱 결과 화면 calcBadge와 같은 기준
+    //   PERFECT = 회차 어휘 전부가 누적 '내 어휘'(attempts.is_perfect, 4단계 훈련) — 옛 기록은 강화 정답 수 ≥ 어휘 수
     if (mode === 'retry') {
       const { data: areaRow } = await supabase.from('areas').select('id').eq('slug', area).maybeSingle();
       const { data: sessRow } = areaRow
@@ -103,9 +103,9 @@ Deno.serve(async (req) => {
         : { data: null };
       if (sessRow) {
         const { data: past } = await supabase.from('attempts')
-          .select('correct_words, total_words')
+          .select('correct_words, total_words, is_perfect')
           .eq('member_no', userNo).eq('session_id', sessRow.id);
-        const perfect = (past || []).some((r: any) => (r.total_words || 0) > 0 && (r.correct_words || 0) >= r.total_words);
+        const perfect = (past || []).some((r: any) => r.is_perfect || ((r.total_words || 0) > 0 && (r.correct_words || 0) >= r.total_words));
         if (perfect) return jsonErr(409, '이미 모든 어휘를 습득(PERFECT)한 회차는 재훈련할 수 없습니다', cors, 'perfect');
       }
     }

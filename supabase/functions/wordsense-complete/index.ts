@@ -91,6 +91,8 @@ Deno.serve(async (req) => {
         payment_fn,
         training_round,
         is_retry:        isRetry,
+        is_perfect:      !!r.is_perfect,                       // 이 훈련 후 회차 어휘 전부가 내 어휘
+        known_count:     Number.isFinite(Number(r.known_count)) ? Number(r.known_count) : null,
       }).select('id').single();
       if (insErr) console.error('[wordsense-complete] attempts INSERT 오류:', insErr);
       else {
@@ -101,6 +103,7 @@ Deno.serve(async (req) => {
             attempt_id: att.id, member_no: r.user_no,
             session_word_id: Number(w.session_word_id), word_master_id: Number(w.word_master_id),
             retrieve_passed: !!w.retrieve_passed, extend_passed: !!w.extend_passed, reinforce_passed: !!w.reinforce_passed,
+            recall2_passed: !!w.recall2_passed,   // 3 다시 인출에서 떠올림 (4단계 훈련)
           }));
         if (rows.length) {
           const { error: wrErr } = await supabase.from('word_results').insert(rows);

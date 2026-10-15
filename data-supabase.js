@@ -270,6 +270,11 @@ window.SESSION_READY = (async function loadSession() {
       .in('session_id', [sess.id].concat(elemIds));   // 중등이면 초등 같은 主字 회차 오답 피드백도
     if (e4) throw e4;
 
+    // 4b. 학생의 과정별 '내 어휘'(인출·다시 인출 + 강화 통과) — 금색 칩으로 켜고 출제에서 뺌 (4단계 훈련, 2026-10-15)
+    //     시험용: ?known=N 이면 앞에서 N개를 내 어휘로 가정
+    const knownSet = new Set(((window.__ST_SESSION && window.__ST_SESSION.known_wm_ids) || []).map(Number));
+    const knownTest = parseInt(_params.get('known'), 10) || 0;
+
     // 5. data.js의 SESSION 형식으로 변환
     window.SESSION = {
       id: sess.round_no,
@@ -300,6 +305,7 @@ window.SESSION_READY = (async function loadSession() {
           choices: [correct ? correct.text : ''].concat(wrongChoices.map(function(c){ return c.text; })),
           fillSentence: r.fill_sentence,
           fillPool: fillPools[r.session_word_id] || null,   // { 후보 wmId: 적합도 } — pickFillOthers 참고
+          known: knownSet.has(Number(r.word_master_id)),    // 이미 내 어휘 → 금색 칩, 출제 제외
           // sentenceText/Choices는 현재 스키마에 없음 (필요 시 컬럼 추가)
           sentenceText: null,
           sentenceChoices: null
@@ -365,6 +371,8 @@ window.SESSION_READY = (async function loadSession() {
         };
       }
     } catch (e) { /* 다음 회차 미존재 — nextPreview null 유지 */ }
+
+    if (knownTest > 0 && !window.__ST_SESSION) window.SESSION.words.slice(0, knownTest).forEach(function(w){ w.known = true; });
 
     console.log('[Supabase] SESSION loaded —',
       window.SESSION.area, window.SESSION.id + '회차',

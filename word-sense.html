@@ -4214,6 +4214,21 @@ body[data-page="stats"] .r-topbar-meta.global-topbar-meta .r-tm-char { display: 
   color: rgba(255,255,255,0.92); letter-spacing: 0.01em; white-space: nowrap; line-height: 1.1;
 }
 .r-rank-myrank.hidden { display: none; }
+/* ── 4단계 훈련 ── */
+/* 이미 내 어휘 — 금색 칩 */
+.g-node.lit.is-known { background: linear-gradient(180deg, #FFE9A8, #F2C94C) !important; color: #6B4A00 !important; border-color: #D9A92E !important; box-shadow: 0 0 10px rgba(242,201,76,0.45) !important; }
+/* 2 학습 중 점수판 흐리게 */
+.score-chip.dimmed { opacity: 0.45; filter: saturate(0.6); }
+/* 미션 화면 — 이미 아는 어휘 수 */
+.gm-foot b { font-weight: 600; color: #FFFFFF; }
+.gm-foot b.gm-known { color: #F2C94C; }
+/* 결과 — 오늘 새로 내 어휘가 된 수 */
+.rtb-new { margin-left: 6px; font-size: 0.8em; font-weight: 600; color: #2E9E6B; }
+.r-known-line { position: absolute; left: 50%; bottom: -30px; transform: translateX(-50%); white-space: nowrap; font-size: 14px; color: #5A6178; letter-spacing: 0.02em; opacity: 0; transition: opacity .5s ease 1.2s; }
+.r-known-line b { font-weight: 600; color: #2A3050; }
+.r-known-line .rk-new { font-weight: 600; color: #2E9E6B; }
+.r-trio-row.on .r-known-line { opacity: 1; }
+body.pmode .r-known-line { font-size: 17px; bottom: 0; }
 /* 내 행 — 오늘 기록 옆에 내 최고 기록(하루 합계 최고) */
 .r-rank-best { flex-shrink: 0; margin-left: 6px; font-size: 11px; font-weight: 600; color: #8A93A6; white-space: nowrap; }
 .r-rank-myrank .mr-num { font-size: 15px; }
@@ -4641,7 +4656,7 @@ body.pmode .r-topbar-meta { top: 20px; left: 18px; font-size: 16px; }
 body.pmode .r-tier-badge { top: 48px; }
 body.pmode .result-body-v3 { padding: 30px 14px 18px; gap: 12px; }
 body.pmode .r-trio-row { flex-wrap: wrap; height: auto; margin-top: 0; gap: 10px; }
-body.pmode .r-score-cell { flex: 0 0 100%; height: 196px; order: -1; }
+body.pmode .r-score-cell { flex: 0 0 100%; height: 222px; order: -1; }
 body.pmode .r-collect-col { flex: 1 1 calc(50% - 5px); height: 138px; margin-top: 0; }
 body.pmode .r-rank-block { flex: 1 1 auto; min-height: 0; margin: 4px 0 8px; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: minmax(0, 1fr); gap: 10px; }
 body.pmode .r-rank-card { min-height: 0; overflow: hidden; }
@@ -4803,7 +4818,7 @@ body.pmode .st-today-badge { font-size: 13px; }
       </div>
 
     </div>
-    <button class="learn-skip" onclick="goRecap()">확장 끝내고 강화 →</button>
+    <button class="learn-skip" onclick="goRecap()">학습 끝내고 다시 인출 →</button>
   </div>
 
   <!-- ══ 게임 ══ -->
@@ -4835,7 +4850,7 @@ body.pmode .st-today-badge { font-size: 13px; }
         </div>
         <button class="btn-ok" onclick="submit()">확인</button>
       </div>
-      <button class="btn-done" id="dbtn" onclick="goLearn()"><span class="bd-label">완료</span><span class="bd-arrow"><svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polyline points="6,1.5 13,9 6,16.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+      <button class="btn-done" id="dbtn" onclick="onDoneClick()"><span class="bd-label">완료</span><span class="bd-arrow"><svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polyline points="6,1.5 13,9 6,16.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
     </div>
   </div>
 
@@ -4918,10 +4933,11 @@ body.pmode .st-today-badge { font-size: 13px; }
         </div>
         <div class="r-score-cell">
           <div class="r-score-anchor"></div>
+          <div class="r-known-line" id="r-known-line"></div>
         </div>
         <div class="r-collect-col r-col-exp">
           <div class="r-collect-head">
-            <span class="r-collect-tag tag-exp">확장 어휘</span>
+            <span class="r-collect-tag tag-exp">다시 인출 어휘</span>
             <span class="r-collect-cnt"><em id="r-exp-cnt">0</em>개</span>
           </div>
           <div class="r-collect-list" id="r-exp-list"></div>
@@ -5227,6 +5243,7 @@ function showPage(id){
                  : (id === 'fillq' || id === 'result' || id === 'area') ? '3'
                  : '1';
     chipForColor.dataset.stage = stageVal;
+    chipForColor.classList.toggle('dimmed', id === 'learn');   // 2 학습은 점수 없음 — 흐리게 유지
     // 카운팅 모드(회색): home/game/learn 단계 (강화 후보 어휘 누적 중)
     // 점수 모드(파랑): fillq/result (분자 = 마스터 어휘 점수)
     var inCountingPhase = (id === 'home' || id === 'game' || id === 'learn');
@@ -6303,7 +6320,7 @@ function shuffle(arr){
 }
 
 // ── 상태 ────────────────────────────────────
-var S = { found:[], attempted:[], attemptedFb:{}, hints:5, okCount:0, hintTargets:[], hintFound:[], hintLog:[] };
+var S = { found:[], attempted:[], attemptedFb:{}, hints:5, okCount:0, hintTargets:[], hintFound:[], hintLog:[], recall2:[] };
 var HINT_NUDGE_TIMER = null;
 function resetHintNudge(){
   if(HINT_NUDGE_TIMER){ clearTimeout(HINT_NUDGE_TIMER); HINT_NUDGE_TIMER = null; }
@@ -6361,7 +6378,7 @@ function finishTraining(){
 }
 function goHome(){
   var sess = SESSION;
-  S = { found:[], attempted:[], attemptedFb:{}, hints:5, okCount:0, hintTargets:[], hintFound:[], hintLog:[] };
+  S = { found:[], attempted:[], attemptedFb:{}, hints:5, okCount:0, hintTargets:[], hintFound:[], hintLog:[], recall2:[] };
   renderHintLog();
   var _tom = document.getElementById('tomorrow-splash'); if(_tom) _tom.classList.remove('on');
   CONFETTI_FIRED = false;
@@ -6387,15 +6404,37 @@ function goHome(){
 // 인출에서 다룬 가족 어휘 수 = 바로 맞힘(S.found) + 뜻을 틀렸다 맞힘(S.attempted 안의 entry key)
 //   (정답 수는 우측 상단 점수판에서 따로 확인 가능)
 function handledEntryCount(){
-  var n = S.found.length;
-  (S.attempted || []).forEach(function(k){ if(WORD_KEY_MAP[k]) n++; });
-  return n;
+  var seen = {};
+  S.found.forEach(function(k){ seen[k] = 1; });
+  (S.attempted || []).forEach(function(k){ if(WORD_KEY_MAP[k]) seen[k] = 1; });
+  (S.recall2 || []).forEach(function(k){ seen[k] = 1; });
+  return Object.keys(seen).length;
 }
+// ── 4단계 훈련 (대표님 2026-10-15): 1 인출 → 2 학습 → 3 다시 인출 → 4 강화 ──
+//   '내 어휘' = (1 인출 또는 3 다시 인출) + 강화 첫 시도 정답. 다음 훈련부터 금색 칩으로 켜진 채 시작, 출제 제외.
+function isKnownEntry(e){ return !!(e && e.known); }
+function knownBeforeCount(){ return (typeof WORD_LIST !== 'undefined' ? WORD_LIST : []).filter(isKnownEntry).length; }
+function todayTotal(){ return (typeof WORD_LIST !== 'undefined' ? WORD_LIST.length : 0) - knownBeforeCount(); }
+function isRecall2(){ return document.body.classList.contains('recall2-mode'); }
+// 오늘 새로 '내 어휘'가 된 수 (강화 첫 시도 정답) / 누적 내 어휘 수
+function newKnownCount(){ var o = {}; ((typeof FQ !== 'undefined' && FQ && FQ.okKeys) || []).forEach(function(k){ o[k] = 1; }); return Object.keys(o).length; }
+function knownAllCount(){ return knownBeforeCount() + newKnownCount(); }
 // 가족 어휘를 모두 찾으면 축하 피드백 후 자동으로 다음 단계(확장)로
 function checkAllFound(){
   if(S.allDoneFired) return;
-  var total = (typeof WORD_LIST !== 'undefined') ? WORD_LIST.length : 0;
-  if(!total || handledEntryCount() < total) return;
+  var total = todayTotal();
+  // 3 다시 인출에서는 실제로 떠올린 것(1 인출 정답 + 다시 인출)만 셈
+  var done = isRecall2()
+    ? (function(){ var o = {}; S.found.concat(S.recall2 || []).forEach(function(k){ o[k] = 1; }); return Object.keys(o).length; })()
+    : handledEntryCount();
+  if(!total || done < total) return;
+  if(isRecall2()){
+    S.allDoneFired = true;
+    var inp = document.getElementById('wi'); if(inp){ inp.value = ''; inp.blur(); }
+    setTimeout(function(){ setFb('ok', '🎉 배운 어휘를 모두 떠올렸어요! 강화로 넘어갈게요.', 3200); }, 900);
+    setTimeout(function(){ finishRecall2(); }, 3400);
+    return;
+  }
   S.allDoneFired = true;   // submit()이 이 값을 보고 추가 입력을 막음 (input은 비활성화하지 않음 — 다음 게임에 남지 않게)
   var input = document.getElementById('wi'); if(input){ input.value = ''; input.blur(); }
   setTimeout(function(){ setFb('ok', '🎉 가족 어휘를 모두 찾았어요! 다음 단계로 넘어갈게요.', 3200); }, 900);
@@ -6404,7 +6443,7 @@ function checkAllFound(){
 
 function updateGameCounter(){
   var n = handledEntryCount();
-  var t = (SESSION && SESSION.words) ? SESSION.words.length : 0;
+  var t = todayTotal();   // 이미 내 어휘는 빼고 오늘 학습할 어휘 수
   // 인풋박스 내부 좌측 카운터
   var wf = document.getElementById('wi-found');
   var wt = document.getElementById('wi-total');
@@ -6450,74 +6489,63 @@ function rebalanceNodesToCap(){
   });
 }
 
+// ── 3 다시 인출 (4단계 훈련, 대표님 2026-10-15) ──
+//   학습에서 배운 어휘가 자동으로 붙지 않음 — 학생이 스스로 떠올려 입력해야 보라 칩으로 붙고 점수 +1.
+//   다 못 떠올려도 '완료'로 강화로 넘어감. 강화에는 1 인출 + 3 다시 인출에서 떠올린 어휘만 나옴.
 function goRecap(){
-  var hasNormal = LEARN.collected && LEARN.collected.length > 0;
-  var hasSilent = LEARN.silentCollected && LEARN.silentCollected.length > 0;
-  if(!hasNormal && !hasSilent){ goFillQ(); return; }
+  var learned = ((LEARN && LEARN.collected) ? LEARN.collected.length : 0) + ((LEARN && LEARN.silentCollected) ? LEARN.silentCollected.length : 0);
+  if(!learned){ goFillQ(); return; }   // 배운 어휘가 없으면 바로 강화
   showPage('game');
-  document.body.classList.add('recap-mode');   // 하단 흰 입력 블록 숨김
-  // 레이아웃 변경 후(다음 프레임)에: ① 확장에서 합류할 노드까지 미리 확보 → ② 전체 기준 중심 재배치.
-  //   (recap 도중 노드가 새로 생성되면 centroid가 바뀌어 캡슐이 구름 밖으로 밀리므로,
-  //    모든 노드를 먼저 확보한 뒤 한 번에 정렬해야 중심이 맞음)
-  // 이미 네트워크에 칩이 있는 어휘(인출 단계 검정 칩 등) — 새 칩을 만들지 않고 기존 칩을 바꾼다
-  var nodeByKey = {};
-  GNODES.forEach(function(n){ if(n.lit && n.entry) nodeByKey[entryKeyOf(n.entry)] = n; });
-  var collected = LEARN.collected.filter(function(w){ return !nodeByKey[entryKeyOf(w)] || nodeByKey[entryKeyOf(w)].silent; });
-  var upgrades  = collected.filter(function(w){ return !!nodeByKey[entryKeyOf(w)]; });
-  var silentCollected = (LEARN.silentCollected || []).filter(function(w){ return !nodeByKey[entryKeyOf(w)]; });
-  requestAnimationFrame(function(){
-    var toLight = (collected.length - upgrades.length) + silentCollected.length;
-    var unlit = GNODES.filter(function(n){ return !n.lit; }).length;
-    if(toLight > unlit) spawnUnlitNodes(toLight - unlit);
-    if(isPm()) pmRelayoutAll(); else rebalanceNodesToCap();
-  });
-  // 환원 화면은 "확장 단계의 결과 합류"를 보여주므로 상단 네비도 확장으로 점등
+  document.body.classList.add('recall2-mode');
+  S.allDoneFired = false;
   var gameNav = document.querySelector('#game .stage-nav');
-  if(gameNav) gameNav.setAttribute('data-stage', '확장');
-  // 하단 입력/완료 잠금 (이미 인출 끝난 상태)
-  var input = document.getElementById('wi'); if(input){ input.disabled = true; input.blur(); }
-  var dbtn  = document.getElementById('dbtn'); if(dbtn) dbtn.style.visibility = 'hidden';
-  var hbtn  = document.getElementById('hbtn'); if(hbtn) hbtn.disabled = true;
-  // 기존 환원 버튼 있으면 제거
+  if(gameNav) gameNav.setAttribute('data-stage', '인출');
+  var input = document.getElementById('wi'); if(input){ input.disabled = false; input.value = ''; }
+  var dbtn  = document.getElementById('dbtn'); if(dbtn){ dbtn.style.visibility = ''; dbtn.className = 'btn-done on'; }
+  var hbtn  = document.getElementById('hbtn'); if(hbtn) hbtn.disabled = true;   // 방금 배웠으므로 힌트 없음
   var prev = document.getElementById('recap-next'); if(prev) prev.remove();
-  // 안내 메시지
-  var fb = document.getElementById('fb');
-  if(fb){
-    fb.innerHTML = '';
-    var msg = document.createElement('div');
-    msg.style.cssText = 'color:#9B6CD9;font-weight:600;font-size:13px;letter-spacing:0.02em;animation:fadeUp .35s ease';
-    msg.textContent = '✦ 새로 알게 된 어휘가 나의 어휘 네트워크에 추가됩니다!';
-    fb.appendChild(msg);
-  }
-
-  var baseFound = (S && S.found) ? S.found.length : 0;
-  var startDelay = 700;
-  var stepDelay  = 520;
-
-  collected.forEach(function(w, i){
-    setTimeout(function(){
-      var old = nodeByKey[entryKeyOf(w)];
-      if(old) upgradeNodeToLearn(old);   // 인출 검정 칩 → 보라 칩 (같은 자리)
-      else lightUpNode(w, true);         // fromLearn = true → 보라색
-      try{ sndOk(); }catch(e){}
-      var newCount = baseFound + (i + 1);
-      var wf = document.getElementById('wi-found');
-      if(wf) wf.textContent = newCount;
-    }, startDelay + i * stepDelay);
-  });
-
-  // 정상 컬렉션 이후, 오답 후 정답(silent) 어휘도 검정 노드로 표시 (g-found는 증가 X)
-  var silentStart = startDelay + collected.length * stepDelay;
-  silentCollected.forEach(function(w, i){
-    setTimeout(function(){
-      lightUpNode(w, true, true);   // silent = true → 검정 노드
-    }, silentStart + i * stepDelay);
-  });
-
-  // 마지막 점등 + 라인 도착 여유 후 "다음 →" 버튼 등장 (자동 진행 X)
-  var totalCount = collected.length + silentCollected.length;
-  var btnT = startDelay + totalCount * stepDelay + 900;
-  setTimeout(function(){ showRecapNext(); }, btnT);
+  updateGameCounter();
+  setFb('ok', '✦ 방금 배운 어휘를 떠올려 입력해 보세요!', 4000);
+  showRecall2Intro();
+}
+function showRecall2Intro(){
+  var intro = document.getElementById('game-intro');
+  var msg   = document.getElementById('gi-msg');
+  if(!intro || !msg) return;
+  sfxPlay('balloon.mp3', 0.8);
+  msg.classList.remove('gi-mission'); msg.classList.add('gi-card');
+  msg.dataset.stage = '1';
+  msg.innerHTML = buildIntroHTML(1)
+    .replace('인출하기', '다시 인출하기')
+    .replace(STAGE_META[1].quote, '방금 배운 어휘를 스스로 떠올려 보세요!');
+  intro.classList.remove('fade-out');
+  intro.classList.add('on');
+  if(GAME_INTRO_TIMER) clearTimeout(GAME_INTRO_TIMER);
+  GAME_INTRO_TIMER = setTimeout(hideGameIntro, 2400);
+}
+// 다시 인출에서 떠올린 어휘 — 보라 칩(검정 칩이었으면 보라로 바꿈) + 점수 +1
+function recall2Word(entry){
+  var key = entryKeyOf(entry);
+  S.recall2.push(key);
+  var node = null;
+  GNODES.forEach(function(n){ if(n.lit && n.entry && entryKeyOf(n.entry) === key) node = n; });
+  if(node) upgradeNodeToLearn(node);
+  else lightUpNode(entry, true);
+  setFb('ok', '"' + entry.word + '" 떠올렸어요!', 2600);
+  bumpCounting();
+  updateGameCounter();
+  checkCelebrate();
+  checkAllFound();
+}
+function finishRecall2(){
+  document.body.classList.remove('recall2-mode');
+  var hbtn = document.getElementById('hbtn'); if(hbtn) hbtn.disabled = false;
+  goFillQ();
+}
+// 완료 버튼 — 1 인출이면 학습으로, 3 다시 인출이면 강화로
+function onDoneClick(){
+  if(isRecall2()) finishRecall2();
+  else goLearn();
 }
 
 // 인출에서 검정(오답 후 정답)이던 칩을 확장 정답으로 보라색 전환 — 새 칩 생성 X
@@ -6559,8 +6587,9 @@ function goLearn(){
   if(handledInGame > 0){
     pool = WORD_LIST.filter(function(entry){
       var key = entryKeyOf(entry);
-      // 인출에서 맞춘 어휘 X
+      // 인출에서 맞춘 어휘 X, 이미 내 어휘 X
       if(S.found && S.found.indexOf(key) > -1) return false;
+      if(isKnownEntry(entry)) return false;
       // 인출에서 가족 어휘가 아닌 말로 입력한 단어(원문 word)만 제외.
       // 뜻 퀴즈를 틀렸다가 맞힌 어휘(S.attempted에 entry key로 기록)는 확장에서 한 번 더 연습 — 의도된 동작(대표님 확정 2026-10-14)
       if(S.attempted && S.attempted.indexOf(entry.word) > -1) return false;
@@ -6624,7 +6653,9 @@ function buildMissionHTML(){
   var char = (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.mainChar || '') : '';
   return ''
     + '<div class="gm-line">오늘 만날 <span class="gm-hun">'+hun+'</span> <span class="gm-han">'+char+'</span>의 가족 어휘</div>'
-    + '<div class="gm-foot">모두 찾아볼까요?</div>'
+    + (knownBeforeCount() > 0
+        ? '<div class="gm-foot">이미 아는 어휘 <b class="gm-known">' + knownBeforeCount() + '개</b> · 오늘 학습할 어휘 <b>' + todayTotal() + '개</b></div>'
+        : '<div class="gm-foot">모두 찾아볼까요?</div>')
     + '<button class="gm-confirm" type="button" onclick="confirmMission(event)">Go!</button>';
 }
 // 확인 버튼 → 인출 스테이지 카드로 스왑 (STAGE 01 / 인출하기 / 인용구)
@@ -6873,8 +6904,7 @@ function renderLearnCard(){
     bubbleText: '맞아요. 훈으로 의미를 깨웠어요 ✨',
     beforeNext: function(wrongAttempted){
       LEARN.correct++;   // sndOk 제거 — o.mp3 효과음(setupChoiceButtons)만 사용
-      // 확장 첫 시도 정답 시에만 강화 후보 카운트 +1
-      if(!wrongAttempted) bumpCounting();
+      // 학습 단계는 점수 없음 — 배운 어휘를 3 다시 인출에서 떠올리면 +1 (4단계 훈련)
     },
     onCorrect: function(wrongAttempted){
       // 컬렉션 누적 — 뜻 퀴즈 첫 시도 정답만 노드 점등(보라) + 강화 후보가 됨.
@@ -7135,6 +7165,7 @@ function goGame(){
   // 재생 중인 어원 나레이션 부드럽게 fade out — "훈 감각 깨우러 가기" 클릭 시
   fadeOutNarration(500);
   resetScore();   // 새 회차 = 점수 초기화
+  document.body.classList.remove('recall2-mode');   // 새 회차 = 1 인출부터
   CONFETTI_FIRED = false;   // 새 회차 = 마일스톤 다시 발동 가능
   // 새 회차 진입 — 게임 stage-nav를 인출로 복원 (recap에서 확장으로 바뀌어 있을 수 있음)
   var gameNav = document.querySelector('#game .stage-nav');
@@ -7177,8 +7208,7 @@ function showGameIntro(){
   var chip  = document.getElementById('score-chip');
   var scNum = document.getElementById('sc-num');
   if(scNum){
-    var total = (typeof WORD_LIST !== 'undefined' && WORD_LIST) ? WORD_LIST.length : 0;
-    scNum.textContent = total;
+    scNum.textContent = todayTotal();   // 오늘 학습할 어휘 수 (이미 내 어휘 제외)
   }
   if(chip){
     chip.style.transition = 'none';
@@ -7516,6 +7546,8 @@ function setupGameStage(){
   var ctx = cv.getContext('2d');
   ctx.setTransform(dpr,0,0,dpr,0,0);
   if(isPm()) pmRelayoutAll();   // 휴대폰 세로: 칸 방식으로 다시 앉힘
+  // 이미 내 어휘 → 처음부터 금색 칩으로 켜 둠 (출제·점수 없음)
+  WORD_LIST.filter(isKnownEntry).forEach(function(e){ lightUpNode(e, false, false, true); });
   if(GANIM) cancelAnimationFrame(GANIM);
   GANIM = requestAnimationFrame(drawGameStage);
 }
@@ -7899,7 +7931,8 @@ function spawnUnlitNodes(count){
   return added;
 }
 
-function lightUpNode(entry, fromLearn, silent){
+function lightUpNode(entry, fromLearn, silent, known){
+  // known = true → 이미 내 어휘(금색 칩) — 선 애니메이션·효과음 없이 바로 켜짐 (4단계 훈련)
   // entry: word + hanja entry 객체 (동음이의어 지원)
   // 점등된 노드들로부터 "최소 거리"가 가장 큰 미점등 노드를 선택 — 활성 노드를 최대한 흩어지게
   var unlit = [];
@@ -7938,8 +7971,9 @@ function lightUpNode(entry, fromLearn, silent){
   node.lineT = 0;
   node.fromLearn = !!fromLearn;
   node.silent = !!silent;   // true → 오답 후 정답: 검정 노드 (점수/강화 후보 X, 시각 표시만)
+  node.known = !!known;
   // 노드 라인 그어질 때 laser 효과음 (silent 케이스는 점수 X라 사운드도 절제). 50% 볼륨.
-  if(!silent) sfxPlay('laser.mp3', 0.3);
+  if(!silent && !known) sfxPlay('laser.mp3', 0.3);
   // 캡슐 색 + 길이 변주 클래스를 미리 계산해 node에 저장 — 라인이 도착하면 한 번에 chip으로 변환
   var mainCap = document.querySelector('.g-center .game-cap');
   var capCls = 'c-green';
@@ -7952,13 +7986,13 @@ function lightUpNode(entry, fromLearn, silent){
   node.capCls = capCls;
   node.lenCls = lenCls[idx % lenCls.length] || 'len-m';
   node.chipShown = false;
+  if(node.known){ node.lineT = 1; showNodeChip(node); }   // 내 어휘는 바로 금색 칩
   // 노드 DOM은 아직 unlit 상태(작은 발광 점) 그대로 유지 — drawGameStage에서 lineT===1 도달 시 chip 등장
 
   // ── 마지막 미점등이 채워졌고, 아직 찾을 단어가 남아있다면 새 빈 노드를 1개 서서히 추가 ──
   // (오답 후 정답 silent 케이스도 "다룬 어휘"로 간주하여 무한 spawn 방지)
   var totalWords = (typeof WORD_LIST !== 'undefined') ? WORD_LIST.length : 38;
-  var doneNow    = ((typeof S !== 'undefined' && S.found)     ? S.found.length     : 0)
-                 + ((typeof S !== 'undefined' && S.attempted) ? S.attempted.length : 0);
+  var doneNow    = ((typeof S !== 'undefined' && S) ? handledEntryCount() : 0) + knownBeforeCount();
   var nowUnlit = 0;
   for(var k=0;k<GNODES.length;k++){ if(!GNODES[k].lit) nowUnlit++; }
   if(nowUnlit === 0 && doneNow < totalWords){
@@ -7971,7 +8005,8 @@ function showNodeChip(node){
   node.chipShown = true;
   node.el.className = 'g-node lit pop ' + (node.capCls || 'c-green') + ' ' + (node.lenCls || 'len-m')
                     + (node.fromLearn ? ' from-learn' : '')
-                    + (node.silent ? ' is-silent' : '');
+                    + (node.silent ? ' is-silent' : '')
+                    + (node.known ? ' is-known' : '');
   node.el.textContent = node.word;
 }
 
@@ -8027,12 +8062,12 @@ var CELEBRATE_THRESHOLD = (typeof WORD_LIST !== 'undefined') ? WORD_LIST.length 
 
 function totalDiscovered(){
   var s = (typeof S !== 'undefined' && S && S.found) ? S.found.length : 0;
-  var l = (typeof LEARN !== 'undefined' && LEARN && LEARN.collected) ? LEARN.collected.length : 0;
+  var l = (typeof S !== 'undefined' && S && S.recall2) ? S.recall2.length : 0;
   return s + l;
 }
 function checkCelebrate(){
   if(CONFETTI_FIRED) return;
-  if(totalDiscovered() >= CELEBRATE_THRESHOLD){
+  if(totalDiscovered() >= Math.max(1, todayTotal())){
     triggerConfetti();
   }
 }
@@ -8181,8 +8216,24 @@ async function submit(){
   // 가족 어휘 — 동음이의어 지원: 같은 word에 entry가 2+개일 수 있음
   var entries = WORD_MAP[val];
   if(entries && entries.length > 0){
+    // 이미 내 어휘(금색 칩) — 점수·출제 없음, 알려만 줌
+    var notKnown = entries.filter(function(e){ return !isKnownEntry(e); });
+    if(notKnown.length === 0){
+      setFb('info', '"' + val + '"' + eunNeun(val) + ' 이미 내 어휘예요! ⭐', 2400);
+      sndDup(); return;
+    }
+    // 3 다시 인출 — 뜻 퀴즈 없이 바로 떠올린 것으로 인정 (방금 배웠으므로)
+    if(isRecall2()){
+      var cand = notKnown.filter(function(e){
+        var k = entryKeyOf(e);
+        return S.found.indexOf(k) === -1 && S.recall2.indexOf(k) === -1;
+      });
+      if(cand.length === 0){ setFb('miss', '"' + val + '"' + eunNeun(val) + ' 이미 떠올렸어요!'); sndDup(); return; }
+      recall2Word(cand[0]);
+      return;
+    }
     // 미발견 entry 추출 (S.found 정답 발견 + S.attempted silent 처리 모두 제외)
-    var unfound = entries.filter(function(e){
+    var unfound = notKnown.filter(function(e){
       var key = entryKeyOf(e);
       return S.found.indexOf(key) === -1 && S.attempted.indexOf(key) === -1;
     });
@@ -8386,7 +8437,7 @@ function useHint(){
 function goFillQ(){
   // 사운드 — 확장 → 강화 단계 전환 (옥타브 상승)
   try { sndStageNext(); } catch(e){}
-  // 강화 = 인출(S.found) + 탐구(LEARN.collected) 모두 — entry 단위로 통합
+  // 강화 = 1 인출(S.found) + 3 다시 인출(S.recall2)에서 스스로 떠올린 어휘만 (4단계 훈련)
   var pool = [];
   if(S && S.found){
     S.found.forEach(function(key){
@@ -8394,14 +8445,17 @@ function goFillQ(){
       if(e) pool.push(e);
     });
   }
-  if(LEARN && LEARN.collected) pool = pool.concat(LEARN.collected);
-  // 중복 제거 + fillSentence 보유 entry만
+  (S && S.recall2 ? S.recall2 : []).forEach(function(key){
+    var e = WORD_KEY_MAP[key];
+    if(e) pool.push(e);
+  });
+  // 중복 제거 + fillSentence 보유 entry만 (이미 내 어휘는 출제 X)
   var seen = {};
   var all = pool.filter(function(entry){
     var key = entryKeyOf(entry);
     if(seen[key]) return false;
     seen[key] = true;
-    return entry.fillSentence;
+    return entry.fillSentence && !isKnownEntry(entry);
   });
   if(all.length === 0){ goResult(); return; }
   all = shuffle(all);
@@ -8485,7 +8539,9 @@ function renderFQCard(entry){
           // 재시도 정답이면 통과는 되지만 점수 X — 메시지 톤 다르게
           bub.innerHTML = wrongAttempted
             ? ('맞아요. "' + entry.word + '"' + eunNeun(entry.word) + ' 이렇게 활용할 수 있어요.')
-            : '어휘를 정확하게 활용할 수 있군요!';
+            : (S.found.indexOf(entryKeyOf(entry)) > -1
+                ? '⭐ 원래 알던 어휘, 확실히 내 것이 됐어요!'
+                : '⭐ 애써서 떠올렸어요! 이제 내 어휘예요!');
           sb.appendChild(bub);
         }
         setTimeout(function(){
@@ -8575,7 +8631,7 @@ function buildRetrieveRank(){
 // 인출+확장어휘 랭킹 (오늘) — 인출 + 학습/탐구 단계에서 깨운 어휘 합산
 function buildComboRank(){
   var myRetr = (S && S.found) ? S.found.length : 0;
-  var myExp  = (typeof LEARN !== 'undefined' && LEARN && LEARN.collected) ? LEARN.collected.length : 0;
+  var myExp  = (S && S.recall2) ? S.recall2.length : 0;   // 3 다시 인출
   var me = myRankEntry('combo', myRetr + myExp);
   if(SERVER_RANK && SERVER_RANK.others){
     var o = SERVER_RANK.others.comboToday.map(function(x){ return { name:x.name, count:x.count, me:false }; });
@@ -8597,14 +8653,12 @@ function buildMasterRank(){
 // 인출+확장 누적 랭킹 (회차 누적, 영역 내)
 function buildCumulRank(myTodayCombo){
   if(SERVER_RANK && SERVER_RANK.others){
-    var myCombo = ((S && S.found) ? S.found.length : 0)
-                + ((typeof LEARN !== 'undefined' && LEARN && LEARN.collected) ? LEARN.collected.length : 0);
+    var myCombo = ((S && S.found) ? S.found.length : 0) + ((S && S.recall2) ? S.recall2.length : 0);
     var me = { name:'나', count: (SERVER_RANK.me_cumul_past || 0) + myCombo, me:true };
     var o = SERVER_RANK.others.cumulArea.map(function(x){ return { name:x.name, count:x.count, me:false }; });
     return _sortRank(o.concat([me]));
   }
-  var myC = ((S && S.found) ? S.found.length : 0)
-          + ((typeof LEARN !== 'undefined' && LEARN && LEARN.collected) ? LEARN.collected.length : 0);
+  var myC = ((S && S.found) ? S.found.length : 0) + ((S && S.recall2) ? S.recall2.length : 0);
   return _sortRank([{ name:'나', count: myC, me:true }]);
 }
 
@@ -8738,7 +8792,7 @@ function goResult(){
   var fqScore = (typeof FQ !== 'undefined' && FQ) ? (FQ.correct || 0) : 0;
   var fqTotal = (typeof WORD_LIST !== 'undefined' && WORD_LIST) ? WORD_LIST.length : 0;   // renderTierBadge와 같은 기준
   var willPerfect = false;
-  try { willPerfect = calcBadge(fqScore, fqTotal).isPerfect; } catch(e){}
+  try { willPerfect = calcBadge(knownAllCount(), fqTotal).isPerfect; } catch(e){}
   if(!willPerfect){
     if(fqScore >= 20){
       // 점수별 박수 — 30점 이상은 강한 박수(Applause2), 20점 이상은 일반(Applause)
@@ -8780,7 +8834,7 @@ function goResult(){
   // ── 확장 어휘 (학습 단계에서 깨운 어휘) ──
   //   LEARN.collected는 entry 객체 배열
   var expList = document.getElementById('r-exp-list'); expList.innerHTML = '';
-  var exp = (LEARN && LEARN.collected) ? LEARN.collected.slice() : [];
+  var exp = (S && S.recall2 ? S.recall2 : []).map(function(k){ return WORD_KEY_MAP[k]; }).filter(Boolean);   // 3 다시 인출에서 떠올린 어휘
   exp.forEach(function(entry, i){
     if(!entry) return;
     var el = document.createElement('div');
@@ -8792,8 +8846,8 @@ function goResult(){
   document.getElementById('r-exp-cnt').textContent = exp.length;
 
   // ── 등급 배지 (별 시스템) ──
-  // correct = 강화 첫시도 정답 어휘 수, total = 회차 가족 어휘 총수
-  var correct = (typeof FQ !== 'undefined' && FQ) ? (FQ.correct || 0) : 0;
+  // 별·PERFECT = 누적 '내 어휘'(이전 훈련 + 오늘 강화 첫 시도 정답) / 회차 가족 어휘 총수 (4단계 훈련)
+  var correct = knownAllCount();
   var total   = (typeof WORD_LIST !== 'undefined' && WORD_LIST) ? WORD_LIST.length : 0;
   renderTierBadge(correct, total);
 
@@ -8894,7 +8948,11 @@ function renderTierBadge(correct, total){
   stars.innerHTML = html;
 
   // 분수 표시 (correct / total) — 분모는 가족 어휘 총수
-  scoreEl.innerHTML = '<em>' + b.correct + '</em> / ' + b.total;
+  var nk = (typeof newKnownCount === 'function') ? newKnownCount() : 0;
+  // 점수판 아래 — 누적 내 어휘 / 회차 전체 · 오늘 새로 내 어휘가 된 수 (4단계 훈련)
+  var kl = document.getElementById('r-known-line');
+  if(kl) kl.innerHTML = '내 어휘 <b>' + b.correct + '</b> / ' + b.total + (nk > 0 ? ' · <span class="rk-new">오늘 +' + nk + '</span>' : '');
+  scoreEl.innerHTML = '<em>' + b.correct + '</em> / ' + b.total + (nk > 0 ? ' <span class="rtb-new">오늘 +' + nk + '</span>' : '');
 
   // 메시지
   msgEl.textContent = getBadgeMessage(b);
@@ -9280,10 +9338,8 @@ function buildAreaProgress(){
   var curRound = (SESSION && SESSION.id) ? SESSION.id : 1;
   AREA_PROGRESS = list.map(function(item){
     if(item.round === curRound){
-      // 오늘의 회차 — 인출(S.found) + 확장(LEARN.collected) 합산
-      var foundFromGame = (S && S.found) ? S.found.length : 0;
-      var foundFromLearn = (LEARN && LEARN.collected) ? LEARN.collected.length : 0;
-      return { char:item.char, hun:item.hun, total:WORD_LIST.length, found:foundFromGame+foundFromLearn, locked:false, current:true };
+      // 오늘의 회차 — 누적 '내 어휘'(이전 훈련 + 오늘 강화 통과)
+      return { char:item.char, hun:item.hun, total:WORD_LIST.length, found:knownAllCount(), locked:false, current:true };
     }
     // 그 외 회차는 모두 잠금 (학습 기록 미존재)
     return { char:item.char, hun:item.hun, total:0, found:0, locked:true, current:false };
@@ -9494,7 +9550,7 @@ async function notifyStudyComplete(){
   }
   // ── 학습 결과 집계 (Supabase attempts 저장용) ──
   var retr = (typeof S !== 'undefined' && S && S.found) ? S.found.length : 0;        // 인출
-  var exp  = (typeof LEARN !== 'undefined' && LEARN && LEARN.collected) ? LEARN.collected.length : 0; // 확장
+  var exp  = (typeof S !== 'undefined' && S && S.recall2) ? S.recall2.length : 0;  // 3 다시 인출 (4단계 훈련)
   var corr = (typeof FQ !== 'undefined' && FQ) ? (FQ.correct || 0) : 0;              // 강화 정답
   var fqTot= (typeof FQ !== 'undefined' && FQ) ? (FQ.total || 0) : 0;                // 강화 총문항
   var totW = (typeof SESSION !== 'undefined' && SESSION && SESSION.words) ? SESSION.words.length : 0;
@@ -9515,8 +9571,10 @@ async function notifyStudyComplete(){
     started_at:     new Date(startMs).toISOString(),
     finished_at:    new Date().toISOString(),
     duration_sec:   Math.max(0, Math.round((Date.now() - startMs) / 1000)),
+    known_count:    knownAllCount(),                                     // 이 훈련 후 누적 내 어휘
+    is_perfect:     totW > 0 && knownAllCount() >= totW,                 // 회차 어휘 전부가 내 어휘 → 재훈련 불가
     // 어휘별 결과 → word_results (통계 화면 원천). 습득 = 인출 또는 확장에서 맞힘(검정 칩 제외)
-    words: (typeof WORD_LIST !== 'undefined' ? WORD_LIST : []).map(function(e){
+    words: (typeof WORD_LIST !== 'undefined' ? WORD_LIST : []).filter(function(e){ return !isKnownEntry(e); }).map(function(e){   // 이미 내 어휘는 오늘 학습 X
       var k = entryKeyOf(e);
       return {
         session_word_id:  e.swId,
@@ -9524,6 +9582,7 @@ async function notifyStudyComplete(){
         retrieve_passed:  !!(S && S.found && S.found.indexOf(k) > -1),
         extend_passed:    !!(LEARN && LEARN.collected && LEARN.collected.some(function(c){ return entryKeyOf(c) === k; })),
         reinforce_passed: !!(FQ && FQ.okKeys && FQ.okKeys.indexOf(k) > -1),
+        recall2_passed:   !!(S && S.recall2 && S.recall2.indexOf(k) > -1),
       };
     }),
   };

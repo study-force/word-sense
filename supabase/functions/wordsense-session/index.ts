@@ -92,8 +92,16 @@ Deno.serve(async (req) => {
     .eq('user_no', session.user_no)
     .single();
 
+  // ── 과정별 '내 어휘'(인출·다시 인출 + 강화 통과) — 앱이 금색 칩으로 켜고 출제에서 뺌 ──
+  let knownIds: number[] = [];
+  try {
+    const { data: kw } = await supabase.rpc('wordsense_known_words', { p_member_no: session.user_no, p_level: session.training_level || '초등' });
+    knownIds = (kw || []).map((x: any) => Number(x));
+  } catch (e) { console.warn('[wordsense-session] 내 어휘 조회 실패(무시):', e); }
+
   return new Response(JSON.stringify({
     success: true,
+    known_wm_ids: knownIds,
     student: {
       user_no: session.user_no,
       name: student?.name || '',
