@@ -32,6 +32,8 @@ function corsHeaders(origin: string | null): Record<string, string> {
     'Access-Control-Allow-Origin': isAllowed ? origin! : '',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, apikey, authorization',
+    'Vary': 'Origin',               // 접속 주소마다 응답이 다름 — 브라우저가 다른 주소의 응답을 재사용하지 않게
+    'Cache-Control': 'no-store',    // 입장권 상태(완료·만료)는 매번 새로 확인
   };
 }
 function safeHost(url: string) { try { return new URL(url).hostname; } catch { return ''; } }
