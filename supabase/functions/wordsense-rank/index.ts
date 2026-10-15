@@ -5,7 +5,7 @@
 //   RLS로 anon은 attempts/students를 못 읽으므로, service_role로 서버에서 집계해 안전 반환.
 //
 // 입력 (POST application/json):
-//   { user_no, area_id }
+//   { user_no, area_id, session_init_id? }   (session_init_id = 방금 끝낸 훈련 — 본인 과거분에서 제외)
 //     - user_no: 현재 학생(본인) — 집계에서 제외(본인은 프론트가 현재 세션값으로 넣음)
 //     - area_id: 누적 랭킹(영역 내)용
 //
@@ -14,6 +14,7 @@
 //     - 각 리스트 = [{ user_no, name, count }]  (본인 제외, 정렬 X — 프론트가 '나' 합쳐 정렬)
 //     - retr/combo/master = '오늘'(KST) 집계, cumulArea = 영역 내 전체 누적(인출+확장)
 //     - me_cumul_past = 본인의 영역 누적(저장분) — 프론트가 현재 세션분 더함
+//     - me_today_past / me_best_past = 본인 오늘 앞선 훈련 합계 / 지난날 하루 최고 {retr, combo, master}
 //
 // ⚠️ 집계는 현재 JS in-memory (오픈 전 소량). 데이터 커지면 Postgres RPC/뷰로 이관 권장.
 // ════════════════════════════════════════════════════════════════
@@ -38,6 +39,10 @@ function corsHeaders(origin: string | null): Record<string, string> {
   };
 }
 
+// KST 날짜 키 (yyyy-mm-dd)
+function kstDayKey(iso: string): string {
+  return new Date(new Date(iso).getTime() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+}
 // 오늘 00:00 KST(UTC+9)의 UTC ISO 문자열
 function startOfTodayKST(): string {
   const now = Date.now();
@@ -56,6 +61,8 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { return jsonErr(400, '입력 JSON 파싱 실패', cors); }
   const userNo = body.user_no != null ? String(body.user_no) : null;
   const areaId = body.area_id != null ? body.area_id : null;
+  // 방금 끝낸 훈련(입장권) — 저장이 랭킹 조회보다 먼저 끝났어도 '나' 과거분에서 빼서 이중 집계 방지
+  const curSid = body.session_init_id ? String(body.session_init_id) : null;
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
@@ -95,12 +102,40 @@ Deno.serve(async (req) => {
 
     // 영역 누적 (본인 제외) + 본인 과거 누적
     const cumMap = new Map<string, number>();
-    let meCumulPast = 0;
     for (const r of cumulRows) {
       const k = String(r.member_no);
       const v = (r.retrieve_count || 0) + (r.extend_count || 0);
-      if (userNo && k === userNo) { meCumulPast += v; continue; }
+      if (userNo && k === userNo) continue;   // 본인 누적은 아래 me 집계에서
       cumMap.set(k, (cumMap.get(k) || 0) + v);
+    }
+
+    // ── 본인: 오늘 앞서 한 훈련 합계 + 지난날 하루 최고 기록 + 영역 누적 (방금 끝낸 훈련 제외) ──
+    //   오늘 기록 = 오늘 한 훈련 전부(재훈련 포함)의 합, 최고 기록 = 하루 합계 중 최고 (대표님 결정)
+    let meCumulPast = 0;
+    const meTodayPast = { retr: 0, combo: 0, master: 0 };
+    const meBestPast  = { retr: 0, combo: 0, master: 0 };
+    if (userNo) {
+      const { data: mine } = await supabase.from('attempts')
+        .select('finished_at, retrieve_count, extend_count, correct_words, area_id, session_init_id')
+        .eq('member_no', userNo);
+      const todayKey = kstDayKey(new Date().toISOString());
+      const byDay = new Map<string, { retr: number; combo: number; master: number }>();
+      for (const r of (mine || [])) {
+        if (curSid && r.session_init_id && String(r.session_init_id) === curSid) continue;
+        const retr = r.retrieve_count || 0, combo = retr + (r.extend_count || 0), master = r.correct_words || 0;
+        if (areaId != null && String(r.area_id) === String(areaId)) meCumulPast += combo;
+        if (!r.finished_at) continue;
+        const d = kstDayKey(r.finished_at);
+        const t = byDay.get(d) || { retr: 0, combo: 0, master: 0 };
+        t.retr += retr; t.combo += combo; t.master += master;
+        byDay.set(d, t);
+      }
+      for (const [d, t] of byDay) {
+        if (d === todayKey) { meTodayPast.retr = t.retr; meTodayPast.combo = t.combo; meTodayPast.master = t.master; continue; }
+        meBestPast.retr = Math.max(meBestPast.retr, t.retr);
+        meBestPast.combo = Math.max(meBestPast.combo, t.combo);
+        meBestPast.master = Math.max(meBestPast.master, t.master);
+      }
     }
     const cumulArea = [...cumMap.entries()].map(([k, count]) => ({ user_no: Number(k), name: label(k), count }));
 
@@ -108,6 +143,8 @@ Deno.serve(async (req) => {
       success: true,
       others: { retrToday, comboToday, masterToday, cumulArea },
       me_cumul_past: meCumulPast,
+      me_today_past: meTodayPast,   // 프론트가 방금 끝낸 훈련분을 더해 '오늘 기록'
+      me_best_past: meBestPast,     // 지난날 하루 최고 — 프론트가 max(이 값, 오늘 기록)로 '최고 기록'
     }), { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } });
 
   } catch (err) {
