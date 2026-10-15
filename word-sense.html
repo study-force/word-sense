@@ -1260,6 +1260,16 @@ input, textarea { caret-color: auto; -webkit-user-select: text; user-select: tex
 .g-node.lit.len-m { padding: 5px 11px; min-width: 38px; }
 .g-node.lit.len-l { padding: 6px 16px; min-width: 50px; letter-spacing: 0.06em; }
 .g-node.lit::before { display: none; }
+/* 칩 눌러 뜻 보기 — 옆으로 넓어지며 뜻 표시 (대표님 2026-10-16) */
+.g-node.lit { pointer-events: auto; cursor: pointer; }
+.g-node.lit .nm {
+  display: inline-block; vertical-align: bottom;
+  max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  font-weight: 500; font-size: 0.92em; letter-spacing: 0;
+  transition: max-width .35s ease, opacity .25s ease, margin-left .35s ease;
+}
+.g-node.lit.show-mean { z-index: 5; }
+.g-node.lit.show-mean .nm { max-width: min(360px, 72vw); opacity: 1; margin-left: 8px; }
 /* 오답 후 정답(silent) 노드: 검정 칩 — 표시는 되지만 강조 X (점수/강화 후보 아님) */
 .g-node.lit.is-silent {
   background: #1A1F30 !important;
@@ -8014,7 +8024,32 @@ function showNodeChip(node){
                     + (node.fromLearn ? ' from-learn' : '')
                     + (node.silent ? ' is-silent' : '')
                     + (node.known ? ' is-known' : '');
-  node.el.textContent = node.word;
+  var mean = node.entry && node.entry.meaning;
+  if(mean){
+    // 칩을 누르면 옆으로 넓어지며 뜻 표시, 마우스가 벗어나면(터치는 다시 누르면) 접힘 — 대표님 2026-10-16
+    node.el.innerHTML = '<span class="nw"></span><span class="nm"></span>';
+    node.el.firstChild.textContent = node.word;
+    node.el.lastChild.textContent = mean;
+    if(!node.meanBound){
+      node.meanBound = true;
+      var el = node.el;
+      var toggle = function(ev){
+        ev.preventDefault();                       // 입력창 포커스(키보드) 유지
+        var on = !el.classList.contains('show-mean');
+        closeNodeMeanings();
+        if(on) el.classList.add('show-mean');
+      };
+      el.addEventListener('mousedown', toggle);
+      el.addEventListener('touchstart', toggle, { passive: false });
+      el.addEventListener('mouseleave', function(){ el.classList.remove('show-mean'); });
+    }
+  } else {
+    node.el.textContent = node.word;
+  }
+}
+function closeNodeMeanings(){
+  var on = document.querySelectorAll('.g-node.show-mean');
+  for(var i=0;i<on.length;i++) on[i].classList.remove('show-mean');
 }
 
 function finishWord(entry, opts){
