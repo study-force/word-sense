@@ -1269,6 +1269,22 @@ input, textarea { caret-color: auto; -webkit-user-select: text; user-select: tex
   transition: max-width .35s ease, opacity .25s ease, margin-left .35s ease;
 }
 .g-node.lit.show-mean { z-index: 5; }
+.chip-tip {
+  position: absolute; left: 50%; bottom: calc(100% + 9px); transform: translateX(-50%);
+  padding: 5px 11px; border-radius: 100px; white-space: nowrap; pointer-events: none;
+  background: #F2C94C; color: #3A2A00; font-size: 12px; font-weight: 600; letter-spacing: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  animation: chipTipIn .35s ease, chipTipBob 1.4s ease-in-out .35s infinite;
+}
+.chip-tip::after {
+  content: ''; position: absolute; left: 50%; top: 100%; transform: translateX(-50%);
+  border: 5px solid transparent; border-top-color: #F2C94C;
+}
+.chip-tip.below { bottom: auto; top: calc(100% + 9px); }
+.chip-tip.below::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: #F2C94C; }
+.chip-tip.out { opacity: 0; transition: opacity .4s; }
+@keyframes chipTipIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes chipTipBob { 0%,100% { margin-bottom: 0; } 50% { margin-bottom: 3px; } }
 .g-node.lit.show-mean .nm { max-width: min(360px, 72vw); opacity: 1; margin-left: 8px; }
 /* 오답 후 정답(silent) 노드: 검정 칩 — 표시는 되지만 강조 X (점수/강화 후보 아님) */
 .g-node.lit.is-silent {
@@ -1470,6 +1486,13 @@ input, textarea { caret-color: auto; -webkit-user-select: text; user-select: tex
   text-shadow: 0 1px 6px rgba(0,0,0,0.45);
 }
 @keyframes fadeUp { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+/* 메시지가 흰 칩과 겹쳐도 읽히게 — 어두운 알약 배경 (대표님 2026-10-16) */
+#fb .fb {
+  background: rgba(10,14,26,0.88) !important;
+  padding: 6px 16px !important;
+  border-radius: 100px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+}
 
 /* 오답 후 "다시 생각해보세요" 빨강 마스크 — choice/fill 버튼 위를 덮어 가림. */
 .try-again-mask {
@@ -8111,6 +8134,7 @@ function showNodeChip(node){
       var el = node.el;
       var toggle = function(ev){
         ev.preventDefault();                       // 입력창 포커스(키보드) 유지
+        chipTipDone();
         var on = !el.classList.contains('show-mean');
         closeNodeMeanings();
         if(on) el.classList.add('show-mean');
@@ -8119,9 +8143,25 @@ function showNodeChip(node){
       el.addEventListener('touchstart', toggle, { passive: false });
       el.addEventListener('mouseleave', function(){ el.classList.remove('show-mean'); });
     }
+    maybeShowChipTip(node);
   } else {
     node.el.textContent = node.word;
   }
+}
+// '눌러서 뜻 보기' 안내 — 훈련마다 처음 찾은 칩 위에 잠깐(4.5초)만. 칩을 한 번이라도 눌러 봤으면 다시 안 띄움 (대표님 2026-10-16)
+function chipTipSeen(){ try { return localStorage.getItem('ws_chiptip_done') === '1'; } catch(e){ return false; } }
+function chipTipDone(){
+  try { localStorage.setItem('ws_chiptip_done', '1'); } catch(e){}
+  var t = document.querySelectorAll('.chip-tip'); for(var i=0;i<t.length;i++) t[i].remove();
+}
+function maybeShowChipTip(node){
+  if(!node || node.known || (S && S.chipTipShown) || chipTipSeen()) return;
+  if(S) S.chipTipShown = true;
+  var tip = document.createElement('span');
+  tip.className = 'chip-tip' + ((node.baseY || 0) < 70 ? ' below' : '');
+  tip.textContent = '눌러서 뜻 보기';
+  node.el.appendChild(tip);
+  setTimeout(function(){ tip.classList.add('out'); setTimeout(function(){ tip.remove(); }, 400); }, 4500);
 }
 function closeNodeMeanings(){
   var on = document.querySelectorAll('.g-node.show-mean');
