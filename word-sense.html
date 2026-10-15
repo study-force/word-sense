@@ -4571,11 +4571,6 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
    세로 모드 (body.pmode) — 휴대폰 폭 480 / 태블릿 폭 600 캔버스, 높이는 화면에 맞춤 (applyPhoneScale)
    PC/태블릿 가로에는 영향 없음
    ════════════════════════════════════════════════════════════════ */
-#rotate-hint { position: fixed; inset: 0; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: #0E121B; color: #F2F4FA; font-family: 'Noto Sans KR', sans-serif; }
-#rotate-hint .rh-icon { font-size: 44px; animation: rhTurn 1.8s ease-in-out infinite; }
-#rotate-hint .rh-text { font-size: 18px; font-weight: 500; }
-#rotate-hint .rh-text b { color: var(--green); font-weight: 600; }
-@keyframes rhTurn { 0%,30% { transform: rotate(-90deg); } 60%,100% { transform: rotate(0deg); } }
 /* 인출: 아래를 키보드 자리로 비움 (흰 도크가 그 자리까지 이어짐) */
 body.pmode #game { padding-bottom: var(--kb-reserve, 360px); }
 /* 확장(환원) 화면은 입력이 없으므로 키보드 자리 없이 전체 높이 사용 */
@@ -5027,27 +5022,38 @@ function visibleBox(){
   }
   return { w: w, h: h, top: top };
 }
-// ── 세로 모드(body.pmode) — 휴대폰·태블릿을 세로로 들었을 때 ──
-//   폭 480(휴대폰) / 600(태블릿) 기준의 세로로 긴 캔버스로 바꿔 그림(높이 = 화면 높이에 맞춤).
+// ── 세로 모드(body.pmode) — 휴대폰·태블릿은 방향과 상관없이 항상 세로 화면 ──
+//   폭 480(휴대폰) / 600(태블릿) 기준의 세로로 긴 캔버스. 세로로 들면 화면 폭에 꽉 차고,
+//   가로로 들면 같은 세로 화면을 높이에 맞춰 가운데에 세워서 보여줌(돌리라는 안내 없음).
 //   인출 화면은 아래 --kb-reserve 만큼을 키보드 자리로 비워 둠 → 키보드가 떠도 레이아웃 안 움직임.
-//   키보드 실제 높이는 처음 뜰 때 재서 저장(다음부터 그 값 사용). 시험용: ?pmode=1
+//   키보드 실제 높이는 처음 뜰 때 재서 방향별로 저장(다음부터 그 값 사용). 시험용: ?pmode=1
+//   ※ 판정은 '손가락이 주 입력 + 마우스 없음'(휴대폰·태블릿)만 — 터치스크린 노트북(PC)은 제외
+var IS_MOBILE_TOUCH = (function(){
+  try { return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches && window.matchMedia('(hover: none)').matches); }
+  catch(e){ return false; }
+})();
 var FORCE_PMODE = /[?&]pmode=1/.test(location.search);
-function isTabletW(){ return window.innerWidth >= 600; }
+function isLandscape(){ return window.innerWidth > window.innerHeight; }
+function isTabletW(){ return Math.min(window.innerWidth, window.innerHeight) >= 600; }
 function pmDesignW(){ return isTabletW() ? 600 : 480; }   // 태블릿은 폭이 넓어 캔버스도 넓게
+var PM_ASPECT = 1.5;   // 가로로 들었을 때 세로 화면 비율(높이 = 폭 × 1.5)
 function isPhonePortrait(){
-  if(FORCE_PMODE) return true;
-  return IS_TOUCH_DEVICE && window.innerHeight > window.innerWidth * 1.15;
+  return FORCE_PMODE || IS_MOBILE_TOUCH;
 }
+function kbKey(){ return isLandscape() ? 'ws_kb_ratio_l' : 'ws_kb_ratio'; }
 function kbReserveRatio(){
   var r = 0;
-  try { r = parseFloat(localStorage.getItem('ws_kb_ratio')) || 0; } catch(e){}
-  // 첫 실행 추정치: 한글 자판+추천줄 ≈ 휴대폰 화면의 43%, 태블릿 세로는 36%
-  return (r > 0.2 && r < 0.6) ? r : (isTabletW() ? 0.36 : 0.43);
+  try { r = parseFloat(localStorage.getItem(kbKey())) || 0; } catch(e){}
+  if(r > 0.2 && r < 0.75) return r;
+  // 첫 실행 추정치(한글 자판+추천줄): 세로 휴대폰 43%·태블릿 36%, 가로 휴대폰 60%·태블릿 50%
+  if(isLandscape()) return isTabletW() ? 0.5 : 0.6;
+  return isTabletW() ? 0.36 : 0.43;
 }
 function applyPhoneScale(){
   var W = window.innerWidth, H = window.innerHeight;
   var PW = pmDesignW();
-  var s = W / PW;
+  var s = Math.min(W / PW, H / (PW * PM_ASPECT));   // 세로: 폭에 맞춤 / 가로: 높이에 맞춰 가운데 세움
+  if(isPhonePortrait() && !isLandscape()) s = W / PW;
   if(!(s > 0)){ setTimeout(applyScale, 300); return; }
   var designH = H / s;
   var kbPx = Math.round(H * kbReserveRatio());
@@ -5063,7 +5069,7 @@ function applyPhoneScale(){
   if(typing && vv){
     var realKb = H - vv.height;
     if(realKb > 80){
-      try { localStorage.setItem('ws_kb_ratio', (realKb / H).toFixed(3)); } catch(e){}
+      try { localStorage.setItem(kbKey(), (realKb / H).toFixed(3)); } catch(e){}
       if(realKb > kbPx) shift = realKb - kbPx;
     }
   }
@@ -5078,21 +5084,10 @@ function applyPhoneScale(){
   });
   document.documentElement.style.setProperty('--canvas-scale', s);
   if(typeof CAP_CENTER !== 'undefined') CAP_CENTER = null;
-}
-// 휴대폰 가로: 키보드가 뜨면 화면이 너무 작아져 → 세로로 돌리라는 안내
-function updateRotateHint(){
-  var on = IS_TOUCH_DEVICE && !FORCE_PMODE && window.innerWidth > window.innerHeight && window.innerHeight < 500;
-  var el = document.getElementById('rotate-hint');
-  if(on && !el){
-    el = document.createElement('div');
-    el.id = 'rotate-hint';
-    el.innerHTML = '<div class="rh-icon">📱</div><div class="rh-text">휴대폰을 <b>세로</b>로 돌려 주세요</div>';
-    document.body.appendChild(el);
-  }
-  if(el) el.style.display = on ? 'flex' : 'none';
+  // 방향을 바꾸면 무대 높이가 달라지므로 네트워크 칩을 새 칸에 다시 앉힘
+  if(typeof GNODES !== 'undefined' && GNODES.length && typeof pmRelayoutAll === 'function') requestAnimationFrame(pmRelayoutAll);
 }
 function applyScale(){
-  updateRotateHint();
   if(isPhonePortrait()){ applyPhoneScale(); return; }
   if(document.body.classList.contains('pmode')){
     document.body.classList.remove('pmode');
