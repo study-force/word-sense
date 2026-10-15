@@ -2355,6 +2355,22 @@ body.mission-mode #game .stage-nav {
   letter-spacing: 0.05em;
   transition: all .2s;
 }
+/* 못 찾은 어휘 목록 (강화 직전) */
+.miss-card { text-align: center; }
+.miss-title { font-size: 20px; font-weight: 600; color: var(--ink, #1A1F30); }
+.miss-title b { color: #E06B4A; font-weight: 600; }
+.miss-sub { font-size: 13px; color: #8A90A2; margin: 6px 0 16px; }
+.miss-list { max-height: 360px; overflow-y: auto; text-align: left; border-top: 1px solid #ECEEF4; }
+.miss-row { display: flex; align-items: baseline; gap: 10px; padding: 10px 6px; border-bottom: 1px solid #ECEEF4; }
+.miss-w { flex: none; font-size: 16px; font-weight: 600; color: #1A1F30; }
+.miss-h { flex: none; font-size: 13px; color: #9AA0B2; }
+.miss-m { flex: 1; font-size: 14px; color: #4A5068; line-height: 1.45; }
+.miss-next {
+  margin-top: 18px; padding: 12px 30px; border-radius: 100px; border: none; cursor: pointer;
+  background: linear-gradient(135deg, #45C28A, #2FA572); color: #fff;
+  font-family: 'Noto Sans KR', sans-serif; font-size: 15px; font-weight: 600;
+}
+.miss-next:hover { filter: brightness(1.05); }
 .next-btn:hover { background: rgba(var(--stage-accent-rgb), 0.14); }
 
 .skip-link {
@@ -5030,6 +5046,12 @@ body.pmode .st-today-badge { font-size: 13px; }
     <div class="gi-msg gi-card" id="fi-msg"></div>
   </div>
 </div>
+<!-- 3 다시 인출 끝 → 강화 전에 못 찾은 어휘 보여주기 (대표님 2026-10-16) -->
+<div class="quiz-overlay" id="miss-ov">
+  <div class="ovly-scale">
+    <div class="quiz-card miss-card" id="miss-card"></div>
+  </div>
+</div>
 <div class="quiz-overlay" id="qo">
   <div class="ovly-scale">
     <div class="quiz-card" id="qc"></div>
@@ -6552,7 +6574,29 @@ function recall2Word(entry){
 function finishRecall2(){
   document.body.classList.remove('recall2-mode');
   var hbtn = document.getElementById('hbtn'); if(hbtn) hbtn.disabled = false;
-  goFillQ();
+  showMissedWords(goFillQ);
+}
+// 강화로 넘어가기 전, 스스로 떠올리지 못한 어휘(1 인출·3 다시 인출 모두 못 찾음) 목록 — 없으면 바로 다음
+function showMissedWords(next){
+  var done = {};
+  S.found.concat(S.recall2 || [], S.recall2Silent || []).forEach(function(k){ done[k] = 1; });
+  var miss = (typeof WORD_LIST !== 'undefined' ? WORD_LIST : []).filter(function(e){
+    return !isKnownEntry(e) && !done[entryKeyOf(e)];
+  });
+  var ov = document.getElementById('miss-ov'), card = document.getElementById('miss-card');
+  if(!miss.length || !ov || !card){ next(); return; }
+  var inp = document.getElementById('wi'); if(inp) inp.blur();
+  var esc = function(t){ return String(t == null ? '' : t).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); };
+  card.innerHTML = '<div class="miss-title">아쉽게 못 찾은 어휘 <b>' + miss.length + '</b>개</div>'
+    + '<div class="miss-sub">다음 훈련에서는 꼭 떠올려 봐요!</div>'
+    + '<div class="miss-list">' + miss.map(function(e){
+        return '<div class="miss-row"><span class="miss-w">' + esc(e.word) + '</span>'
+          + (e.hanja ? '<span class="miss-h">' + esc(String(e.hanja).slice(0, e.word.length)) + '</span>' : '')   // 蘇生甦生처럼 붙은 표기는 첫 표기만
+          + '<span class="miss-m">' + esc(e.meaning) + '</span></div>';
+      }).join('') + '</div>'
+    + '<button class="miss-next" id="miss-next">강화 훈련으로 →</button>';
+  ov.classList.add('on');
+  document.getElementById('miss-next').onclick = function(){ ov.classList.remove('on'); next(); };
 }
 // 완료 버튼 — 1 인출이면 학습으로, 3 다시 인출이면 강화로
 function onDoneClick(){
