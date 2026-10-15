@@ -6599,6 +6599,8 @@ function recall2Word(entry){
   checkAllFound();
 }
 function finishRecall2(){
+  if(S.recall2Finished) return;   // 자동 진행과 완료 버튼이 겹쳐도 한 번만
+  S.recall2Finished = true;
   document.body.classList.remove('recall2-mode');
   var hbtn = document.getElementById('hbtn'); if(hbtn) hbtn.disabled = false;
   showMissedWords(goFillQ);
@@ -6660,6 +6662,9 @@ function showRecapNext(){
 function goLearn(){
   var sess = SESSION;
   if(!sess) return;
+  // 한 훈련에 한 번만 — '모두 찾음' 자동 진행(3.4초 뒤)과 완료 버튼이 겹치면 확장 인트로·음성이 두 번 재생되던 문제 (2026-10-16)
+  if(S.learnEntered) return;
+  S.learnEntered = true;
   // 사운드 — 인출 → 확장 단계 전환 (옥타브 상승)
   try { sndStageNext(); } catch(e){}
   // 인출(게임)에서 이미 다룬 단어(first-try 정답 + 오답후정답 silent)는 모두 제외하고 탐구 대상으로
@@ -8571,6 +8576,8 @@ function useHint(){
 // 빈칸 채우기 (FillQ)
 // ══════════════════════════════════════════════
 function goFillQ(){
+  if(S.fillEntered) return;       // 강화도 한 훈련에 한 번만
+  S.fillEntered = true;
   // 사운드 — 확장 → 강화 단계 전환 (옥타브 상승)
   try { sndStageNext(); } catch(e){}
   // 강화 = 1 인출(S.found) + 3 다시 인출(S.recall2)에서 스스로 떠올린 어휘만 (4단계 훈련)
