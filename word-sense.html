@@ -7655,8 +7655,13 @@ function renderHintLog(){
   if(!S.hintLog || S.hintLog.length === 0){ box.className = 'hint-log'; box.innerHTML = ''; return; }
   // 아직 못 찾은 힌트를 왼쪽(최신 먼저), 찾은 힌트는 그 뒤(최신 먼저)
   var rev = S.hintLog.slice().reverse();
-  // 찾음 = 바로 맞힘(S.found) 또는 오답 후 맞힘(S.attempted, entry key)
-  var isDone = function(h){ return S.found.indexOf(h.key) > -1 || (S.attempted && S.attempted.indexOf(h.key) > -1); };
+  // 찾음 = 바로 맞힘(S.found) 또는 오답 후 맞힘(S.attempted, entry key) — 3 다시 인출에서 떠올린 것도 포함
+  var isDone = function(h){
+    return S.found.indexOf(h.key) > -1
+        || (S.attempted && S.attempted.indexOf(h.key) > -1)
+        || (S.recall2 && S.recall2.indexOf(h.key) > -1)
+        || (S.recall2Silent && S.recall2Silent.indexOf(h.key) > -1);
+  };
   var open = rev.filter(function(h){ return !isDone(h); });
   var done = rev.filter(isDone);
   var chip = function(h, found){
@@ -8032,8 +8037,8 @@ function finishWord(entry, opts){
       checkAllFound();
       return;
     }
-    if(S.hintTargets.indexOf(key) > -1){ S.hintFound.push(key); renderHintLog(); }
     recall2Word(entry);
+    if(S.hintTargets.indexOf(key) > -1){ S.hintFound.push(key); renderHintLog(); }   // recall2에 넣은 뒤 다시 그려야 딤드됨
     return;
   }
   if(S.found.indexOf(key) > -1) return;
