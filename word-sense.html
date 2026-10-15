@@ -4568,7 +4568,7 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
 }
 
 /* ════════════════════════════════════════════════════════════════
-   휴대폰 세로 모드 (body.pmode) — 캔버스 폭 480, 높이는 화면에 맞춤 (applyPhoneScale)
+   세로 모드 (body.pmode) — 휴대폰 폭 480 / 태블릿 폭 600 캔버스, 높이는 화면에 맞춤 (applyPhoneScale)
    PC/태블릿 가로에는 영향 없음
    ════════════════════════════════════════════════════════════════ */
 #rotate-hint { position: fixed; inset: 0; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: #0E121B; color: #F2F4FA; font-family: 'Noto Sans KR', sans-serif; }
@@ -4609,9 +4609,9 @@ body.pmode .word-input { font-size: 19px; padding: 12px 128px 12px 84px; }
 body.pmode .wi-counter { left: 16px; font-size: 16px; }
 body.pmode .hint-btn { right: 8px; padding: 6px 9px 6px 11px; font-size: 13px; }
 /* 점수판: 미션 화면 중앙·결과 중앙 이동 좌표를 폭 480 기준으로 (우상단 칩 중심 x=412 → 화면 중앙 240) */
-body.pmode .score-chip.center-mission { transform: translate(-172px, calc(var(--pm-half, 520px) - 162px)) scale(2.0); }
+body.pmode .score-chip.center-mission { transform: translate(var(--pm-dx, -172px), calc(var(--pm-half, 520px) - 162px)) scale(2.0); }
 /* 뜻 고르기 창(인출 퀴즈)·확장 카드 — 폭 620 → 폭 안에 맞춤 */
-body.pmode .quiz-card, body.pmode .learn-card { width: 456px; padding: 22px 20px 20px; }
+body.pmode .quiz-card, body.pmode .learn-card { width: var(--pm-card-w, 456px); padding: 22px 20px 20px; }
 body.pmode .quiz-card .iq-head { padding: 16px 12px; }
 /* 팝업 위 단어·한자·훈음·급수 — 휴대폰에서 한 단계 작게 (보기 공간 확보) */
 body.pmode .iq-head { gap: 20px; padding: 16px 12px; margin-bottom: 12px; }
@@ -4643,7 +4643,7 @@ body.pmode .r-collect-col { flex: 1 1 calc(50% - 5px); height: 138px; margin-top
 body.pmode .r-rank-block { flex: 1 1 auto; min-height: 0; margin: 4px 0 8px; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: minmax(0, 1fr); gap: 10px; }
 body.pmode .r-rank-card { min-height: 0; overflow: hidden; }
 body.pmode .r-home-btn { flex: 0 0 auto; width: auto; font-size: 15px; padding: 13px 34px; }
-body.pmode .score-chip.center-result { transform: translate(-172px, 120px) scale(1.9); }
+body.pmode .score-chip.center-result { transform: translate(var(--pm-dx, -172px), 120px) scale(1.9); }
 /* 나의 훈사전: 10열 → 5열(10줄) */
 body.pmode .area-grid { grid-template-columns: repeat(5, 1fr); grid-auto-rows: minmax(0, 1fr); min-height: 0; gap: 5px; }
 body.pmode .area-cell .cell-char { font-size: 32px; }
@@ -5027,30 +5027,36 @@ function visibleBox(){
   }
   return { w: w, h: h, top: top };
 }
-// ── 휴대폰 세로 모드(body.pmode) ──
-//   폭 480 기준의 세로로 긴 캔버스로 바꿔 그림(높이 = 화면 높이에 맞춤).
+// ── 세로 모드(body.pmode) — 휴대폰·태블릿을 세로로 들었을 때 ──
+//   폭 480(휴대폰) / 600(태블릿) 기준의 세로로 긴 캔버스로 바꿔 그림(높이 = 화면 높이에 맞춤).
 //   인출 화면은 아래 --kb-reserve 만큼을 키보드 자리로 비워 둠 → 키보드가 떠도 레이아웃 안 움직임.
 //   키보드 실제 높이는 처음 뜰 때 재서 저장(다음부터 그 값 사용). 시험용: ?pmode=1
-var PHONE_W = 480;
 var FORCE_PMODE = /[?&]pmode=1/.test(location.search);
+function isTabletW(){ return window.innerWidth >= 600; }
+function pmDesignW(){ return isTabletW() ? 600 : 480; }   // 태블릿은 폭이 넓어 캔버스도 넓게
 function isPhonePortrait(){
   if(FORCE_PMODE) return true;
-  return IS_TOUCH_DEVICE && window.innerWidth < 600 && window.innerHeight > window.innerWidth;
+  return IS_TOUCH_DEVICE && window.innerHeight > window.innerWidth * 1.15;
 }
 function kbReserveRatio(){
   var r = 0;
   try { r = parseFloat(localStorage.getItem('ws_kb_ratio')) || 0; } catch(e){}
-  return (r > 0.25 && r < 0.6) ? r : 0.43;   // 첫 실행 추정치: 한글 자판+추천줄 ≈ 화면의 43%
+  // 첫 실행 추정치: 한글 자판+추천줄 ≈ 휴대폰 화면의 43%, 태블릿 세로는 36%
+  return (r > 0.2 && r < 0.6) ? r : (isTabletW() ? 0.36 : 0.43);
 }
 function applyPhoneScale(){
   var W = window.innerWidth, H = window.innerHeight;
-  var s = W / PHONE_W;
+  var PW = pmDesignW();
+  var s = W / PW;
   if(!(s > 0)){ setTimeout(applyScale, 300); return; }
   var designH = H / s;
   var kbPx = Math.round(H * kbReserveRatio());
   document.body.classList.add('pmode');
   document.documentElement.style.setProperty('--kb-reserve', Math.round(kbPx / s) + 'px');
   document.documentElement.style.setProperty('--pm-half', Math.round(designH / 2) + 'px');
+  // 점수판(우상단, 중심 x = 폭-68)을 화면 가운데로 옮길 때의 이동량
+  document.documentElement.style.setProperty('--pm-dx', Math.round(PW / 2 - (PW - 68)) + 'px');
+  document.documentElement.style.setProperty('--pm-card-w', (PW - 24) + 'px');
   // 키보드가 예상보다 크면 그만큼만 위로 밀어 입력창이 가려지지 않게
   var shift = 0, vv = window.visualViewport;
   var typing = document.activeElement && document.activeElement.id === 'wi';
@@ -5065,7 +5071,7 @@ function applyPhoneScale(){
   var cy = (H/2 - shift) + 'px';
   [document.getElementById('screen'), document.getElementById('chip-anchor')].forEach(function(el){
     if(!el) return;
-    el.style.width = PHONE_W + 'px';
+    el.style.width = PW + 'px';
     el.style.height = designH + 'px';
     el.style.transform = t;
     el.style.top = cy;
@@ -5098,11 +5104,6 @@ function applyScale(){
   if(!(s > 0)){ setTimeout(applyScale, 300); return; }
   var t = 'translate(-50%,-50%) scale('+s+')';
   var cy = (box.top + box.h/2) + 'px';
-  // 태블릿 세로: 캔버스를 위쪽에 붙이고 아래는 키보드 자리로 비움 → 키보드가 떠도 화면이 안 움직임
-  if(IS_TOUCH_DEVICE && window.innerHeight > window.innerWidth * 1.15){
-    var gap = Math.min(24, Math.max(0, box.h - s*800) / 2);
-    cy = (box.top + gap + s*800/2) + 'px';
-  }
   var scr = document.getElementById('screen');
   scr.style.transform = t;
   scr.style.top = cy;
