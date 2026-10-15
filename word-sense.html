@@ -9330,13 +9330,20 @@ function passNeed(p){ return Math.min(PASS_MIN, Math.max(1, p.total || 0)); }
 function isPass(p){ return !p.locked && p.total > 0 && p.found >= passNeed(p); }
 
 function buildAreaProgress(){
-  // 학습 기록 DB(Phase 2) 미구축 상태 — 현재 회차만 활성, 나머지는 모두 잠금.
+  // 오늘 회차 = 실시간 누적 내 어휘, 과거 회차 = 서버 집계(SESSION.areaProgress), 훈련 안 한 회차 = 잠금.
   // 글자 목록은 현재 영역의 실제 main_chars(SESSION.areaChars). 없으면 하드코딩(생물) 폴백.
   var list = (SESSION && SESSION.areaChars && SESSION.areaChars.length)
     ? SESSION.areaChars
     : AREA_HANJA.map(function(c, i){ return { round:i+1, char:c, hun:(AREA_HUN[c]||'') }; });
   var curRound = (SESSION && SESSION.id) ? SESSION.id : 1;
+  // 과거 회차 — 서버 집계(누적 내 어휘). 훈련한 적 있는 회차만 열림 (4단계 훈련, 2026-10-15)
+  var past = {};
+  ((SESSION && SESSION.areaProgress) || []).forEach(function(p){ past[p.round] = p; });
   AREA_PROGRESS = list.map(function(item){
+    var pp = past[item.round];
+    if(item.round !== curRound && pp && pp.trained){
+      return { char:item.char, hun:item.hun, total:pp.total || 0, found:pp.known || 0, locked:false, current:false };
+    }
     if(item.round === curRound){
       // 오늘의 회차 — 누적 '내 어휘'(이전 훈련 + 오늘 강화 통과)
       return { char:item.char, hun:item.hun, total:WORD_LIST.length, found:knownAllCount(), locked:false, current:true };

@@ -373,6 +373,8 @@ window.SESSION_READY = (async function loadSession() {
     } catch (e) { /* 다음 회차 미존재 — nextPreview null 유지 */ }
 
     if (knownTest > 0 && !window.__ST_SESSION) window.SESSION.words.slice(0, knownTest).forEach(function(w){ w.known = true; });
+    // 훈사전 — 이 영역·과정의 회차별 누적 { round, total, known, trained } (학원 진입일 때만)
+    window.SESSION.areaProgress = (window.__ST_SESSION && window.__ST_SESSION.area_progress) || null;
 
     console.log('[Supabase] SESSION loaded —',
       window.SESSION.area, window.SESSION.id + '회차',

@@ -98,10 +98,20 @@ Deno.serve(async (req) => {
     const { data: kw } = await supabase.rpc('wordsense_known_words', { p_member_no: session.user_no, p_level: session.training_level || '초등' });
     knownIds = (kw || []).map((x: any) => Number(x));
   } catch (e) { console.warn('[wordsense-session] 내 어휘 조회 실패(무시):', e); }
+  // ── 훈사전: 이 영역·과정의 회차별 { round, total, known, trained } — 과거 회차까지 실제 누적 표시 ──
+  let areaProgress: any[] = [];
+  try {
+    const { data: ar } = await supabase.from('areas').select('id').eq('slug', session.training_area).maybeSingle();
+    if (ar) {
+      const { data: ap } = await supabase.rpc('wordsense_area_progress', { p_member_no: session.user_no, p_area_id: ar.id, p_level: session.training_level || '초등' });
+      areaProgress = ap || [];
+    }
+  } catch (e) { console.warn('[wordsense-session] 훈사전 집계 실패(무시):', e); }
 
   return new Response(JSON.stringify({
     success: true,
     known_wm_ids: knownIds,
+    area_progress: areaProgress,
     student: {
       user_no: session.user_no,
       name: student?.name || '',
