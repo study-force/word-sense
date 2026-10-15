@@ -5125,7 +5125,7 @@ if(window.visualViewport){
   window.visualViewport.addEventListener('scroll', applyScale);
 }
 // 입력창 포커스/해제 시점에 맞춰 재배치 (키보드 애니메이션 끝난 뒤 한 번 더)
-document.addEventListener('focusin',  function(e){ if(e.target && e.target.id === 'wi'){ applyScale(); setTimeout(applyScale, 350); } });
+document.addEventListener('focusin',  function(e){ if(e.target && e.target.id === 'wi'){ if(typeof syncInputPad === 'function') syncInputPad(); applyScale(); setTimeout(applyScale, 350); } });
 document.addEventListener('focusout', function(e){ if(e.target && e.target.id === 'wi'){ setTimeout(applyScale, 50); setTimeout(applyScale, 400); } });
 // iOS가 입력창을 보여주려고 페이지 자체를 밀어 올리는 것 방지 — 위치는 applyScale이 직접 맞춤
 window.addEventListener('scroll', function(){ if(window.scrollY || window.scrollX) window.scrollTo(0, 0); });
@@ -6400,6 +6400,13 @@ function updateGameCounter(){
   var wt = document.getElementById('wi-total');
   if(wf) wf.textContent = n;
   if(wt) wt.textContent = t;
+  syncInputPad();
+}
+// 입력 글자 시작 위치를 카운터(숫자 + 흰 구분선) 바로 오른쪽에 맞춤 — 숫자 자릿수(9/44 → 100/120)에 따라 폭이 달라짐
+function syncInputPad(){
+  var c = document.querySelector('.wi-counter'), wi = document.getElementById('wi');
+  if(!c || !wi || !c.offsetWidth) return;
+  wi.style.paddingLeft = (c.offsetLeft + c.offsetWidth + 12) + 'px';
 }
 
 // ════════════════════════════
@@ -7226,9 +7233,17 @@ function getCapCenter(stage){
 //   → 칩끼리 겹치지 않고, 한쪽으로 쏠리지 않으며, 이미 놓인 칩은 그 자리에 머묾.
 //   칸이 모자라면 칩 크기(--pm-chip-k)를 조금씩 줄여 다시 깔음.
 var PM_K = 1;
+// 칸 위치 기억 — 가운데 한자·점수판은 살짝 움직이는 애니메이션이 있어 매번 재면 칸이 조금씩 달라짐
+//   → 무대 크기가 같고 칸이 충분하면 처음 정한 칸을 그대로 씀 (답을 넣을 때마다 칩이 움직이지 않게)
+var PM_SLOT_CACHE = null;
 function isPm(){ return document.body.classList.contains('pmode'); }
 function pmBuildSlots(stage){
   var W = stage.clientWidth, H = stage.clientHeight;
+  var key = W + 'x' + H;
+  if(PM_SLOT_CACHE && PM_SLOT_CACHE.key === key && PM_SLOT_CACHE.slots.length >= GNODES.length + 2){
+    document.documentElement.style.setProperty('--pm-chip-k', PM_SLOT_CACHE.k.toFixed(2));
+    return PM_SLOT_CACHE.slots;
+  }
   var sr = stage.getBoundingClientRect();
   if(!(W > 0 && H > 0 && sr.width > 0)) return [];
   var scl = sr.width / W;
@@ -7261,6 +7276,7 @@ function pmBuildSlots(stage){
     if(slots.length >= GNODES.length + 2) break;
   }
   document.documentElement.style.setProperty('--pm-chip-k', PM_K.toFixed(2));
+  if(best.length) PM_SLOT_CACHE = { key: key, slots: best, k: PM_K };
   return best;
 }
 // 모든 노드를 칸에 다시 앉힘 (GNODES 순서 = 안쪽 칸부터) + 캔버스 크기 맞춤
@@ -7271,6 +7287,7 @@ function pmRelayoutAll(){
   if(!slots.length) return;
   GNODES.forEach(function(n, i){
     var s = slots[Math.min(i, slots.length - 1)];
+    if(n.baseX === s.x && n.baseY === s.y && n.el.style.left) return;
     n.baseX = s.x; n.baseY = s.y;
     n.ampX = Math.min(n.ampX, 2.5); n.ampY = Math.min(n.ampY, 2);   // 흔들림 줄임
     n.el.style.left = s.x + 'px';
@@ -7313,6 +7330,7 @@ function setupGameStage(){
   holder.innerHTML = '';
   GNODES = [];
   CAP_CENTER = null;   // 새 셋업 — 캐시 무효화
+  PM_SLOT_CACHE = null;   // 새 회차 — 칸도 새로
   var W = stage.clientWidth || 1100;
   var H = stage.clientHeight || 290;
   // 노드 배치 기준점 = 캡슐 시각 중심 (drawGameStage의 라인 출발점과 동일)
