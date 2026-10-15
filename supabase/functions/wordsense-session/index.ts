@@ -7,9 +7,9 @@
 //   ?id={sessionId}
 //
 // 처리:
-//   1) session_init 조회 (expires_at > NOW(), used_at IS NULL)
+//   1) session_init 조회 — 완료됨(completed_at)=410 completed / 첫 열기는 expires_at(10분) 안, 이후 used_at+3시간까지 새로고침 허용
 //   2) students JOIN → 학생 정보
-//   3) used_at = NOW() 마크 (1회 사용)
+//   3) 첫 열기 때 used_at = NOW() 기록
 //   4) 응답: { student{…}, session{ id, payment_fn, training_round, training_area, training_level, is_payment } }
 //
 // 호출: word-sense.html에서 fetch
@@ -19,6 +19,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const REOPEN_MS = 3 * 60 * 60 * 1000;   // 처음 연 뒤 새로고침 허용 시간
 
 function corsHeaders(origin: string | null): Record<string, string> {
   const isAllowed = origin && (
@@ -56,17 +57,30 @@ Deno.serve(async (req) => {
     auth: { persistSession: false }
   });
 
-  // ── 세션 조회 (만료 X, 미사용) ──
+  // ── 세션 조회 ──
+  //   · 처음 여는 것은 발급 후 10분(expires_at) 안에만
+  //   · 한 번 연 뒤(used_at)에는 3시간 동안 새로고침 허용 (훈련이 10분을 넘으므로)
+  //   · 훈련 완료(completed_at)된 입장권은 폐기 — 다시 열 수 없음
   const { data: session, error: sErr } = await supabase
     .from('session_init')
     .select('*')
     .eq('id', sessionId)
-    .gt('expires_at', new Date().toISOString())
-    .is('used_at', null)
-    .single();
+    .maybeSingle();
 
   if (sErr || !session) {
-    return jsonErr(404, '세션이 만료되었거나 존재하지 않습니다', cors);
+    return jsonErr(404, '입장 정보를 찾을 수 없습니다', cors, 'not_found');
+  }
+  if (session.completed_at) {
+    return jsonErr(410, '이미 완료된 훈련입니다', cors, 'completed');
+  }
+  const now = Date.now();
+  if (!session.used_at) {
+    if (new Date(session.expires_at).getTime() < now) {
+      return jsonErr(410, '입장 시간이 지났습니다', cors, 'expired');
+    }
+    await supabase.from('session_init').update({ used_at: new Date(now).toISOString() }).eq('id', sessionId);
+  } else if (now - new Date(session.used_at).getTime() > REOPEN_MS) {
+    return jsonErr(410, '입장 시간이 지났습니다', cors, 'expired');
   }
 
   // ── 학생 정보 조회 ──
@@ -75,10 +89,6 @@ Deno.serve(async (req) => {
     .select('*')
     .eq('user_no', session.user_no)
     .single();
-
-  // ── 1회 사용 마크 (재호출 방지) — 선택적 ──
-  // 새로고침 복원을 위해 expires_at 까지는 다회 조회 허용하려면 used_at 갱신 X
-  // await supabase.from('session_init').update({ used_at: new Date().toISOString() }).eq('id', sessionId);
 
   return new Response(JSON.stringify({
     success: true,
@@ -104,8 +114,8 @@ Deno.serve(async (req) => {
   });
 });
 
-function jsonErr(status: number, message: string, cors: Record<string, string>) {
-  return new Response(JSON.stringify({ success: false, status, message }), {
+function jsonErr(status: number, message: string, cors: Record<string, string>, code = '') {
+  return new Response(JSON.stringify({ success: false, status, message, code }), {
     status, headers: { ...cors, 'Content-Type': 'application/json' },
   });
 }

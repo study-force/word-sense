@@ -100,6 +100,20 @@ window.pickFillOthers = function(entry, list){
   return picked;
 };
 
+// 학원 입장권(?st) 문제 시 전체 화면 안내 — 다른 회차로 새지 않게 여기서 멈춤
+function showEntryBlock(code) {
+  const msg = code === 'completed' ? '이 훈련은 이미 끝났어요.'
+            : code === 'expired'   ? '입장 시간이 지났어요.'
+            : code === 'network'   ? '인터넷 연결을 확인해 주세요.'
+            : '입장 정보를 찾을 수 없어요.';
+  const el = document.createElement('div');
+  el.id = 'entry-block';
+  el.style.cssText = 'position:fixed;inset:0;z-index:100000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#0E121B;color:#F2F4FA;font-family:"Noto Sans KR",sans-serif;text-align:center;padding:24px;';
+  el.innerHTML = '<div style="font-size:22px;font-weight:600">' + msg + '</div>'
+               + '<div style="font-size:16px;color:rgba(242,244,250,.7)">학원 화면에서 훈련을 다시 시작해 주세요.</div>';
+  const add = function(){ document.body.appendChild(el); };
+  if (document.body) add(); else document.addEventListener('DOMContentLoaded', add);
+}
 window.SESSION_READY = (async function loadSession() {
   // Supabase 클라이언트 — 위에서 생성한 전역 인스턴스 사용
   const client = window.SUPABASE_CLIENT;
@@ -110,16 +124,24 @@ window.SESSION_READY = (async function loadSession() {
     if (st) {
       try {
         const sr = await fetch(SUPABASE_URL + '/functions/v1/wordsense-session?id=' + encodeURIComponent(st), { headers: { apikey: SUPABASE_ANON_KEY } });
-        const sd = sr.ok ? await sr.json() : null;
+        const sd = await sr.json().catch(function(){ return null; });   // 실패 응답에도 이유(code)가 담겨 옴
         if (sd && sd.success) {
           window.__ST_SESSION = sd;   // word-sense.html의 loadStudentFromSession이 다시 부르지 않고 재사용
           if (sd.session.training_area) TARGET_AREA_SLUG = sd.session.training_area;
           if (sd.session.training_round) TARGET_ROUND_NO = Number(sd.session.training_round);
           if (sd.session.training_level) TARGET_LEVEL = sd.session.training_level;
         } else {
-          console.warn('[supabase] 입장권 조회 실패 — 만료되었거나 잘못된 입장권', sr.status);
+          // 입장권이 없거나 만료·완료됨 → 다른 회차(기본값)를 열지 않고 안내만 띄우고 멈춤
+          console.warn('[supabase] 입장권 조회 실패', sr.status, sd && sd.code);
+          showEntryBlock(sd && sd.code);
+          throw { entryBlocked: true };
         }
-      } catch (e) { console.warn('[supabase] 입장권 조회 오류', e); }
+      } catch (e) {
+        if (e && e.entryBlocked) throw e;
+        console.warn('[supabase] 입장권 조회 오류', e);
+        showEntryBlock('network');
+        throw { entryBlocked: true };
+      }
     }
 
     // 1. 영역 ID 조회
@@ -346,6 +368,7 @@ window.SESSION_READY = (async function loadSession() {
       '·', window.SESSION.words.length + '개 어휘');
 
   } catch (err) {
+    if (err && err.entryBlocked) throw err;   // 입장권 안내 화면을 이미 띄움
     console.error('[Supabase] 데이터 로드 실패:', err);
     // 폴백: 알림 표시 (UX 개선 여지)
     alert('데이터를 불러오지 못했습니다. 새로고침해주세요.\n\n오류: ' + (err.message || err));

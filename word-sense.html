@@ -6305,6 +6305,20 @@ function pad2(n){ n = String(n); while(n.length < 2) n = '0' + n; return n; }
 
 // 끝내기 — 어드민 '회차 테스트'에서 열린 경우 그 창에 완료 신호를 보내 자동 체크되게 함
 function finishTraining(){
+  // 학원에서 들어온 훈련(입장권 ?st): 처음 화면으로 돌아가 다시 시작하지 않고 끝냄 — 창 닫기, 안 닫히면 마침 화면
+  if(window.__ST_SESSION){
+    try { window.close(); } catch(e){}
+    setTimeout(function(){
+      if(document.getElementById('finish-block')) return;
+      var el = document.createElement('div');
+      el.id = 'finish-block';
+      el.style.cssText = 'position:fixed;inset:0;z-index:100000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#0E121B;color:#F2F4FA;font-family:"Noto Sans KR",sans-serif;text-align:center;padding:24px;';
+      el.innerHTML = '<div style="font-size:24px;font-weight:600">오늘 훈련을 마쳤어요!</div>'
+                   + '<div style="font-size:16px;color:rgba(242,244,250,.7)">이 창을 닫아 주세요.</div>';
+      document.body.appendChild(el);
+    }, 300);
+    return;
+  }
   try{
     if(window.opener && !window.opener.closed){
       var q = new URLSearchParams(location.search);
