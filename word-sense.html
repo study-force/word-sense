@@ -5049,32 +5049,40 @@ function kbReserveRatio(){
   if(isLandscape()) return isTabletW() ? 0.5 : 0.6;
   return isTabletW() ? 0.36 : 0.43;
 }
+// 자판이 없을 때의 화면 높이 — 카카오톡 등 일부 앱 브라우저는 자판이 뜨면 화면 높이 자체를 줄이므로,
+//   줄어든 높이로 다시 배치하면 자판 자리를 두 번 빼게 됨 → 이 높이를 기준으로 고정 배치
+var PM_FULL_W = 0, PM_FULL_H = 0;
 function applyPhoneScale(){
   var W = window.innerWidth, H = window.innerHeight;
+  var typing = document.activeElement && document.activeElement.id === 'wi';
+  if(W !== PM_FULL_W || !typing || H > PM_FULL_H){ PM_FULL_W = W; PM_FULL_H = H; }
+  var FH = PM_FULL_H;   // 기준 높이(자판 없을 때)
   var PW = pmDesignW();
-  var s = Math.min(W / PW, H / (PW * PM_ASPECT));   // 세로: 폭에 맞춤 / 가로: 높이에 맞춰 가운데 세움
+  var s = Math.min(W / PW, FH / (PW * PM_ASPECT));   // 세로: 폭에 맞춤 / 가로: 높이에 맞춰 가운데 세움
   if(isPhonePortrait() && !isLandscape()) s = W / PW;
   if(!(s > 0)){ setTimeout(applyScale, 300); return; }
-  var designH = H / s;
-  var kbPx = Math.round(H * kbReserveRatio());
+  var designH = FH / s;
+  var kbPx = Math.round(FH * kbReserveRatio());
   document.body.classList.add('pmode');
   document.documentElement.style.setProperty('--kb-reserve', Math.round(kbPx / s) + 'px');
   document.documentElement.style.setProperty('--pm-half', Math.round(designH / 2) + 'px');
   // 점수판(우상단, 중심 x = 폭-68)을 화면 가운데로 옮길 때의 이동량
   document.documentElement.style.setProperty('--pm-dx', Math.round(PW / 2 - (PW - 68)) + 'px');
   document.documentElement.style.setProperty('--pm-card-w', (PW - 24) + 'px');
-  // 키보드가 예상보다 크면 그만큼만 위로 밀어 입력창이 가려지지 않게
+  // 실제 자판 높이 = 기준 높이 - 지금 보이는 아래끝 (화면이 줄어든 만큼 + 자판이 덮은 만큼)
+  //   예상(비워 둔 자리)보다 크면 그만큼만 위로 밀어 입력창이 가려지지 않게
   var shift = 0, vv = window.visualViewport;
-  var typing = document.activeElement && document.activeElement.id === 'wi';
-  if(typing && vv){
-    var realKb = H - vv.height;
+  if(typing){
+    var visBottom = H;
+    if(vv) visBottom = Math.min(H, vv.offsetTop + vv.height);
+    var realKb = FH - visBottom;
     if(realKb > 80){
-      try { localStorage.setItem(kbKey(), (realKb / H).toFixed(3)); } catch(e){}
+      try { localStorage.setItem(kbKey(), (realKb / FH).toFixed(3)); } catch(e){}
       if(realKb > kbPx) shift = realKb - kbPx;
     }
   }
   var t = 'translate(-50%,-50%) scale('+s+')';
-  var cy = (H/2 - shift) + 'px';
+  var cy = (FH/2 - shift) + 'px';   // 위쪽 고정 — 화면이 줄어도 아래(자판 자리)만 가려짐
   [document.getElementById('screen'), document.getElementById('chip-anchor')].forEach(function(el){
     if(!el) return;
     el.style.width = PW + 'px';
