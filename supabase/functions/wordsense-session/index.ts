@@ -107,6 +107,7 @@ Deno.serve(async (req) => {
       training_round: session.training_round,
       training_area: session.training_area || null,     // 앱이 이 영역·회차로 콘텐츠를 불러옴
       training_level: session.training_level || '초등',
+      training_mode: session.training_mode || 'normal',  // retry = 재훈련 (내일의 한자 없이 종료)
       is_payment: session.is_payment,
       // study_token은 브라우저로 보내지 않음 — 완료 시 서버(wordsense-complete)가 session_init에서 직접 읽음
     },

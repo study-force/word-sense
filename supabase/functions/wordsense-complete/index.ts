@@ -60,6 +60,7 @@ Deno.serve(async (req) => {
   const payment_fn: string = sess ? sess.payment_fn : body.payment_fn;
   const training_round: number = sess ? Number(sess.training_round) : Number(body.training_round);
   const study_token: string | null = sess ? (sess.study_token || null) : (body.study_token || null);
+  const isRetry = !!(sess && sess.training_mode === 'retry');   // 재훈련: Supabase에만 저장, 학원 완료 API 미호출
   if (!payment_fn || !Number.isFinite(training_round)) {
     return jsonErr(400, '필수 정보 누락: payment_fn, training_round', cors);
   }
@@ -89,6 +90,7 @@ Deno.serve(async (req) => {
         session_init_id: sess ? sess.id : null,
         payment_fn,
         training_round,
+        is_retry:        isRetry,
       }).select('id').single();
       if (insErr) console.error('[wordsense-complete] attempts INSERT 오류:', insErr);
       else {
@@ -108,6 +110,12 @@ Deno.serve(async (req) => {
     } catch (e) {
       console.error('[wordsense-complete] 결과 저장 실패(무시하고 계속):', e);
     }
+  }
+
+  // ── 재훈련은 학원 기록을 바꾸지 않음 — 입장권만 완료 처리하고 끝 ──
+  if (isRetry) {
+    if (sess && !sess.completed_at) await supabase.from('session_init').update({ completed_at: new Date().toISOString() }).eq('id', sess.id);
+    return ok({ success: true, saved: !!attemptId, service_back: { skipped: 'retry' } }, cors);
   }
 
   // ── 2) 학원 완료 API — 이미 완료한 세션이면 다시 부르지 않음 ──

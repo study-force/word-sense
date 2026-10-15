@@ -6,7 +6,8 @@
 // 입력 (POST application/json — 연동방법_20261014 문서):
 //   { user_name(또는 name), user_no, user_section, user_school_grade,
 //     academy_name, academy_no, payment_fn, training_round, training_area, study_token,
-//     training_level?(elementary/middle 또는 초등/중등, 없으면 초등), is_payment? }
+//     training_level?(elementary/middle 또는 초등/중등, 없으면 초등),
+//     training_mode?("retry" = 재훈련 — study_token 불필요, 학원 완료 API 미호출), is_payment? }
 //
 // 처리:
 //   1) 입력 검증 (필수 필드)
@@ -78,13 +79,15 @@ Deno.serve(async (req) => {
   const lv = String(body.training_level ?? '').trim().toLowerCase();
   const level = (lv === 'middle' || lv === '중등') ? '중등' : '초등';
   const studyToken = String(body.study_token ?? '').trim();
+  // 훈련 방식 — retry(재훈련: 학원 완료 API 미호출, study_token 불필요) / 그 외 normal
+  const mode = String(body.training_mode ?? '').trim().toLowerCase() === 'retry' ? 'retry' : 'normal';
   const AREAS = ['biology', 'society', 'history', 'science', 'culture', 'economy'];
   if (!userName) return jsonErr(400, '필수 필드 누락: user_name', cors);
   if (!Number.isFinite(userNo)) return jsonErr(400, '필수 필드 누락/형식 오류: user_no', cors);
   if (!body.payment_fn) return jsonErr(400, '필수 필드 누락: payment_fn', cors);
   if (!Number.isInteger(round) || round < 1) return jsonErr(400, '필수 필드 누락/형식 오류: training_round', cors);
   if (!AREAS.includes(area)) return jsonErr(400, 'training_area는 ' + AREAS.join('/') + ' 중 하나여야 합니다', cors);
-  if (!studyToken) return jsonErr(400, '필수 필드 누락: study_token', cors);
+  if (mode === 'normal' && !studyToken) return jsonErr(400, '필수 필드 누락: study_token', cors);
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
     auth: { persistSession: false }
@@ -118,7 +121,8 @@ Deno.serve(async (req) => {
         training_round: round,
         training_area: area,
         training_level: level,
-        study_token: studyToken,
+        study_token: studyToken || null,
+        training_mode: mode,
         is_payment: body.is_payment || 'N',
         academy_no: body.academy_no != null ? Number(body.academy_no) : null,
       })

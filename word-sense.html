@@ -3160,6 +3160,12 @@ body.dark-canvas .score-chip,
 .area-cell.current:not(.pass) .cell-hun  { color: rgba(255,255,255,0.95); opacity: 1; }
 .area-cell.current:not(.pass) .cell-frac { color: rgba(255,255,255,0.85); }
 
+/* 학원 진입이면 훈사전 칸 재훈련 없음(학원 사이트에서 회차별로 들어옴) */
+body.academy-entry .area-cell::after { display: none !important; }
+body.academy-entry .area-cell:not(.locked) { cursor: default; }
+/* 재훈련 표시 — 홈 영역/회차 옆 */
+.retry-tag { display: none; font-size: 15px; font-weight: 600; color: #FFD66B; border: 1px solid rgba(255,214,107,0.5); border-radius: 100px; padding: 3px 12px; margin-left: 6px; }
+body.retry-mode .retry-tag { display: inline-block; }
 /* 과거 회차(통과·미통과 모두)는 재훈련 가능 — 호버 시 "재훈련" 중앙 표시 */
 .area-cell:not(.locked) { cursor: pointer; }
 .area-cell:not(.locked):hover { z-index: 5; }   /* 호버 셀이 인접 셀 위로 떠오르도록 */
@@ -4734,6 +4740,7 @@ body.pmode .st-today-badge { font-size: 13px; }
       <em id="h-area"></em>
       <span class="sep">/</span>
       <span class="round-num" id="h-round">01</span>
+      <span class="retry-tag">다시 훈련</span>
     </div>
     <button class="btn-start" onclick="goCharIntro()">시작하기</button>
   </div>
@@ -9306,6 +9313,8 @@ function buildAreaProgress(){
 
 // 통계 → 내일의 한자. 오버레이가 area 페이지에 속하므로 area를 활성화한 뒤 오버레이 표시.
 function goTomorrow(){
+  // 재훈련(학원 '다시 하기')은 다음 한자를 보여주지 않고 바로 끝냄
+  if(document.body.classList.contains('retry-mode')){ finishTraining(); return; }
   if(typeof showPage === 'function') showPage('area');
   showTomorrowSplash();
 }
@@ -9380,7 +9389,8 @@ function goArea(){
       }
     }
     // 잠금 외 모든 셀(오늘 + 과거 통과·미통과) 재훈련 가능 — 클릭 시 홈으로 돌아가 새로 시작
-    if(!p.locked){
+    // 학원 진입이면 칸 클릭 재훈련 없음 — 재훈련은 학원 사이트에서 회차별 '다시 하기'로 들어옴
+    if(!p.locked && !document.body.classList.contains('academy-entry')){
       cell.title = p.char + ' 회차 재훈련';
       cell.addEventListener('click', function(){
         // 현재는 단일 회차 데이터만 존재 — 홈에서 다시 시작

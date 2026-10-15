@@ -127,6 +127,9 @@ window.SESSION_READY = (async function loadSession() {
         const sd = await sr.json().catch(function(){ return null; });   // 실패 응답에도 이유(code)가 담겨 옴
         if (sd && sd.success) {
           window.__ST_SESSION = sd;   // word-sense.html의 loadStudentFromSession이 다시 부르지 않고 재사용
+          // 학원 진입 표시 — 훈사전 칸 '재훈련' 숨김 / 재훈련(retry)이면 '내일의 한자' 없이 종료
+          document.body.classList.add('academy-entry');
+          if (sd.session.training_mode === 'retry') document.body.classList.add('retry-mode');
           if (sd.session.training_area) TARGET_AREA_SLUG = sd.session.training_area;
           if (sd.session.training_round) TARGET_ROUND_NO = Number(sd.session.training_round);
           if (sd.session.training_level) TARGET_LEVEL = sd.session.training_level;
