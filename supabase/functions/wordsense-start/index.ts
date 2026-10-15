@@ -94,6 +94,22 @@ Deno.serve(async (req) => {
   });
 
   try {
+    // ── 재훈련 제한: 이 회차를 PERFECT(모든 어휘 습득)로 끝낸 적이 있으면 결제 기간 내라도 재훈련 불가 (대표님 결정) ──
+    //   PERFECT = 강화 정답 수(correct_words) ≥ 회차 어휘 수(total_words) — 앱 결과 화면 calcBadge와 같은 기준
+    if (mode === 'retry') {
+      const { data: areaRow } = await supabase.from('areas').select('id').eq('slug', area).maybeSingle();
+      const { data: sessRow } = areaRow
+        ? await supabase.from('sessions').select('id').eq('area_id', areaRow.id).eq('round_no', round).eq('level', level).maybeSingle()
+        : { data: null };
+      if (sessRow) {
+        const { data: past } = await supabase.from('attempts')
+          .select('correct_words, total_words')
+          .eq('member_no', userNo).eq('session_id', sessRow.id);
+        const perfect = (past || []).some((r: any) => (r.total_words || 0) > 0 && (r.correct_words || 0) >= r.total_words);
+        if (perfect) return jsonErr(409, '이미 모든 어휘를 습득(PERFECT)한 회차는 재훈련할 수 없습니다', cors, 'perfect');
+      }
+    }
+
     // ── 학원 upsert ──
     if (body.academy_no) {
       await supabase.from('academies')
@@ -156,8 +172,8 @@ Deno.serve(async (req) => {
   }
 });
 
-function jsonErr(status: number, message: string, cors: Record<string, string>) {
-  return new Response(JSON.stringify({ success: false, status, message }), {
+function jsonErr(status: number, message: string, cors: Record<string, string>, code = '') {
+  return new Response(JSON.stringify({ success: false, status, message, code }), {
     status, headers: { ...cors, 'Content-Type': 'application/json' },
   });
 }
