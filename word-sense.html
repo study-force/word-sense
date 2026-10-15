@@ -2356,6 +2356,18 @@ body.mission-mode #game .stage-nav {
   transition: all .2s;
 }
 /* 못 찾은 어휘 목록 (강화 직전) */
+/* 강화 이전 문제 다시 보기 */
+.fq-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; max-width: 960px; margin: 18px auto 0; }   /* #fq-card 폭과 같게 */
+body.pmode .fq-nav { max-width: var(--pm-card-w, 456px); }
+.fq-nav-btn {
+  padding: 9px 18px; border-radius: 100px; cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.06); color: #E8ECF6;
+  font-family: 'Noto Sans KR', sans-serif; font-size: 14px; font-weight: 500;
+}
+.fq-nav-btn:hover { background: rgba(255,255,255,0.14); }
+.fq-viewlbl { font-size: 13px; color: #F2C94C; }
+#fq-card.fq-review { opacity: 0.92; }
+#fq-card.fq-review .ans-bubble { animation: none; }
 .miss-card { text-align: center; }
 .miss-title { font-size: 20px; font-weight: 600; color: var(--ink, #1A1F30); }
 .miss-title b { color: #E06B4A; font-weight: 600; }
@@ -4888,6 +4900,11 @@ body.pmode .st-today-badge { font-size: 13px; }
     </div>
     <div class="qpage-body">
       <div class="qcard" id="fq-card"></div>
+      <div class="fq-nav">
+        <button class="fq-nav-btn" id="fq-prev" onclick="fqPrev()" style="visibility:hidden">← 이전 문제</button>
+        <span class="fq-viewlbl" id="fq-viewlbl"></span>
+        <button class="fq-nav-btn" id="fq-next" onclick="fqNext()" style="visibility:hidden">다음 →</button>
+      </div>
     </div>
     <button class="skip-link" onclick="goResult()">건너뛰고 결과 보기 →</button>
   </div>
@@ -8653,11 +8670,7 @@ function renderFQCard(entry){
                 : '⭐ 애써서 떠올렸어요! 이제 내 어휘예요!');
           sb.appendChild(bub);
         }
-        setTimeout(function(){
-          FQ.idx++; renderFQDots();
-          if(FQ.idx >= FQ.total) goResult();
-          else renderFQCard(FQ.words[FQ.idx]);
-        }, 1100);
+        setTimeout(fqAdvance, 1100);
       } else {
         sndErr();
         wrongAttempted = true;   // 첫 오답 → 이후 정답 맞혀도 점수 X (강화 빈칸)
@@ -8679,11 +8692,58 @@ function renderFQCard(entry){
     };
     wrap.appendChild(btn); cs.appendChild(wrap);
   });
-  document.getElementById('fq-nb').onclick = function(){
-    FQ.idx++; renderFQDots();
-    if(FQ.idx >= FQ.total) goResult();
-    else renderFQCard(FQ.words[FQ.idx]);
-  };
+  document.getElementById('fq-nb').onclick = fqAdvance;
+  updateFQNav();
+}
+
+// ── 강화 이전 문제 다시 보기 (대표님 2026-10-16) ──
+//   푼 카드는 넘어가는 순간의 화면(정답 표시)을 그대로 저장. 다시 보기 중에는 지금 문제를 잠시 떼어 두었다가 그대로 되돌림
+function fqAdvance(){
+  var card = document.getElementById('fq-card');
+  if(FQ.view != null) fqExitReview();
+  (FQ.snaps = FQ.snaps || [])[FQ.idx] = card.innerHTML.replace(/ id="[^"]*"/g, '');
+  FQ.idx++; renderFQDots();
+  if(FQ.idx >= FQ.total) goResult();
+  else renderFQCard(FQ.words[FQ.idx]);
+}
+function fqShowReview(i){
+  var card = document.getElementById('fq-card');
+  if(!FQ.snaps || FQ.snaps[i] == null) return;
+  if(FQ.view == null){
+    FQ.live = document.createDocumentFragment();
+    while(card.firstChild) FQ.live.appendChild(card.firstChild);
+  }
+  FQ.view = i;
+  card.innerHTML = FQ.snaps[i];
+  card.classList.add('fq-review');
+  updateFQNav();
+}
+function fqExitReview(){
+  var card = document.getElementById('fq-card');
+  if(FQ.view == null) return;
+  card.innerHTML = '';
+  if(FQ.live) card.appendChild(FQ.live);
+  FQ.live = null; FQ.view = null;
+  card.classList.remove('fq-review');
+  updateFQNav();
+}
+function fqPrev(){
+  var cur = (FQ.view != null) ? FQ.view : FQ.idx;
+  if(cur > 0) fqShowReview(cur - 1);
+}
+function fqNext(){
+  if(FQ.view == null) return;
+  if(FQ.view + 1 >= FQ.idx) fqExitReview();
+  else fqShowReview(FQ.view + 1);
+}
+function updateFQNav(){
+  var p = document.getElementById('fq-prev'), n = document.getElementById('fq-next'), l = document.getElementById('fq-viewlbl');
+  if(!p || !n || !FQ) return;
+  var cur = (FQ.view != null) ? FQ.view : FQ.idx;
+  p.style.visibility = (cur > 0) ? 'visible' : 'hidden';
+  n.style.visibility = (FQ.view != null) ? 'visible' : 'hidden';
+  n.textContent = (FQ.view != null && FQ.view + 1 >= FQ.idx) ? '지금 문제로 →' : '다음 →';
+  if(l) l.textContent = (FQ.view != null) ? '지난 문제 다시 보기' : '';
 }
 
 // ══════════════════════════════════════════════
