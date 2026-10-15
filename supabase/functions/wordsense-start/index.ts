@@ -6,7 +6,7 @@
 // 입력 (POST application/json — 연동방법_20261014 문서):
 //   { user_name(또는 name), user_no, user_section, user_school_grade,
 //     academy_name, academy_no, payment_fn, training_round, training_area, study_token,
-//     training_level?(초등/중등, 없으면 초등), is_payment? }
+//     training_level?(elementary/middle 또는 초등/중등, 없으면 초등), is_payment? }
 //
 // 처리:
 //   1) 입력 검증 (필수 필드)
@@ -74,7 +74,9 @@ Deno.serve(async (req) => {
   const userNo = Number(body.user_no);
   const round = Number(body.training_round);
   const area = String(body.training_area ?? '').trim();
-  const level = body.training_level === '중등' ? '중등' : '초등';
+  // 훈련 과정 — 영어 코드 elementary/middle 권장, 한글 초등/중등도 인식 (학제 user_section과는 별개). 없으면 초등
+  const lv = String(body.training_level ?? '').trim().toLowerCase();
+  const level = (lv === 'middle' || lv === '중등') ? '중등' : '초등';
   const studyToken = String(body.study_token ?? '').trim();
   const AREAS = ['biology', 'society', 'history', 'science', 'culture', 'economy'];
   if (!userName) return jsonErr(400, '필수 필드 누락: user_name', cors);
