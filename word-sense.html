@@ -8231,7 +8231,7 @@ async function submit(){
   // 민감 어휘(중등) — 정답 처리하지 않음(칩·점수·랭킹 X, 대표님 2026-10-15). 알고 있다는 피드백만 주고 넘어감
   var bonus = (SESSION && SESSION.bonusWords || []).filter(function(b){ return b.word === val; })[0];
   if(bonus){
-    setFb('info', '이 어휘도 알고 있군요.', 2400);
+    setFb('info', '이 어휘도 ' + (SESSION.mainHunFull ? SESSION.mainHunFull + '(' + SESSION.mainChar + ')' : SESSION.mainChar) + '의 가족 어휘예요.', 2400);
     sndUnknown();
     return;
   }
@@ -8315,6 +8315,9 @@ async function submit(){
       case 'native':            // 고유어
       case 'foreign':           // 외래어
       case 'hybrid':            // 혼종어
+      case 'sensitive':         // 학습 목록에서 뺀 신체·성 관련 가족 어휘 — 서버 문구 그대로, 점수 X (2026-10-15)
+      case 'same_hun':          // 主字와 훈이 같은 다른 한자 (예: 不 회차의 부인=否) — 서버 문구 그대로
+      case 'slur':              // 비하어 — 쓰지 않는 게 좋다는 안내
       case 'root':              // 어근 — 혼자 안 쓰이는 말 (예: 생생 → 생생하다·생생히), v7
         fbType = 'info'; fbSound = sndUnknown; break;
       case 'not_found':
