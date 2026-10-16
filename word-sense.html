@@ -1131,7 +1131,7 @@ input, textarea { caret-color: auto; -webkit-user-select: text; user-select: tex
 .hint-log .hl-arrow:not(:disabled):hover { background: #DDF2E7; }
 .hint-log .hl-title { flex-shrink: 0; font-size: 12px; font-weight: 800; color: #1F9D63; letter-spacing: 0.03em; margin-right: 2px; white-space: nowrap; }
 /* 힌트는 받는 순간 소모 → 칩은 '이미 쓴 힌트'로 딤드 표시(가로줄 X). 찾은 건 조금 더 흐리게. */
-.hint-log .hl-chip { flex-shrink: 0; white-space: nowrap; max-width: 340px; overflow: hidden; text-overflow: ellipsis; font-size: 13px; font-weight: 500; color: #DCF0E6; background: #2E6B4E; border: 1px solid #23543E; border-radius: 100px; padding: 3px 12px; }
+.hint-log .hl-chip { flex-shrink: 0; white-space: nowrap;   /* 긴 힌트도 말줄임 없이 전부 (대표님 2026-10-16) */ font-size: 13px; font-weight: 500; color: #DCF0E6; background: #2E6B4E; border: 1px solid #23543E; border-radius: 100px; padding: 3px 12px; }
 .hint-log .hl-chip.found { color: #B3C4BB; background: #49594F; border-color: #3A4740; }  /* 찾은/쓴 힌트 — 진한 회녹색 */
 .hint-log .hl-chip.new { animation: hlPop .55s ease; }
 @keyframes hlPop { 0%{ transform: scale(.7); opacity:0; } 60%{ transform: scale(1.08); } 100%{ transform: scale(1); opacity:1; } }
@@ -7818,7 +7818,7 @@ function renderHintLog(){
   var open = rev.filter(function(h){ return !isDone(h); });
   var done = rev.filter(isDone);
   var chip = function(h, found){
-    return '<span class="hl-chip' + (found ? ' found' : '') + '" data-key="' + escHtml(h.key) + '" title="' + escHtml(h.meaning) + '">' + escHtml(h.meaning) + '</span>';
+    return '<span class="hl-chip' + (found ? ' found' : '') + '" data-key="' + escHtml(h.key) + '">' + escHtml(h.meaning) + '</span>';
   };
   var arrow = function(cls, dir, pts, label){
     return '<button type="button" class="hl-arrow ' + cls + '" aria-label="' + label + '" onclick="scrollHintLog(' + dir + ')">'
