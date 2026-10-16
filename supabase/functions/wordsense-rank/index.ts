@@ -15,6 +15,9 @@
 //     - retr/combo/master = '오늘'(KST) 집계, cumulArea = 영역 내 전체 누적(인출+확장)
 //     - me_cumul_past = 본인의 영역 누적(저장분) — 프론트가 현재 세션분 더함
 //     - me_today_past / me_best_past = 본인 오늘 앞선 훈련 합계 / 지난날 하루 최고 {retr, combo, master}
+//   + known: { today[], cumul[] }, me_known: { today_past, best_past, cumul_past }  (2026-10-17, 랭킹 2종)
+//     - '내 어휘' 기준: 오늘 새로 내 어휘가 된 수 / 영역·과정 누적 내 어휘 수 (RPC wordsense_rank_known)
+//     - 입력에 level('초등'|'중등') 추가 — 누적은 과정별
 //
 // ⚠️ 집계는 현재 JS in-memory (오픈 전 소량). 데이터 커지면 Postgres RPC/뷰로 이관 권장.
 // ════════════════════════════════════════════════════════════════
@@ -63,6 +66,7 @@ Deno.serve(async (req) => {
   const areaId = body.area_id != null ? body.area_id : null;
   // 방금 끝낸 훈련(입장권) — 저장이 랭킹 조회보다 먼저 끝났어도 '나' 과거분에서 빼서 이중 집계 방지
   const curSid = body.session_init_id ? String(body.session_init_id) : null;
+  const level = body.level === '중등' ? '중등' : '초등';
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
@@ -139,12 +143,22 @@ Deno.serve(async (req) => {
     }
     const cumulArea = [...cumMap.entries()].map(([k, count]) => ({ user_no: Number(k), name: label(k), count }));
 
+    // ── '내 어휘' 기준 랭킹 2종 (2026-10-17) ──
+    const { data: kn, error: knErr } = await supabase.rpc('wordsense_rank_known', {
+      p_area_id: areaId, p_level: level, p_member_no: userNo ? Number(userNo) : null, p_exclude_sid: curSid,
+    });
+    if (knErr) console.error('[wordsense-rank] rank_known 실패:', knErr.message);
+    const named = (arr: any[]) => (arr || []).map((x: any) => ({ user_no: Number(x.member_no), name: label(String(x.member_no)), count: x.count }));
+    const known = { today: named(kn?.today), cumul: named(kn?.cumul) };
+    const meKnown = { today_past: kn?.me_today_past || 0, best_past: kn?.me_best_past || 0, cumul_past: kn?.me_cumul_past || 0 };
+
     return new Response(JSON.stringify({
       success: true,
       others: { retrToday, comboToday, masterToday, cumulArea },
       me_cumul_past: meCumulPast,
       me_today_past: meTodayPast,   // 프론트가 방금 끝낸 훈련분을 더해 '오늘 기록'
       me_best_past: meBestPast,     // 지난날 하루 최고 — 프론트가 max(이 값, 오늘 기록)로 '최고 기록'
+      known, me_known: meKnown,     // '내 어휘' 기준 랭킹 2종 (오늘·누적)
     }), { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } });
 
   } catch (err) {

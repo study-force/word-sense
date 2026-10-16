@@ -4992,26 +4992,16 @@ body.pmode .st-today-badge { font-size: 13px; }
           <div class="r-collect-list" id="r-exp-list"></div>
         </div>
       </div>
-      <!-- ══ 랭킹 — 4종 별도 카드로 분리. 각 카드 상단의 podium(1·2·3등)은 스크롤 X,
+      <!-- ══ 랭킹 — '내 어휘' 기준 2종(오늘·누적, 대표님 2026-10-17). 예전 4종(인출/인출+확장/…) 정리. 각 카드 상단의 podium(1·2·3등)은 스크롤 X,
            list(4등 이하)만 스크롤. id="r-rank-block"은 기존 등장 애니메이션 훅 유지. -->
       <div class="r-rank-block" id="r-rank-block">
-        <div class="r-rank-card col-retr">
-          <div class="r-rank-card-head"><span class="r-rank-col-tag tag-retr">인출</span><div class="r-rank-head-right"><span class="r-rank-col-sub">오늘</span><span class="r-rank-myrank hidden" id="r-myrank-retr"></span></div></div>
-          <div class="r-rank-podium" id="r-rank-podium-retr"></div>
-          <div class="r-rank-list"   id="r-rank-list-retr"></div>
-        </div>
-        <div class="r-rank-card col-combo">
-          <div class="r-rank-card-head"><span class="r-rank-col-tag tag-combo">인출+확장</span><div class="r-rank-head-right"><span class="r-rank-col-sub">오늘</span><span class="r-rank-myrank hidden" id="r-myrank-combo"></span></div></div>
-          <div class="r-rank-podium" id="r-rank-podium-combo"></div>
-          <div class="r-rank-list"   id="r-rank-list-combo"></div>
-        </div>
         <div class="r-rank-card col-master">
-          <div class="r-rank-card-head"><span class="r-rank-col-tag tag-master">인출+확장+강화</span><div class="r-rank-head-right"><span class="r-rank-col-sub">오늘</span><span class="r-rank-myrank hidden" id="r-myrank-master"></span></div></div>
+          <div class="r-rank-card-head"><span class="r-rank-col-tag tag-master">내 어휘</span><div class="r-rank-head-right"><span class="r-rank-col-sub">오늘 새로 익힘</span><span class="r-rank-myrank hidden" id="r-myrank-master"></span></div></div>
           <div class="r-rank-podium" id="r-rank-podium-master"></div>
           <div class="r-rank-list"   id="r-rank-list-master"></div>
         </div>
         <div class="r-rank-card col-cumul">
-          <div class="r-rank-card-head"><span class="r-rank-col-tag tag-cumul">인출+확장+강화</span><div class="r-rank-head-right"><span class="r-rank-col-sub" id="r-rank-area">누적</span><span class="r-rank-myrank hidden" id="r-myrank-cumul"></span></div></div>
+          <div class="r-rank-card-head"><span class="r-rank-col-tag tag-cumul">내 어휘</span><div class="r-rank-head-right"><span class="r-rank-col-sub" id="r-rank-area">누적</span><span class="r-rank-myrank hidden" id="r-myrank-cumul"></span></div></div>
           <div class="r-rank-podium" id="r-rank-podium-cumul"></div>
           <div class="r-rank-list"   id="r-rank-list-cumul"></div>
         </div>
@@ -8746,7 +8736,7 @@ function fqAdvance(){
 // ══════════════════════════════════════════════
 // 결과
 // ══════════════════════════════════════════════
-var RANK_RETR = [], RANK_COMBO = [], RANK_MASTER = [], RANK_CUMUL = [];
+var RANK_MASTER = [], RANK_CUMUL = [];   // 랭킹 2종: 오늘 / 누적 ('내 어휘' 기준)
 var SERVER_RANK = null;   // wordsense-rank 집계 결과(항상 실제 데이터). 실패하면 null → '나'만 표시
 
 // 서버 랭킹 집계 fetch — 학원 학생이 아니어도(테스트·직접 접속) 실제 순위를 받아옴(가짜 이름 없음)
@@ -8760,6 +8750,7 @@ async function fetchRankings(){
         user_no: (typeof STUDENT_INFO !== 'undefined' && STUDENT_INFO) ? (STUDENT_INFO.user_no || null) : null,
         area_id: (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.areaId || null) : null,
         session_init_id: (typeof TRAINING_INFO !== 'undefined' && TRAINING_INFO) ? (TRAINING_INFO.id || null) : null,
+        level: (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.level || '초등') : '초등',   // 누적 '내 어휘'는 과정별
       }),
     });
     var data = await res.json();
@@ -8768,16 +8759,6 @@ async function fetchRankings(){
   } catch(e){ console.error('[rank] fetch 오류:', e); }
 }
 
-// '나' 행 값: 오늘 기록 = 오늘 앞서 한 훈련(재훈련 포함) + 방금 끝낸 훈련, 최고 기록 = max(지난날 하루 최고, 오늘 기록)
-function myRankEntry(key, current){
-  var past = (SERVER_RANK && SERVER_RANK.me_today_past) ? (SERVER_RANK.me_today_past[key] || 0) : 0;
-  var today = past + current;
-  var me = { name:'나', count: today, me:true };
-  // 최고 기록은 학원 학생(기록이 쌓이는 학생)일 때만
-  var isStudent = (typeof STUDENT_INFO !== 'undefined' && STUDENT_INFO && STUDENT_INFO.user_no);
-  if(isStudent && SERVER_RANK && SERVER_RANK.me_best_past) me.best = Math.max(SERVER_RANK.me_best_past[key] || 0, today);
-  return me;
-}
 function _sortRank(list){
   list.sort(function(a,b){
     if(b.count !== a.count) return b.count - a.count;
@@ -8785,47 +8766,24 @@ function _sortRank(list){
   });
   return list;
 }
-// 인출어휘 랭킹 (오늘) — game 단계에서 발견한 가족 어휘
-function buildRetrieveRank(){
-  var me = myRankEntry('retr', (S && S.found) ? S.found.length : 0);
-  if(SERVER_RANK && SERVER_RANK.others){
-    var o = SERVER_RANK.others.retrToday.map(function(x){ return { name:x.name, count:x.count, me:false }; });
-    return _sortRank(o.concat([me]));
-  }
-  return _sortRank([me]);   // 서버 순위를 못 받으면 '나'만 (가짜 이름 X)
+// ── 랭킹 2종 — '내 어휘' 기준 (대표님 2026-10-17) ──
+//   오늘: 오늘 새로 '내 어휘'가 된 수 (재훈련 포함 — 이미 아는 어휘는 빠지므로 새로 익힌 것만 더해짐) + 내 최고 기록
+//   누적: 이 영역·과정에서 모은 '내 어휘' 총수 (같은 어휘 한 번만) — 결과 화면 '내 어휘 N'과 같은 기준
+function _knownOthers(key){
+  return (SERVER_RANK && SERVER_RANK.known && SERVER_RANK.known[key] || []).map(function(x){ return { name:x.name, count:x.count, me:false }; });
 }
-// 인출+확장어휘 랭킹 (오늘) — 인출 + 학습/탐구 단계에서 깨운 어휘 합산
-function buildComboRank(){
-  var myRetr = (S && S.found) ? S.found.length : 0;
-  var myExp  = (S && S.recall2) ? S.recall2.length : 0;   // 3 다시 인출
-  var me = myRankEntry('combo', myRetr + myExp);
-  if(SERVER_RANK && SERVER_RANK.others){
-    var o = SERVER_RANK.others.comboToday.map(function(x){ return { name:x.name, count:x.count, me:false }; });
-    return _sortRank(o.concat([me]));
-  }
-  return _sortRank([me]);
-}
-// 인출+확장+강화 랭킹 (오늘) — 적용까지 통과해 "내 어휘"로 자리잡은 어휘 합산
 function buildMasterRank(){
-  // 본인 = FQ.correct (강화 첫시도 정답 어휘 수)
-  var myMaster = (typeof FQ !== 'undefined' && FQ) ? (FQ.correct || 0) : 0;
-  var me = myRankEntry('master', myMaster);
-  if(SERVER_RANK && SERVER_RANK.others){
-    var o = SERVER_RANK.others.masterToday.map(function(x){ return { name:x.name, count:x.count, me:false }; });
-    return _sortRank(o.concat([me]));
-  }
-  return _sortRank([me]);
+  var mk = (SERVER_RANK && SERVER_RANK.me_known) || {};
+  var today = (mk.today_past || 0) + newKnownCount();
+  var me = { name:'나', count: today, me:true };
+  var isStudent = (typeof STUDENT_INFO !== 'undefined' && STUDENT_INFO && STUDENT_INFO.user_no);
+  if(isStudent && SERVER_RANK) me.best = Math.max(mk.best_past || 0, today);   // 최고 기록은 기록이 쌓이는 학원 학생만
+  return _sortRank(_knownOthers('today').concat([me]));
 }
-// 인출+확장 누적 랭킹 (회차 누적, 영역 내)
-function buildCumulRank(myTodayCombo){
-  if(SERVER_RANK && SERVER_RANK.others){
-    var myCombo = ((S && S.found) ? S.found.length : 0) + ((S && S.recall2) ? S.recall2.length : 0);
-    var me = { name:'나', count: (SERVER_RANK.me_cumul_past || 0) + myCombo, me:true };
-    var o = SERVER_RANK.others.cumulArea.map(function(x){ return { name:x.name, count:x.count, me:false }; });
-    return _sortRank(o.concat([me]));
-  }
-  var myC = ((S && S.found) ? S.found.length : 0) + ((S && S.recall2) ? S.recall2.length : 0);
-  return _sortRank([{ name:'나', count: myC, me:true }]);
+function buildCumulRank(){
+  var mk = (SERVER_RANK && SERVER_RANK.me_known) || {};
+  var me = { name:'나', count: (mk.cumul_past || 0) + newKnownCount(), me:true };
+  return _sortRank(_knownOthers('cumul').concat([me]));
 }
 
 function highlightStudent(student){
@@ -8913,21 +8871,17 @@ function renderRankList(){
   var areaSub = document.getElementById('r-rank-area');
   if(areaSub) areaSub.textContent = (SESSION.area || '') + ' · 누적';
 
-  var vR = buildFullRankView(RANK_RETR), vC = buildFullRankView(RANK_COMBO),
-      vM = buildFullRankView(RANK_MASTER), vU = buildFullRankView(RANK_CUMUL);
-  _renderRankBlock('r-rank-podium-retr',   'r-rank-list-retr',   vR);
-  _renderRankBlock('r-rank-podium-combo',  'r-rank-list-combo',  vC);
+  var vM = buildFullRankView(RANK_MASTER), vU = buildFullRankView(RANK_CUMUL);
   _renderRankBlock('r-rank-podium-master', 'r-rank-list-master', vM);
   _renderRankBlock('r-rank-podium-cumul',  'r-rank-list-cumul',  vU, 'cumul');
   // 각 카드 타이틀 우측에 '내 등수' 표시
-  setMyRank('r-myrank-retr', vR); setMyRank('r-myrank-combo', vC);
   setMyRank('r-myrank-master', vM); setMyRank('r-myrank-cumul', vU);
 
   // 각 컬럼에서 "나" 행으로 자동 스크롤 — 학생이 자기 위치를 즉시 볼 수 있게.
   // renderRankList가 showPage('result') 이전에 호출되어 layout이 아직 안 잡혔을 수 있으므로
   // 두 번의 RAF 후에 실행 (페이지 활성화 + paint 완료 시점)
   function scrollToMe(){
-    ['r-rank-list-retr', 'r-rank-list-combo', 'r-rank-list-master', 'r-rank-list-cumul'].forEach(function(id){
+    ['r-rank-list-master', 'r-rank-list-cumul'].forEach(function(id){
       var rl = document.getElementById(id);
       if(!rl) return;
       var meRow = rl.querySelector('.r-rank-row.me');
@@ -8942,7 +8896,7 @@ function renderRankList(){
   setTimeout(scrollToMe, 1250);
   setTimeout(scrollToMe, 1650);
 
-  var me = RANK_RETR.filter(function(s){ return s.me; })[0];
+  var me = RANK_MASTER.filter(function(s){ return s.me; })[0];
   if(me) highlightStudent(me);
 }
 
@@ -9025,13 +8979,10 @@ function goResult(){
   var total   = (typeof WORD_LIST !== 'undefined' && WORD_LIST) ? WORD_LIST.length : 0;
   renderTierBadge(correct, total);
 
-  // ── 랭킹 (4종) — 서버 실제 집계(전체 학생) 후 렌더 ──
-  var myMasterToday = (typeof FQ !== 'undefined' && FQ) ? (FQ.correct || 0) : 0;
+  // ── 랭킹 2종('내 어휘' 오늘·누적) — 서버 실제 집계(전체 학생) 후 렌더 ──
   var _buildAndRenderRanks = function(){
-    RANK_RETR   = buildRetrieveRank();
-    RANK_COMBO  = buildComboRank();
     RANK_MASTER = buildMasterRank();
-    RANK_CUMUL  = buildCumulRank(myMasterToday);
+    RANK_CUMUL  = buildCumulRank();
     renderRankList();
   };
   fetchRankings().then(_buildAndRenderRanks);   // 항상 서버 실제 집계 → 렌더 (학원 학생이 아니면 '나'는 이번 훈련만)
