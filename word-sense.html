@@ -4380,6 +4380,15 @@ body.pmode .r-known-line { font-size: 17px; bottom: 0; }
 /* 카드 제목 — 배지 대신 글자 (대표님 2026-10-16) */
 .r-rank-title { font-family: 'Noto Sans KR', sans-serif; font-size: 15px; font-weight: 600; color: #E8ECF6; letter-spacing: 0.01em; }
 body.pmode .r-rank-title { font-size: 18px; }
+/* 명예의 전당 */
+.r-hall-crown { font-size: 22px; line-height: 1; filter: drop-shadow(0 0 6px rgba(255,214,107,0.55)); }
+.r-hall-desc { font-size: 11px; color: #C8A030; margin: -4px 0 10px; letter-spacing: 0.01em; }
+.r-hall-date { flex: none; font-size: 12px; color: #8A93A6; font-variant-numeric: tabular-nums; }
+.r-rank-row.me .r-hall-date { color: #6B7488; }
+.r-hall-new { display: inline-block; margin-left: 5px; padding: 1px 6px; border-radius: 100px; background: #E9B43A; color: #3A2A00; font-size: 9px; font-weight: 600; vertical-align: 1px; }
+.r-hall-empty { padding: 28px 8px; text-align: center; font-size: 12px; color: #8A93A6; line-height: 1.7; }
+body.pmode .r-hall-desc { font-size: 13px; }
+body.pmode .r-hall-date, body.pmode .r-hall-empty { font-size: 14px; }
 /* 오늘의 랭킹 — 영역별 내역 (오른쪽 숫자는 합산) */
 .r-rank-card .r-rank-areas { margin-left: 7px; font-size: 11px; color: #8A93A6; letter-spacing: 0; }
 .r-rank-card .r-rank-row.me .r-rank-areas { color: #6B7488; }
@@ -5049,7 +5058,8 @@ body.pmode .st-today-badge { font-size: 13px; }
           <div class="r-rank-list"   id="r-rank-list-master"></div>
         </div>
         <div class="r-rank-card col-cumul">
-          <div class="r-rank-card-head"><span class="r-rank-title" id="r-rank-cumul-title">누적 랭킹</span><div class="r-rank-head-right"><span class="r-rank-col-sub" id="r-rank-area">누적</span><span class="r-rank-myrank hidden" id="r-myrank-cumul"></span></div></div>
+          <div class="r-rank-card-head"><span class="r-rank-title">명예의 전당</span><div class="r-rank-head-right"><span class="r-hall-crown" aria-hidden="true">👑</span></div></div>
+          <div class="r-hall-desc" id="r-hall-desc">누적 어휘를 모두 익힌 사람만 올라요</div>
           <div class="r-rank-podium" id="r-rank-podium-cumul"></div>
           <div class="r-rank-list"   id="r-rank-list-cumul"></div>
         </div>
@@ -8794,7 +8804,7 @@ function fqAdvance(){
 // ══════════════════════════════════════════════
 // 결과
 // ══════════════════════════════════════════════
-var RANK_MASTER = [], RANK_CUMUL = [];
+var RANK_MASTER = [], RANK_CUMUL = [];   // RANK_CUMUL = 명예의 전당 목록
 var RANK_FILTER = { level: '', scope: '' };   // 랭킹 토글: level ''=전체|초등|중등, scope ''=전체|academy=우리학원   // 랭킹 2종: 오늘 / 누적 ('내 어휘' 기준)
 var SERVER_RANK = null;   // wordsense-rank 집계 결과(항상 실제 데이터). 실패하면 null → '나'만 표시
 
@@ -8810,7 +8820,7 @@ async function fetchRankings(){
         area_id: (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.areaId || null) : null,
         session_init_id: (typeof TRAINING_INFO !== 'undefined' && TRAINING_INFO) ? (TRAINING_INFO.id || null) : null,
         level: (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.level || '초등') : '초등',   // 누적 '내 어휘'는 과정별
-        round_no: (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.id || null) : null,       // 누적은 이 영역 1회차~지금 회차까지만 (앞 회차 학생도 공평하게)
+        round_no: (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.id || null) : null,   // 명예의 전당도 1~지금 회차 기준       // 누적은 이 영역 1회차~지금 회차까지만 (앞 회차 학생도 공평하게)
         filter_level: RANK_FILTER.level || null,                                                     // 토글 [전체|초등|중등]
         academy_no: (RANK_FILTER.scope === 'academy' && typeof STUDENT_INFO !== 'undefined' && STUDENT_INFO) ? (STUDENT_INFO.academy_no || null) : null,   // 토글 [전체|우리학원]
       }),
@@ -8838,7 +8848,7 @@ function myNewForFilter(){
 // 토글 — 누르면 서버에서 다시 집계해 두 랭킹을 함께 다시 그림
 function rerenderRanks(){
   RANK_MASTER = buildMasterRank();
-  RANK_CUMUL  = buildCumulRank();
+  RANK_CUMUL  = buildHall();
   renderRankList();
 }
 function initRankToggles(){
@@ -8873,10 +8883,30 @@ function buildMasterRank(){
   var me = { name:'나', count: today, me:true, areas: myTodayAreas() };
   return _sortRank(_knownOthers('today').concat([me]));
 }
-function buildCumulRank(){
-  var mk = (SERVER_RANK && SERVER_RANK.me_known) || {};
-  var me = { name:'나', count: (mk.cumul_past || 0) + myNewForFilter(), me:true };
-  return _sortRank(_knownOthers('cumul').concat([me]));
+// ── 명예의 전당 (대표님 2026-10-16) — 이 영역·과정 1회차~지금 회차 누적 어휘를 모두 익힌 사람. 최신 등극이 맨 위, 100명 ──
+//   이번 훈련으로 이 회차 만점이 되고 앞 회차들도 모두 만점이면 '나'가 맨 위에 새로 등극
+function buildHall(){
+  var list = ((SERVER_RANK && SERVER_RANK.hall) || []).map(function(x){ return { name:x.name, at:x.at, me:!!x.me }; });
+  var total = (typeof WORD_LIST !== 'undefined' && WORD_LIST) ? WORD_LIST.length : 0;
+  var perfectNow = total > 0 && knownAllCount() >= total;
+  var prevOk = (SERVER_RANK && SERVER_RANK.me_hall_prev) || (SESSION && SESSION.id === 1);
+  var meIn = list.some(function(x){ return x.me; });
+  if(perfectNow && prevOk && !meIn) list.unshift({ name:'나', at:new Date().toISOString(), me:true, isNew:true });
+  return list.slice(0, 100);
+}
+function renderHall(){
+  var podium = document.getElementById('r-rank-podium-cumul'), box = document.getElementById('r-rank-list-cumul');
+  if(!box) return;
+  if(podium) podium.innerHTML = '';
+  var list = RANK_CUMUL || [];
+  if(!list.length){ box.innerHTML = '<div class="r-hall-empty">아직 아무도 없어요.<br>첫 번째 주인공이 되어 보세요! 👑</div>'; return; }
+  box.innerHTML = list.map(function(x){
+    var d = new Date(x.at), md = (d.getMonth() + 1) + '.' + d.getDate();
+    var nm = x.me ? (myName() === '나' ? '나' : myName() + ' (나)') : x.name;
+    return '<div class="r-rank-row' + (x.me ? ' me' : '') + '"><span class="r-rank-num medal">👑</span>'
+      + '<span class="r-rank-name">' + nm + (x.isNew ? ' <span class="r-hall-new">NEW</span>' : '') + '</span>'
+      + '<span class="r-hall-date">' + md + '</span></div>';
+  }).join('');
 }
 
 function highlightStudent(student){
@@ -8963,10 +8993,8 @@ function setMyRank(elId, view){
 
 function renderRankList(){
   // 영역명 서브라벨 (누적 컬럼)
-  var areaSub = document.getElementById('r-rank-area');
-  if(areaSub) areaSub.textContent = (SESSION.id > 1 ? '1~' + SESSION.id + '회차' : '1회차') + ' 내 어휘';
-  var cumT = document.getElementById('r-rank-cumul-title');
-  if(cumT) cumT.textContent = (SESSION.area || '') + ' 누적 랭킹';
+  var hd = document.getElementById('r-hall-desc');
+  if(hd) hd.textContent = (SESSION.area || '') + ' ' + (SESSION.id > 1 ? '1~' + SESSION.id + '회차' : '1회차') + ' 누적 어휘를 모두 익힌 사람만 올라요';
 
   // 공통 랭킹판(ranking.html) 링크 — 우리학원·과정·나를 맞춰서 열기
   var bl = document.getElementById('r-board-link');
@@ -8979,11 +9007,10 @@ function renderRankList(){
     }
     bl.href = 'ranking.html' + (bq.toString() ? '?' + bq.toString() : '');
   }
-  var vM = buildFullRankView(RANK_MASTER), vU = buildFullRankView(RANK_CUMUL);
+  var vM = buildFullRankView(RANK_MASTER);
   _renderRankBlock('r-rank-podium-master', 'r-rank-list-master', vM);
-  _renderRankBlock('r-rank-podium-cumul',  'r-rank-list-cumul',  vU, 'cumul');
-  // 각 카드 타이틀 우측에 '내 등수' 표시
-  setMyRank('r-myrank-master', vM); setMyRank('r-myrank-cumul', vU);
+  setMyRank('r-myrank-master', vM);
+  renderHall();
 
   // 각 컬럼에서 "나" 행으로 자동 스크롤 — 학생이 자기 위치를 즉시 볼 수 있게.
   // renderRankList가 showPage('result') 이전에 호출되어 layout이 아직 안 잡혔을 수 있으므로

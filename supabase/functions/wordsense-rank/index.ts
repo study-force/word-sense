@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
 
   try {
     // 이름 맵
-    const { data: studs } = await supabase.from('students').select('user_no, name');
+    const { data: studs } = await supabase.from('students').select('user_no, name, academy_no');
     const nameOf = new Map((studs || []).map((s: any) => [String(s.user_no), s.name]));
     const label = (k: string) => nameOf.get(k) || ('회원' + k);
 
@@ -156,6 +156,44 @@ Deno.serve(async (req) => {
     if (knErr) console.error('[wordsense-rank] rank_known 실패:', knErr.message);
     const named = (arr: any[]) => (arr || []).map((x: any) => ({ user_no: Number(x.member_no), name: label(String(x.member_no)), count: x.count, areas: x.areas || null }));   // areas = 오늘 영역별 내역
     const known = { today: named(kn?.today), cumul: named(kn?.cumul) };
+    // ── 명예의 전당 (2026-10-16): 이 영역·과정의 1회차~지금 회차까지 '누적 어휘 만점'인 학생
+    //    = 그 회차들 전부 만점(attempts.is_perfect) 기록이 있는 학생. 등극 시각 = 마지막으로 채운 회차의 첫 만점 시각
+    //    최신 등극이 맨 위, 100명. academy_no(우리학원 토글) 적용. 방금 끝낸 훈련은 프론트가 더함(me_hall_prev)
+    let hall: any[] = [];
+    let meHallPrev = false;   // 본인: 지금 회차 이전(1~N-1)이 모두 만점인지 — 이번 훈련으로 만점이면 프론트가 등극 처리
+    if (areaId != null && round != null) {
+      const acadOf = new Map((studs || []).map((s: any) => [String(s.user_no), s.academy_no != null ? Number(s.academy_no) : null]));
+      const { data: ss } = await supabase.from('sessions').select('id, round_no')
+        .eq('area_id', areaId).eq('level', level).lte('round_no', round);
+      const sids = (ss || []).map((x: any) => x.id);
+      const roundOf = new Map((ss || []).map((x: any) => [x.id, x.round_no]));
+      if (sids.length) {
+        const { data: pf } = await supabase.from('attempts').select('member_no, session_id, finished_at, session_init_id')
+          .in('session_id', sids).eq('is_perfect', true);
+        const per = new Map<string, Map<number, string>>();   // member → session → 첫 만점 시각
+        for (const r of (pf || [])) {
+          if (!r.finished_at) continue;
+          if (curSid && r.session_init_id && String(r.session_init_id) === curSid) continue;
+          const k = String(r.member_no);
+          const m = per.get(k) || new Map<number, string>();
+          const prev = m.get(r.session_id);
+          if (!prev || r.finished_at < prev) m.set(r.session_id, r.finished_at);
+          per.set(k, m);
+        }
+        for (const [k, m] of per) {
+          if (userNo && k === userNo) {
+            meHallPrev = sids.filter((id: number) => roundOf.get(id) < round).every((id: number) => m.has(id));
+          }
+          if (m.size !== sids.length) continue;
+          if (academyNo != null && acadOf.get(k) !== academyNo) continue;
+          const at = [...m.values()].sort().pop()!;
+          hall.push({ user_no: Number(k), name: label(k), at, me: !!(userNo && k === userNo) });
+        }
+        if (userNo && !per.has(userNo)) meHallPrev = sids.every((id: number) => roundOf.get(id) >= round);   // 1회차면 이전 회차 없음
+        hall.sort((x, y) => (x.at < y.at ? 1 : -1));
+        hall = hall.slice(0, 100);
+      }
+    }
     const meKnown = { today_past: kn?.me_today_past || 0, best_past: kn?.me_best_past || 0, cumul_past: kn?.me_cumul_past || 0, today_areas: kn?.me_today_areas || [] };
 
     return new Response(JSON.stringify({
@@ -164,7 +202,7 @@ Deno.serve(async (req) => {
       me_cumul_past: meCumulPast,
       me_today_past: meTodayPast,   // 프론트가 방금 끝낸 훈련분을 더해 '오늘 기록'
       me_best_past: meBestPast,     // 지난날 하루 최고 — 프론트가 max(이 값, 오늘 기록)로 '최고 기록'
-      known, me_known: meKnown,     // '내 어휘' 기준 랭킹 2종 (오늘·누적)
+      known, me_known: meKnown, hall, me_hall_prev: meHallPrev,   // hall = 명예의 전당     // '내 어휘' 기준 랭킹 2종 (오늘·누적)
     }), { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } });
 
   } catch (err) {
