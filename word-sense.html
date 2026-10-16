@@ -6512,6 +6512,7 @@ function goHome(){
     if(carried) document.body.classList.add('retry-mode');   // 이어서 하는 훈련 = 다시 훈련
   }
   FQ = { words:[], idx:0, correct:0, total:0 };
+  try { testMarkPerfect(); } catch(e){}   // 테스트: 이미 다 익힌 회차를 열면 만점으로 기억 (이 기능 전에 만점 낸 회차 포함)
   S = { found:[], attempted:[], attemptedFb:{}, hints:5, okCount:0, hintTargets:[], hintFound:[], hintLog:[], recall2:[], recall2Silent:[] };
   renderHintLog();
   var _tom = document.getElementById('tomorrow-splash'); if(_tom) _tom.classList.remove('on');
@@ -8895,6 +8896,23 @@ function buildMasterRank(){
 }
 // ── 명예의 전당 (대표님 2026-10-16) — 이 영역·과정 1회차~지금 회차 누적 어휘를 모두 익힌 사람. 최신 등극이 맨 위, 100명 ──
 //   이번 훈련으로 이 회차 만점이 되고 앞 회차들도 모두 만점이면 '나'가 맨 위에 새로 등극
+// 테스트(학생 없이 접속)는 서버에 기록이 없으므로 회차별 만점을 이 브라우저에 기억 → 명예의 전당 확인용 (2026-10-16)
+function testPerfectKey(round){ return window.__TEST_KNOWN_KEY ? window.__TEST_KNOWN_KEY.replace(/^ws_test_known_/, 'ws_test_perfect_').replace(/_\d+$/, '_' + round) : null; }
+function testMarkPerfect(){
+  var k = testPerfectKey(SESSION && SESSION.id); if(!k) return;
+  var total = (typeof WORD_LIST !== 'undefined' && WORD_LIST) ? WORD_LIST.length : 0;
+  if(total > 0 && knownAllCount() >= total){ try { if(!localStorage.getItem(k)) localStorage.setItem(k, new Date().toISOString()); } catch(e){} }
+}
+function testHallAt(){   // 1~지금 회차가 모두 만점이면 마지막으로 채운 시각, 아니면 null
+  if(!window.__TEST_KNOWN_KEY || (typeof STUDENT_INFO !== 'undefined' && STUDENT_INFO)) return null;
+  var last = null;
+  for(var r = 1; r <= ((SESSION && SESSION.id) || 1); r++){
+    var v = null; try { v = localStorage.getItem(testPerfectKey(r)); } catch(e){}
+    if(!v) return null;
+    if(!last || v > last) last = v;
+  }
+  return last;
+}
 function buildHall(){
   var list = ((SERVER_RANK && SERVER_RANK.hall) || []).map(function(x){ return { name:x.name, at:x.at, me:!!x.me }; });
   var total = (typeof WORD_LIST !== 'undefined' && WORD_LIST) ? WORD_LIST.length : 0;
@@ -8902,6 +8920,12 @@ function buildHall(){
   var prevOk = (SERVER_RANK && SERVER_RANK.me_hall_prev) || (SESSION && SESSION.id === 1);
   var meIn = list.some(function(x){ return x.me; });
   if(perfectNow && prevOk && !meIn) list.unshift({ name:'나', at:new Date().toISOString(), me:true, isNew:true });
+  // 테스트 접속: 브라우저에 기억한 회차별 만점으로 판단
+  var tAt = testHallAt();
+  if(tAt && !list.some(function(x){ return x.me; })){
+    var isNew = (Date.now() - new Date(tAt).getTime()) < 10 * 60 * 1000;
+    list.unshift({ name:'나', at:tAt, me:true, isNew:isNew });
+  }
   return list.slice(0, 100);
 }
 function renderHall(){
@@ -9079,6 +9103,7 @@ function goResult(){
       ((FQ && FQ.okKeys) || []).forEach(function(k){ var e = WORD_KEY_MAP[k]; if(e && e.wmId && tk.indexOf(Number(e.wmId)) === -1) tk.push(Number(e.wmId)); });
       localStorage.setItem(window.__TEST_KNOWN_KEY, JSON.stringify(tk));
     } catch(e){}
+    testMarkPerfect();
     // 어드민 회차 테스트 화면에 '내 어휘 N / 전체 T' 알림 → '다시 훈련' 탭에서 못 익힌 어휘가 남은 회차를 빨강으로 (2026-10-16)
     try {
       if(window.opener && !window.opener.closed){
