@@ -9001,6 +9001,14 @@ function goResult(){
       ((FQ && FQ.okKeys) || []).forEach(function(k){ var e = WORD_KEY_MAP[k]; if(e && e.wmId && tk.indexOf(Number(e.wmId)) === -1) tk.push(Number(e.wmId)); });
       localStorage.setItem(window.__TEST_KNOWN_KEY, JSON.stringify(tk));
     } catch(e){}
+    // 어드민 회차 테스트 화면에 '내 어휘 N / 전체 T' 알림 → '다시 훈련' 탭에서 못 익힌 어휘가 남은 회차를 빨강으로 (2026-10-16)
+    try {
+      if(window.opener && !window.opener.closed){
+        var tq = new URLSearchParams(location.search);
+        window.opener.postMessage({ type:'wordsense-test-progress', area:tq.get('area')||'biology', round:parseInt(tq.get('round'),10)||1,
+          level:tq.get('level')||'초등', known:knownAllCount(), total:(WORD_LIST ? WORD_LIST.length : 0) }, '*');
+      }
+    } catch(e){}
   }
 
   // ── 상단 메타 (영역 · 회차 · 한자 · 훈) ──
