@@ -3153,6 +3153,7 @@ body.dark-canvas .score-chip,
 .area-cell .cell-char {
   font-family: var(--font-han); font-size: 47px; font-weight: 300; line-height: 1;
 }
+.area-cell .cell-frac.is-perfect { color: #E0A800 !important; font-weight: 600; }   /* 다 모은 회차 */
 .area-cell .cell-hun {
   font-family: var(--font-han); font-size: 12px; font-weight: 500;
   color: #5A6178; opacity: .92; line-height: 1; letter-spacing: 0.05em;
@@ -3310,10 +3311,10 @@ body.retry-mode .retry-tag { display: inline-block; }
   font-family: 'Noto Sans KR', sans-serif;
 }
 .area-cell.pass:not(.current) .cell-mark { color: var(--stage-accent, var(--green)); }   /* 과거 통과의 ✓ — 컨셉 컬러 */
-.area-cell .cell-frac {
-  position: absolute; bottom: 2px; right: 5px;
-  font-size: 8px; color: var(--mid);
-  font-family: 'Noto Sans KR', sans-serif; font-weight: 500; letter-spacing: 0.05em;
+.area-cell .cell-frac {   /* 수집 개수/총수 — 훈 아래 잘 보이게 (예전 별 자리, 2026-10-16) */
+  margin-top: 3px; line-height: 1;
+  font-size: 12px; color: var(--mid);
+  font-family: 'Noto Sans KR', sans-serif; font-weight: 600; letter-spacing: 0.02em;
 }
 
 /* 카드 색상 범례 — 그리드 하단에 한 줄로 */
@@ -4773,7 +4774,7 @@ body.pmode .r-rank-ellipsis { font-size: 17px; }
 body.pmode .r-rank-card-head { flex-wrap: wrap; row-gap: 6px; }
 body.pmode .r-rank-head-right { margin-left: auto; }
 body.pmode .area-cell .cell-hun { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-body.pmode .area-cell .cell-frac { font-size: 12px; top: 4px; right: 5px; bottom: auto; left: auto; }
+body.pmode .area-cell .cell-frac { font-size: 14px; }
 body.pmode .area-legend { flex-wrap: wrap; gap: 6px 14px; }
 body.pmode .al-item { font-size: 14px; white-space: nowrap; }
 body.pmode .area-back-btn { font-size: 14px; }
@@ -9633,26 +9634,10 @@ function goArea(){
       var m = document.createElement('div'); m.className = 'cell-mark'; m.textContent = '✓'; cell.appendChild(m);
     }
     if(!p.locked){
-      // 통과/미통과·PERFECT 표시 (별 시스템) — 결과 페이지와 동일한 calcBadge 규칙
-      //   • PERFECT(전부 발견)        → "PERFECT" 골드 뱃지
-      //   • 통과(found ≥ PASS_MIN)    → 별 표시 (채운 별 N개 + 빈 별 M개)
-      //   • 미통과(found < PASS_MIN)  → 진행도 분수 "found/total"
+      // 수집 개수 / 총수 — 별 대신 정확한 숫자로 (대표님 2026-10-16). 모두 모으면 금색
       var b = calcBadge(p.found, p.total);
-      if(b.isPerfect){
-        var pf = document.createElement('div'); pf.className = 'cell-perfect';
-        pf.textContent = 'PERFECT';
-        cell.appendChild(pf);
-      } else if(passed){
-        var sr = document.createElement('div'); sr.className = 'cell-stars';
-        var sh = '';
-        for(var si = 0; si < b.yellowCount; si++) sh += '<span class="st-fill">★</span>';
-        for(var se = 0; se < b.grayCount;   se++) sh += '<span class="st-empty">☆</span>';
-        sr.innerHTML = sh;
-        cell.appendChild(sr);
-      } else {
-        var f = document.createElement('div'); f.className = 'cell-frac';
-        f.textContent = p.found + '/' + p.total; cell.appendChild(f);
-      }
+      var f = document.createElement('div'); f.className = 'cell-frac' + (b.isPerfect ? ' is-perfect' : '');
+      f.textContent = p.found + '/' + p.total; cell.appendChild(f);
     }
     // 잠금 외 모든 셀(오늘 + 과거 통과·미통과) 재훈련 가능 — 클릭 시 홈으로 돌아가 새로 시작
     // 학원 진입이면 칸 클릭 재훈련 없음 — 재훈련은 학원 사이트에서 회차별 '다시 하기'로 들어옴
