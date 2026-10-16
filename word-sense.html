@@ -4382,12 +4382,14 @@ body.pmode .r-known-line { font-size: 17px; bottom: 0; }
 body.pmode .r-rank-title { font-size: 18px; }
 /* 명예의 전당 */
 .r-hall-crown { font-size: 22px; line-height: 1; filter: drop-shadow(0 0 6px rgba(255,214,107,0.55)); }
-.r-hall-desc { font-size: 11px; color: #C8A030; margin: -4px 0 10px; letter-spacing: 0.01em; }
+/* 제목 + 바로 오른쪽 작은 설명 (대표님 2026-10-16) */
+.r-rank-title-wrap { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.r-rank-title-wrap .r-rank-col-sub { overflow: hidden; text-overflow: ellipsis; }
+#r-rank-podium-cumul:empty { display: none; }   /* 명예의 전당은 전시대 없이 목록만 */
 .r-hall-date { flex: none; font-size: 12px; color: #8A93A6; font-variant-numeric: tabular-nums; }
 .r-rank-row.me .r-hall-date { color: #6B7488; }
 .r-hall-new { display: inline-block; margin-left: 5px; padding: 1px 6px; border-radius: 100px; background: #E9B43A; color: #3A2A00; font-size: 9px; font-weight: 600; vertical-align: 1px; }
 .r-hall-empty { padding: 28px 8px; text-align: center; font-size: 12px; color: #8A93A6; line-height: 1.7; }
-body.pmode .r-hall-desc { font-size: 13px; }
 body.pmode .r-hall-date, body.pmode .r-hall-empty { font-size: 14px; }
 /* 오늘의 랭킹 — 영역별 내역 (오른쪽 숫자는 합산) */
 .r-rank-card .r-rank-areas { margin-left: 7px; font-size: 11px; color: #8A93A6; letter-spacing: 0; }
@@ -5053,13 +5055,12 @@ body.pmode .st-today-badge { font-size: 13px; }
       </div>
       <div class="r-rank-block" id="r-rank-block">
         <div class="r-rank-card col-master">
-          <div class="r-rank-card-head"><span class="r-rank-title">오늘의 랭킹</span><div class="r-rank-head-right"><span class="r-rank-col-sub">오늘 새로 익힌 어휘</span><span class="r-rank-myrank hidden" id="r-myrank-master"></span></div></div>
+          <div class="r-rank-card-head"><div class="r-rank-title-wrap"><span class="r-rank-title">오늘의 랭킹</span><span class="r-rank-col-sub">오늘 새로 익힌 어휘</span></div><div class="r-rank-head-right"><span class="r-rank-myrank hidden" id="r-myrank-master"></span></div></div>
           <div class="r-rank-podium" id="r-rank-podium-master"></div>
           <div class="r-rank-list"   id="r-rank-list-master"></div>
         </div>
         <div class="r-rank-card col-cumul">
-          <div class="r-rank-card-head"><span class="r-rank-title">명예의 전당</span><div class="r-rank-head-right"><span class="r-hall-crown" aria-hidden="true">👑</span></div></div>
-          <div class="r-hall-desc" id="r-hall-desc">누적 어휘를 모두 익힌 사람만 올라요</div>
+          <div class="r-rank-card-head"><div class="r-rank-title-wrap"><span class="r-rank-title">명예의 전당</span><span class="r-rank-col-sub" id="r-hall-desc">누적 어휘 만점자</span></div><div class="r-rank-head-right"><span class="r-hall-crown" aria-hidden="true">👑</span></div></div>
           <div class="r-rank-podium" id="r-rank-podium-cumul"></div>
           <div class="r-rank-list"   id="r-rank-list-cumul"></div>
         </div>
@@ -8994,7 +8995,7 @@ function setMyRank(elId, view){
 function renderRankList(){
   // 영역명 서브라벨 (누적 컬럼)
   var hd = document.getElementById('r-hall-desc');
-  if(hd) hd.textContent = (SESSION.area || '') + ' ' + (SESSION.id > 1 ? '1~' + SESSION.id + '회차' : '1회차') + ' 누적 어휘를 모두 익힌 사람만 올라요';
+  if(hd) hd.textContent = (SESSION.area || '') + ' ' + (SESSION.id || 1) + '회차 누적 어휘 만점자';   // 예: 생물 19회차 누적 어휘 만점자
 
   // 공통 랭킹판(ranking.html) 링크 — 우리학원·과정·나를 맞춰서 열기
   var bl = document.getElementById('r-board-link');
