@@ -2379,25 +2379,6 @@ body.mission-mode #game .stage-nav {
   transition: all .2s;
 }
 /* 못 찾은 어휘 목록 (강화 직전) */
-/* 강화 이전 문제 다시 보기 */
-.fq-foot {
-  position: absolute; left: 0; right: 0; bottom: 0; height: 64px; z-index: 3;
-  display: flex; align-items: center; justify-content: center;
-  border-top: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03);
-}
-.fq-nav { display: flex; align-items: center; gap: 14px; }
-.fq-nav-btn {
-  width: 40px; height: 40px; border-radius: 50%; padding: 0; cursor: pointer;
-  display: inline-flex; align-items: center; justify-content: center;
-  border: 1px solid rgba(255,255,255,0.28); background: rgba(255,255,255,0.08); color: #E8ECF6;
-  transition: background .2s, opacity .2s;
-}
-.fq-nav-btn svg { width: 16px; height: 16px; }
-.fq-nav-btn:hover:not(:disabled) { background: rgba(255,255,255,0.18); }
-.fq-nav-btn:disabled { opacity: 0.25; cursor: default; }
-.fq-viewlbl { min-width: 150px; text-align: center; font-size: 13px; color: #F2C94C; }
-#fq-card.fq-review { opacity: 0.92; }
-#fq-card.fq-review .ans-bubble { animation: none; }
 .miss-card { text-align: center; }
 .miss-title { font-size: 20px; font-weight: 600; color: var(--ink, #1A1F30); }
 .miss-title b { color: #E06B4A; font-weight: 600; }
@@ -4930,14 +4911,6 @@ body.pmode .st-today-badge { font-size: 13px; }
     </div>
     <div class="qpage-body">
       <div class="qcard" id="fq-card"></div>
-    </div>
-    <!-- 하단 풋터: 지난 문제 다시 보기 (쓸 수 없을 땐 딤드) — 대표님 2026-10-16 -->
-    <div class="fq-foot">
-      <div class="fq-nav">
-        <button class="fq-nav-btn" id="fq-prev" onclick="fqPrev()" disabled aria-label="이전 문제" title="이전 문제"><svg viewBox="0 0 18 18" aria-hidden="true"><polyline points="11.5,3 5.5,9 11.5,15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <span class="fq-viewlbl" id="fq-viewlbl"></span>
-        <button class="fq-nav-btn" id="fq-next" onclick="fqNext()" disabled aria-label="다음 문제" title="다음 문제"><svg viewBox="0 0 18 18" aria-hidden="true"><polyline points="6.5,3 12.5,9 6.5,15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-      </div>
     </div>
     <button class="skip-link" onclick="goResult()">건너뛰고 결과 보기 →</button>
   </div>
@@ -8762,56 +8735,12 @@ function renderFQCard(entry){
     wrap.appendChild(btn); cs.appendChild(wrap);
   });
   document.getElementById('fq-nb').onclick = fqAdvance;
-  updateFQNav();
 }
 
-// ── 강화 이전 문제 다시 보기 (대표님 2026-10-16) ──
-//   푼 카드는 넘어가는 순간의 화면(정답 표시)을 그대로 저장. 다시 보기 중에는 지금 문제를 잠시 떼어 두었다가 그대로 되돌림
 function fqAdvance(){
-  var card = document.getElementById('fq-card');
-  if(FQ.view != null) fqExitReview();
-  (FQ.snaps = FQ.snaps || [])[FQ.idx] = card.innerHTML.replace(/ id="[^"]*"/g, '');
   FQ.idx++; renderFQDots();
   if(FQ.idx >= FQ.total) goResult();
   else renderFQCard(FQ.words[FQ.idx]);
-}
-function fqShowReview(i){
-  var card = document.getElementById('fq-card');
-  if(!FQ.snaps || FQ.snaps[i] == null) return;
-  if(FQ.view == null){
-    FQ.live = document.createDocumentFragment();
-    while(card.firstChild) FQ.live.appendChild(card.firstChild);
-  }
-  FQ.view = i;
-  card.innerHTML = FQ.snaps[i];
-  card.classList.add('fq-review');
-  updateFQNav();
-}
-function fqExitReview(){
-  var card = document.getElementById('fq-card');
-  if(FQ.view == null) return;
-  card.innerHTML = '';
-  if(FQ.live) card.appendChild(FQ.live);
-  FQ.live = null; FQ.view = null;
-  card.classList.remove('fq-review');
-  updateFQNav();
-}
-function fqPrev(){
-  var cur = (FQ.view != null) ? FQ.view : FQ.idx;
-  if(cur > 0) fqShowReview(cur - 1);
-}
-function fqNext(){
-  if(FQ.view == null) return;
-  if(FQ.view + 1 >= FQ.idx) fqExitReview();
-  else fqShowReview(FQ.view + 1);
-}
-function updateFQNav(){
-  var p = document.getElementById('fq-prev'), n = document.getElementById('fq-next'), l = document.getElementById('fq-viewlbl');
-  if(!p || !n || !FQ) return;
-  var cur = (FQ.view != null) ? FQ.view : FQ.idx;
-  p.disabled = !(cur > 0);
-  n.disabled = (FQ.view == null);
-  if(l) l.textContent = (FQ.view != null) ? '지난 문제 다시 보기 · ' + (FQ.view + 1) + '번' : '';
 }
 
 // ══════════════════════════════════════════════
