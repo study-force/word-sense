@@ -8973,6 +8973,14 @@ function goResult(){
   //   STUDENT_INFO/TRAINING_INFO 있을 때만 호출. 멱등성 보장이라 재호출 안전.
   //   통계 화면이 방금 저장된 결과까지 반영하도록 promise 보관 (goStats가 잠깐 기다림)
   if(typeof notifyStudyComplete === 'function'){ window.__COMPLETE_P = notifyStudyComplete(); }
+  // 테스트(학생 없이 접속) — 이번에 '내 어휘'가 된 것(강화 첫 시도 정답)을 이 브라우저에 누적 저장 → 테스트 화면의 '다시 훈련'에서 금색 칩으로
+  if(window.__TEST_KNOWN_KEY && !(TRAINING_INFO && TRAINING_INFO.payment_fn)){
+    try {
+      var tk = JSON.parse(localStorage.getItem(window.__TEST_KNOWN_KEY) || '[]');
+      ((FQ && FQ.okKeys) || []).forEach(function(k){ var e = WORD_KEY_MAP[k]; if(e && e.wmId && tk.indexOf(Number(e.wmId)) === -1) tk.push(Number(e.wmId)); });
+      localStorage.setItem(window.__TEST_KNOWN_KEY, JSON.stringify(tk));
+    } catch(e){}
+  }
 
   // ── 상단 메타 (영역 · 회차 · 한자 · 훈) ──
   var area = sess.area || '환경과 생물';

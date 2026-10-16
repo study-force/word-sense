@@ -273,6 +273,15 @@ window.SESSION_READY = (async function loadSession() {
     // 4b. 학생의 과정별 '내 어휘'(인출·다시 인출 + 강화 통과) — 금색 칩으로 켜고 출제에서 뺌 (4단계 훈련, 2026-10-15)
     //     시험용: ?known=N 이면 앞에서 N개를 내 어휘로 가정
     const knownSet = new Set(((window.__ST_SESSION && window.__ST_SESSION.known_wm_ids) || []).map(Number));
+    // 테스트(학생 없이 접속)용 다시 훈련 — ?retry=1 이면 이 브라우저에 기억해 둔 이 회차 '내 어휘'를 금색 칩으로 (2026-10-16)
+    //   (테스트로 한 번 끝까지 훈련하면 word-sense.html이 강화 통과 어휘를 이 열쇠로 저장)
+    if (!window.__ST_SESSION) {
+      window.__TEST_KNOWN_KEY = 'ws_test_known_' + TARGET_LEVEL + '_' + TARGET_AREA_SLUG + '_' + sess.round_no;
+      if (_params.get('retry') === '1') {
+        document.body.classList.add('retry-mode');
+        try { JSON.parse(localStorage.getItem(window.__TEST_KNOWN_KEY) || '[]').forEach(function(id){ knownSet.add(Number(id)); }); } catch (e) {}
+      }
+    }
     const knownTest = parseInt(_params.get('known'), 10) || 0;
 
     // 5. data.js의 SESSION 형식으로 변환
