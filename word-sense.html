@@ -1866,6 +1866,12 @@ body.mission-mode #game .stage-nav {
   visibility: hidden !important;
 }
 /* 점수칩이 미션 화면 중앙으로 이동(center-mission). 확인 클릭 시 클래스 제거 → 우상단 복귀 (transition으로 자연 애니메이션) */
+/* 재도전 미션 화면 — 점수판(=재도전 어휘 수)에 '재도전' 띠 (대표님 2026-10-16) */
+.score-chip .sc-band { position: absolute; left: -6px; right: -6px; bottom: 3px; z-index: 3; pointer-events: none;
+  background: linear-gradient(180deg, #FFD66B, #E9B43A); color: #3A2A00; text-align: center;
+  font-family: 'Noto Sans KR', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; line-height: 17px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35); transform: rotate(-4deg); opacity: 0; transition: opacity .3s ease; }
+.score-chip.center-mission.retry-band .sc-band { opacity: 1; }
 .score-chip.center-mission {
   /* chip-anchor가 canvas와 같은 좌표계라 원래 canvas-coords 그대로 사용 */
   transform: translate(-482px, 238px) scale(2.0);
@@ -4288,6 +4294,8 @@ body.pmode .r-seg button { font-size: 16px; padding: 8px 18px; }
 /* 미션 화면 — 이미 아는 어휘 수 */
 .gm-foot b { font-weight: 600; color: #FFFFFF; }
 .gm-foot b.gm-known { color: #F2C94C; }
+.game-intro .gi-msg.gi-mission .gm-got { font-family: 'Noto Sans KR', sans-serif; font-size: 17px; font-weight: 500; color: rgba(255,255,255,0.7); margin: -6px 0 14px; }
+.game-intro .gi-msg.gi-mission .gm-got b { font-weight: 600; color: #F2C94C; }
 /* 결과 — 오늘 새로 내 어휘가 된 수 */
 .rtb-new { margin-left: 6px; font-size: 0.8em; font-weight: 600; color: #2E9E6B; }
 /* 강화에서 틀려 '내 어휘'가 안 된 칩 — 회색 점선 */
@@ -4783,6 +4791,7 @@ body.pmode .st-today-badge { font-size: 13px; }
      applyScale()이 #screen과 함께 transform을 동기화. ══ -->
 <div id="chip-anchor">
   <div class="score-chip" id="score-chip">
+    <div class="sc-band" aria-hidden="true">재도전</div>
     <div class="sc-bulbs" aria-hidden="true">
       <i class="sc-bulb t1"></i><i class="sc-bulb b-mint t2"></i><i class="sc-bulb t3"></i><i class="sc-bulb b-violet t4"></i><i class="sc-bulb t5"></i>
       <i class="sc-bulb r1"></i><i class="sc-bulb b-violet r2"></i><i class="sc-bulb r3"></i><i class="sc-bulb b-mint r4"></i><i class="sc-bulb r5"></i>
@@ -6770,10 +6779,10 @@ function buildMissionHTML(){
   var hun  = (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.mainHunFull || '') : '';
   var char = (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.mainChar || '') : '';
   return ''
+    // 재도전: 점수판 숫자 = 재도전 어휘 수(띠로 표시) → 이미 획득한 수만 점수판 바로 아래 작게 (대표님 2026-10-16)
+    + (knownBeforeCount() > 0 ? '<div class="gm-got">획득 <b>' + knownBeforeCount() + '</b></div>' : '')
     + '<div class="gm-line">오늘 만날 <span class="gm-hun">'+hun+'</span> <span class="gm-han">'+char+'</span>의 가족 어휘</div>'
-    + (knownBeforeCount() > 0
-        ? '<div class="gm-foot">획득 <b class="gm-known">' + knownBeforeCount() + '</b> : 재도전 <b>' + todayTotal() + '</b></div>'   // 획득(이미 내 어휘) : 재도전(남은 어휘)
-        : '<div class="gm-foot">모두 찾아볼까요?</div>')
+    + (knownBeforeCount() > 0 ? '' : '<div class="gm-foot">모두 찾아볼까요?</div>')
     + '<button class="gm-confirm" type="button" onclick="confirmMission(event)">Go!</button>';
 }
 // 확인 버튼 → 인출 스테이지 카드로 스왑 (STAGE 01 / 인출하기 / 인용구)
@@ -6788,7 +6797,7 @@ function confirmMission(e){
   // Phase 1: 점수칩 우상단으로 비행 (920ms) + 텍스트 페이드아웃 + 점수 카운트다운 (38→0)
   // 점수판 이동 효과음 (move.mp3) — 비행 시작과 동기
   sfxPlay('move.mp3', 0.8);
-  if(chip) chip.classList.remove('center-mission');
+  if(chip) chip.classList.remove('center-mission', 'retry-band');
   msg.style.transition = 'opacity .6s ease';
   msg.style.opacity = '0';
 
@@ -7331,6 +7340,7 @@ function showGameIntro(){
   if(chip){
     chip.style.transition = 'none';
     chip.classList.add('center-mission');
+    chip.classList.toggle('retry-band', knownBeforeCount() > 0);   // 재도전이면 점수판에 '재도전' 띠
     void chip.offsetWidth;   // 강제 reflow
     // 두 RAF 후 default transition 복원 — 다음 OUT 애니메이션을 위해
     requestAnimationFrame(function(){
