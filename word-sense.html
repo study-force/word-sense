@@ -3528,7 +3528,7 @@ body[data-page="stats"] .r-topbar-meta.global-topbar-meta .r-tm-char { display: 
   transform: translateX(-50%) translateY(-7px);
 }
 .rtb-stars {
-  display: flex;
+  display: none;   /* 결과 화면 별 삭제 — 점수판의 획득 N/T로 정확히 (대표님 2026-10-16) */
   gap: 4px;
 }
 .rtb-star {
@@ -4230,6 +4230,7 @@ body.pmode .r-seg button { font-size: 16px; padding: 8px 18px; }
   background: #181E2C;
   border-radius: 12px;
   padding: 16px 14px 19px;   /* 하단 +3px → 카드 세로 길이 +3px */
+  min-height: 210px;          /* 참여자가 적어도 카드 높이 유지 (대표님 2026-10-16) */
   box-shadow:
     0 4px 14px rgba(20,25,40,0.22),
     inset 0 1px 0 rgba(255,255,255,0.04);
@@ -4427,6 +4428,12 @@ body.pmode .r-known-line { font-size: 17px; bottom: 0; }
     inset 0 0 0 1px rgba(255,214,107,0.24),
     inset 0 1px 0 rgba(255,255,255,0.08);
 }
+/* 결과 점수판 — 숫자 아래 '획득 N / T' (대표님 2026-10-16: 별·'오늘 +k' 줄 대신 점수판 안에) */
+.score-chip .sc-got { display: none; position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; pointer-events: none;
+  font-family: 'Noto Sans KR', sans-serif; font-size: 9px; font-weight: 500; color: rgba(255,255,255,0.72); letter-spacing: 0.02em; line-height: 1; }
+.score-chip .sc-got b { font-weight: 600; color: #FFE08A; }
+.score-chip.center-result .sc-got { display: block; animation: fadeIn .5s ease 1s both; }
+.score-chip.center-result .sc-num { position: relative; top: -7px; }
 .score-chip.center-result .sc-num {
   text-shadow:
     0 0 10px rgba(255,214,107,0.55),
@@ -4801,6 +4808,7 @@ body.pmode .st-today-badge { font-size: 13px; }
     </div>
     <span class="sc-num" id="sc-num">0</span>
     <span class="sc-denom" id="sc-denom"></span>
+    <span class="sc-got" id="sc-got"></span>
     <div class="sc-ring" id="sc-ring"></div>
   </div>
 </div>
@@ -9175,7 +9183,9 @@ function renderTierBadge(correct, total){
   var nk = (typeof newKnownCount === 'function') ? newKnownCount() : 0;
   // 점수판 아래 — 누적 내 어휘 / 회차 전체 · 오늘 새로 내 어휘가 된 수 (4단계 훈련)
   var kl = document.getElementById('r-known-line');
-  if(kl) kl.innerHTML = '획득 <b>' + b.correct + '</b> / ' + b.total + (nk > 0 ? ' · <span class="rk-new">오늘 +' + nk + '</span>' : '');
+  if(kl) kl.innerHTML = '';   // '획득 N / T'는 점수판 안으로 옮김 (오늘 +k는 점수판 숫자와 같아 뺌)
+  var sg = document.getElementById('sc-got');
+  if(sg) sg.innerHTML = '획득 <b>' + b.correct + '</b> / ' + b.total;
   scoreEl.innerHTML = '<em>' + b.correct + '</em> / ' + b.total + (nk > 0 ? ' <span class="rtb-new">오늘 +' + nk + '</span>' : '');
 
   // 메시지
