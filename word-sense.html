@@ -5438,13 +5438,23 @@ function updateScoreVisibility(pageId){
 // ── 사운드 ─────────────────────────────────
 var AC = null;
 function ac(){
+  // 닫힌 컨텍스트(페이지 숨김·복귀, 앱 전환 등)면 새로 만듦 — 전엔 닫힌 채로 남아
+  //   합성 효과음(정답·오답·모름·중복)이 전부 안 나고 mp3 효과음만 들려 '같은 소리만 난다'는 문제가 있었음 (2026-10-16)
+  if(AC && AC.state === 'closed'){ AC = null; SND_MASTER = null; }
   if(!AC){
     try{ AC = new(window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; }
   }
-  // 브라우저 자동재생 정책으로 suspended일 수 있음 → 매번 resume 시도
-  if(AC && AC.state === 'suspended'){ try{ AC.resume(); }catch(e){} }
+  // suspended(자동재생 정책·탭 숨김) / interrupted(iOS 전화·다른 앱 소리) → 매번 resume 시도
+  if(AC && AC.state !== 'running'){ try{ AC.resume(); }catch(e){} }
   return AC;
 }
+// 키 입력·터치 때마다 소리 장치를 깨움 — 첫 제스처 한 번만 하던 것을 계속 (복귀 후 멈춤 방지)
+(function(){
+  function wake(){ try{ if(AC && AC.state !== 'running') ac(); }catch(e){} }
+  window.addEventListener('keydown', wake, true);
+  window.addEventListener('pointerdown', wake, true);
+  window.addEventListener('pageshow', function(){ try{ if(AC) ac(); }catch(e){} });
+})();
 
 // 마스터 게인 + 사운드 ON/OFF 상태 (localStorage 동기화 — UI 토글은 제거됨, window.toggleSound로 콘솔 제어 가능)
 var SND_ON = (function(){
@@ -6176,8 +6186,8 @@ document.addEventListener('visibilitychange', function(){
     if(typeof DICT_BGM !== 'undefined' && DICT_BGM){
       try { DICT_BGM.play().catch(function(){}); } catch(e){}
     }
-    if(typeof AC !== 'undefined' && AC && AC.state === 'suspended'){
-      try { AC.resume(); } catch(e){}
+    if(typeof AC !== 'undefined' && AC && AC.state !== 'running'){
+      try { ac(); } catch(e){}
     }
   }
 });
@@ -6197,8 +6207,10 @@ window.addEventListener('pagehide', function(){
     try { CURRENT_NARRATION.pause(); CURRENT_NARRATION.src = ''; } catch(e){}
     CURRENT_NARRATION = null;
   }
-  if(typeof AC !== 'undefined' && AC){
+  // 진짜 떠날 때만 닫음 — 뒤로가기 캐시(persisted)나 앱 전환으로 숨겨질 때 닫으면 돌아와서 소리가 안 남
+  if(typeof AC !== 'undefined' && AC && !(arguments[0] && arguments[0].persisted)){
     try { AC.close(); } catch(e){}
+    AC = null; SND_MASTER = null;
   }
 });
 
