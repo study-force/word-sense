@@ -68,6 +68,10 @@ Deno.serve(async (req) => {
   const curSid = body.session_init_id ? String(body.session_init_id) : null;
   const level = body.level === '중등' ? '중등' : '초등';
   const round = Number.isFinite(Number(body.round_no)) && body.round_no != null ? Number(body.round_no) : null;   // 누적은 이 회차까지만
+  // 랭킹 토글 [전체|초등|중등] × [전체|우리학원] — filter_level 키가 있으면 토글 사용(null=전체), academy_no=우리학원
+  const useFilter = Object.prototype.hasOwnProperty.call(body, 'filter_level');
+  const filterLevel = body.filter_level === '초등' || body.filter_level === '중등' ? body.filter_level : null;
+  const academyNo = body.academy_no != null && body.academy_no !== '' ? Number(body.academy_no) : null;
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
@@ -147,6 +151,7 @@ Deno.serve(async (req) => {
     // ── '내 어휘' 기준 랭킹 2종 (2026-10-16) ──
     const { data: kn, error: knErr } = await supabase.rpc('wordsense_rank_known', {
       p_area_id: areaId, p_level: level, p_member_no: userNo ? Number(userNo) : null, p_exclude_sid: curSid, p_round: round,
+      p_use_filter: useFilter, p_filter_level: filterLevel, p_academy_no: academyNo,
     });
     if (knErr) console.error('[wordsense-rank] rank_known 실패:', knErr.message);
     const named = (arr: any[]) => (arr || []).map((x: any) => ({ user_no: Number(x.member_no), name: label(String(x.member_no)), count: x.count }));

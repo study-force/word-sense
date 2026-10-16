@@ -4191,6 +4191,17 @@ body[data-page="stats"] .r-topbar-meta.global-topbar-meta .r-tm-char { display: 
 /* ── 랭킹 ── (4종 분리 카드)
    .r-rank-block: 단지 4개 카드 가로 배치용 flex wrapper. 어두운 박스 X.
                   기존 id="r-rank-block"의 등장 애니메이션(.on)은 그대로 유지. */
+/* 랭킹 토글 [전체|초등|중등] × [전체|우리학원] — 두 랭킹을 함께 바꿈 (대표님 2026-10-16) */
+.r-rank-toggles { width: 100%; max-width: 940px; display: flex; justify-content: center; gap: 10px; margin: 24px 0 -18px;
+  opacity: 0; transition: opacity .55s ease 1.15s; }
+.r-rank-toggles.on { opacity: 1; }
+.r-seg { display: inline-flex; background: #1A1F30; border-radius: 100px; padding: 3px; }
+.r-seg button { border: 0; background: transparent; color: #8A93A6; font-family: 'Noto Sans KR', sans-serif; font-size: 13px; font-weight: 500;
+  padding: 6px 16px; border-radius: 100px; cursor: pointer; transition: background .2s, color .2s; }
+.r-seg button.on { background: #FFFFFF; color: #1A1F30; font-weight: 600; }
+.r-seg button:disabled { opacity: .35; cursor: default; }
+body.pmode .r-rank-toggles { margin: 8px 0 0; }
+body.pmode .r-seg button { font-size: 16px; padding: 8px 18px; }
 .r-rank-block {
   width: 100%; max-width: 940px;
   margin: 33px 0 24px;   /* 위 43 → 33 (10px 위로) */
@@ -5000,6 +5011,10 @@ body.pmode .st-today-badge { font-size: 13px; }
       </div>
       <!-- ══ 랭킹 — '내 어휘' 기준 2종(오늘·누적, 대표님 2026-10-16). 예전 4종(인출/인출+확장/…) 정리. 각 카드 상단의 podium(1·2·3등)은 스크롤 X,
            list(4등 이하)만 스크롤. id="r-rank-block"은 기존 등장 애니메이션 훅 유지. -->
+      <div class="r-rank-toggles" id="r-rank-toggles">
+        <div class="r-seg" data-k="level"><button data-v="" class="on">전체</button><button data-v="초등">초등</button><button data-v="중등">중등</button></div>
+        <div class="r-seg" data-k="scope"><button data-v="" class="on">전체</button><button data-v="academy" id="r-seg-academy">우리학원</button></div>
+      </div>
       <div class="r-rank-block" id="r-rank-block">
         <div class="r-rank-card col-master">
           <div class="r-rank-card-head"><span class="r-rank-col-tag tag-master">내 어휘</span><div class="r-rank-head-right"><span class="r-rank-col-sub">오늘 새로 익힘</span><span class="r-rank-myrank hidden" id="r-myrank-master"></span></div></div>
@@ -5012,7 +5027,7 @@ body.pmode .st-today-badge { font-size: 13px; }
           <div class="r-rank-list"   id="r-rank-list-cumul"></div>
         </div>
       </div>
-      <a class="r-board-link" id="r-board-link" href="ranking.html" target="_blank" rel="noopener">🏆 전국·우리학원 랭킹 보기 →</a>
+      <a class="r-board-link" id="r-board-link" href="ranking.html" target="_blank" rel="noopener">🏆 전체 랭킹 보기 →</a>
       <button class="r-home-btn" id="r-home-btn" onclick="goArea()">나의 훈사전 보기 →</button>
     </div>
   </div>
@@ -8743,7 +8758,8 @@ function fqAdvance(){
 // ══════════════════════════════════════════════
 // 결과
 // ══════════════════════════════════════════════
-var RANK_MASTER = [], RANK_CUMUL = [];   // 랭킹 2종: 오늘 / 누적 ('내 어휘' 기준)
+var RANK_MASTER = [], RANK_CUMUL = [];
+var RANK_FILTER = { level: '', scope: '' };   // 랭킹 토글: level ''=전체|초등|중등, scope ''=전체|academy=우리학원   // 랭킹 2종: 오늘 / 누적 ('내 어휘' 기준)
 var SERVER_RANK = null;   // wordsense-rank 집계 결과(항상 실제 데이터). 실패하면 null → '나'만 표시
 
 // 서버 랭킹 집계 fetch — 학원 학생이 아니어도(테스트·직접 접속) 실제 순위를 받아옴(가짜 이름 없음)
@@ -8759,6 +8775,8 @@ async function fetchRankings(){
         session_init_id: (typeof TRAINING_INFO !== 'undefined' && TRAINING_INFO) ? (TRAINING_INFO.id || null) : null,
         level: (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.level || '초등') : '초등',   // 누적 '내 어휘'는 과정별
         round_no: (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.id || null) : null,       // 누적은 이 영역 1회차~지금 회차까지만 (앞 회차 학생도 공평하게)
+        filter_level: RANK_FILTER.level || null,                                                     // 토글 [전체|초등|중등]
+        academy_no: (RANK_FILTER.scope === 'academy' && typeof STUDENT_INFO !== 'undefined' && STUDENT_INFO) ? (STUDENT_INFO.academy_no || null) : null,   // 토글 [전체|우리학원]
       }),
     });
     var data = await res.json();
@@ -8777,19 +8795,42 @@ function _sortRank(list){
 // ── 랭킹 2종 — '내 어휘' 기준 (대표님 2026-10-16) ──
 //   오늘: 오늘 새로 '내 어휘'가 된 수 (재훈련 포함 — 이미 아는 어휘는 빠지므로 새로 익힌 것만 더해짐)
 //   누적: 이 영역·과정의 1회차~지금 회차에서 모은 '내 어휘' 수 (같은 어휘 한 번만, 뒤 회차는 안 셈 — 앞 회차 학생도 공평하게)
+// 이번 훈련에서 새로 익힌 수 — 토글로 다른 과정을 고르면 0 (이번 회차는 SESSION.level 과정)
+function myNewForFilter(){
+  return (!RANK_FILTER.level || RANK_FILTER.level === (SESSION && SESSION.level)) ? newKnownCount() : 0;
+}
+// 토글 — 누르면 서버에서 다시 집계해 두 랭킹을 함께 다시 그림
+function rerenderRanks(){
+  RANK_MASTER = buildMasterRank();
+  RANK_CUMUL  = buildCumulRank();
+  renderRankList();
+}
+function initRankToggles(){
+  var box = document.getElementById('r-rank-toggles');
+  if(!box || box.dataset.bound) return;
+  box.dataset.bound = '1';
+  box.addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b || b.disabled) return;
+    var seg = b.parentNode, k = seg.dataset.k;
+    if(RANK_FILTER[k] === b.dataset.v) return;
+    RANK_FILTER[k] = b.dataset.v;
+    seg.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); });
+    fetchRankings().then(rerenderRanks);
+  });
+}
 function _knownOthers(key){
   return (SERVER_RANK && SERVER_RANK.known && SERVER_RANK.known[key] || []).map(function(x){ return { name:x.name, count:x.count, me:false }; });
 }
 function buildMasterRank(){
   var mk = (SERVER_RANK && SERVER_RANK.me_known) || {};
-  var today = (mk.today_past || 0) + newKnownCount();
+  var today = (mk.today_past || 0) + myNewForFilter();
   // '최고 기록'은 표시하지 않음 — 남은 어휘가 줄수록 하루에 새로 익힐 수 있는 수도 줄어, 옛 최고는 넘을 수 없게 됨 (대표님 2026-10-16)
   var me = { name:'나', count: today, me:true };
   return _sortRank(_knownOthers('today').concat([me]));
 }
 function buildCumulRank(){
   var mk = (SERVER_RANK && SERVER_RANK.me_known) || {};
-  var me = { name:'나', count: (mk.cumul_past || 0) + newKnownCount(), me:true };
+  var me = { name:'나', count: (mk.cumul_past || 0) + myNewForFilter(), me:true };
   return _sortRank(_knownOthers('cumul').concat([me]));
 }
 
@@ -8998,11 +9039,12 @@ function goResult(){
   renderTierBadge(correct, total);
 
   // ── 랭킹 2종('내 어휘' 오늘·누적) — 서버 실제 집계(전체 학생) 후 렌더 ──
-  var _buildAndRenderRanks = function(){
-    RANK_MASTER = buildMasterRank();
-    RANK_CUMUL  = buildCumulRank();
-    renderRankList();
-  };
+  initRankToggles();
+  var hasAcademy = (typeof STUDENT_INFO !== 'undefined' && STUDENT_INFO && STUDENT_INFO.academy_no);
+  var segA = document.getElementById('r-seg-academy');
+  if(segA){ segA.disabled = !hasAcademy; segA.title = hasAcademy ? '' : '학원으로 들어온 훈련에서만 볼 수 있어요'; }
+  if(!hasAcademy && RANK_FILTER.scope === 'academy') RANK_FILTER.scope = '';
+  var _buildAndRenderRanks = rerenderRanks;
   fetchRankings().then(_buildAndRenderRanks);   // 항상 서버 실제 집계 → 렌더 (학원 학생이 아니면 '나'는 이번 훈련만)
 
   buildAreaProgress();
@@ -9020,6 +9062,7 @@ function goResult(){
   if(chip)       chip.classList.remove('center-result', 'landed');
   if(collectRow) collectRow.classList.remove('on');
   if(rankBlock)  rankBlock.classList.remove('on');
+  var rt0 = document.getElementById('r-rank-toggles'); if(rt0) rt0.classList.remove('on');
   if(homeBtn)    homeBtn.classList.remove('on');
   if(tierBadge)  tierBadge.classList.remove('on');
 
@@ -9034,6 +9077,7 @@ function goResult(){
       // 컬렉션/랭킹/버튼/배지는 CSS transition delay로 등장 (.on 토글)
       if(collectRow) collectRow.classList.add('on');
       if(rankBlock)  rankBlock.classList.add('on');
+      var rt = document.getElementById('r-rank-toggles'); if(rt) rt.classList.add('on');
       if(homeBtn)    homeBtn.classList.add('on');
       if(tierBadge)  tierBadge.classList.add('on');
     });

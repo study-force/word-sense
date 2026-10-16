@@ -8,20 +8,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* 훈감각 공통 랭킹판 — 홈페이지에 링크/iframe으로 넣는 화면 (대표님 2026-10-16)
-   기간(오늘·이번 주·이번 달) × 과정(통합·초등·중등) × 범위(전국·우리학원)
-   점수 = 그 기간에 새로 '내 어휘'가 된 수. 여러 회차·재훈련 모두 합산. 이름은 서버에서 가림(홍*동) */
+   두 랭킹(오늘 새로 익힘 · 누적) + 토글 [전체|초등|중등] × [전체|우리학원] — 결과 화면과 같은 모양
+   점수 = 새로 '내 어휘'가 된 수. 여러 회차·재훈련 모두 합산. 이름은 서버에서 가림(홍*동) */
 :root {
   --bg: #F4F6FA; --card: #FFFFFF; --ink: #1A1F30; --sub: #6B7488; --line: #E6E9F0;
   --green: #2FA572; --green-soft: #E7F6EE; --gold: #E0A800; --me: #FFF7DB;
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Noto Sans KR', sans-serif; }
-.wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 40px; }
+.wrap { max-width: 960px; margin: 0 auto; padding: 24px 16px 40px; }
 h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
 .lead { font-size: 14px; color: var(--sub); margin: 0 0 18px; line-height: 1.6; }
-.filters { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
-.seg { display: flex; background: #E3E7EF; border-radius: 10px; padding: 3px; }
-.seg button { flex: 1; border: 0; background: transparent; padding: 9px 4px; border-radius: 8px; font: inherit; font-size: 15px; font-weight: 500; color: var(--sub); cursor: pointer; }
+.filters { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+.boards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 640px) { .boards { grid-template-columns: 1fr; } }
+.seg { display: inline-flex; background: #E3E7EF; border-radius: 100px; padding: 3px; }
+.seg button { border: 0; background: transparent; padding: 8px 18px; border-radius: 100px; font: inherit; font-size: 15px; font-weight: 500; color: var(--sub); cursor: pointer; }
 .seg button.on { background: var(--card); color: var(--ink); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
 .seg button:disabled { opacity: .45; cursor: default; }
 .row-label { font-size: 12px; color: var(--sub); margin: 0 0 4px 2px; }
@@ -54,20 +56,23 @@ h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
   <p class="lead">새로 <b>'내 어휘'</b>로 익힌 어휘 수로 겨뤄요. 여러 회차·다시 훈련에서 새로 익힌 어휘가 모두 더해져요.</p>
 
   <div class="filters">
-    <div><div class="row-label">기간</div><div class="seg" id="f-period">
-      <button data-v="day">오늘</button><button data-v="week">이번 주</button><button data-v="month">이번 달</button></div></div>
-    <div><div class="row-label">과정</div><div class="seg" id="f-level">
-      <button data-v="">통합</button><button data-v="초등">초등</button><button data-v="중등">중등</button></div></div>
-    <div><div class="row-label">범위</div><div class="seg" id="f-scope">
-      <button data-v="all">전국</button><button data-v="academy" id="btn-academy">우리학원</button></div></div>
+    <div class="seg" id="f-level"><button data-v="">전체</button><button data-v="초등">초등</button><button data-v="중등">중등</button></div>
+    <div class="seg" id="f-scope"><button data-v="all">전체</button><button data-v="academy" id="btn-academy">우리학원</button></div>
   </div>
 
-  <div class="card">
-    <div class="card-head"><span class="t" id="title"></span><span class="r" id="range"></span></div>
-    <div class="me-bar" id="me-bar" hidden></div>
-    <div id="body"><div class="loading"><div class="spin"></div>불러오는 중이에요</div></div>
+  <div class="boards">
+    <div class="card">
+      <div class="card-head"><span class="t">오늘 새로 익힌 어휘</span><span class="r" id="range-day"></span></div>
+      <div class="me-bar" id="me-day" hidden></div>
+      <div id="body-day"><div class="loading"><div class="spin"></div>불러오는 중이에요</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="t">누적 내 어휘</span><span class="r" id="range-all"></span></div>
+      <div class="me-bar" id="me-all" hidden></div>
+      <div id="body-all"><div class="loading"><div class="spin"></div>불러오는 중이에요</div></div>
+    </div>
   </div>
-  <div class="foot">· 이름은 일부를 가려서 보여 줘요.<br>· 오늘은 매일, 이번 주는 매주 월요일, 이번 달은 매달 1일에 0부터 다시 시작해요.</div>
+  <div class="foot">· 이름은 일부를 가려서 보여 줘요.<br>· 오늘 랭킹은 매일 0부터 다시 시작하고, 누적 랭킹은 지금까지 모은 '내 어휘' 수예요.</div>
 </div>
 
 <script>
@@ -87,7 +92,6 @@ h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
   var me = q.get('me');   // 훈련 앱에서 열었을 때 '나' 표시
 
   var st = {
-    period: ['day', 'week', 'month'].indexOf(q.get('period')) > -1 ? q.get('period') : 'day',
     level: ['초등', '중등'].indexOf(q.get('level')) > -1 ? q.get('level') : '',
     scope: academy && q.get('scope') !== 'all' ? 'academy' : 'all'
   };
@@ -102,34 +106,30 @@ h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
     });
     paint();
   }
-  bindSeg('f-period', 'period'); bindSeg('f-level', 'level'); bindSeg('f-scope', 'scope');
+  bindSeg('f-level', 'level'); bindSeg('f-scope', 'scope');
 
   function esc(t){ return String(t == null ? '' : t).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
   function fmtDay(d){ var p = String(d).split('-'); return Number(p[1]) + '월 ' + Number(p[2]) + '일'; }
-  var PERIOD = { day: '오늘', week: '이번 주', month: '이번 달' };
   var seq = 0;
-
-  function load(){
-    var my = ++seq;
-    var body = document.getElementById('body');
+  function loadOne(period, my){
+    var sfx = period === 'day' ? 'day' : 'all';
+    var body = document.getElementById('body-' + sfx);
     body.innerHTML = '<div class="loading"><div class="spin"></div>불러오는 중이에요</div>';
-    fetch(URL_ + '/rest/v1/rpc/wordsense_rank_board', {
+    return fetch(URL_ + '/rest/v1/rpc/wordsense_rank_board', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', apikey: KEY_, Authorization: 'Bearer ' + KEY_ },
-      body: JSON.stringify({ p_period: st.period, p_level: st.level || null,
+      body: JSON.stringify({ p_period: period, p_level: st.level || null,
         p_academy_no: st.scope === 'academy' && academy ? Number(academy) : null,
         p_limit: 50, p_member_no: me ? Number(me) : null })
     }).then(function(r){ return r.json(); }).then(function(d){
       if (my !== seq) return;
       if (!d || !d.rows) throw new Error((d && d.message) || '불러오지 못했어요');
-      var scopeName = st.scope === 'academy' ? (d.academy_name || '우리학원') : '전국';
-      document.getElementById('title').textContent = PERIOD[st.period] + ' · ' + (st.level || '초등·중등 통합') + ' · ' + scopeName;
-      document.getElementById('range').textContent = d.from === d.to ? fmtDay(d.to) : fmtDay(d.from) + ' ~ ' + fmtDay(d.to);
-      var mb = document.getElementById('me-bar');
-      if (me && d.me) { mb.hidden = false; mb.innerHTML = '나는 <b>' + d.me.rank + '위</b> · 새로 익힌 어휘 <b>' + d.me.count + '개</b> (참여 ' + d.total + '명)'; }
-      else if (me) { mb.hidden = false; mb.textContent = '이 기간에 새로 익힌 어휘가 아직 없어요. 훈련하면 순위에 올라가요!'; }
+      document.getElementById('range-' + sfx).textContent = period === 'day' ? fmtDay(d.to) : (st.scope === 'academy' ? (d.academy_name || '우리학원') : '전국');
+      var mb = document.getElementById('me-' + sfx);
+      if (me && d.me) { mb.hidden = false; mb.innerHTML = '나는 <b>' + d.me.rank + '위</b> · <b>' + d.me.count + '개</b> (참여 ' + d.total + '명)'; }
+      else if (me) { mb.hidden = false; mb.textContent = period === 'day' ? '오늘 새로 익힌 어휘가 아직 없어요. 훈련하면 순위에 올라가요!' : '아직 모은 내 어휘가 없어요.'; }
       else mb.hidden = true;
-      if (!d.rows.length) { body.innerHTML = '<div class="empty">아직 이 기간에 기록이 없어요.<br>먼저 훈련하고 1등을 차지해 보세요! 🚀</div>'; return; }
+      if (!d.rows.length) { body.innerHTML = '<div class="empty">아직 기록이 없어요.<br>먼저 훈련하고 1등을 차지해 보세요! 🚀</div>'; return; }
       var medals = ['🥇', '🥈', '🥉'];
       body.innerHTML = '<ol class="list">' + d.rows.map(function(r){
         var m = r.rank <= 3;
@@ -143,6 +143,7 @@ h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
       console.error('[ranking]', e);
     });
   }
+  function load(){ var my = ++seq; loadOne('day', my); loadOne('all', my); }
   load();
 })();
 </script>
