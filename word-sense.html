@@ -4290,6 +4290,8 @@ body.pmode .r-seg button { font-size: 16px; padding: 8px 18px; }
 .gm-foot b.gm-known { color: #F2C94C; }
 /* 결과 — 오늘 새로 내 어휘가 된 수 */
 .rtb-new { margin-left: 6px; font-size: 0.8em; font-weight: 600; color: #2E9E6B; }
+/* 강화에서 틀려 '내 어휘'가 안 된 칩 — 회색 점선 */
+.r-collect-word.not-known { background: #F1F3F7 !important; color: #A0A7B8 !important; border: 1px dashed #C5CAD6 !important; text-decoration: line-through; }
 .r-known-line { position: absolute; left: 50%; bottom: -30px; transform: translateX(-50%); white-space: nowrap; font-size: 14px; color: #5A6178; letter-spacing: 0.02em; opacity: 0; transition: opacity .5s ease 1.2s; }
 .r-known-line b { font-weight: 600; color: #2A3050; }
 .r-known-line .rk-new { font-weight: 600; color: #2E9E6B; }
@@ -9019,6 +9021,12 @@ function goResult(){
   var tmH = document.getElementById('r-tm-han');    if(tmH) tmH.textContent = sess.mainChar;
   var tmU = document.getElementById('r-tm-hun');    if(tmU) tmU.textContent = sess.mainHunFull || '';
 
+  // 떠올렸지만 강화에서 첫 시도에 틀려 '내 어휘'가 안 된 어휘 → 회색 칩 (12개 떠올림 vs 오늘 +11 차이가 보이게, 2026-10-16)
+  function isMissedReinforce(key){
+    var ok = (FQ && FQ.okKeys) || [];
+    var e = WORD_KEY_MAP[key];
+    return !!(e && !isKnownEntry(e) && e.fillSentence && ok.indexOf(key) === -1 && FQ && FQ.total > 0);
+  }
   // ── 인출 어휘 (게임 단계에서 발견) ──
   //   S.found는 entry key 배열 → entry로 변환해 word 표시
   var retrList = document.getElementById('r-retr-list'); retrList.innerHTML = '';
@@ -9027,8 +9035,9 @@ function goResult(){
     var entry = WORD_KEY_MAP[key];
     if(!entry) return;
     var el = document.createElement('div');
-    el.className = 'r-collect-word tone-retr';
+    el.className = 'r-collect-word tone-retr' + (isMissedReinforce(key) ? ' not-known' : '');
     el.textContent = entry.word;
+    if(isMissedReinforce(key)) el.title = '강화에서 틀려 아직 내 어휘가 아니에요';
     el.style.animationDelay = (1.10 + i * 0.05) + 's';
     retrList.appendChild(el);
   });
@@ -9041,8 +9050,9 @@ function goResult(){
   exp.forEach(function(entry, i){
     if(!entry) return;
     var el = document.createElement('div');
-    el.className = 'r-collect-word tone-exp';
+    el.className = 'r-collect-word tone-exp' + (isMissedReinforce(entryKeyOf(entry)) ? ' not-known' : '');
     el.textContent = entry.word;
+    if(isMissedReinforce(entryKeyOf(entry))) el.title = '강화에서 틀려 아직 내 어휘가 아니에요';
     el.style.animationDelay = (1.10 + i * 0.05) + 's';
     expList.appendChild(el);
   });
@@ -9154,7 +9164,7 @@ function renderTierBadge(correct, total){
   var nk = (typeof newKnownCount === 'function') ? newKnownCount() : 0;
   // 점수판 아래 — 누적 내 어휘 / 회차 전체 · 오늘 새로 내 어휘가 된 수 (4단계 훈련)
   var kl = document.getElementById('r-known-line');
-  if(kl) kl.innerHTML = '내 어휘 <b>' + b.correct + '</b> / ' + b.total + (nk > 0 ? ' · <span class="rk-new">오늘 +' + nk + '</span>' : '');
+  if(kl) kl.innerHTML = '획득 <b>' + b.correct + '</b> / ' + b.total + (nk > 0 ? ' · <span class="rk-new">오늘 +' + nk + '</span>' : '');
   scoreEl.innerHTML = '<em>' + b.correct + '</em> / ' + b.total + (nk > 0 ? ' <span class="rtb-new">오늘 +' + nk + '</span>' : '');
 
   // 메시지
