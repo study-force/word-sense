@@ -17,7 +17,7 @@
 //     - me_today_past / me_best_past = 본인 오늘 앞선 훈련 합계 / 지난날 하루 최고 {retr, combo, master}
 //   + known: { today[], cumul[] }, me_known: { today_past, best_past, cumul_past }  (2026-10-17, 랭킹 2종)
 //     - '내 어휘' 기준: 오늘 새로 내 어휘가 된 수 / 영역·과정 누적 내 어휘 수 (RPC wordsense_rank_known)
-//     - 입력에 level('초등'|'중등') 추가 — 누적은 과정별
+//     - 입력에 level('초등'|'중등')·round_no 추가 — 누적은 과정별, 이 영역 1회차~지금 회차까지만(앞 회차 학생도 공평하게)
 //
 // ⚠️ 집계는 현재 JS in-memory (오픈 전 소량). 데이터 커지면 Postgres RPC/뷰로 이관 권장.
 // ════════════════════════════════════════════════════════════════
@@ -67,6 +67,7 @@ Deno.serve(async (req) => {
   // 방금 끝낸 훈련(입장권) — 저장이 랭킹 조회보다 먼저 끝났어도 '나' 과거분에서 빼서 이중 집계 방지
   const curSid = body.session_init_id ? String(body.session_init_id) : null;
   const level = body.level === '중등' ? '중등' : '초등';
+  const round = Number.isFinite(Number(body.round_no)) && body.round_no != null ? Number(body.round_no) : null;   // 누적은 이 회차까지만
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
@@ -145,7 +146,7 @@ Deno.serve(async (req) => {
 
     // ── '내 어휘' 기준 랭킹 2종 (2026-10-17) ──
     const { data: kn, error: knErr } = await supabase.rpc('wordsense_rank_known', {
-      p_area_id: areaId, p_level: level, p_member_no: userNo ? Number(userNo) : null, p_exclude_sid: curSid,
+      p_area_id: areaId, p_level: level, p_member_no: userNo ? Number(userNo) : null, p_exclude_sid: curSid, p_round: round,
     });
     if (knErr) console.error('[wordsense-rank] rank_known 실패:', knErr.message);
     const named = (arr: any[]) => (arr || []).map((x: any) => ({ user_no: Number(x.member_no), name: label(String(x.member_no)), count: x.count }));

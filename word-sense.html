@@ -8751,6 +8751,7 @@ async function fetchRankings(){
         area_id: (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.areaId || null) : null,
         session_init_id: (typeof TRAINING_INFO !== 'undefined' && TRAINING_INFO) ? (TRAINING_INFO.id || null) : null,
         level: (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.level || '초등') : '초등',   // 누적 '내 어휘'는 과정별
+        round_no: (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.id || null) : null,       // 누적은 이 영역 1회차~지금 회차까지만 (앞 회차 학생도 공평하게)
       }),
     });
     var data = await res.json();
@@ -8768,7 +8769,7 @@ function _sortRank(list){
 }
 // ── 랭킹 2종 — '내 어휘' 기준 (대표님 2026-10-17) ──
 //   오늘: 오늘 새로 '내 어휘'가 된 수 (재훈련 포함 — 이미 아는 어휘는 빠지므로 새로 익힌 것만 더해짐)
-//   누적: 이 영역·과정에서 모은 '내 어휘' 총수 (같은 어휘 한 번만) — 결과 화면 '내 어휘 N'과 같은 기준
+//   누적: 이 영역·과정의 1회차~지금 회차에서 모은 '내 어휘' 수 (같은 어휘 한 번만, 뒤 회차는 안 셈 — 앞 회차 학생도 공평하게)
 function _knownOthers(key){
   return (SERVER_RANK && SERVER_RANK.known && SERVER_RANK.known[key] || []).map(function(x){ return { name:x.name, count:x.count, me:false }; });
 }
@@ -8868,7 +8869,7 @@ function setMyRank(elId, view){
 function renderRankList(){
   // 영역명 서브라벨 (누적 컬럼)
   var areaSub = document.getElementById('r-rank-area');
-  if(areaSub) areaSub.textContent = (SESSION.area || '') + ' · 누적';
+  if(areaSub) areaSub.textContent = (SESSION.area || '') + ' · ' + (SESSION.id > 1 ? '1~' + SESSION.id + '회차' : '1회차') + ' 누적';
 
   var vM = buildFullRankView(RANK_MASTER), vU = buildFullRankView(RANK_CUMUL);
   _renderRankBlock('r-rank-podium-master', 'r-rank-list-master', vM);
