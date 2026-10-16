@@ -154,9 +154,9 @@ Deno.serve(async (req) => {
       p_use_filter: useFilter, p_filter_level: filterLevel, p_academy_no: academyNo,
     });
     if (knErr) console.error('[wordsense-rank] rank_known 실패:', knErr.message);
-    const named = (arr: any[]) => (arr || []).map((x: any) => ({ user_no: Number(x.member_no), name: label(String(x.member_no)), count: x.count }));
+    const named = (arr: any[]) => (arr || []).map((x: any) => ({ user_no: Number(x.member_no), name: label(String(x.member_no)), count: x.count, areas: x.areas || null }));   // areas = 오늘 영역별 내역
     const known = { today: named(kn?.today), cumul: named(kn?.cumul) };
-    const meKnown = { today_past: kn?.me_today_past || 0, best_past: kn?.me_best_past || 0, cumul_past: kn?.me_cumul_past || 0 };
+    const meKnown = { today_past: kn?.me_today_past || 0, best_past: kn?.me_best_past || 0, cumul_past: kn?.me_cumul_past || 0, today_areas: kn?.me_today_areas || [] };
 
     return new Response(JSON.stringify({
       success: true,

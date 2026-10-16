@@ -4377,6 +4377,13 @@ body.pmode .r-known-line { font-size: 17px; bottom: 0; }
 .r-rank-card .r-rank-row.gold   .r-rank-num { color: #FFD659; }
 .r-rank-card .r-rank-row.silver .r-rank-num { color: #D8DDEA; }
 .r-rank-card .r-rank-row.bronze .r-rank-num { color: #E0A87E; }
+/* 카드 제목 — 배지 대신 글자 (대표님 2026-10-16) */
+.r-rank-title { font-family: 'Noto Sans KR', sans-serif; font-size: 15px; font-weight: 600; color: #E8ECF6; letter-spacing: 0.01em; }
+body.pmode .r-rank-title { font-size: 18px; }
+/* 오늘의 랭킹 — 영역별 내역 (오른쪽 숫자는 합산) */
+.r-rank-card .r-rank-areas { margin-left: 7px; font-size: 11px; color: #8A93A6; letter-spacing: 0; }
+.r-rank-card .r-rank-row.me .r-rank-areas { color: #6B7488; }
+body.pmode .r-rank-card .r-rank-areas { font-size: 13px; }
 .r-rank-card .r-rank-name {
   flex: 1; min-width: 0;
   color: rgba(255,255,255,0.74);
@@ -5037,12 +5044,12 @@ body.pmode .st-today-badge { font-size: 13px; }
       </div>
       <div class="r-rank-block" id="r-rank-block">
         <div class="r-rank-card col-master">
-          <div class="r-rank-card-head"><span class="r-rank-col-tag tag-master">내 어휘</span><div class="r-rank-head-right"><span class="r-rank-col-sub">오늘 새로 익힘</span><span class="r-rank-myrank hidden" id="r-myrank-master"></span></div></div>
+          <div class="r-rank-card-head"><span class="r-rank-title">오늘의 랭킹</span><div class="r-rank-head-right"><span class="r-rank-col-sub">오늘 새로 익힌 어휘</span><span class="r-rank-myrank hidden" id="r-myrank-master"></span></div></div>
           <div class="r-rank-podium" id="r-rank-podium-master"></div>
           <div class="r-rank-list"   id="r-rank-list-master"></div>
         </div>
         <div class="r-rank-card col-cumul">
-          <div class="r-rank-card-head"><span class="r-rank-col-tag tag-cumul">내 어휘</span><div class="r-rank-head-right"><span class="r-rank-col-sub" id="r-rank-area">누적</span><span class="r-rank-myrank hidden" id="r-myrank-cumul"></span></div></div>
+          <div class="r-rank-card-head"><span class="r-rank-title" id="r-rank-cumul-title">누적 랭킹</span><div class="r-rank-head-right"><span class="r-rank-col-sub" id="r-rank-area">누적</span><span class="r-rank-myrank hidden" id="r-myrank-cumul"></span></div></div>
           <div class="r-rank-podium" id="r-rank-podium-cumul"></div>
           <div class="r-rank-list"   id="r-rank-list-cumul"></div>
         </div>
@@ -8848,13 +8855,22 @@ function initRankToggles(){
   });
 }
 function _knownOthers(key){
-  return (SERVER_RANK && SERVER_RANK.known && SERVER_RANK.known[key] || []).map(function(x){ return { name:x.name, count:x.count, me:false }; });
+  return (SERVER_RANK && SERVER_RANK.known && SERVER_RANK.known[key] || []).map(function(x){ return { name:x.name, count:x.count, me:false, areas:x.areas || null }; });
+}
+// 나의 오늘 영역별 내역 = 앞서 한 훈련(서버) + 이번 훈련(이 영역)
+function myTodayAreas(){
+  var mk = (SERVER_RANK && SERVER_RANK.me_known) || {};
+  var m = {};
+  (mk.today_areas || []).forEach(function(a){ m[a.area] = (m[a.area] || 0) + (a.count || 0); });
+  var add = myNewForFilter();
+  if(add > 0 && SESSION && SESSION.area) m[SESSION.area] = (m[SESSION.area] || 0) + add;
+  return Object.keys(m).map(function(k){ return { area:k, count:m[k] }; }).sort(function(a,b){ return b.count - a.count; });
 }
 function buildMasterRank(){
   var mk = (SERVER_RANK && SERVER_RANK.me_known) || {};
   var today = (mk.today_past || 0) + myNewForFilter();
   // '최고 기록'은 표시하지 않음 — 남은 어휘가 줄수록 하루에 새로 익힐 수 있는 수도 줄어, 옛 최고는 넘을 수 없게 됨 (대표님 2026-10-16)
-  var me = { name:'나', count: today, me:true };
+  var me = { name:'나', count: today, me:true, areas: myTodayAreas() };
   return _sortRank(_knownOthers('today').concat([me]));
 }
 function buildCumulRank(){
@@ -8899,7 +8915,9 @@ function _renderRankBlock(podiumId, listId, view, extraRowClass){
       ? '<span class="r-rank-num medal">'+icon+'</span>'
       : '<span class="r-rank-num">'+rank+'</span>';
     row.innerHTML = numHtml
-      +'<span class="r-rank-name">'+(s.me ? (myName() === '나' ? '나' : myName()+' (나)') : s.name)+'</span>'
+      +'<span class="r-rank-name">'+(s.me ? (myName() === '나' ? '나' : myName()+' (나)') : s.name)
+      +  (s.areas && s.areas.length ? '<span class="r-rank-areas">'+s.areas.map(function(a){ return a.area+' '+a.count; }).join(' · ')+'</span>' : '')   // 어느 영역에서 몇 개 (오른쪽 숫자 = 합산)
+      +'</span>'
       +'<span class="r-rank-cnt">'+s.count+'</span>'
       + (s.me && s.best != null ? '<span class="r-rank-best">최고 '+s.best+'</span>' : '');
     (rank <= 3 ? podium : list).appendChild(row);
@@ -8912,7 +8930,7 @@ function _renderRankBlock(podiumId, listId, view, extraRowClass){
 var RANK_TOP_LIMIT = 100;
 function buildFullRankView(list){
   var ranked = list.map(function(s, i){
-    return { name:s.name, count:s.count, me:s.me, best:s.best, rank:i+1 };
+    return { name:s.name, count:s.count, me:s.me, best:s.best, areas:s.areas, rank:i+1 };
   });
   var meIdx = ranked.findIndex(function(s){ return s.me; });
   if (meIdx === -1) return ranked.slice(0, RANK_TOP_LIMIT);
@@ -8946,7 +8964,9 @@ function setMyRank(elId, view){
 function renderRankList(){
   // 영역명 서브라벨 (누적 컬럼)
   var areaSub = document.getElementById('r-rank-area');
-  if(areaSub) areaSub.textContent = (SESSION.area || '') + ' · ' + (SESSION.id > 1 ? '1~' + SESSION.id + '회차' : '1회차') + ' 누적';
+  if(areaSub) areaSub.textContent = (SESSION.id > 1 ? '1~' + SESSION.id + '회차' : '1회차') + ' 내 어휘';
+  var cumT = document.getElementById('r-rank-cumul-title');
+  if(cumT) cumT.textContent = (SESSION.area || '') + ' 누적 랭킹';
 
   // 공통 랭킹판(ranking.html) 링크 — 우리학원·과정·나를 맞춰서 열기
   var bl = document.getElementById('r-board-link');
