@@ -15,7 +15,7 @@
 //     - retr/combo/master = '오늘'(KST) 집계, cumulArea = 영역 내 전체 누적(인출+확장)
 //     - me_cumul_past = 본인의 영역 누적(저장분) — 프론트가 현재 세션분 더함
 //     - me_today_past / me_best_past = 본인 오늘 앞선 훈련 합계 / 지난날 하루 최고 {retr, combo, master}
-//   + known: { today[], cumul[] }, me_known: { today_past, best_past, cumul_past }  (2026-10-17, 랭킹 2종)
+//   + known: { today[], cumul[] }, me_known: { today_past, best_past, cumul_past }  (2026-10-16, 랭킹 2종)
 //     - '내 어휘' 기준: 오늘 새로 내 어휘가 된 수 / 영역·과정 누적 내 어휘 수 (RPC wordsense_rank_known)
 //     - 입력에 level('초등'|'중등')·round_no 추가 — 누적은 과정별, 이 영역 1회차~지금 회차까지만(앞 회차 학생도 공평하게)
 //
@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
     }
     const cumulArea = [...cumMap.entries()].map(([k, count]) => ({ user_no: Number(k), name: label(k), count }));
 
-    // ── '내 어휘' 기준 랭킹 2종 (2026-10-17) ──
+    // ── '내 어휘' 기준 랭킹 2종 (2026-10-16) ──
     const { data: kn, error: knErr } = await supabase.rpc('wordsense_rank_known', {
       p_area_id: areaId, p_level: level, p_member_no: userNo ? Number(userNo) : null, p_exclude_sid: curSid, p_round: round,
     });

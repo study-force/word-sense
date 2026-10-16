@@ -1,4 +1,4 @@
--- 누적 랭킹은 '이 영역에서 지금 회차까지'만 (대표님 2026-10-17)
+-- 누적 랭킹은 '이 영역에서 지금 회차까지'만 (대표님 2026-10-16)
 --   뒤 회차까지 한 학생이 그 회차들의 어휘로 앞서지 않게 → 앞 회차 학생도 공평하게 순위에
 --   p_round: 지금 훈련한 회차 번호(sessions.round_no). NULL이면 영역 전체(예전 방식)
 DROP FUNCTION IF EXISTS public.wordsense_rank_known(bigint, text, bigint, uuid);
