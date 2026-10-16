@@ -4823,8 +4823,8 @@ body.pmode .st-today-badge { font-size: 13px; }
     <div class="home-area-tag">
       <em id="h-area"></em>
       <span class="sep">/</span>
-      <span class="round-num" id="h-round">01</span>
-      <span class="retry-tag">다시 훈련</span>
+      <span class="round-num" id="h-round">1회</span>
+      <span class="retry-tag">재도전</span>
     </div>
     <button class="btn-start" onclick="goCharIntro()">시작하기</button>
   </div>
@@ -5247,7 +5247,7 @@ window.SESSION_READY.then(function() {
   if(hChar)  hChar.textContent  = SESSION.mainChar;
   if(hHun)   hHun.textContent   = SESSION.mainHunFull;
   if(hArea)  hArea.textContent  = SESSION.area;
-  if(hRound) hRound.textContent = String(SESSION.id || 1).padStart(2, '0');
+  if(hRound) hRound.textContent = (SESSION.id || 1) + '회';   // 예: 생물 / 19회 (대표님 2026-10-16)
   // 전역 상단 메타 (.global-topbar-meta) — charintro 큰 한자 등장부터 result/stats까지 공유
   var tmA = document.getElementById('r-tm-area');   if(tmA) tmA.textContent = SESSION.area;
   var tmR = document.getElementById('r-tm-round');  if(tmR) tmR.textContent = String(SESSION.id || 1) + '회차';
@@ -6481,7 +6481,7 @@ function goHome(){
   var hArea = document.getElementById('h-area');
   if(hArea) hArea.textContent = sess.area || '';
   var hRound = document.getElementById('h-round');
-  if(hRound) hRound.textContent = pad2(sess.id || 1);
+  if(hRound) hRound.textContent = (sess.id || 1) + '회';   // 예: 생물 / 19회
   showPage('home');
 }
 
@@ -6770,7 +6770,7 @@ function buildMissionHTML(){
   return ''
     + '<div class="gm-line">오늘 만날 <span class="gm-hun">'+hun+'</span> <span class="gm-han">'+char+'</span>의 가족 어휘</div>'
     + (knownBeforeCount() > 0
-        ? '<div class="gm-foot">이미 아는 어휘 <b class="gm-known">' + knownBeforeCount() + '개</b> · 오늘 학습할 어휘 <b>' + todayTotal() + '개</b></div>'
+        ? '<div class="gm-foot">획득 <b class="gm-known">' + knownBeforeCount() + '</b> : 재도전 <b>' + todayTotal() + '</b></div>'   // 획득(이미 내 어휘) : 재도전(남은 어휘)
         : '<div class="gm-foot">모두 찾아볼까요?</div>')
     + '<button class="gm-confirm" type="button" onclick="confirmMission(event)">Go!</button>';
 }
