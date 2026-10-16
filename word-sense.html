@@ -6457,6 +6457,14 @@ function finishTraining(){
 }
 function goHome(){
   var sess = SESSION;
+  // 같은 화면에서 다시 훈련(훈사전 '다시하기' 등) — 방금 '내 어휘'가 된 어휘(강화 첫 시도 정답)를 금색 칩으로 이어감 (2026-10-16)
+  //   전엔 페이지를 새로 불러오지 않아 금색 칩 없이 처음 상태로 다시 시작했음
+  if(FQ && FQ.okKeys && FQ.okKeys.length){
+    var carried = 0;
+    FQ.okKeys.forEach(function(k){ var e = WORD_KEY_MAP[k]; if(e && !e.known){ e.known = true; carried++; } });
+    if(carried) document.body.classList.add('retry-mode');   // 이어서 하는 훈련 = 다시 훈련
+  }
+  FQ = { words:[], idx:0, correct:0, total:0 };
   S = { found:[], attempted:[], attemptedFb:{}, hints:5, okCount:0, hintTargets:[], hintFound:[], hintLog:[], recall2:[], recall2Silent:[] };
   renderHintLog();
   var _tom = document.getElementById('tomorrow-splash'); if(_tom) _tom.classList.remove('on');
