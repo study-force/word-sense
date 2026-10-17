@@ -314,7 +314,7 @@ function renderTests(){
   for(let u=1;u<=10;u++){ const l=us[u], rr=((u-1)*5+1)+"~"+(u*5);
     if(!l){ h+='<tr class="none"><td class="u" style="color:#c2c8cf">'+rr+'회차</td><td><div class="pc-bar"></div></td><td>–</td><td></td><td></td></tr>'; continue; }
     const b=bestOf(l), sc=b.score;
-    h+='<tr><td class="u">'+rr+'회차</td><td><div class="pc-bar"><i style="width:'+Math.max(sc,2)+'%;background:'+scoreColor(sc)+'"></i></div></td>'
+    h+='<tr><td class="u">'+rr+'회차</td><td><div class="pc-bar"><i style="width:'+Math.max(sc,2)+'%;background:#3b7ddd"></i></div></td>'
       +'<td class="pc-sc" style="color:'+scoreColor(sc)+'">'+sc+'</td><td class="m">'+l.length+'회</td><td class="m">'+(b.at||"")+'</td></tr>'; }
   h+='</table>';
   const cnt={known:0,infer:0,wrong:0}; bests.forEach(t=>{ cnt.known+=t.n_known||0; cnt.infer+=t.n_hanja||0; cnt.wrong+=(t.n_hanja_wrong||0)+(t.n_wrong||0); });
