@@ -3135,9 +3135,9 @@ body.pmode .area-cell .cell-play { width: 46px; height: 46px; }
 /* 통과 = 훈사전 파랑(#area의 --pass-c) · 진행 중(80% 미만) = 진한 회색 — 빨강은 좌절감을 줘서 뺌 (대표님 2026-10-17·18) */
 :root { --pass-c: #2FA572; --pass-rgb: 47,165,114; --prog-c: #5A616B; --prog-rgb: 90,97,107; }
 /* ── 과거 통과 — 초록 보더 + 부드러운 글로우 ──── */
-/* 지난 통과 = '나의 훈사전' 訓 아이콘처럼 옅은 파랑 바탕 + 파랑 테두리 + 파랑 한자 (대표님 2026-10-18) */
+/* 지난 통과 = 흰 바탕 + 파랑 테두리 + 파랑 한자 (訓 아이콘 느낌, 대표님 2026-10-18) */
 .area-cell.pass:not(.current) {
-  background: rgba(var(--pass-rgb), 0.10);
+  background: #FFFFFF;
   border: 1.5px solid rgba(var(--pass-rgb), 0.55);
   box-shadow:
     0 0 0 1px rgba(var(--pass-rgb), 0.18) inset,
@@ -3276,7 +3276,7 @@ body.retry-mode .retry-tag { display: inline-block; }
   box-shadow: 0 0 8px rgba(var(--prog-rgb), 0.45);
 }
 .al-swatch.al-past-pass {
-  background: rgba(var(--pass-rgb), 0.10);
+  background: #FFFFFF;
   border: 1.5px solid rgba(var(--pass-rgb), 0.55);
 }
 .al-swatch.al-past-fail {
