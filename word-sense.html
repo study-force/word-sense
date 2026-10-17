@@ -1638,7 +1638,7 @@ input, textarea { caret-color: auto; -webkit-user-select: text; user-select: tex
 .btn-done {
   position: absolute;
   right: 32px; top: 50%; transform: translateY(-50%);
-  width: 96px; height: 52px;
+  min-width: 96px; height: 52px;   /* 첫 인출은 '어휘 확장하기'라 글자만큼 넓어짐 */
   padding: 0 16px;
   border: 1px solid rgba(0,0,0,0.08);
   border-radius: 12px;
@@ -1656,7 +1656,11 @@ input, textarea { caret-color: auto; -webkit-user-select: text; user-select: tex
     inset 0 1px 0 rgba(255,255,255,0.6);
   transition: all .2s;
 }
-.btn-done .bd-label { font-size: 17px; font-weight: 700; letter-spacing: 0.04em; line-height: 1; transform: translate(3px, -2px); }
+/* 첫 인출 = '어휘 확장하기'(다음 화면 제목과 같게, 대표님 2026-10-17) · 다시 인출 = '완료' */
+.btn-done .bd-l2 { display: none; }
+body.recall2-mode .btn-done .bd-l1 { display: none; }
+body.recall2-mode .btn-done .bd-l2 { display: inline; }
+.btn-done .bd-label { white-space: nowrap; font-size: 17px; font-weight: 700; letter-spacing: 0.04em; line-height: 1; transform: translate(3px, -2px); }
 .btn-done .bd-arrow { display: inline-flex; align-items: center; justify-content: center; line-height: 0; transform: translate(3px, -1px); }
 .btn-done .bd-arrow svg { width: 18px; height: 18px; display: block; }
 .btn-done.on {
@@ -5051,7 +5055,7 @@ body.pmode .st-today-badge { font-size: 13px; }
         </div>
         <button class="btn-ok" onclick="submit()">확인</button>
       </div>
-      <button class="btn-done" id="dbtn" onclick="onDoneClick()"><span class="bd-label">완료</span><span class="bd-arrow"><svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polyline points="6,1.5 13,9 6,16.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+      <button class="btn-done" id="dbtn" onclick="onDoneClick()"><span class="bd-label"><span class="bd-l1">어휘 확장하기</span><span class="bd-l2">완료</span></span><span class="bd-arrow"><svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polyline points="6,1.5 13,9 6,16.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
     </div>
   </div>
 
