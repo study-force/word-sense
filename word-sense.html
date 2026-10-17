@@ -9147,6 +9147,8 @@ function renderRankList(){
       if(STUDENT_INFO.academy_no) bq.set('academy', STUDENT_INFO.academy_no);
       if(STUDENT_INFO.user_no) bq.set('me', STUDENT_INFO.user_no);
     }
+    // 입장권 — 랭킹판에서 '나'만 전체 이름으로 (서버가 입장권으로 나를 확인, 2026-10-18)
+    if(typeof TRAINING_INFO !== 'undefined' && TRAINING_INFO && TRAINING_INFO.id) bq.set('st', TRAINING_INFO.id);
     bl.href = 'ranking.html' + (bq.toString() ? '?' + bq.toString() : '');
   }
   var vM = buildFullRankView(RANK_MASTER);
