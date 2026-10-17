@@ -295,7 +295,7 @@ function paint(){ for(let i=1;i<=PAGES;i++) document.getElementById("pg"+i).clas
 function setPage(p){ page=Math.min(PAGES,Math.max(1,p)); paint(); } function go(d){ setPage(page+d); }
 
 // ── 3쪽 실력 점검 결과 — 구간(5회차)마다 대표 점수 = 최고 점수, 구성·회차별 정답률도 최고 점수 점검 기준 ──
-const RES=[["known","완전 습득","#2f9e73"],["infer","추론","#e3b341"],["wrong","틀림","#d87878"]];   // 결과 구성 (대표님 2026-10-18): 틀림 = 한자 보고도 틀림 + 틀림
+const RES=[["known","완전 습득","#3b7ddd"],["infer","추론","#f2c230"],["wrong","틀림","#e05a5a"]];   // 파랑 / 노랑 / 빨강 (대표님 2026-10-18)   // 결과 구성 (대표님 2026-10-18): 틀림 = 한자 보고도 틀림 + 틀림
 const scoreColor=v=>v>=100?"#246ce3":v>=90?"#009900":v>=80?"#e46600":"#cc0000";   // 공용 폼 범례
 function testsByUnit(slug){ const u={}; (D.tests||[]).filter(t=>t.area===slug).forEach(t=>(u[t.unit]=u[t.unit]||[]).push(t)); return u; }
 function bestOf(l){ return l.reduce((b,t)=>(t.score>b.score||(t.score===b.score&&String(t.at)>String(b.at)))?t:b, l[0]); }
