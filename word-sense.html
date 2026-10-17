@@ -3135,9 +3135,9 @@ body.pmode .area-cell .cell-play { width: 46px; height: 46px; }
 /* 통과 = 훈사전 파랑(#area의 --pass-c) · 진행 중(80% 미만) = 진한 회색 — 빨강은 좌절감을 줘서 뺌 (대표님 2026-10-17·18) */
 :root { --pass-c: #2FA572; --pass-rgb: 47,165,114; --prog-c: #5A616B; --prog-rgb: 90,97,107; }
 /* ── 과거 통과 — 초록 보더 + 부드러운 글로우 ──── */
-/* 지난 통과 = 흰 바탕 + 파랑 테두리 + 파랑 한자 (訓 아이콘 느낌, 대표님 2026-10-18) */
+/* 지난 통과 = 반투명 파랑 바탕 + 파랑 테두리 + 파랑 한자 (訓 아이콘 느낌, 페이지는 흰 바탕 — 대표님 2026-10-18) */
 .area-cell.pass:not(.current) {
-  background: #FFFFFF;
+  background: rgba(var(--pass-rgb), 0.10);
   border: 1.5px solid rgba(var(--pass-rgb), 0.55);
   box-shadow:
     0 0 0 1px rgba(var(--pass-rgb), 0.18) inset,
@@ -3276,7 +3276,7 @@ body.retry-mode .retry-tag { display: inline-block; }
   box-shadow: 0 0 8px rgba(var(--prog-rgb), 0.45);
 }
 .al-swatch.al-past-pass {
-  background: #FFFFFF;
+  background: rgba(var(--pass-rgb), 0.10);
   border: 1.5px solid rgba(var(--pass-rgb), 0.55);
 }
 .al-swatch.al-past-fail {
@@ -4307,6 +4307,9 @@ body.theme-light {
     radial-gradient(ellipse 80% 60% at 50% 45%, #EEF1F7 0%, #E4E8F1 55%, #D7DCE8 100%) !important;
   background-attachment: fixed !important;
 }
+/* 나의 훈사전 — 전체 흰 바탕, 통과 카드는 반투명 파랑 (대표님 2026-10-18) */
+body.theme-light.page-area { background: #FFFFFF !important; }
+body.page-area .area-cell.locked { background: #F6F7FA; }
 /* 페이지·프레임·캔버스 모두 투명 — body 테마가 그대로 비치도록 */
 .canvas { background: transparent !important; }
 .page, #game, #home, #learn, #charintro, #result, #area { background: transparent !important; }
@@ -5088,6 +5091,7 @@ function showPage(id){
   // body 그라디언트가 viewport 전체를 채우므로 캔버스 가장자리 봉합 자국 없음
   var isLightPage = (id === 'charintro' || id === 'result' || id === 'area' || id === 'unittest');
   document.body.classList.toggle('theme-light', isLightPage);
+  document.body.classList.toggle('page-area', id === 'area');   // 나의 훈사전 = 흰 바탕 (2026-10-18)
   // BGM 시스템 — tap-to-start 게이트 통과 후에만 작동 (페이지 첫 로드 부담 X)
   //   게이트 전: 큰 mp3 다운로드 안 함. 게이트 dismiss 후 BGM 시작.
   if(window.TAP_GATE_PASSED){
