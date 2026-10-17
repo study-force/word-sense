@@ -2971,10 +2971,10 @@ body.mission-mode #game .stage-nav {
   position: relative;
   display: flex; align-items: center; justify-content: center; gap: 16px;
   margin: 2px 4px 12px;
-  padding: 0 0 14px 0;
-  border-bottom: 1px solid rgba(20,25,40,0.10);
+  padding: 0 0 6px 0;   /* 아래 줄 없앰 (대표님 2026-10-18) */
 }
 .area-page-title::after {
+  display: none;
   content: '';
   position: absolute;
   left: 50%; bottom: -1px;
@@ -2986,10 +2986,10 @@ body.mission-mode #game .stage-nav {
 }
 .area-page-title .apt-mark {
   flex: 0 0 auto;
-  width: 50px; height: 50px;
+  width: 60px; height: 60px;   /* 50 → 60 크게 (2026-10-18) */
   display: flex; align-items: center; justify-content: center;
   font-family: var(--font-han);
-  font-size: 30px; font-weight: 400;
+  font-size: 36px; font-weight: 400;
   color: var(--stage-accent, var(--green));
   background: rgba(var(--stage-accent-rgb), 0.10);
   border: 1.5px solid rgba(var(--stage-accent-rgb), 0.55);
@@ -3002,7 +3002,7 @@ body.mission-mode #game .stage-nav {
 }
 .area-page-title .apt-name {
   font-family: 'S-Core Dream', 'SCoreDream', 'Noto Sans KR', sans-serif;
-  font-size: 34px; font-weight: 700;
+  font-size: 42px; font-weight: 700;   /* 34 → 42 크게 (2026-10-18) */
   color: #2A3050;
   letter-spacing: -0.035em;
   line-height: 1;
@@ -3291,7 +3291,7 @@ body.retry-mode .retry-tag { display: inline-block; }
 }
 
 .area-master {
-  display: flex; align-items: center; gap: 14px;
+  display: flex; align-items: center; justify-content: center; gap: 14px;   /* 설명 가운데 (2026-10-18) */
   padding: 8px 6px;
   background: transparent; border: none;
   border-radius: 0;
@@ -3304,7 +3304,7 @@ body.retry-mode .retry-tag { display: inline-block; }
 }
 .area-master-icon { font-size: 22px; filter: grayscale(0.3); }
 .area-master.unlocked .area-master-icon { filter: none; }
-.area-master-msg { flex: 1; font-size: 12px; color: #5A6178; line-height: 1.5; letter-spacing: 0.02em; }
+.area-master-msg { flex: 0 1 auto; text-align: center; font-size: 12px; color: #5A6178; line-height: 1.5; letter-spacing: 0.02em; }
 .area-master-msg strong { color: #2A3050; font-weight: 700; font-size: 13px; }
 .area-master.unlocked .area-master-msg { color: var(--stage-accent-deep, #2FA070); }
 .area-master.unlocked .area-master-msg strong { color: var(--stage-accent, var(--green)); text-shadow: none; }
