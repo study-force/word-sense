@@ -9614,8 +9614,8 @@ async function utFinish(){
     + '<div class="ut-body">'
     +   '<div class="ut-score"><em>' + att.score + '</em><span>/ 100점</span></div>'
     +   '<table class="ut-sheet">'
-    +     '<tr><th>바로 앎 (4점)</th><th>한자로 풂 (2점)</th><th>한자 보고도 틀림</th><th>틀림</th></tr>'
-    +     '<tr><td>' + att.n_known + '</td><td>' + att.n_hanja + '</td><td>' + att.n_hanja_wrong + '</td><td>' + att.n_wrong + '</td></tr>'
+    +     '<tr><th>완전 습득 (4점)</th><th>추론 (2점)</th><th>틀림</th></tr>'
+    +     '<tr><td>' + att.n_known + '</td><td>' + att.n_hanja + '</td><td>' + ((att.n_hanja_wrong || 0) + (att.n_wrong || 0)) + '</td></tr>'
     +   '</table>'
     +   (wrong.length
           ? '<div class="ut-wrong-h">다시 보면 좋은 어휘 (' + wrong.length + ')</div><div class="ut-wrong">' + wrong.map(function(x){
