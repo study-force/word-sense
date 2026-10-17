@@ -177,10 +177,10 @@
             <div class="itotal"><div class="tl">습득 어휘</div><b class="tnum" id="atAcq">0</b><div class="ttot">총 <span id="atTotal">0</span>개</div></div>
             <div class="sum" id="sum"></div>
             <div class="leg1">
-              <span><span class="sw" style="border-color:var(--biology);background:#fff"></span>통과 (어휘 80% 이상 수집)</span>
+              <span><span class="sw" style="border-color:#4FA3F0;background:#fff"></span>통과 (어휘 80% 이상 수집)</span>
               <span><span class="sw" style="border-color:rgba(90,97,107,.55);background:rgba(90,97,107,.10)"></span>진행 중 (80% 미만)</span>
               <span><span class="sw" style="border:1px dashed rgba(20,25,40,.25);background:#fff"></span>미훈련(잠금)</span>
-              <span><span class="sw" style="border-color:var(--biology);background:color-mix(in srgb,var(--biology) 16%,#fff)"></span><span style="color:#F2B01E;margin-right:2px">★</span>PERFECT (전 어휘 수집)</span>
+              <span><span class="sw" style="border-color:#4FA3F0;background:color-mix(in srgb,#4FA3F0 16%,#fff)"></span><span style="color:#F2B01E;margin-right:2px">★</span>PERFECT (전 어휘 수집)</span>
               <span><b style="color:#8b929c">×</b> 숫자 = 회차별 재시도 횟수</span>
             </div>
           </div>
@@ -243,13 +243,14 @@ function renderArea(){
   document.getElementById("atName").textContent=ko+" 영역";
   const pass=rounds.filter(r=>r.st==="pass").length, fail=rounds.filter(r=>r.st==="fail").length, lock=rounds.filter(r=>r.st==="lock").length;
   const g=document.getElementById("agrid"); g.innerHTML="";
+  const PASS="#4FA3F0";   // 통과 카드 = 앱 훈사전과 같은 파랑 (영역 색 아님, 2026-10-18)
   rounds.forEach(r=>{ let inner='<div class="ch">'+r.c+'</div><div class="hn">'+r.h+'</div>';
     const perf=(r.st==="pass"&&r.found>=r.total&&r.total>0);
-    if(r.st==="pass") inner+='<div class="frac" style="color:'+col+'">'+r.found+'/'+r.total+'</div>';
+    if(r.st==="pass") inner+='<div class="frac" style="color:'+PASS+'">'+r.found+'/'+r.total+'</div>';
     else if(r.st==="fail") inner+='<div class="frac">'+r.found+'/'+r.total+'</div>';
     const rt=(r.st!=="lock"&&r.retry>0)?'<span class="rt">×'+r.retry+'</span>':'';
     const star=perf?'<span class="star">★</span>':'';
-    g.insertAdjacentHTML("beforeend",'<div class="ac '+r.st+(perf?' perfect':'')+'" style="--ac:'+col+'">'+rt+star+inner+'</div>'); });
+    g.insertAdjacentHTML("beforeend",'<div class="ac '+r.st+(perf?' perfect':'')+'" style="--ac:'+PASS+'">'+rt+star+inner+'</div>'); });
   let pf=0; rounds.forEach(r=>{ if(r.st==="pass"&&r.found>=r.total)pf++; });
   const ar=D.areas[slug]||{}, acq=ar.acq||0, totW=ar.tot||0, retries=ar.retries||0;
   const aa=document.getElementById("atAcq"); aa.textContent=acq.toLocaleString(); aa.style.color=col;
@@ -257,7 +258,7 @@ function renderArea(){
   document.getElementById("atPeriod").textContent=(ar.first&&ar.last)?(ar.first+" ~ "+ar.last):"";
   document.getElementById("sum").innerHTML=
     '<div class="brk">'+
-      '<div class="b" style="background:color-mix(in srgb,'+col+' 14%,#fff);border:1.5px solid '+col+';color:'+col+'">통과<span class="n">'+pass+'</span></div>'+
+      '<div class="b" style="background:color-mix(in srgb,'+PASS+' 14%,#fff);border:1.5px solid '+PASS+';color:'+PASS+'">통과<span class="n">'+pass+'</span></div>'+
       '<div class="b" style="background:rgba(90,97,107,.10);border:1.5px solid rgba(90,97,107,.55);color:#5A616B">진행 중<span class="n">'+fail+'</span></div>'+
       '<div class="b" style="background:rgba(0,0,0,.02);border:1px dashed rgba(20,25,40,.18);color:#8b929c">미훈련<span class="n">'+lock+'</span></div>'+
     '</div>'+
