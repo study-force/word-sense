@@ -296,11 +296,11 @@ function setPage(p){ page=Math.min(PAGES,Math.max(1,p)); paint(); } function go(
 
 // ── 3쪽 실력 점검 결과 — 구간(5회차)마다 대표 점수 = 최고 점수, 구성·회차별 정답률도 최고 점수 점검 기준 ──
 const RES=[["known","완전 습득","#3b7ddd"],["infer","추론","#f2c230"],["wrong","틀림","#e05a5a"]];   // 파랑 / 노랑 / 빨강 (대표님 2026-10-18)   // 결과 구성 (대표님 2026-10-18): 틀림 = 한자 보고도 틀림 + 틀림
-const scoreColor=v=>v>=100?"#246ce3":v>=90?"#009900":v>=80?"#e46600":"#cc0000";   // 공용 폼 범례
+const BLUE="#3b7ddd";   // 3쪽 점수·막대 색 하나로 (대표님 2026-10-18 — 점수에 빨강·주황 안 씀)
 function testsByUnit(slug){ const u={}; (D.tests||[]).filter(t=>t.area===slug).forEach(t=>(u[t.unit]=u[t.unit]||[]).push(t)); return u; }
 function bestOf(l){ return l.reduce((b,t)=>(t.score>b.score||(t.score===b.score&&String(t.at)>String(b.at)))?t:b, l[0]); }
 function renderTests(){
-  const slug=curArea, col=COLOR[slug], us=testsByUnit(slug);
+  const slug=curArea, us=testsByUnit(slug);
   document.getElementById("pcTabs").innerHTML=AREAS.map(([k,s])=>{ const on=s===slug, has=(D.tests||[]).some(t=>t.area===s);
     return '<div class="tab'+(on?' on':'')+(has?'':' off')+'" onclick="curArea=\''+s+'\';renderArea();renderTests()" style="'+(on?'background:'+COLOR[s]:'')+'"><span class="dt" style="background:'+(on?'#fff':COLOR[s])+'"></span>'+k+'</div>'; }).join("");
   const body=document.getElementById("pcBody"), lists=Object.values(us);
@@ -308,14 +308,14 @@ function renderTests(){
   const bests=lists.map(bestOf);
   const avg=Math.round(bests.reduce((a,t)=>a+t.score,0)/bests.length), top=Math.max(...bests.map(t=>t.score));
   const kpi=(l,v,u,c)=>'<div class="pc-kpi"><div class="l">'+l+'</div><div class="v"'+(c?' style="color:'+c+'"':'')+'>'+v+'<small>'+u+'</small></div></div>';
-  let h='<div class="pc-kpis">'+kpi("점검한 구간",lists.length," / 10")+kpi("평균 점수",avg,"점",scoreColor(avg))+kpi("최고 점수",top,"점",scoreColor(top))+'</div>';
+  let h='<div class="pc-kpis">'+kpi("점검한 구간",lists.length," / 10")+kpi("평균 점수",avg,"점",BLUE)+kpi("최고 점수",top,"점",BLUE)+'</div>';
   h+='<div class="pc-sec">구간별 점수 <span class="n">5회차마다 25문항 · 100점 만점 · 여러 번 점검하면 최고 점수</span></div>';
   h+='<table class="pc-ut"><tr><th style="width:78px;text-align:left;padding-left:8px">구간</th><th>최고 점수</th><th style="width:44px"></th><th style="width:52px">횟수</th><th style="width:92px">점검일</th></tr>';
   for(let u=1;u<=10;u++){ const l=us[u], rr=((u-1)*5+1)+"~"+(u*5);
     if(!l){ h+='<tr class="none"><td class="u" style="color:#c2c8cf">'+rr+'회차</td><td><div class="pc-bar"></div></td><td>–</td><td></td><td></td></tr>'; continue; }
     const b=bestOf(l), sc=b.score;
-    h+='<tr><td class="u">'+rr+'회차</td><td><div class="pc-bar"><i style="width:'+Math.max(sc,2)+'%;background:#3b7ddd"></i></div></td>'
-      +'<td class="pc-sc" style="color:'+scoreColor(sc)+'">'+sc+'</td><td class="m">'+l.length+'회</td><td class="m">'+(b.at||"")+'</td></tr>'; }
+    h+='<tr><td class="u">'+rr+'회차</td><td><div class="pc-bar"><i style="width:'+Math.max(sc,2)+'%;background:'+BLUE+'"></i></div></td>'
+      +'<td class="pc-sc" style="color:'+BLUE+'">'+sc+'</td><td class="m">'+l.length+'회</td><td class="m">'+(b.at||"")+'</td></tr>'; }
   h+='</table>';
   const cnt={known:0,infer:0,wrong:0}; bests.forEach(t=>{ cnt.known+=t.n_known||0; cnt.infer+=t.n_hanja||0; cnt.wrong+=(t.n_hanja_wrong||0)+(t.n_wrong||0); });
   const tot=RES.reduce((a,[k])=>a+cnt[k],0);
@@ -325,7 +325,7 @@ function renderTests(){
   const per={}; bests.forEach(t=>(t.rounds||[]).forEach(x=>{ const p=per[x.r]=per[x.r]||{n:0,ok:0}; p.n+=x.n; p.ok+=x.ok; }));
   let bars="", ax="";
   for(let r=1;r<=50;r++){ const p=per[r];
-    if(p&&p.n){ const pct=Math.round(p.ok/p.n*100); bars+='<div class="c" title="'+r+'회차 '+p.ok+'/'+p.n+' ('+pct+'%)"><i style="height:'+Math.max(pct,3)+'%;background:'+col+';opacity:'+(0.45+pct/180)+'"></i></div>'; }
+    if(p&&p.n){ const pct=Math.round(p.ok/p.n*100); bars+='<div class="c" title="'+r+'회차 '+p.ok+'/'+p.n+' ('+pct+'%)"><i style="height:'+Math.max(pct,3)+'%;background:'+BLUE+';opacity:'+(0.45+pct/180)+'"></i></div>'; }
     else bars+='<div class="c no"><i></i></div>';
     ax+='<span>'+(r===1||r%5===0?r:"")+'</span>'; }
   h+='<div class="pc-sec">회차별 정답률 <span class="n">회차마다 5문항 · 완전 습득 + 추론</span></div><div class="pc-rchart">'+bars+'</div><div class="pc-rax">'+ax+'</div>';
