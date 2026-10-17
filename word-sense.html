@@ -9002,10 +9002,10 @@ function renderTierBadge(correct, total){
   if(rb2){
     var pTot = (typeof WORD_LIST !== 'undefined') ? WORD_LIST.length : 0, pGot = knownAllCount(), pNeed = passNeed({ total: pTot });
     rb2.hidden = !pTot || pGot >= pTot;
-    rb2.textContent = pGot < pNeed ? '남은 ' + (pNeed - pGot) + '개 재도전 →' : '남은 ' + (pTot - pGot) + '개 더 모으기 →';
+    rb2.textContent = pGot < pNeed ? '← 남은 ' + (pNeed - pGot) + '개 재도전' : '← 남은 ' + (pTot - pGot) + '개 더 모으기';   // 화살표 왼쪽 (대표님 2026-10-18)
   }
   var sg = document.getElementById('sc-got');
-  if(sg) sg.innerHTML = '획득 <b>' + b.correct + '</b> / ' + b.total;
+  if(sg) sg.innerHTML = '총 획득 <b>' + b.correct + '</b> / ' + b.total;   // 이전 훈련에서 모은 것 포함 (대표님 2026-10-18)
   scoreEl.innerHTML = '<em>' + b.correct + '</em> / ' + b.total + (nk > 0 ? ' <span class="rtb-new">오늘 +' + nk + '</span>' : '');
 
   // 메시지
