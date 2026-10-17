@@ -3194,13 +3194,9 @@ body.pmode .ut-info, body.pmode .ut-rules { font-size: 16px; } body.pmode .ut-hi
 .area-cell.ut-cell .ut-cell-s { font-size: 12px; margin-top: 3px; font-variant-numeric: tabular-nums; }
 .area-grid .area-cell.ut-cell.ok { cursor: pointer; border-style: solid !important; }
 .area-grid .area-cell.ut-cell.ok:hover { background: #FFEFC4 !important; }
-.area-grid .area-cell.ut-cell.off { opacity: .45; }
-.area-grid .area-cell.ut-cell.notyet { background: #F3F4F6 !important; border-color: #B9C0CC !important; color: #6B7383 !important; }
-.area-grid .area-cell.ut-cell.notyet:hover { background: #E8EAEE !important; }
-.area-grid .area-cell.ut-cell.ready { background: #FFF1CC !important; border-color: #E0A800 !important; }
+.area-grid .area-cell.ut-cell.off { background: #F3F4F6 !important; border-color: #C3C9D2 !important; color: #6B7383 !important; }
 .area-grid .area-cell.ut-cell::after { display: none !important; }
 .area-grid .area-cell.ut-cell.done::after { content: '재응시'; display: block !important; }
-.ut-recommend { font-size: 14px; color: #8A5A00; background: #FFF6DE; border: 1px solid #F0D490; border-radius: 4px; padding: 9px 12px; line-height: 1.6; margin: 12px 0 4px; }
 .area-grid .area-cell.ut-cell.open { border-color: #2FA572 !important; color: #1F7A50 !important; background: #E9F6EF !important; }
 .area-grid {
   flex: 1; display: grid; grid-template-columns: repeat(12, 1fr);   /* 5회차 + 평가 칸 × 2 (단원평가, 2026-10-17) */
@@ -9733,10 +9729,11 @@ var AREA_HUN = {
 };
 var AREA_PROGRESS = null;
 
-var PASS_MIN = 10;
-// 통과 = 10개 이상 수집. 단, 가족 어휘가 10개 미만인 회차는 전부 찾으면 통과
-//   (예전엔 어휘 3~9개 회차는 다 찾아도 영원히 미통과였음 — 초등 32·중등 18회차)
-function passNeed(p){ return Math.min(PASS_MIN, Math.max(1, p.total || 0)); }
+var PASS_PCT = 60;
+// 통과 = 회차 어휘의 60% 이상이 내 어휘 (대표님 2026-10-17, 예전: 10개 고정)
+//   회차 크기(3~90개)에 맞춰 공평하게 — 단원평가 자격(5회차 모두 통과)과 같은 기준
+//   서버 통계(wordsense_student_stats cleared)·단원평가(wordsense-unittest)도 같은 계산: known*10 >= total*6
+function passNeed(p){ return Math.max(1, Math.ceil((p.total || 0) * PASS_PCT / 100)); }
 function isPass(p){ return !p.locked && p.total > 0 && p.found >= passNeed(p); }
 
 function buildAreaProgress(){
@@ -9832,18 +9829,22 @@ async function utFetchStatus(){
   return UT_STATUS;
 }
 function utInfo(u){ return ((UT_STATUS && UT_STATUS.units) || []).filter(function(x){ return x.unit === u; })[0] || null; }
-var UT_READY_PCT = 80;   // 내 어휘가 이 비율 이상이면 '응시 준비 완료' (권장 기준, 대표님 2026-10-17)
-function utReadiness(u){
-  var prog = AREA_PROGRESS || buildAreaProgress(), f = 0, t = 0, miss = false;
-  prog.forEach(function(p){ if(p.round >= (u - 1) * 5 + 1 && p.round <= u * 5){ if(p.locked) miss = true; f += p.found || 0; t += p.total || 0; } });
-  if(miss) return { found: 0, total: 0, ready: false };   // 기록 없는 회차가 있으면(어드민 테스트 접속 등) 준비 정도를 모름 → 숫자·권장 안내 숨김
-  return { found: f, total: t, ready: t > 0 && f * 100 >= t * UT_READY_PCT };
+// 단원의 통과한 회차 수 — 학원 접속: 서버 통과 기록 + 방금 마친 오늘 회차(훈사전 계산) / 테스트 접속: 훈련한 회차
+function utPassedCount(u){
+  var from = (u - 1) * 5 + 1, to = u * 5, got = {};
+  if(utIsServer()){
+    ((UT_STATUS && UT_STATUS.passed_rounds) || []).forEach(function(r){ got[r] = 1; });
+    (AREA_PROGRESS || buildAreaProgress()).forEach(function(p){ if(isPass(p)) got[p.round] = 1; });
+  } else ((UT_STATUS && UT_STATUS.trained_rounds) || []).forEach(function(r){ got[r] = 1; });
+  var n = 0; for(var r = from; r <= to; r++) if(got[r]) n++;
+  return n;
 }
-function utEligible(u){
-  var tr = (UT_STATUS && UT_STATUS.trained_rounds) || [];
-  for(var r = (u - 1) * 5 + 1; r <= u * 5; r++) if(tr.indexOf(r) === -1) return false;
-  return true;
-}
+function utEligible(u){ return utPassedCount(u) >= 5; }
+function utStarted(u){   // 단원 회차를 하나라도 훈련했는지 (안 했으면 '0/5 통과' 대신 'N단원')
+  var from = (u - 1) * 5 + 1, to = u * 5;
+  return ((UT_STATUS && UT_STATUS.trained_rounds) || []).some(function(r){ return r >= from && r <= to; })
+    || (AREA_PROGRESS || buildAreaProgress()).some(function(p){ return p.round >= from && p.round <= to && !p.locked; });
+}   // 5회차 모두 통과 (어휘 60% 이상, 2026-10-17)
 // 단원 5회차의 출제 후보 — 보기 문구는 어휘 사전(word_master) 뜻으로 (훈련 화면과 같은 SSOT)
 async function utLoadPool(u){
   var c = window.SUPABASE_CLIENT, from = (u - 1) * 5 + 1, to = u * 5;
@@ -9917,8 +9918,6 @@ async function utOpen(u){
     +     '<li>뜻을 모르면 찍지 말고 <b>\'한자 보고 풀기\'</b>를 눌러 한자로 뜻을 찾아보세요.</li>'
     +     '<li>정답은 모두 푼 뒤에 알려 줍니다.</li>'
     +   '</ul>'
-    +   (function(){ if(done > 0) return ''; var rd = utReadiness(u); return rd.total && !rd.ready
-          ? '<div class="ut-recommend">아직 이 단원 어휘를 ' + rd.found + '/' + rd.total + '개 익혔어요. 어휘를 충분히 익힌 뒤 응시하는 것을 권장해요.</div>' : ''; })()
     +   (done > 0 ? '<div class="ut-resume">' + done + '번까지 풀었습니다. 이어서 풉니다.</div>' : '')
     +   '<button class="ut-btn" onclick="utShowQ()">' + (done > 0 ? '이어서 풀기' : '시작') + '</button>'
     + '</div></div>');
@@ -10024,13 +10023,12 @@ function utDecorateArea(){
     var after = cells[Math.min(u * 5, cells.length) - 1]; if(!after) continue;
     var info = utInfo(u), ok = utEligible(u), open = info && info.open_id;
     var el = document.createElement('div');
-    var done = !open && info && info.last != null, rd = utReadiness(u);
-    el.className = 'area-cell ut-cell' + (open ? ' open ok' : done ? ' done ok' : ok ? (rd.ready ? ' ok ready' : rd.total ? ' ok notyet' : ' ok') : ' off');
+    var done = !open && info && info.last != null, np = utPassedCount(u);
+    el.className = 'area-cell ut-cell' + (open ? ' open ok' : done ? ' done ok' : ok ? ' ok' : ' off');
     el.innerHTML = '<div class="ut-cell-t">평가</div><div class="ut-cell-s">'
-      + (open ? '이어 풀기' : done ? info.last + '점' : ok ? (rd.ready ? '준비 완료' : rd.total ? rd.found + '/' + rd.total : '응시하기') : u + '단원') + '</div>';
+      + (open ? '이어 풀기' : done ? info.last + '점' : ok ? '응시하기' : utStarted(u) ? np + '/5 통과' : u + '단원') + '</div>';
     el.title = u + '단원 평가 (' + ((u - 1) * 5 + 1) + '~' + (u * 5) + '회차)'
-      + (open ? '' : !ok ? ' — 5회차를 모두 훈련하면 볼 수 있어요'
-        : !rd.total ? '' : rd.ready ? ' — 응시 준비 완료' : ' — 어휘를 충분히 익힌 뒤 응시하세요 (내 어휘 ' + rd.found + '/' + rd.total + ')');
+      + (open || ok ? '' : ' — 5회차를 모두 통과하면 볼 수 있어요 (회차 어휘 ' + PASS_PCT + '% 이상)');
     if(ok || open){ (function(uu){ el.addEventListener('click', function(){ utOpen(uu); }); })(u); }
     after.insertAdjacentElement('afterend', el);
   }
@@ -10039,7 +10037,7 @@ function utDecorateArea(){
 function utAfterResult(){
   var b0 = document.getElementById('r-home-btn');
   if(b0){ b0.textContent = '나의 훈사전 보기 →'; b0.onclick = function(){ goArea(); }; }
-  // 단원평가는 자동으로 띄우지 않음 — 훈사전 '평가' 칸에서 준비 정도를 보고 응시 (대표님 2026-10-17)
+  // 단원평가는 자동으로 띄우지 않음 — 5회차를 모두 통과하면 훈사전 '평가' 칸에서 응시 (대표님 2026-10-17)
 }
 // 첫 화면 — 끝내지 않은 평가가 있으면 먼저 이어 풀기
 function utCheckOpenOnHome(){
@@ -10132,7 +10130,7 @@ function goArea(){
   } else {
     master.className = 'area-master';
     icon.textContent = '';
-    msg.innerHTML = '※ 회차당 가족 어휘 ' + PASS_MIN + '개 이상 수집 시 패스 (' + PASS_MIN + '개 미만 회차는 모두 찾으면 패스)';
+    msg.innerHTML = '※ 회차 가족 어휘의 ' + PASS_PCT + '% 이상을 모으면 통과 · 5회차를 모두 통과하면 단원평가가 열려요';
   }
   showPage('area');
   // 5회차마다 '평가' 칸 — 상태를 아직 모르면 받아 온 뒤 다시 그림

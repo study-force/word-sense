@@ -7,7 +7,7 @@
 //
 // 입력 (POST JSON): { action, ticket, ... }
 //   status  { level, area_id }                         → 단원별 응시 결과·훈련한 회차·진행 중 평가
-//   start   { level, area_id, unit, items[25] }        → 진행 중이 있으면 그것을, 없으면 새로 (5회차 모두 훈련해야)
+//   start   { level, area_id, unit, items[25] }        → 진행 중이 있으면 그것을, 없으면 새로 (5회차 모두 통과해야)
 //   hint    { attempt_id, ord }                        → '한자 보고 풀기' 누름 저장
 //   answer  { attempt_id, ord, choice_idx, ms }        → 결과는 서버가 판정
 //   finish  { attempt_id }                             → 25문항 다 답했으면 점수 계산·완료
@@ -59,6 +59,11 @@ Deno.serve(async (req) => {
         .in('session_id', [...roundOf.keys()]).not('finished_at', 'is', null);
       return [...new Set((at || []).map((a: any) => roundOf.get(a.session_id)).filter(Boolean))].sort((x: any, y: any) => x - y);
     };
+    // 학생이 통과한 회차 번호 — 훈련한 회차 중 어휘의 60% 이상이 내 어휘 (훈사전과 같은 기준, 2026-10-17)
+    const passedRounds = async (level: string, areaId: number) => {
+      const { data } = await db.rpc('wordsense_area_progress', { p_member_no: member, p_area_id: areaId, p_level: level });
+      return ((data || []) as any[]).filter(p => p.trained && p.total > 0 && p.known * 10 >= p.total * 6).map(p => p.round);
+    };
     const loadAttempt = async (id: number) => {
       const { data: a } = await db.from('test_attempts').select('*').eq('id', id).eq('member_no', member).maybeSingle();
       if (!a) return null;
@@ -70,8 +75,9 @@ Deno.serve(async (req) => {
 
     if (b.action === 'status') {
       const level = b.level === '중등' ? '중등' : '초등', areaId = Number(b.area_id);
-      const [rounds, { data: atts }] = await Promise.all([
+      const [rounds, passed, { data: atts }] = await Promise.all([
         trainedRounds(level, areaId),
+        passedRounds(level, areaId),
         db.from('test_attempts').select('id, unit, status, score, started_at, finished_at')
           .eq('member_no', member).eq('level', level).eq('area_id', areaId).order('started_at'),
       ]);
@@ -84,7 +90,7 @@ Deno.serve(async (req) => {
         u.last = a.score;
         u.best = Math.max(u.best ?? 0, a.score ?? 0);
       }
-      return ok({ trained_rounds: rounds, units: Object.values(units) }, cors);
+      return ok({ trained_rounds: rounds, passed_rounds: passed, units: Object.values(units) }, cors);
     }
 
     if (b.action === 'start') {
@@ -94,11 +100,11 @@ Deno.serve(async (req) => {
       const { data: open } = await db.from('test_attempts').select('id').eq('member_no', member)
         .eq('level', level).eq('area_id', areaId).eq('unit', unit).eq('status', 'in_progress').maybeSingle();
       if (open) return ok({ resumed: true, attempt: await loadAttempt(open.id) }, cors);
-      // 응시 자격: 단원 5회차 모두 훈련
-      const rounds = await trainedRounds(level, areaId);
+      // 응시 자격: 단원 5회차 모두 통과 (어휘 60% 이상, 2026-10-17)
+      const rounds = await passedRounds(level, areaId);
       const missing = [];
       for (let r = from; r <= to; r++) if (!rounds.includes(r)) missing.push(r);
-      if (missing.length) return err(409, `아직 훈련하지 않은 회차가 있어요: ${missing.join(', ')}회`, cors, 'not_eligible');
+      if (missing.length) return err(409, `아직 통과하지 않은 회차가 있어요: ${missing.join(', ')}회`, cors, 'not_eligible');
       const items = Array.isArray(b.items) ? b.items.slice(0, N_ITEMS) : [];
       if (items.length < 1) return err(400, '문항이 없습니다', cors);
       const { data: a, error: e1 } = await db.from('test_attempts').insert({
