@@ -122,7 +122,8 @@
   table.pc-ut tr.none td{color:#c2c8cf}
   .pc-bar{height:11px;background:#eef0f2;border-radius:6px;overflow:hidden}
   .pc-bar i{display:block;height:100%;border-radius:6px}
-  .pc-sc{font-weight:600;font-size:15px}
+  .pc-sc{font-weight:600;font-size:15px;white-space:nowrap}
+  .pc-sc small{font-size:11px;font-weight:500;margin-left:1px}
   .pc-stack{display:flex;height:22px;border-radius:5px;overflow:hidden;background:#eef0f2}
   .pc-stack i{display:block;height:100%}
   .pc-leg{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12.5px;color:#6b727b;margin:8px 0 20px}
@@ -312,12 +313,12 @@ function renderTests(){
   const kpi=(l,v,u,c)=>'<div class="pc-kpi"><div class="l">'+l+'</div><div class="v"'+(c?' style="color:'+c+'"':'')+'>'+v+'<small>'+u+'</small></div></div>';
   let h='<div class="pc-kpis">'+kpi("점검한 구간",lists.length," / 10")+kpi("평균 점수",avg,"점",BLUE)+kpi("최고 점수",top,"점",BLUE)+'</div>';
   h+='<div class="pc-sec">구간별 점수</div>';
-  h+='<table class="pc-ut"><tr><th style="width:78px;text-align:left;padding-left:8px">구간</th><th>최고 점수</th><th style="width:44px"></th><th style="width:72px">점검 횟수</th><th style="width:92px">날짜</th></tr>';
+  h+='<table class="pc-ut"><tr><th style="width:78px;text-align:left;padding-left:8px">구간</th><th>최고 점수</th><th style="width:52px"></th><th style="width:72px">점검 횟수</th><th style="width:92px">날짜</th></tr>';
   for(let u=1;u<=10;u++){ const l=us[u], p2=n=>String(n).padStart(2,"0"), rr=p2((u-1)*5+1)+"~"+p2(u*5);   // 01~05회차
     if(!l){ h+='<tr class="none"><td class="u" style="color:#c2c8cf">'+rr+'회차</td><td><div class="pc-bar"></div></td><td>–</td><td class="m">–</td><td class="m">–</td></tr>'; continue; }
     const b=bestOf(l), sc=b.score;
     h+='<tr><td class="u">'+rr+'회차</td><td><div class="pc-bar"><i style="width:'+Math.max(sc,2)+'%;background:'+BLUE+'"></i></div></td>'
-      +'<td class="pc-sc" style="color:'+BLUE+'">'+sc+'</td><td class="m">'+l.length+'회</td><td class="m">'+(b.at||"")+'</td></tr>'; }
+      +'<td class="pc-sc" style="color:'+BLUE+'">'+sc+'<small>점</small></td><td class="m">'+l.length+'회</td><td class="m">'+(b.at||"")+'</td></tr>'; }
   h+='</table>';
   const cnt={known:0,infer:0,wrong:0}; bests.forEach(t=>{ cnt.known+=t.n_known||0; cnt.infer+=t.n_hanja||0; cnt.wrong+=(t.n_hanja_wrong||0)+(t.n_wrong||0); });
   const tot=RES.reduce((a,[k])=>a+cnt[k],0);
