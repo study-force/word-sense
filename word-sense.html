@@ -3082,11 +3082,11 @@ body.pmode .ut-info, body.pmode .ut-rules { font-size: 16px; } body.pmode .ut-hi
 .area-cell.ut-cell .ut-cell-t { font-size: 14px; font-weight: 600; letter-spacing: 0.04em; }
 .area-cell.ut-cell .ut-cell-s { font-size: 12px; margin-top: 3px; font-variant-numeric: tabular-nums; }
 .area-grid .area-cell.ut-cell.ok { cursor: pointer; }
-/* 점검하기 — 남색 버튼 ('다음' 버튼과 같은 톤) */
-.area-grid .area-cell.ut-cell.ok:not(.done):not(.open) { background: #1A1F30 !important; border-color: #1A1F30 !important; color: #FFFFFF !important; box-shadow: 0 2px 8px rgba(26,31,48,0.25); }
-.area-grid .area-cell.ut-cell.ok:not(.done):not(.open):hover { background: #2E3548 !important; }
-/* 점검 끝(점수) — 흰 바탕 + 남색 */
-.area-grid .area-cell.ut-cell.done { background: #FFFFFF !important; border: 1.5px solid #1A1F30 !important; color: #1A1F30 !important; }
+/* 점검하기 — 초록 버튼 (대표님 2026-10-18, 검정 대신) */
+.area-grid .area-cell.ut-cell.ok:not(.done):not(.open) { background: #2FA572 !important; border-color: #2FA572 !important; color: #FFFFFF !important; box-shadow: 0 2px 8px rgba(47,165,114,0.30); }
+.area-grid .area-cell.ut-cell.ok:not(.done):not(.open):hover { background: #28935F !important; }
+/* 점검 끝(점수) — 흰 바탕 + 초록 */
+.area-grid .area-cell.ut-cell.done { background: #FFFFFF !important; border: 1.5px solid #2FA572 !important; color: #23865A !important; }
 .area-grid .area-cell.ut-cell.done .ut-cell-s { font-size: 15px; font-weight: 700; }
 .area-grid .area-cell.ut-cell.done:hover { background: #F2F4F8 !important; }
 .area-grid .area-cell.ut-cell.off { background: #F6F7FA !important; border-color: #E3E7EE !important; color: #9AA1AE !important; }
@@ -3254,7 +3254,7 @@ body.retry-mode .retry-tag { display: inline-block; }
 .area-legend {
   display: flex; align-items: center; justify-content: center;
   gap: 22px;
-  padding: 4px 4px 2px;
+  padding: 14px 4px 0;   /* 색 안내 조금 아래로 (2026-10-18) */
   font-size: 11px; color: #5A6178;
   letter-spacing: 0.04em;
   flex-shrink: 0;
@@ -3290,7 +3290,7 @@ body.retry-mode .retry-tag { display: inline-block; }
 
 .area-master {
   display: flex; align-items: center; justify-content: center; gap: 14px;   /* 설명 가운데 (2026-10-18) */
-  padding: 8px 6px;
+  padding: 0 6px 8px;   /* 색 안내와 간격 줄임 */
   background: transparent; border: none;
   border-radius: 0;
   box-shadow: none;
