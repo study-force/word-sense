@@ -3131,7 +3131,7 @@ body.pmode .area-cell .cell-play { width: 46px; height: 46px; }
 }
 .area-cell.locked .cell-char { color: rgba(20,25,40,0.26); }
 
-/* 통과 = 초록 · 진행 중(80% 미만) = 진한 회색 — 빨강은 좌절감을 줘서 뺌 (대표님 2026-10-17) */
+/* 통과 = 영역 색(goArea가 --pass-c 지정, 기본 초록) · 진행 중(80% 미만) = 진한 회색 — 빨강은 좌절감을 줘서 뺌 (대표님 2026-10-17·18) */
 :root { --pass-c: #2FA572; --pass-rgb: 47,165,114; --prog-c: #5A616B; --prog-rgb: 90,97,107; }
 /* ── 과거 통과 — 초록 보더 + 부드러운 글로우 ──── */
 .area-cell.pass:not(.current) {
@@ -9676,6 +9676,13 @@ function goArea(){
   // area 페이지 진입 시 내일의 한자 splash는 닫혀있어야 — 재진입 시 잔존 방지
   var tom = document.getElementById('tomorrow-splash');
   if(tom) tom.classList.remove('on');
+  // 통과 색 = 영역 색 (대표님 2026-10-18 — 선생님 결과지 1쪽과 같게). 과학은 밝은 바탕에서 보이게 진하게
+  var PASS_BY_AREA = { biology:'#5EBE7E', society:'#A87BD6', history:'#E5C257', science:'#8FA0BD', culture:'#E889A8', economy:'#7BB6E6' };
+  var areaPage = document.getElementById('area'), pc = PASS_BY_AREA[(typeof TARGET_AREA_SLUG !== 'undefined' && TARGET_AREA_SLUG) || 'biology'];
+  if(areaPage && pc){
+    areaPage.style.setProperty('--pass-c', pc);
+    areaPage.style.setProperty('--pass-rgb', [1, 3, 5].map(function(i){ return parseInt(pc.substr(i, 2), 16); }).join(','));
+  }
 
   var prog = AREA_PROGRESS || buildAreaProgress();
   var passes = prog.filter(isPass).length;
