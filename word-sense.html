@@ -10007,6 +10007,12 @@ function utAfterResult(){
 }
 // 첫 화면 — 끝내지 않은 평가가 있으면 먼저 이어 풀기
 function utCheckOpenOnHome(){
+  // 어드민 회차 테스트의 '평가' 버튼 → ?unittest=1 : 응시 자격 확인 없이 그 단원 평가를 바로 엶 (테스트 접속 전용, 처음 한 번)
+  if(!utIsServer() && !window.__UT_DIRECT_DONE && new URLSearchParams(location.search).get('unittest') === '1'){
+    window.__UT_DIRECT_DONE = true;
+    utFetchStatus().then(function(){ utOpen(utUnitOf((SESSION && SESSION.id) || 1)); });
+    return;
+  }
   var b0 = document.querySelector('#home .btn-start');
   if(b0){ b0.textContent = '시작하기'; b0.onclick = function(){ goCharIntro(); }; }
   utFetchStatus().then(function(){
