@@ -74,7 +74,6 @@ window.addEventListener('load', function(){ document.querySelectorAll('link[data
 }
 
 /* 한자 명조 적용 — utility class */
-.han { font-family: var(--font-han); }
 
 /* ─── 페이지 단위 컨셉 색상 ─────────────────────
    각 단계 페이지가 --stage-accent 변수를 정의하면, 그 페이지 안의 모든 요소가
@@ -262,11 +261,6 @@ button { font-family: inherit; color: inherit; }
 }
 .tomorrow-splash .ts-next:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(37, 47, 102, 0.40); }
 .tomorrow-splash .ts-next:active { transform: translateY(0); }
-.tomorrow-splash .ts-next-arrow {
-  font-weight: 500;
-  transition: transform .2s ease;
-}
-.tomorrow-splash .ts-next:hover .ts-next-arrow { transform: translateX(2px); }
 
 /* ── 탑바 — 자리만 차지하는 invisible 헤더 제거, stage-nav의 positioning context 역할만 유지 ── */
 .topbar {
@@ -330,21 +324,6 @@ button { font-family: inherit; color: inherit; }
 
 /* 활성 단계 — 배지 전체가 "불이 들어온" 상태
    단계별 컨셉 색상: 인출=녹색 / 확장=보라 / 강화=파랑 */
-.stage-nav .sn-step.is-active {
-  background: linear-gradient(180deg, rgba(var(--sn-rgb), 0.20) 0%, rgba(var(--sn-rgb), 0.12) 100%);
-  border-color: var(--sn-color);
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.18),
-    inset 0 1px 0 rgba(255,255,255,0.18),
-    0 0 10px rgba(var(--sn-rgb), 0.30),
-    0 0 22px rgba(var(--sn-rgb), 0.18);
-  animation: snBadgePulse 2.4s ease-in-out infinite;
-}
-.stage-nav .sn-step.is-active .sn-label {
-  color: var(--sn-color);
-  font-weight: 700;
-  text-shadow: 0 0 8px rgba(var(--sn-rgb), 0.45);
-}
 /* data-stage(active stage)에 따라 컨셉 색상 변수 결정 */
 .stage-nav[data-stage="인출"] { --sn-color: #2FA070; --sn-rgb: 69,194,138; }
 .stage-nav[data-stage="확장"] { --sn-color: #9B6CD9; --sn-rgb: 155,108,217; }
@@ -389,11 +368,6 @@ button { font-family: inherit; color: inherit; }
 
 /* ── 캡슐 색상 (3D 글로시 그라디언트) ── */
 .c-green   { background: radial-gradient(circle at 32% 28%, #A8EDC9 0%, #5BC893 55%, #2E9E6B 100%); }
-.c-peach   { background: radial-gradient(circle at 32% 28%, #FFD2B0 0%, #FFB48A 55%, #E08A5A 100%); }
-.c-sky     { background: radial-gradient(circle at 32% 28%, #B8DCF6 0%, #7FB6F0 55%, #4080C0 100%); }
-.c-lav     { background: radial-gradient(circle at 32% 28%, #DCC8F6 0%, #B79CE9 55%, #8060B0 100%); }
-.c-rose    { background: radial-gradient(circle at 32% 28%, #F0B8B8 0%, #D88080 55%, #A04040 100%); }
-.c-yel     { background: radial-gradient(circle at 32% 28%, #FFDF98 0%, #E8B848 55%, #B08020 100%); }
 
 /* 글로시 캡슐 공통 효과 (.circle-cap, .game-cap 모두 적용) */
 .circle-cap, .game-cap {
@@ -758,21 +732,6 @@ button { font-family: inherit; color: inherit; }
   /* splash 한자처럼 transform만 transition — morph 후 작은 자리에 머무름 */
   transition: transform 1s cubic-bezier(.4,0,.2,1);
   will-change: transform;
-}
-#charintro .ci-splash-hint {
-  position: absolute;
-  bottom: 50px;
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 12px; font-weight: 500;
-  color: rgba(0,0,0,0.42);
-  letter-spacing: 0.20em;
-  opacity: 0;
-  animation: ciSplashHintIn 1.2s ease 1.0s forwards, ciSplashHintPulse 2.2s ease-in-out 2.2s infinite;
-  transition: opacity .25s ease;
-}
-#charintro .ci-splash.dismissed .ci-splash-hint {
-  opacity: 0;
-  animation: none;
 }
 
 @keyframes ciSplashCharIn {
@@ -1724,24 +1683,6 @@ body.recall2-mode .btn-done .bd-l2 { display: inline; }
   color: #FFFFFF;
   padding: 0 24px;
 }
-.tts-title {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 42px; font-weight: 700;
-  letter-spacing: 0.04em;
-  margin-bottom: 14px;
-  background: linear-gradient(135deg, #FFE48F 0%, #FFD659 60%, #FFA500 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  text-shadow: 0 2px 18px rgba(255,214,89,0.18);
-}
-.tts-sub {
-  font-size: 14px;
-  color: rgba(255,255,255,0.55);
-  letter-spacing: 0.06em;
-  margin-bottom: 56px;
-  font-weight: 400;
-}
 .tts-hint {
   font-size: 16px; font-weight: 600;
   color: rgba(255,255,255,0.78);
@@ -2165,30 +2106,9 @@ body.mission-mode #game .stage-nav {
   padding: 20px 60px 90px; gap: 0; overflow: hidden;
 }
 /* 지시어(intro-banner)와 패널(qcard)은 무게중심을 모아 한 덩어리처럼 — 좁은 간격 */
-.qpage-body .intro-banner { margin-bottom: 12px; }
 /* 진행률 dot은 패널 하단의 페이지네이션처럼 — 충분한 여백으로 분리 */
-.qpage-body .progress-row { margin-top: 26px; }
-.intro-banner {
-  width: 100%; padding: 14px 22px;
-  border-radius: 10px;
-  font-size: 15px; font-weight: 400;
-  text-align: center;
-  line-height: 1.6;
-  flex-shrink: 0;
-  background: transparent;
-  border: none;
-  color: #FFFFFF;
-  position: relative;
-}
-.intro-banner::before { content: none; }
-.intro-banner strong { color: var(--stage-accent-deep, var(--green-deep)); font-weight: 700; }
 
 /* 진행 막대 (dot bar) */
-.progress-row {
-  display: flex; align-items: center; gap: 10px;
-  flex-shrink: 0;
-  justify-content: center;
-}
 .dot {
   width: 22px; height: 4px; border-radius: 2px;
   background: var(--border); transition: all .3s;
@@ -2196,11 +2116,6 @@ body.mission-mode #game .stage-nav {
 .dot.done {
   background: var(--stage-accent, var(--green));
   box-shadow: 0 0 6px rgba(var(--stage-accent-rgb), 0.30);
-}
-.dot.curr {
-  background: var(--stage-accent, var(--green));
-  width: 32px;
-  animation: pulseBar 1.2s ease-in-out infinite;
 }
 @keyframes pulseBar {
   0%, 100% { box-shadow: 0 0 6px rgba(var(--stage-accent-rgb), 0.30); opacity: 0.7; }
@@ -2379,15 +2294,6 @@ body.mission-mode #game .stage-nav {
 }
 .ans-bubble.fq-dual-pass::after {
   border-top-color: var(--stage-accent, #45C28A);
-}
-.ans-bubble.fq-dual-pass .fq-dual-mark {
-  display: inline-block;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  margin-right: 6px;
-  padding: 1px 8px;
-  border-radius: 100px;
-  background: rgba(255,255,255,0.22);
 }
 .next-btn {
   padding: 11px 30px; border-radius: 100px;
@@ -2646,7 +2552,6 @@ body.mission-mode #game .stage-nav {
   flex-direction: column;
   gap: 22px;
 }
-/* .learn-counter — 제거됨 (좌·우 덱 숫자로 진행 상태 표현) */
 
 /* 메인 카드 — 검정 캔버스 위 떠 있는 흰 카드 (탐구 훈련) */
 .learn-card {
@@ -2689,7 +2594,6 @@ body.mission-mode #game .stage-nav {
 
 /* 카드 내부 — 흰 카드(.learn-card) 안의 탐구 퀴즈 콘텐츠
    inferQ의 .iq-head + .choices-col을 그대로 재활용 */
-/* .lc-corner-r — 제거됨 (카드 코너 인덱스 표기 삭제) */
 /* 카드 안에서 .iq-head 사이즈를 살짝 컴팩트하게 (가로 폭이 inferQ보다 좁음) */
 .learn-card .iq-head { padding: 32px 18px; margin: 6px 0 12px; }   /* 18/14 → 32/18 (확대 비율 유지) */
 .learn-card .choices-col { gap: 7px; }
@@ -3035,7 +2939,6 @@ body.mission-mode #game .stage-nav {
 
 /* 점수판은 항상 진한 배경(전구 무드) — 다크 캔버스에서는 그림자만 좀 더 깊게.
    초록 프레임 글로우는 유지 */
-body.dark-canvas .score-chip,
 .score-chip.on-dark {
   box-shadow:
     0 8px 26px rgba(0,0,0,0.55),
@@ -3047,34 +2950,6 @@ body.dark-canvas .score-chip,
 }
 
 /* 환원 — "강화로 →" 버튼 (게임 화면 위에 떠 있음) */
-.recap-next-btn {
-  position: absolute;
-  right: 28px; bottom: 26px;
-  z-index: 10;
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 11px 22px;
-  background: linear-gradient(135deg, #9B6CD9, #7B4FCB);
-  border: 1px solid rgba(216,184,247,0.5);
-  border-radius: 100px;
-  color: #FFFFFF;
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 14px; font-weight: 600;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-  box-shadow:
-    0 0 0 4px rgba(155,108,217,0.18),
-    0 8px 22px rgba(155,108,217,0.45),
-    0 2px 6px rgba(0,0,0,0.30);
-  animation: recapBtnIn .42s cubic-bezier(.2,1,.3,1) both;
-  transition: transform .18s, box-shadow .18s;
-}
-.recap-next-btn:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    0 0 0 5px rgba(155,108,217,0.22),
-    0 12px 28px rgba(155,108,217,0.55),
-    0 2px 6px rgba(0,0,0,0.30);
-}
 @keyframes recapBtnIn {
   0%   { opacity: 0; transform: translateY(12px) scale(0.92); }
   60%  { opacity: 1; }
@@ -3330,53 +3205,23 @@ body.retry-mode .retry-tag { display: inline-block; }
 /* 셀 내용은 호버 시 페이드 — 라벨이 가운데서 잘 보이게 */
 .area-cell:not(.locked) .cell-char,
 .area-cell:not(.locked) .cell-hun,
-.area-cell:not(.locked) .cell-frac,
-.area-cell:not(.locked) .cell-stars,
-.area-cell:not(.locked) .cell-perfect {
+.area-cell:not(.locked) .cell-frac {
   transition: opacity .18s;
 }
 .area-cell:not(.locked):hover .cell-char,
 .area-cell:not(.locked):hover .cell-hun,
-.area-cell:not(.locked):hover .cell-frac,
-.area-cell:not(.locked):hover .cell-stars,
-.area-cell:not(.locked):hover .cell-perfect {
+.area-cell:not(.locked):hover .cell-frac {
   opacity: 0.18;
 }
 
 /* ── 별 표시 — 통과 카드(파랑) 하단에 채운 별/빈 별 ──────────────
    결과 페이지의 별 시스템과 동일한 규칙(calcBadge): 어휘 10개당 별 1개, 최대 5개. */
-.area-cell .cell-stars {
-  display: flex; gap: 1px;
-  font-size: 11px; line-height: 1;
-  letter-spacing: 0.04em;
-}
 /* 흰 배경(과거 통과)에서 노랑이 너무 옅어 가독성이 떨어지므로
    기본 채운 별은 #E8B848(c-yel 중간 톤)로 진하게.
    오늘 통과(불투명 파랑 배경)에서는 #FFE48F로 밝게 유지 — 배경과의 대비 위해. */
-.area-cell .cell-stars .st-fill {
-  color: #E8B848;
-  text-shadow: 0 0 6px rgba(232,184,72,0.42);
-}
-.area-cell .cell-stars .st-empty {
-  color: rgba(20,25,40,0.22);
-}
-.area-cell.current.pass .cell-stars .st-fill  { color: #FFE48F; }
-.area-cell.current.pass .cell-stars .st-empty { color: rgba(255,255,255,0.40); }
 
 /* ── PERFECT 뱃지 — 모든 어휘 발견 시 별 자리 대신 표시 ─────────
    골드 그라디언트 + 살짝 떠오른 듯한 inset highlight. */
-.area-cell .cell-perfect {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 9px; font-weight: 800; letter-spacing: 0.10em;
-  color: #8C6212;
-  background: linear-gradient(180deg, #FFE89B 0%, #FFD659 100%);
-  padding: 2px 8px;
-  border-radius: 100px;
-  box-shadow:
-    0 1px 3px rgba(140,98,18,0.18),
-    inset 0 1px 0 rgba(255,255,255,0.55);
-  line-height: 1;
-}
 /* 통과(과거+오늘) hover — 초록 글로우 */
 .area-cell.pass:hover {
   transform: translateY(-2px);
@@ -3613,24 +3458,6 @@ body[data-page="stats"] .r-topbar-meta.global-topbar-meta .r-tm-char { display: 
   /* 등장 시 위로 7px 추가 이동 — 별이 회차 메타에 살짝 더 가까이 */
   transform: translateX(-50%) translateY(-7px);
 }
-.rtb-stars {
-  display: none;   /* 결과 화면 별 삭제 — 점수판의 획득 N/T로 정확히 (대표님 2026-10-16) */
-  gap: 4px;
-}
-.rtb-star {
-  width: 28px; height: 28px;                 /* 22 → 28 (더 잘 보이게) */
-  display: block;
-  fill: #C5CBD7;                             /* 회색 별 — 약간 더 진해서 노랑과 대비 */
-  stroke: #C5CBD7;                           /* 빈별도 보더 일관 (외곽 또렷) */
-  stroke-width: 1;
-  transition: fill .3s ease, transform .3s ease;
-}
-.rtb-star.filled {
-  fill: #FFB300;                             /* 진한 황금 — 다크/라이트 양쪽에서 잘 보임 */
-  stroke: #B8860B;                           /* 황토색 보더 (노랑보다 짙은 톤) — 글로우 대신 윤곽으로 강조 */
-  stroke-width: 1.2;
-  /* 글로우 제거 — 무광 차분한 별로 */
-}
 /* 점수 (44/44) — 점수판 뒤에 가려져 의미 X. 숨김. */
 .rtb-score { display: none; }
 /* 별 아래 안내 문구 — 점수판과 겹쳐 숨김 (대표님 2026-10-14). JS는 그대로 채우지만 표시 X */
@@ -3644,7 +3471,6 @@ body[data-page="stats"] .r-topbar-meta.global-topbar-meta .r-tm-char { display: 
 }
 
 /* PERFECT 변형 — 별 숨기고 황금 배지로. 메시지도 숨김 (점수판 뒤로 가려져 의미 X). */
-.r-tier-badge.is-perfect .rtb-stars { display: none; }
 .r-tier-badge.is-perfect .rtb-msg   { display: none; }
 .rtb-perfect {
   display: none;                             /* 기본 숨김, .is-perfect에서 표시 */
@@ -3807,16 +3633,6 @@ body[data-page="stats"] .r-topbar-meta.global-topbar-meta .r-tm-char { display: 
   animation: ciFadeUp .7s cubic-bezier(.2,1,.3,1) .12s forwards;
 }
 /* 관심 1위 한 줄 메시지 — 도넛 아래 */
-.st-donut-lead {
-  text-align: center;
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--st-text);
-  margin-top: -30px;   /* 도넛 프레임(440) 하단 여백 안으로 당겨 그래프에 더 가깝게 */
-  opacity: 0;
-  animation: ciFadeUp .6s cubic-bezier(.2,1,.3,1) .55s forwards;
-}
-.st-donut-lead b { font-weight: 800; }
 
 /* ── 등급별 어휘 습득률 — 세로 막대(앱: 다크 + 입체감) ── */
 .gc-title { text-align: center; font-size: 20px; font-weight: 600; color: var(--st-text-deep); margin: 0 0 4px; letter-spacing: .02em; }
@@ -3835,44 +3651,11 @@ body[data-page="stats"] .r-topbar-meta.global-topbar-meta .r-tm-char { display: 
 .gc-legend .gl-cap { flex-basis: 100%; text-align: center; font-size: 13px; color: var(--st-dim); opacity: .75; font-weight: 600; margin-bottom: 4px; letter-spacing: .02em; }
 .gc-legend .gl-item { font-size: 13.5px; color: var(--st-dim); letter-spacing: .01em; }
 .gc-legend .gl-item b { font-weight: 600; color: var(--st-text-deep); margin-right: 3px; }
-.gc-fill.gc-hi { background: #36d79b; } .gc-pct.gc-hi { color: #4fe0ab; }
-.gc-fill.gc-mid { background: #45b98a; } .gc-pct.gc-mid { color: #6fcaa6; }
-.gc-fill.gc-lo { background: #5f9a8c; } .gc-pct.gc-lo { color: #95bfb2; }
-.st-headline-label {
-  font-size: 10px; font-weight: 700;
-  color: var(--st-dim-strong);
-  letter-spacing: 0.32em;
-  text-indent: 0.32em;
-  text-transform: uppercase;
-  margin-bottom: 14px;
-}
 
 /* 도넛 컨테이너 — SVG 와 중앙 텍스트를 겹치기 위해 relative
    바깥 라벨 공간 확보 위해 내부는 480x480 좌표계 유지 (JS 라벨 좌표가 480 기준).
    좌우 분할 레이아웃에 맞춰 transform: scale 로 시각적으로 440 폭 축소.
    외부 박스(.st-donut-frame)가 440x440 자리만 차지. */
-.st-donut-frame {
-  width: 440px; height: 440px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.st-donut-wrap {
-  position: relative;
-  width: 480px; height: 480px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform: scale(0.9167); /* 440/480 */
-  transform-origin: center center;
-}
-.st-donut-svg {
-  width: 480px; height: 480px;
-  /* 12시 방향에서 시작하도록 -90도 회전 */
-  transform: rotate(-90deg);
-  display: block;
-  overflow: visible;
-}
 .st-donut-track {
   fill: none;
   stroke: var(--st-track);
@@ -3906,52 +3689,8 @@ body[data-page="stats"] .r-topbar-meta.global-topbar-meta .r-tm-char { display: 
 }
 .st-donut-label.empty .st-lbl-name { color: var(--st-dim-soft); }
 /* 가이드 점 — segment 색과 동일 */
-.st-donut-dot {
-  position: absolute;
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  opacity: 0;
-  animation: ciFadeUp .55s ease forwards;
-}
-.st-donut-dot.empty { opacity: 0.45 !important; }
 
 /* 도넛 중앙 — 3줄 (라벨 / 큰 숫자 / 총수 보조) */
-.st-donut-center {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  gap: 6px;
-}
-.st-donut-caplabel {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 11.5px; font-weight: 600;
-  color: rgba(230, 235, 245, 0.65);
-  letter-spacing: 0.08em;
-  line-height: 1;
-}
-.st-donut-num {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 64px; font-weight: 800;
-  color: #FFFFFF;
-  letter-spacing: -0.035em;
-  line-height: 0.92;
-  font-feature-settings: 'tnum' on;
-}
-.st-donut-subtotal {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 12.5px; font-weight: 600;
-  color: rgba(230, 235, 245, 0.55);
-  letter-spacing: 0.04em;
-  line-height: 1;
-  font-feature-settings: 'tnum' on;
-  margin-top: 17px; /* "1,230"과 "총 …개 중" 사이 간격 추가 확대 (기본 gap:6px + 17px) */
-}
 
 /* ── 영역별 비교 — 세로 1열 × 6행 (우측 블록), 한 줄 라인 형식 ── */
 .st-list {
@@ -4127,12 +3866,6 @@ body[data-page="stats"] .r-topbar-meta.global-topbar-meta .r-tm-char { display: 
   background: linear-gradient(180deg, #323855, #1F2438);
   transform: translateY(-2px);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -1px 0 rgba(0,0,0,0.45), 0 10px 24px rgba(0,0,0,0.65);
-}
-.st-finish-btn .st-finish-x {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-  stroke: currentColor;
 }
 
 /* 임시 — 홈 화면의 통계 진입 (개발용, 추후 제거) */
@@ -4339,25 +4072,8 @@ body.pmode .r-seg button { font-size: 16px; padding: 8px 18px; }
   margin-bottom: 4px;
 }
 /* 랭킹 카드 타이틀 — 솔리드 컬러 라벨 + 흰색 글자. 검정 카드 배경 위에서
-   가장 명확히 보이는 형태. 단순 텍스트 색만으론 약해서 라벨 형태로 회귀. */
-.r-rank-col-tag {
-  display: inline-flex; align-items: center;
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 13.5px; font-weight: 600;
-  letter-spacing: 0.04em;
-  color: #FFFFFF;
-  padding: 5px 13px;
-  border-radius: 6px;
-  border: none;
-  white-space: nowrap;
-}
-.r-rank-col-tag.tag-retr   { background: #45C28A; }
-.r-rank-col-tag.tag-combo  { background: #9B6CD9; }
-.r-rank-col-tag.tag-master { background: #4FA3F0; }
-.r-rank-col-tag.tag-cumul  { background: #C8A030; }  /* 노랑은 흰 글자 가독성 떨어져 살짝 어두운 골드 */
+   가장 명확히 보이는 형태. 단순 텍스트 색만으론 약해서 라벨 형태로 회귀. */  /* 노랑은 흰 글자 가독성 떨어져 살짝 어두운 골드 */
 /* 각 카드의 점수 숫자 색을 배지 색과 통일 */
-.r-rank-card.col-retr   .r-rank-cnt { color: #5BC893; }
-.r-rank-card.col-combo  .r-rank-cnt { color: #C9A6F0; }
 .r-rank-card.col-master .r-rank-cnt { color: #4FA3F0; }
 .r-rank-card.col-cumul  .r-rank-cnt { color: #FFD659; }
 .r-rank-col-sub {
@@ -4399,7 +4115,6 @@ body.gold-classic .g-node.lit.is-known { background: linear-gradient(180deg, #FF
 .score-chip.dimmed { opacity: 0.45; filter: saturate(0.6); }
 /* 미션 화면 — 이미 아는 어휘 수 */
 .gm-foot b { font-weight: 600; color: #FFFFFF; }
-.gm-foot b.gm-known { color: #F2C94C; }
 .game-intro .gi-msg.gi-mission .gm-got { font-family: 'Noto Sans KR', sans-serif; font-size: 17px; font-weight: 500; color: rgba(255,255,255,0.7); margin: -6px 0 14px; }
 .game-intro .gi-msg.gi-mission .gm-got b { font-weight: 600; color: #F2C94C; }
 /* 결과 — 오늘 새로 내 어휘가 된 수 */
@@ -4413,14 +4128,11 @@ body.gold-classic .g-node.lit.is-known { background: linear-gradient(180deg, #FF
 .r-retry-btn:hover { background: #28935F; }
 .r-more-btn { font-family: inherit; font-size: 13px; color: #5A6178; background: none; border: none; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 2px 4px; }
 .r-known-line b { font-weight: 600; color: #2A3050; }
-.r-known-line .rk-new { font-weight: 600; color: #2E9E6B; }
 .r-trio-row.on .r-known-line { opacity: 1; }
 body.pmode .r-known-line { font-size: 17px; bottom: 0; }
 /* 내 행 — 오늘 기록 옆에 내 최고 기록(하루 합계 최고) */
 .r-rank-best { flex-shrink: 0; margin-left: 6px; font-size: 11px; font-weight: 600; color: #8A93A6; white-space: nowrap; }
 .r-rank-myrank .mr-num { font-size: 15px; }
-.r-rank-card.col-retr   .r-rank-myrank .mr-num { color: #5BC893; }
-.r-rank-card.col-combo  .r-rank-myrank .mr-num { color: #C9A6F0; }
 .r-rank-card.col-master .r-rank-myrank .mr-num { color: #4FA3F0; }
 .r-rank-card.col-cumul  .r-rank-myrank .mr-num { color: #FFD659; }
 /* 내 랭킹이 멀리 떨어져 있을 때 사이의 ⋯ 구분자 */
@@ -4466,7 +4178,6 @@ body.pmode .r-known-line { font-size: 17px; bottom: 0; }
 .r-rank-card .r-rank-list   .r-rank-ellipsis + .r-rank-row {
   border-top: 1px dashed rgba(255,255,255,0.12);
 }
-.r-rank-card .r-rank-row.cumul { cursor: default; }
 .r-rank-card .r-rank-row:hover { background: rgba(255,255,255,0.04); }
 /* 내 행 — 흰 배경 + 짙은 글자로 어두운 카드 안에서 가장 명확하게 부각 */
 .r-rank-card .r-rank-row.me {
@@ -4514,8 +4225,6 @@ body.pmode .r-rank-card .r-rank-areas { font-size: 13px; }
    점수는 카드별 brand 컬러를 흰 배경에 맞춰 한 톤 진하게 (영역별 정체성 유지). */
 .r-rank-card .r-rank-row.me .r-rank-name { color: #1A1F2E; font-weight: 700; }
 .r-rank-card .r-rank-row.me .r-rank-num  { color: #2A3050; }
-.r-rank-card.col-retr   .r-rank-row.me .r-rank-cnt { color: #2E9E6B; }
-.r-rank-card.col-combo  .r-rank-row.me .r-rank-cnt { color: #7C4FB8; }
 .r-rank-card.col-master .r-rank-row.me .r-rank-cnt { color: #2E7DC4; }
 .r-rank-card.col-cumul  .r-rank-row.me .r-rank-cnt { color: #8C6212; }
 .r-rank-card .r-rank-cnt {
@@ -4600,7 +4309,7 @@ body.theme-light {
   background-attachment: fixed !important;
 }
 /* 페이지·프레임·캔버스 모두 투명 — body 테마가 그대로 비치도록 */
-.frame, .canvas { background: transparent !important; }
+.canvas { background: transparent !important; }
 .page, #game, #home, #learn, #charintro, #result, #area { background: transparent !important; }
 /* 캔버스 외곽 보더/라운드/그림자 제거 — 전체 화면이 한 톤으로 이어지게 */
 #screen {
@@ -4637,15 +4346,6 @@ body.theme-light {
     0 2px 8px rgba(0,0,0,0.35) !important;
 }
 /* 오답 후 정답(silent) 노드 — recap 모드에서도 검정 유지 */
-body.recap-mode .g-node.lit.is-silent {
-  background: #1A1F30 !important;
-  color: rgba(255,255,255,0.82) !important;
-  border-color: rgba(255,255,255,0.20) !important;
-  box-shadow:
-    0 0 0 3px rgba(20,25,40,0.40),
-    0 2px 8px rgba(0,0,0,0.40),
-    inset 0 1px 0 rgba(255,255,255,0.06) !important;
-}
 /* 미점등 노드 — 흰 원은 거의 투명, 가운데 초록 점이 빛을 뿜는 형태 */
 .g-node:not(.lit) {
   width: 21px !important; height: 21px !important;       /* 정사각 — base 1.5x와 동기화 */
@@ -4683,7 +4383,7 @@ body.recap-mode .g-node.lit.is-silent {
 }
 
 /* 主字 캡슐 주변 배경 링 어둡게 */
-.home-stage-rings, .g-stage-rings { opacity: 0.25; }
+.home-stage-rings { opacity: 0.25; }
 
 /* 상단으로 옮긴 프롬프트 — 캔버스 위 가운데 배치 */
 /* 초록 캡슐 — 본문 배경과 같은 톤(#1B2230) + 초록 투명 그라디언트 (뒤 라인 가림) */
@@ -4723,31 +4423,12 @@ body.recap-mode .g-node.lit.is-silent {
 /* 확장: 도크를 완전히 제거(display:none) → 캔버스가 전체 높이. 고정 보정 없이 top:50%로 두면
    네트워크가 '그 스테이지의 자기 공간' 중앙에 자연스럽게 배치됨(하단 빈 공간/상단 뜸 없음).
    인출은 도크 위 공간의 중앙, 확장은 전체의 중앙 — 각자 균형. */
-body.recap-mode .game-bottom { display: none !important; }
 
 /* ─── 환원 모드 컨셉 컬러 — 확장(보라)으로 ─────────────────
    인출에서 맞힌 노드는 .from-learn 없이 그대로 녹색 유지.
    미점등 노드 / 중앙 캡슐 / 점수칩 / 프롬프트는 모두 보라로 전환. */
-body.recap-mode .score-chip {
-  --sc-rgb: 155,108,217;
-  --sc-rgb-tint: 79,163,240;
-}
 /* recap 모드도 단계별 컨셉 색(보라) 유지 — 색 강제 처리 제거. */
 /* 미점등 노드 — 보라 글로우 */
-body.recap-mode .g-node:not(.lit) {
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.20),
-    0 0 8px  rgba(155,108,217,0.45),
-    0 0 18px rgba(155,108,217,0.22) !important;
-  animation: nodeGlowViolet 2.6s ease-in-out infinite !important;
-}
-body.recap-mode .g-node:not(.lit)::before {
-  background: #C9A6F0 !important;
-  box-shadow:
-    0 0 4px  rgba(201,166,240,0.95),
-    0 0 10px rgba(155,108,217,0.85),
-    0 0 18px rgba(155,108,217,0.45) !important;
-}
 @keyframes nodeGlowViolet {
   0%, 100% {
     box-shadow:
@@ -4765,27 +4446,8 @@ body.recap-mode .g-node:not(.lit)::before {
 /* 중앙 캡슐 — 보라 변형
    베이스(#1B2230)는 캔버스 배경과 동일 → 캡슐 안쪽으로 들어온 점선이 가려져 깔끔.
    위에 보라톤 그라디언트만 얹어 색상 정체성 표현. */
-body.recap-mode .game-cap.c-green {
-  background:
-    radial-gradient(circle at 32% 28%,
-      rgba(232, 212, 251, 0.30) 0%,
-      rgba(155, 108, 217, 0.15) 55%,
-      rgba(124, 79, 184, 0.06) 100%),
-    #1B2230 !important;
-  border: 1px solid rgba(232, 212, 251, 0.45) !important;
-  box-shadow:
-    inset 0 0 40px rgba(232, 212, 251, 0.18),
-    inset 0 -12px 24px rgba(124, 79, 184, 0.10),
-    0 0 50px rgba(155, 108, 217, 0.40),
-    0 0 100px rgba(155, 108, 217, 0.20) !important;
-}
-body.recap-mode .game-cap.c-green::before {
-  background: radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.50), rgba(255,255,255,0) 60%) !important;
-}
 /* 캡슐 안 음훈도 보라로 */
-body.recap-mode .game-cap .hun-text { color: #E0CDF5 !important; }
 /* 캔버스 위 프롬프트 한자(em) 보라로 */
-body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
 
 /* 단어 입력창 — 흰 도크 위에서 진한 회색으로 대비 */
 .word-input {
@@ -4808,11 +4470,9 @@ body.recap-mode .game-eum strong { color: #C9A6F0 !important; }
 /* 인출: 아래를 키보드 자리로 비움 (흰 도크가 그 자리까지 이어짐) */
 body.pmode #game { padding-bottom: var(--kb-reserve, 360px); }
 /* 확장(환원) 화면은 입력이 없으므로 키보드 자리 없이 전체 높이 사용 */
-body.pmode.recap-mode #game { padding-bottom: 0; }
 /* 네트워크 칩: 칸 방식 배치 — 칸이 모자라면 --pm-chip-k로 함께 축소, 재배치 시 부드럽게 이동 */
 body.pmode .g-node { transition: left .45s ease, top .45s ease; }
 /* 확장 화면 안내 문구는 "다음" 버튼 위로 올려 겹치지 않게 */
-body.pmode.recap-mode .fb-zone { bottom: 84px; max-width: 92%; }
 
 /* 홈: 히어로(훈감각 生 익히기, 폭 720)를 폭 안에 들어오게 축소 */
 body.pmode .home-hero { transform: scale(0.62); margin: -100px 0 -40px; }
@@ -4898,7 +4558,6 @@ body.pmode .r-collect-word { font-size: 16px; }
 body.pmode .r-collect-tag { font-size: 17px; }
 body.pmode .r-collect-cnt { font-size: 16px; }
 body.pmode .mr-num { font-size: 17px; }
-body.pmode .r-rank-col-tag { font-size: 16px; }
 body.pmode .r-rank-col-sub { font-size: 14px; }
 body.pmode .r-rank-myrank { font-size: 15px; }
 body.pmode .r-rank-best { font-size: 13px; }
@@ -5135,7 +4794,6 @@ body.pmode .st-today-badge { font-size: 13px; }
     <div class="topbar"></div><!-- 메타는 전역 .global-topbar-meta로 분리 (charintro부터 노출) -->
     <!-- ══ 등급 배지 (별) — JS가 calcBadge 결과 채움 ══ -->
     <div class="r-tier-badge" id="r-tier-badge">
-      <div class="rtb-stars" id="rtb-stars"></div>
       <div class="rtb-perfect"><span class="rtb-pf-star">⭐</span>PERFECT!!</div>
       <div class="rtb-score" id="rtb-score"><em>0</em> / 0</div>
       <div class="rtb-msg" id="rtb-msg"></div>
@@ -5971,12 +5629,6 @@ function sndStageNext(){
   sndMarimba(2093.00, 0.4, { peak: 0.13, start: 0.3 });
 }
 
-// 어휘 발견 (확장 단계에서 카드 깨움)
-function sndDiscover(){
-  sndMarimba(1046.50, 0.35, { peak: 0.16 });
-  sndMarimba(1318.51, 0.35, { peak: 0.13, start: 0.012 });
-  sndMarimba(1567.98, 0.35, { peak: 0.11, start: 0.024 });
-}
 
 // 결과 페이지 도착
 function sndResultArrive(){
@@ -5990,10 +5642,6 @@ function sndResultArrive(){
   }, 350);
 }
 
-// 점수 +1 (점수판 증가)
-function sndScorePop(){
-  sndMarimba(1567.98, 0.18, { peak: 0.18 });
-}
 
 // 홈 hero-bubble 등장 시 "pop" — 낮은 → 높은 sweep + 짧은 marimba ping + sparkle
 function sndBubblePop(){
@@ -6067,16 +5715,6 @@ function sndPerfect(){
   }, 480);
 }
 
-// 레벨업 (티어/배지 승급, 추후 활용)
-function sndLevelUp(){
-  var arp = [783.99, 1046.50, 1318.51, 1567.98, 2093.00];
-  arp.forEach(function(f, i){
-    sndMarimba(f, 0.32, { peak: 0.18, start: i * 0.08 });
-  });
-  setTimeout(function(){
-    sndTone(2093.00, 0.7, { type: 'sine', peak: 0.14, attack: 0.005, release: 0.65 });
-  }, 380);
-}
 
 // ════════════════════════════════════════════════════════════════
 // 외부 나레이션 — sound/ 폴더의 mp3/wav 재생.
@@ -6582,8 +6220,6 @@ function eumToPills(text){
   }
   return html;
 }
-function pad3(n){ n = String(n); while(n.length < 3) n = '0' + n; return n; }
-function pad2(n){ n = String(n); while(n.length < 2) n = '0' + n; return n; }
 
 // 끝내기 — 어드민 '회차 테스트'에서 열린 경우 그 창에 완료 신호를 보내 자동 체크되게 함
 function finishTraining(){
@@ -6749,7 +6385,6 @@ function goRecap(){
   var input = document.getElementById('wi'); if(input){ input.disabled = false; input.value = ''; }
   var dbtn  = document.getElementById('dbtn'); if(dbtn){ dbtn.style.visibility = ''; dbtn.className = 'btn-done on'; }
   updateHints();   // 1 인출에서 아낀 힌트를 그대로 이어서 사용
-  var prev = document.getElementById('recap-next'); if(prev) prev.remove();
   updateGameCounter();
   setFb('ok', '✦ 방금 배운 어휘를 떠올려 입력해 보세요!', 4000);
   showRecall2Intro();
@@ -6828,22 +6463,6 @@ function upgradeNodeToLearn(node){
   showNodeChip(node);          // pop 애니메이션과 함께 클래스 갱신
 }
 
-function showRecapNext(){
-  if(document.getElementById('recap-next')) return;
-  var btn = document.createElement('button');
-  btn.id = 'recap-next';
-  btn.className = 'recap-next-btn';
-  btn.innerHTML = '<span>다음 →</span>';
-  btn.onclick = function(){
-    document.body.classList.remove('recap-mode');
-    var input = document.getElementById('wi'); if(input) input.disabled = false;
-    var dbtn  = document.getElementById('dbtn'); if(dbtn) dbtn.style.visibility = '';
-    var hbtn  = document.getElementById('hbtn'); if(hbtn) hbtn.disabled = false;
-    var b = document.getElementById('recap-next'); if(b) b.remove();
-    goFillQ();
-  };
-  document.getElementById('game').appendChild(btn);
-}
 
 function goLearn(){
   var sess = SESSION;
@@ -8397,7 +8016,6 @@ function finishWord(entry, opts){
 // 마일스톤 축하 효과 — 인출 + 탐구 누적 발견이 임계치 도달 시 1회
 // ─────────────────────────────────────────────────────────────
 var CONFETTI_FIRED = false;
-var CELEBRATE_THRESHOLD = (typeof WORD_LIST !== 'undefined') ? WORD_LIST.length : 38;
 
 function totalDiscovered(){
   var s = (typeof S !== 'undefined' && S && S.found) ? S.found.length : 0;
@@ -9361,19 +8979,11 @@ function getBadgeMessage(b){
 
 function renderTierBadge(correct, total){
   var badge   = document.getElementById('r-tier-badge');
-  var stars   = document.getElementById('rtb-stars');
   var scoreEl = document.getElementById('rtb-score');
   var msgEl   = document.getElementById('rtb-msg');
-  if(!badge || !stars || !scoreEl) return;
+  if(!badge || !scoreEl) return;
 
   var b = calcBadge(correct, total);
-
-  // 별 SVG 렌더 (노랑 N개 + 회색 M개)
-  var starSvg = '<svg viewBox="0 0 24 24" class="rtb-star{CLS}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polygon points="12,2.5 14.6,9.4 22,9.8 16.3,14.6 18.2,21.6 12,17.7 5.8,21.6 7.7,14.6 2,9.8 9.4,9.4"/></svg>';
-  var html = '';
-  for(var i = 0; i < b.yellowCount; i++) html += starSvg.replace('{CLS}', ' filled');
-  for(var j = 0; j < b.grayCount;   j++) html += starSvg.replace('{CLS}', '');
-  stars.innerHTML = html;
 
   // 분수 표시 (correct / total) — 분모는 가족 어휘 총수
   var nk = (typeof newKnownCount === 'function') ? newKnownCount() : 0;
