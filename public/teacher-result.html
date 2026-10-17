@@ -291,10 +291,9 @@ function paint(){ for(let i=1;i<=PAGES;i++) document.getElementById("pg"+i).clas
   navL.style.borderRightColor=page>1?"#666666":"#cccccc"; navR.style.borderLeftColor=page<PAGES?"#cd5a29":"#cccccc"; }
 function setPage(p){ page=Math.min(PAGES,Math.max(1,p)); paint(); } function go(d){ setPage(page+d); }
 
-// ── 3쪽 실력 점검 결과 — 차수(5회차)마다 대표 점수 = 최고 점수, 구성·회차별 정답률도 최고 점수 점검 기준 ──
+// ── 3쪽 실력 점검 결과 — 구간(5회차)마다 대표 점수 = 최고 점수, 구성·회차별 정답률도 최고 점수 점검 기준 ──
 const RES=[["n_known","바로 앎","#2f9e73"],["n_hanja","한자로 풂","#e3b341"],["n_hanja_wrong","한자 보고도 틀림","#efb4a4"],["n_wrong","틀림","#d87878"]];
 const scoreColor=v=>v>=100?"#246ce3":v>=90?"#009900":v>=80?"#e46600":"#cc0000";   // 공용 폼 범례
-const mmss=ms=>{ const t=Math.round((ms||0)/1000); return Math.floor(t/60)+"분 "+String(t%60).padStart(2,"0")+"초"; };
 function testsByUnit(slug){ const u={}; (D.tests||[]).filter(t=>t.area===slug).forEach(t=>(u[t.unit]=u[t.unit]||[]).push(t)); return u; }
 function bestOf(l){ return l.reduce((b,t)=>(t.score>b.score||(t.score===b.score&&String(t.at)>String(b.at)))?t:b, l[0]); }
 function renderTests(){
@@ -306,18 +305,18 @@ function renderTests(){
   const bests=lists.map(bestOf);
   const avg=Math.round(bests.reduce((a,t)=>a+t.score,0)/bests.length), top=Math.max(...bests.map(t=>t.score));
   const kpi=(l,v,u,c)=>'<div class="pc-kpi"><div class="l">'+l+'</div><div class="v"'+(c?' style="color:'+c+'"':'')+'>'+v+'<small>'+u+'</small></div></div>';
-  let h='<div class="pc-kpis">'+kpi("점검한 차수",lists.length," / 10")+kpi("평균 점수",avg,"점",scoreColor(avg))+kpi("최고 점수",top,"점",scoreColor(top))+'</div>';
-  h+='<div class="pc-sec">차수별 점수 <span class="n">5회차마다 25문항 · 100점 만점 · 여러 번 점검하면 최고 점수</span></div>';
-  h+='<table class="pc-ut"><tr><th style="width:60px;text-align:left;padding-left:8px">차수</th><th style="width:62px">회차</th><th>최고 점수</th><th style="width:44px"></th><th style="width:52px">첫 점수</th><th style="width:48px">횟수</th><th style="width:76px">걸린 시간</th><th style="width:86px">점검일</th></tr>';
+  let h='<div class="pc-kpis">'+kpi("점검한 구간",lists.length," / 10")+kpi("평균 점수",avg,"점",scoreColor(avg))+kpi("최고 점수",top,"점",scoreColor(top))+'</div>';
+  h+='<div class="pc-sec">구간별 점수 <span class="n">5회차마다 25문항 · 100점 만점 · 여러 번 점검하면 최고 점수</span></div>';
+  h+='<table class="pc-ut"><tr><th style="width:78px;text-align:left;padding-left:8px">구간</th><th>최고 점수</th><th style="width:44px"></th><th style="width:56px">첫 점수</th><th style="width:52px">횟수</th><th style="width:92px">점검일</th></tr>';
   for(let u=1;u<=10;u++){ const l=us[u], rr=((u-1)*5+1)+"~"+(u*5);
-    if(!l){ h+='<tr class="none"><td class="u" style="color:#c2c8cf">'+u+'차</td><td class="r">'+rr+'</td><td><div class="pc-bar"></div></td><td>–</td><td></td><td></td><td></td><td></td></tr>'; continue; }
+    if(!l){ h+='<tr class="none"><td class="u" style="color:#c2c8cf">'+rr+'회차</td><td><div class="pc-bar"></div></td><td>–</td><td></td><td></td><td></td></tr>'; continue; }
     const b=bestOf(l), sc=b.score;
-    h+='<tr><td class="u">'+u+'차</td><td class="r">'+rr+'</td><td><div class="pc-bar"><i style="width:'+Math.max(sc,2)+'%;background:'+scoreColor(sc)+'"></i></div></td>'
-      +'<td class="pc-sc" style="color:'+scoreColor(sc)+'">'+sc+'</td><td>'+l[0].score+'</td><td class="m">'+l.length+'회</td><td class="m">'+mmss(b.duration_ms)+'</td><td class="m">'+(b.at||"")+'</td></tr>'; }
+    h+='<tr><td class="u">'+rr+'회차</td><td><div class="pc-bar"><i style="width:'+Math.max(sc,2)+'%;background:'+scoreColor(sc)+'"></i></div></td>'
+      +'<td class="pc-sc" style="color:'+scoreColor(sc)+'">'+sc+'</td><td>'+l[0].score+'</td><td class="m">'+l.length+'회</td><td class="m">'+(b.at||"")+'</td></tr>'; }
   h+='</table>';
   const cnt={n_known:0,n_hanja:0,n_hanja_wrong:0,n_wrong:0}; bests.forEach(t=>RES.forEach(([k])=>cnt[k]+=t[k]||0));
   const tot=RES.reduce((a,[k])=>a+cnt[k],0);
-  h+='<div class="pc-sec">결과 구성 <span class="n">차수마다 최고 점수 점검 기준 · '+tot+'문항</span></div>';
+  h+='<div class="pc-sec">결과 구성 <span class="n">구간마다 최고 점수 점검 기준 · '+tot+'문항</span></div>';
   h+='<div class="pc-stack">'+RES.map(([k,,c])=>cnt[k]?'<i style="width:'+(cnt[k]/tot*100)+'%;background:'+c+'"></i>':'').join("")+'</div>';
   h+='<div class="pc-leg">'+RES.map(([k,ko,c])=>'<span><i class="sw" style="background:'+c+'"></i>'+ko+'<b>'+cnt[k]+'</b> ('+Math.round(cnt[k]/tot*100)+'%)</span>').join("")+'</div>';
   const per={}; bests.forEach(t=>(t.rounds||[]).forEach(x=>{ const p=per[x.r]=per[x.r]||{n:0,ok:0}; p.n+=x.n; p.ok+=x.ok; }));
