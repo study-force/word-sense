@@ -103,17 +103,18 @@
   .gc-legend .gl-item{font-size:13px;color:#9099a3;letter-spacing:.01em}
   .gc-legend .gl-item b{font-weight:600;color:#5a616b;margin-right:3px}
   /* page3 실력 점검 결과 — 5회차마다 25문항, 대표 점수 = 최고 점수 (2026-10-18) */
+  .pc-wrap{width:642px;margin:0 auto}   /* 1쪽 훈사전(396+30+216)과 같은 폭 */
   .pc-tabs{display:flex;gap:6px;justify-content:center;margin:2px 0 18px}
   .pc-tabs .tab{padding:5px 13px;font-size:13px}
   .pc-tabs .tab.off{opacity:.45}
-  .pc-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 8px 20px}
+  .pc-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 20px}
   .pc-kpi{background:#f3f5f7;border-radius:9px;padding:11px 8px 10px;text-align:center}
   .pc-kpi .l{font-size:12.5px;color:var(--mut);font-weight:600}
   .pc-kpi .v{font-size:27px;font-weight:600;color:#3b414a;line-height:1.15;margin-top:3px;font-variant-numeric:tabular-nums}
   .pc-kpi .v small{font-size:13px;color:var(--mut);font-weight:500;margin-left:2px}
-  .pc-sec{font-size:15.5px;font-weight:600;color:#3b414a;margin:0 8px 8px;display:flex;align-items:baseline;gap:8px}
+  .pc-sec{font-size:15.5px;font-weight:600;color:#3b414a;margin:0 0 8px;display:flex;align-items:baseline;gap:8px}
   .pc-sec .n{font-size:12px;color:#9aa0a8;font-weight:500}
-  table.pc-ut{width:calc(100% - 16px);margin:0 8px 20px;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+  table.pc-ut{width:100%;margin:0 0 20px;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
   table.pc-ut th{font-size:11.5px;color:var(--mut);font-weight:600;padding:0 4px 5px;border-bottom:2px solid #d9dde2;text-align:center}
   table.pc-ut td{padding:5px 4px;border-bottom:1px solid #eef0f2;text-align:center;color:#4a515b;height:30px}
   table.pc-ut td.u{font-weight:600;color:#3b414a;text-align:left;padding-left:8px}
@@ -122,16 +123,16 @@
   .pc-bar{height:11px;background:#eef0f2;border-radius:6px;overflow:hidden}
   .pc-bar i{display:block;height:100%;border-radius:6px}
   .pc-sc{font-weight:600;font-size:15px}
-  .pc-stack{display:flex;height:22px;border-radius:5px;overflow:hidden;background:#eef0f2;margin:0 8px}
+  .pc-stack{display:flex;height:22px;border-radius:5px;overflow:hidden;background:#eef0f2}
   .pc-stack i{display:block;height:100%}
-  .pc-leg{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12.5px;color:#6b727b;margin:8px 8px 20px}
+  .pc-leg{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12.5px;color:#6b727b;margin:8px 0 20px}
   .pc-leg b{font-weight:600;color:#3b414a;margin-left:3px;font-variant-numeric:tabular-nums}
   .pc-leg .sw{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:5px;vertical-align:-1px}
-  .pc-rchart{display:grid;grid-template-columns:repeat(50,1fr);gap:2px;align-items:end;height:110px;border-bottom:1.5px solid #d9dde2;margin:0 8px}
+  .pc-rchart{display:grid;grid-template-columns:repeat(50,1fr);gap:2px;align-items:end;height:110px;border-bottom:1.5px solid #d9dde2}
   .pc-rchart .c{height:100%;display:flex;align-items:flex-end}
   .pc-rchart .c i{display:block;width:100%;border-radius:2px 2px 0 0}
   .pc-rchart .c.no i{background:#eef0f2;height:4px}
-  .pc-rax{display:grid;grid-template-columns:repeat(50,1fr);gap:2px;font-size:10px;color:#aeb4bc;margin:3px 8px 0}
+  .pc-rax{display:grid;grid-template-columns:repeat(50,1fr);gap:2px;font-size:10px;color:#aeb4bc;margin:3px 0 0}
   .pc-rax span{text-align:center}
   .pc-empty{color:#aeb4bc;font-size:14px;text-align:center;padding:60px 0}
   /* foot + nav */
@@ -195,8 +196,10 @@
       </div>
       <div class="pg" id="pg3">
         <div class="title">실력 점검 결과</div>
-        <div class="pc-tabs" id="pcTabs"></div>
-        <div id="pcBody"></div>
+        <div class="pc-wrap">
+          <div class="pc-tabs" id="pcTabs"></div>
+          <div id="pcBody"></div>
+        </div>
       </div>
     </div>
     <div class="footbar noprint">
