@@ -35,6 +35,7 @@
   .tab{padding:5px 9px;border-radius:999px;border:1.5px solid #e2e6ea;background:#fff;font-size:12px;font-weight:700;color:#8b929c;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap}
   .tab .dt{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
   .tab.on{color:#fff;border-color:transparent}
+  .tab.off{opacity:.4;cursor:default;pointer-events:none}   /* 훈련 기록 없는 영역 — 눌리지 않음 (2026-10-18) */
   .p1row{display:grid;grid-template-columns:396px 216px;gap:32px 30px;align-items:stretch;justify-content:center}
   .agrid{grid-column:1;grid-row:2;display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
   .ipanel{grid-column:2;grid-row:2;min-width:0;margin-top:-3px;padding-top:2px;display:flex;flex-direction:column}
@@ -106,7 +107,6 @@
   .pc-wrap{width:642px;margin:0 auto}   /* 1쪽 훈사전(396+30+216)과 같은 폭 */
   .pc-tabs{display:flex;gap:6px;justify-content:center;margin:2px 0 18px}
   .pc-tabs .tab{padding:5px 13px;font-size:13px}
-  .pc-tabs .tab.off{opacity:.45}
   .pc-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 20px}
   .pc-kpi{background:#f3f5f7;border-radius:9px;padding:11px 8px 10px;text-align:center}
   .pc-kpi .l{font-size:12.5px;color:var(--mut);font-weight:600}
@@ -229,11 +229,14 @@ const DEMO={ student:{name:"김건희",school:"초등학교",grade:6,academy:"�
   totalAcq:1230,totalTot:4432,
   grades:[{g:1,acq:580,prov:620},{g:2,acq:390,prov:560},{g:3,acq:190,prov:520},{g:4,acq:70,prov:480}] };
 let D=DEMO, curArea="biology", page=1;
+// 영역에 훈련 기록이 있는지 — 없으면 탭을 누를 수 없게
+function hasTrain(s){ return D.rounds ? (D.rounds[s]||[]).some(r=>r.st!=="lock") : (((D.areas[s]||{}).cleared||0)>0 || ((D.areas[s]||{}).acq||0)>0); }
+function tabHtml(k,s,on,click){ const off=!on&&!hasTrain(s); return '<div class="tab'+(on?' on':'')+(off?' off':'')+'"'+(off?'':' onclick="'+click+'"')+' style="'+(on?'background:'+COLOR[s]:'')+'"><span class="dt" style="background:'+(on?'#fff':COLOR[s])+'"></span>'+k+'</div>'; }
 function renderArea(){
   const [ko,slug]=AREAS.find(a=>a[1]===curArea); const col=COLOR[slug];
   const rounds=(D.rounds&&D.rounds[slug])||genRounds(ko,(D.areas[slug]||{}).cleared||0);
   const tabs=document.getElementById("tabs"); tabs.innerHTML="";
-  AREAS.forEach(([k,s])=>tabs.insertAdjacentHTML("beforeend",'<div class="tab'+(s===curArea?' on':'')+'" onclick="curArea=\''+s+'\';renderArea()" style="'+(s===curArea?'background:'+COLOR[s]:'')+'"><span class="dt" style="background:'+(s===curArea?'#fff':COLOR[s])+'"></span>'+k+'</div>'));
+  AREAS.forEach(([k,s])=>tabs.insertAdjacentHTML("beforeend",tabHtml(k,s,s===curArea,"curArea='"+s+"';renderArea();renderTests()")));
   document.getElementById("atName").textContent=ko+" 영역";
   const pass=rounds.filter(r=>r.st==="pass").length, fail=rounds.filter(r=>r.st==="fail").length, lock=rounds.filter(r=>r.st==="lock").length;
   const g=document.getElementById("agrid"); g.innerHTML="";
@@ -301,8 +304,7 @@ function testsByUnit(slug){ const u={}; (D.tests||[]).filter(t=>t.area===slug).f
 function bestOf(l){ return l.reduce((b,t)=>(t.score>b.score||(t.score===b.score&&String(t.at)>String(b.at)))?t:b, l[0]); }
 function renderTests(){
   const slug=curArea, us=testsByUnit(slug);
-  document.getElementById("pcTabs").innerHTML=AREAS.map(([k,s])=>{ const on=s===slug, has=(D.tests||[]).some(t=>t.area===s);
-    return '<div class="tab'+(on?' on':'')+(has?'':' off')+'" onclick="curArea=\''+s+'\';renderArea();renderTests()" style="'+(on?'background:'+COLOR[s]:'')+'"><span class="dt" style="background:'+(on?'#fff':COLOR[s])+'"></span>'+k+'</div>'; }).join("");
+  document.getElementById("pcTabs").innerHTML=AREAS.map(([k,s])=>tabHtml(k,s,s===slug,"curArea='"+s+"';renderArea();renderTests()")).join("");
   const body=document.getElementById("pcBody"), lists=Object.values(us);
   if(!lists.length){ body.innerHTML='<div class="pc-empty">아직 이 영역의 실력 점검 기록이 없어요<br><span style="font-size:12.5px">5회차를 모두 통과(어휘 80% 이상)하면 점검할 수 있어요</span></div>'; return; }
   const bests=lists.map(bestOf);
