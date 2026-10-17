@@ -1867,7 +1867,7 @@ body.mission-mode #game .stage-nav {
 }
 /* 점수칩이 미션 화면 중앙으로 이동(center-mission). 확인 클릭 시 클래스 제거 → 우상단 복귀 (transition으로 자연 애니메이션) */
 /* 재도전 미션 화면 — 점수판 좌상단 모서리에 45도 리본 '재도전' (대표님 2026-10-17) */
-.score-chip .sc-band { position: absolute; left: -17px; top: 9px; width: 70px; z-index: 3; pointer-events: none;
+.score-chip .sc-band { position: absolute; left: -27px; top: 9px; width: 90px; z-index: 10;   /* 반짝이는 전구보다 위, 조금 더 길게 */ pointer-events: none;
   background: linear-gradient(180deg, #FFD66B, #E9B43A); color: #3A2A00; text-align: center;
   font-family: 'Noto Sans KR', sans-serif; font-size: 9px; font-weight: 600; letter-spacing: 0.06em; line-height: 13px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.35); transform: rotate(-45deg); opacity: 0; transition: opacity .3s ease; }
