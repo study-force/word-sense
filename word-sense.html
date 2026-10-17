@@ -3111,7 +3111,7 @@ body.pmode .area-cell .cell-play { width: 46px; height: 46px; }
 }
 .area-cell .cell-mark { display: none !important; }   /* 상단 ✓ 마크 제거 */
 .area-cell .cell-char {
-  font-family: var(--font-han); font-size: 47px; font-weight: 300; line-height: 1;
+  font-family: var(--font-han); font-size: 43px; font-weight: 300; line-height: 1;   /* 47 → 43 살짝 작게 (2026-10-18) */
 }
 
 .area-cell .cell-hun {
@@ -3244,8 +3244,10 @@ body.retry-mode .retry-tag { display: inline-block; }
   font-family: 'Noto Sans KR', sans-serif;
 }
 .area-cell.pass:not(.current) .cell-mark { color: var(--pass-c); }   /* 과거 통과의 ✓ — 초록 */
+.area-cell .cell-star { position: absolute; top: 4px; left: 6px; font-size: 13px; line-height: 1; color: #F2B01E; text-shadow: 0 1px 1px rgba(140,98,18,.25); }
+.area-cell.current .cell-star { color: #FFE48F; }
 .area-cell .cell-frac {   /* 수집 개수/총수 — 훈 아래 잘 보이게 (예전 별 자리, 2026-10-16) */
-  margin-top: 3px; line-height: 1;
+  margin-top: -3px; line-height: 1;   /* 훈음과 간격 줄임 (2026-10-18) */
   font-size: 12px; color: var(--mid);
   font-family: 'Noto Sans KR', sans-serif; font-weight: 600; letter-spacing: 0.02em;
 }
@@ -4537,7 +4539,7 @@ body.pmode .r-home-btn { flex: 0 0 auto; width: auto; font-size: 15px; padding: 
 body.pmode .score-chip.center-result { transform: translate(var(--pm-dx, -172px), 120px) scale(1.9); }
 /* 나의 훈사전: 10열 → 5열(10줄) */
 body.pmode .area-grid { grid-template-columns: repeat(6, 1fr); grid-auto-rows: minmax(0, 1fr); min-height: 0; gap: 5px; }
-body.pmode .area-cell .cell-char { font-size: 32px; }
+body.pmode .area-cell .cell-char { font-size: 30px; }
 /* 통계: 좌우 2단 → 위(급수 막대)·아래(영역 목록) 세로 쌓기 */
 body.pmode .st-body { padding: 16px 16px 90px; }
 body.pmode .st-page-title { font-size: 32px; }
@@ -9700,6 +9702,7 @@ function goArea(){
       var b = calcBadge(p.found, p.total);
       var f = document.createElement('div'); f.className = 'cell-frac' + (b.isPerfect ? ' is-perfect' : '');
       f.textContent = p.found + '/' + p.total; cell.appendChild(f);
+      if(b.isPerfect){ var st = document.createElement('span'); st.className = 'cell-star'; st.textContent = '★'; st.setAttribute('aria-label', '전부 모음'); cell.appendChild(st); }   // 다 모은 회차 = 왼쪽 위 별 (대표님 2026-10-18)
     }
     // 다음 회차 바로 시작 — 반투명 재생 버튼 (대표님 2026-10-16). 학원 진입은 학원 사이트가 회차를 정하므로 제외
     if(p.round === ((SESSION && SESSION.id) || 0) + 1 && !document.body.classList.contains('academy-entry')){
