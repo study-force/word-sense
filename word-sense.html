@@ -3143,9 +3143,9 @@ body.pmode .area-cell .cell-play { width: 46px; height: 46px; }
     0 0 0 1px rgba(var(--pass-rgb), 0.18) inset,
     0 1px 2px rgba(20,25,40,0.04);
 }
-.area-cell.pass:not(.current) .cell-char { color: var(--pass-c); }
-.area-cell.pass:not(.current) .cell-hun  { color: rgba(var(--pass-rgb), 0.85); opacity: 1; }
-.area-cell.pass:not(.current) .cell-frac { color: rgba(var(--pass-rgb), 0.85); }   /* 다 모은 회차도 같은 색 — 노랑 안 씀 (대표님 2026-10-18) */
+.area-cell.pass:not(.current) .cell-char { color: #3389DA; }   /* 통과 글자 = 파랑보다 약간 진하게 (2026-10-18) */
+.area-cell.pass:not(.current) .cell-hun  { color: rgba(51,137,218,0.9); opacity: 1; }
+.area-cell.pass:not(.current) .cell-frac { color: #3389DA; }   /* 다 모은 회차도 같은 색 — 노랑 안 씀 (대표님 2026-10-18) */
 
 /* ── 과거 진행 중 — 진한 회색 ────────────── */
 .area-cell:not(.locked):not(.pass) {
@@ -3155,8 +3155,8 @@ body.pmode .area-cell .cell-play { width: 46px; height: 46px; }
     0 0 0 1px rgba(var(--prog-rgb), 0.12),
     0 1px 2px rgba(20,25,40,0.04);
 }
-.area-cell:not(.locked):not(.pass) .cell-char { color: rgba(20,25,40,0.92); }
-.area-cell:not(.locked):not(.pass) .cell-hun  { color: rgba(20,25,40,0.72); opacity: 1; }
+.area-cell:not(.locked):not(.pass) .cell-char { color: rgba(20,25,40,0.68); }   /* 진행 중 글자 조금 옅게 (2026-10-18) */
+.area-cell:not(.locked):not(.pass) .cell-hun  { color: rgba(20,25,40,0.55); opacity: 1; }
 .area-cell:not(.locked):not(.pass) .cell-frac { color: var(--prog-c); }
 
 /* ── 오늘 통과 (불투명 초록) ───────────────────────── */
