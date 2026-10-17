@@ -3335,11 +3335,6 @@ body.retry-mode .retry-tag { display: inline-block; }
 
 /* "다음으로 →" — 확인 버튼과 동일한 글로시 슬롯-덮개 디자인 */
 /* 공통 랭킹판 링크 — 랭킹 카드 아래 작은 글자 링크 */
-.r-board-link { display: inline-block; margin: -10px 0 14px; font-size: 13px; font-weight: 500; color: #4FA3F0; text-decoration: none; }
-.r-board-link:hover { text-decoration: underline; }
-.r-board-link { opacity: 0; transition: opacity .55s ease 1.4s; }      /* 랭킹 카드와 함께 등장 */
-.r-rank-block.on ~ .r-board-link { opacity: 1; }
-body.pmode .r-board-link { font-size: 16px; margin: 0 0 10px; }
 .r-home-btn {
   width: 100%; padding: 12px 26px; border-radius: 100px; border: none;
   cursor: pointer; font-size: 13px; font-weight: 700;
@@ -4054,7 +4049,7 @@ body.pmode .r-seg button { font-size: 16px; padding: 8px 18px; }
   background: #181E2C;
   border-radius: 12px;
   padding: 16px 14px 19px;   /* 하단 +3px → 카드 세로 길이 +3px */
-  min-height: 210px;          /* 참여자가 적어도 카드 높이 유지 (대표님 2026-10-16) */
+  min-height: 330px;          /* 참여자가 적어도 카드 높이 유지 (대표님 2026-10-16), 더 길게 (2026-10-18) */
   box-shadow:
     0 4px 14px rgba(20,25,40,0.22),
     inset 0 1px 0 rgba(255,255,255,0.04);
@@ -4147,8 +4142,8 @@ body.pmode .r-known-line { font-size: 17px; bottom: 0; }
 .r-rank-card .r-rank-list {
   display: flex; flex-direction: column;
   gap: 0;
-  /* podium 1·2·3 + list 4~10 = 약 7행. row ~28px → 200px */
-  max-height: 200px;
+  /* 목록이 길면 카드 안에서 스크롤 (대표님 2026-10-18 — 전체 랭킹은 마이룸에서) */
+  max-height: 320px;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,0.18) transparent;
@@ -4837,7 +4832,6 @@ body.pmode .st-today-badge { font-size: 13px; }
           <div class="r-rank-list"   id="r-rank-list-cumul"></div>
         </div>
       </div>
-      <a class="r-board-link" id="r-board-link" href="ranking.html" target="_blank" rel="noopener">🏆 전체 랭킹 보기 →</a>
       <div class="r-btn-row">
         <button class="r-home-btn r-retry2" id="r-retry2" onclick="retryNow()" hidden></button>
         <button class="r-home-btn" id="r-home-btn" onclick="goArea()">나의 훈사전 보기 →</button>
@@ -8761,19 +8755,6 @@ function renderRankList(){
   var hd = document.getElementById('r-hall-desc');
   if(hd) hd.textContent = (SESSION.area || '') + ' ' + (SESSION.id || 1) + '회차 누적 어휘 만점자';   // 예: 생물 19회차 누적 어휘 만점자
 
-  // 공통 랭킹판(ranking.html) 링크 — 우리학원·과정·나를 맞춰서 열기
-  var bl = document.getElementById('r-board-link');
-  if(bl){
-    var bq = new URLSearchParams();
-    if(SESSION && SESSION.level) bq.set('level', SESSION.level);
-    if(typeof STUDENT_INFO !== 'undefined' && STUDENT_INFO){
-      if(STUDENT_INFO.academy_no) bq.set('academy', STUDENT_INFO.academy_no);
-      if(STUDENT_INFO.user_no) bq.set('me', STUDENT_INFO.user_no);
-    }
-    // 입장권 — 랭킹판에서 '나'만 전체 이름으로 (서버가 입장권으로 나를 확인, 2026-10-18)
-    if(typeof TRAINING_INFO !== 'undefined' && TRAINING_INFO && TRAINING_INFO.id) bq.set('st', TRAINING_INFO.id);
-    bl.href = 'ranking.html' + (bq.toString() ? '?' + bq.toString() : '');
-  }
   var vM = buildFullRankView(RANK_MASTER);
   _renderRankBlock('r-rank-podium-master', 'r-rank-list-master', vM);
   setMyRank('r-myrank-master', vM);
