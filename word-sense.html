@@ -9054,36 +9054,6 @@ var STATS_AREAS = [
   { slug:'economy', emoji:'💰', name_ko:'경제' }
 ];
 
-// Mock 데이터 — 영역별 학생 학습 진척도 다양화
-//   acquired: 강화 정답 처리한 distinct 어휘 수 (학생 진척도)
-//   total:    영역 전체 가족 어휘 수 (50회차 합산, ~2,000개 수준)
-//   cleared:  통과한 회차 수 (tier ≥ 1)
-//   perfect:  PERFECT 등급 회차 수 (만점)
-var STATS_MOCK = {
-  biology: { acquired: 850, total: 1932, cleared: 12, perfect: 5 },
-  society: { acquired: 320, total: 1756, cleared:  8, perfect: 1 },
-  history: { acquired:  95, total: 1800, cleared:  4, perfect: 0 },
-  science: { acquired:   0, total: 1820, cleared:  0, perfect: 0 },
-  culture: { acquired: 410, total: 1650, cleared:  7, perfect: 2 },
-  economy: { acquired:   0, total: 1500, cleared:  0, perfect: 0 }
-};
-
-// 메인 KPI 분모 — word_master 전체 (SSOT, 중복 제거 distinct count)
-//   acquired_distinct: 학생이 습득한 고유 어휘 수 (영역간 중복 제외)
-//   total_distinct:    word_master 행 수 (실제 학습 시스템 전체 어휘)
-var STATS_MOCK_TOTAL = {
-  acquired_distinct: 1230,
-  total_distinct:    4432
-};
-
-// 등급별 습득 (현재 회차까지 제공 기준) — 초등 1~4급 (중등은 1~5급)
-var STATS_MOCK_GRADES = [
-  { g:1, acquired:580, provided:620 },
-  { g:2, acquired:390, provided:560 },
-  { g:3, acquired:190, provided:520 },
-  { g:4, acquired:70,  provided:480 }
-];
-
 // 영역별 도넛 색상 — CSS 변수와 동일 (한 군데 관리는 CSS, 여기는 SVG 인라인용)
 var STATS_AREA_COLORS = {
   biology: '#5EBE7E',
@@ -9130,7 +9100,7 @@ function fetchAreaStats(){
   return STATS_AREAS.map(function(area){
     var stat = real
       ? (real.filter(function(r){ return r.slug === area.slug; })[0] || { acquired:0, total:0, cleared:0 })
-      : (STATS_MOCK[area.slug] || { acquired:0, total:0, cleared:0, perfect:0 });
+      : { acquired:0, total:0, cleared:0, perfect:0 };   // 불러오기 실패 → 0 (예시 숫자 없음, 2026-10-18)
     return Object.assign({}, area, { acquired: Number(stat.acquired)||0, total: Number(stat.total)||0, cleared: Number(stat.cleared)||0, perfect: Number(stat.perfect)||0 });
   });
 }
@@ -9141,7 +9111,7 @@ function fmtNum(n){
 }
 
 function goStats(){
-  // 실데이터 먼저 불러온 뒤 그림 (데모/테스트 진입은 바로 mock)
+  // 실데이터 먼저 불러온 뒤 그림 (불러오기 실패면 0으로)
   loadRealStats().then(renderStats, renderStats);
 }
 function renderStats(){
@@ -9151,8 +9121,8 @@ function renderStats(){
   if(!listEl || !headlineEl) return;
 
   // ── 메인 KPI 분모/분자 — distinct (SSOT: word_master) ──
-  var totalAcquiredDistinct = STATS_REAL ? (Number(STATS_REAL.acquired_distinct)||0) : STATS_MOCK_TOTAL.acquired_distinct;
-  var totalDistinct         = STATS_REAL ? (Number(STATS_REAL.total_distinct)||0)    : STATS_MOCK_TOTAL.total_distinct;
+  var totalAcquiredDistinct = STATS_REAL ? (Number(STATS_REAL.acquired_distinct)||0) : 0;
+  var totalDistinct         = STATS_REAL ? (Number(STATS_REAL.total_distinct)||0)    : 0;
   var totalPct              = (totalDistinct > 0) ? Math.round((totalAcquiredDistinct / totalDistinct) * 100) : 0;
   // 파이(관심 분포)의 전체 = 영역별 습득 합 (미습득 제외 → 100% 채움)
   var totalAcquired         = stats.reduce(function(a, ar){ return a + ar.acquired; }, 0);
@@ -9265,7 +9235,7 @@ function renderStats(){
   // 국립국어원 기초어휘 등급별 습득 시기 (2023 최종보고서 2.1~2.2)
   var GRADE_YR = {1:'취학 전', 2:'초1~2', 3:'초3~4', 4:'초5~6', 5:'중1~3'};
   var gSrc = STATS_REAL ? (STATS_REAL.grades || []).map(function(g){ return { g:Number(g.g), acquired:Number(g.acquired)||0, provided:Number(g.provided)||0 }; })
-                        : (typeof STATS_MOCK_GRADES !== 'undefined' ? STATS_MOCK_GRADES : []);
+                        : [];
   var gGrades = gSrc.filter(function(g){ return (g.provided||0) > 0; });
   var gCols = gGrades.map(function(g){
     var prov = g.provided||0, acq = g.acquired||0, pct = prov>0 ? Math.round(acq/prov*100) : 0;
