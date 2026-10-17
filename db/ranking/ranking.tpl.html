@@ -65,6 +65,22 @@ h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
 .rnav button.ar { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: #fff; font-size: 14px; color: var(--ink); cursor: pointer; }
 .rnav button.ar:disabled { opacity: .3; cursor: default; }
 .rnav .mine { border: 0; background: none; font: inherit; font-size: 12px; color: var(--green); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 0; }
+/* 오늘의 랭킹 한 줄: 순위 | 이름 | 영역 내역 | 학원 | 개수 — 열 맞춤. 좁은 화면(휴대폰)은 이름 아래로 영역·학원 (2026-10-18) */
+.day-item { display: grid; grid-template-columns: 30px minmax(64px, 84px) minmax(0, 1fr) minmax(0, 118px) auto; gap: 8px; align-items: center;
+  grid-template-areas: "rk nm ar ac cnt"; }
+/* 우리학원 보기: 모두 같은 학원(제목 옆에 표시)이라 학원 열을 빼고 영역 칸을 넓힘 */
+.list.one-academy .day-item { grid-template-columns: 30px minmax(64px, 96px) minmax(0, 1fr) auto; grid-template-areas: "rk nm ar cnt"; }
+.list.one-academy .day-item .d-ac { display: none; }
+.day-item .rk { grid-area: rk; } .day-item .cnt { grid-area: cnt; }
+.day-item .d-nm { grid-area: nm; font-size: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.day-item .d-ar { grid-area: ar; font-size: 13px; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.day-item .d-ar b { font-weight: 500; color: #3B4256; }
+.day-item .d-ac { grid-area: ac; font-size: 13px; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 860px) and (min-width: 641px), (max-width: 420px) {
+  .day-item, .list.one-academy .day-item { grid-template-columns: 34px minmax(0, 1fr) auto; row-gap: 2px;
+    grid-template-areas: "rk nm cnt" "rk ar cnt" "rk ac cnt"; }
+  .day-item .d-ac:empty { display: none; }
+}
 /* 명예의 전당 한 줄: 왕관 | 이름 | 학원 | 날짜 — 열 너비 고정해 줄마다 가지런히 (대표님 2026-10-18) */
 .hall-item { display: grid; grid-template-columns: 30px minmax(84px, 110px) 1fr auto; gap: 12px; align-items: center; }
 .hall-item .h-nm { font-size: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -172,12 +188,12 @@ h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
       else mb.hidden = true;
       if (!d.rows.length) { body.innerHTML = '<div class="empty">아직 기록이 없어요.<br>먼저 훈련하고 1등을 차지해 보세요! 🚀</div>'; return; }
       var medals = ['🥇', '🥈', '🥉'];
-      body.innerHTML = '<ol class="list">' + d.rows.map(function(r){
+      body.innerHTML = '<ol class="list' + (st.scope === 'academy' && academy ? ' one-academy' : '') + '">' + d.rows.map(function(r){
         var m = r.rank <= 3;
-        return '<li class="item' + (r.me ? ' me' : '') + '"><span class="rk' + (m ? ' medal' : '') + '">' + (m ? medals[r.rank - 1] : r.rank) + '</span>'
-          + '<div class="who"><div class="nm">' + esc(r.name) + (r.me ? ' (나)' : '') + '</div>'
-          + ((r.areas && r.areas.length) ? '<div class="areas">' + r.areas.map(function(a){ return esc(a.area) + ' <b>' + a.n + '</b>'; }).join(' · ') + '</div>' : '')
-          + (r.academy ? '<div class="ac">' + esc(r.academy) + '</div>' : '') + '</div>'
+        return '<li class="item day-item' + (r.me ? ' me' : '') + '"><span class="rk' + (m ? ' medal' : '') + '">' + (m ? medals[r.rank - 1] : r.rank) + '</span>'
+          + '<span class="d-nm">' + esc(r.name) + (r.me ? ' (나)' : '') + '</span>'
+          + '<span class="d-ar" title="' + esc((r.areas || []).map(function(a){ return a.area + ' ' + a.n; }).join(' · ')) + '">' + (r.areas || []).map(function(a){ return esc(a.area) + ' <b>' + a.n + '</b>'; }).join(' · ') + '</span>'
+          + '<span class="d-ac">' + esc(r.academy || '') + '</span>'
           + '<span class="cnt">' + r.count + '<small>개</small></span></li>';
       }).join('') + '</ol>';
     }).catch(function(e){
