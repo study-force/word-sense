@@ -11,6 +11,7 @@
 //   hint    { attempt_id, ord }                        → '한자 보고 풀기' 누름 저장
 //   answer  { attempt_id, ord, choice_idx, ms }        → 결과는 서버가 판정
 //   finish  { attempt_id }                             → 25문항 다 답했으면 점수 계산·완료
+//   report  {}                                         → 선생님 결과 보고서용 — 끝난 평가 전부 + 문항 결과
 // ════════════════════════════════════════════════════════════════
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -119,6 +120,26 @@ Deno.serve(async (req) => {
       const { error: e2 } = await db.from('test_answers').insert(rows);
       if (e2) { await db.from('test_attempts').delete().eq('id', a.id); throw e2; }
       return ok({ resumed: false, attempt: await loadAttempt(a.id) }, cors);
+    }
+
+    // 선생님 결과 보고서 (unit-report.html?st=입장권) — 이 학생의 끝난 평가 전부 + 문항 결과 (대표님 2026-10-17)
+    //   학원 사이트가 훈련 진입과 같은 방식으로 입장권을 만들어 보고서를 엶 → 회원번호는 서버가 입장권에서 읽음
+    if (b.action === 'report') {
+      const [{ data: atts }, { data: areas }, { data: prof }] = await Promise.all([
+        db.from('test_attempts').select('id, level, area_id, unit, round_from, round_to, started_at, finished_at, duration_ms, n_known, n_hanja, n_hanja_wrong, n_wrong, score')
+          .eq('member_no', member).eq('status', 'done').order('finished_at'),
+        db.from('areas').select('id, slug, name_ko').order('display_order'),
+        db.from('user_profile_cache').select('name, school_level, grade, center').eq('member_no', member).maybeSingle(),
+      ]);
+      const ids = (atts || []).map((a: any) => a.id);
+      let answers: any[] = [];
+      for (let i = 0; i < ids.length; i += 200) {   // 평가가 많아도 나눠서
+        const { data } = await db.from('test_answers')
+          .select('attempt_id, ord, round_no, grade, word, hanja, choices, correct_idx, result')
+          .in('attempt_id', ids.slice(i, i + 200)).order('attempt_id').order('ord');
+        answers = answers.concat(data || []);
+      }
+      return ok({ member_no: member, profile: prof || null, areas: areas || [], attempts: atts || [], answers }, cors);
     }
 
     // 이하: 진행 중인 내 평가만

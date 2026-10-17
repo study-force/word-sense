@@ -29,6 +29,10 @@
     {
       "source": "/teacher-result.html",
       "destination": "/public/teacher-result.html"
+    },
+    {
+      "source": "/unit-report.html",
+      "destination": "/public/unit-report.html"
     }
   ]
 }
