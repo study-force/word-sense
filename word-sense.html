@@ -9834,8 +9834,9 @@ async function utFetchStatus(){
 function utInfo(u){ return ((UT_STATUS && UT_STATUS.units) || []).filter(function(x){ return x.unit === u; })[0] || null; }
 var UT_READY_PCT = 80;   // 내 어휘가 이 비율 이상이면 '응시 준비 완료' (권장 기준, 대표님 2026-10-17)
 function utReadiness(u){
-  var prog = AREA_PROGRESS || buildAreaProgress(), f = 0, t = 0;
-  prog.forEach(function(p){ if(p.round >= (u - 1) * 5 + 1 && p.round <= u * 5 && !p.locked){ f += p.found || 0; t += p.total || 0; } });
+  var prog = AREA_PROGRESS || buildAreaProgress(), f = 0, t = 0, miss = false;
+  prog.forEach(function(p){ if(p.round >= (u - 1) * 5 + 1 && p.round <= u * 5){ if(p.locked) miss = true; f += p.found || 0; t += p.total || 0; } });
+  if(miss) return { found: 0, total: 0, ready: false };   // 기록 없는 회차가 있으면(어드민 테스트 접속 등) 준비 정도를 모름 → 숫자·권장 안내 숨김
   return { found: f, total: t, ready: t > 0 && f * 100 >= t * UT_READY_PCT };
 }
 function utEligible(u){
