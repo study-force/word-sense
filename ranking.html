@@ -8,8 +8,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* 훈감각 공통 랭킹판 — 홈페이지에 링크/iframe으로 넣는 화면 (대표님 2026-10-16)
-   두 랭킹(오늘 새로 익힘 · 누적) + 토글 [전체|초등|중등] × [전체|우리학원] — 결과 화면과 같은 모양
-   점수 = 새로 '내 어휘'가 된 수. 여러 회차·재훈련 모두 합산. 이름은 서버에서 가림(홍*동) */
+   오늘의 랭킹(하나로, 영역 내역 함께) + 명예의 전당(영역별) + 토글 [전체|초등|중등] × [전체|우리학원]
+   오늘 점수 = 오늘 새로 '내 어휘'가 된 수(여러 회차·재도전 합산)
+   명예의 전당 = 1회차부터 빠짐없이 만점으로 이어진 회차까지의 누적 어휘 수 많은 순, 같으면 최근 달성 순 (2026-10-17)
+   이름은 서버에서 가림(홍*동). 원본: db/ranking/ranking.tpl.html → node db/ranking/build.js 로 ranking.html 생성 */
 :root {
   --bg: #F4F6FA; --card: #FFFFFF; --ink: #1A1F30; --sub: #6B7488; --line: #E6E9F0;
   --green: #2FA572; --green-soft: #E7F6EE; --gold: #E0A800; --me: #FFF7DB;
@@ -48,12 +50,23 @@ h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
 .spin { width: 28px; height: 28px; margin: 0 auto 10px; border: 3px solid var(--green-soft); border-top-color: var(--green); border-radius: 50%; animation: sp .8s linear infinite; }
 @keyframes sp { to { transform: rotate(360deg); } }
 .foot { font-size: 12px; color: var(--sub); margin-top: 14px; line-height: 1.7; }
+.card-head .d { font-size: 12px; color: var(--sub); font-weight: 400; margin-left: 8px; }
+@media (max-width: 640px) { .card-head .d { display: block; margin: 3px 0 0; } }   /* 휴대폰: 설명은 제목 아래 줄 */
+.areas { font-size: 12px; color: var(--sub); margin-top: 2px; }
+.areas b { font-weight: 500; color: #3B4256; }
+.atabs { display: flex; gap: 4px; padding: 10px 12px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.atabs button { border: 1px solid var(--line); background: #fff; border-radius: 100px; padding: 5px 12px; font: inherit; font-size: 13px; color: var(--sub); cursor: pointer; white-space: nowrap; }
+.atabs button.on { background: #1A1F30; border-color: #1A1F30; color: #fff; font-weight: 500; }
+.crown { font-size: 18px; }
+.hall-cnt { text-align: right; flex: none; }
+.hall-cnt .cnt { color: var(--gold); }
+.hall-cnt .rr { font-size: 12px; color: var(--sub); margin-top: 2px; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>🏆 훈감각 어휘 랭킹</h1>
-  <p class="lead">새로 <b>'내 어휘'</b>로 익힌 어휘 수로 겨뤄요. 여러 회차·다시 훈련에서 새로 익힌 어휘가 모두 더해져요.</p>
+  <p class="lead">오늘 새로 <b>'내 어휘'</b>로 익힌 어휘 수로 겨루고, 1회차부터 빠짐없이 만점을 이어 간 친구는 <b>명예의 전당</b>에 올라요.</p>
 
   <div class="filters">
     <div class="seg" id="f-level"><button data-v="">전체</button><button data-v="초등">초등</button><button data-v="중등">중등</button></div>
@@ -62,17 +75,18 @@ h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
 
   <div class="boards">
     <div class="card">
-      <div class="card-head"><span class="t">오늘 새로 익힌 어휘</span><span class="r" id="range-day"></span></div>
+      <div class="card-head"><span class="t">오늘의 랭킹<span class="d">오늘 새로 익힌 어휘</span></span><span class="r" id="range-day"></span></div>
       <div class="me-bar" id="me-day" hidden></div>
       <div id="body-day"><div class="loading"><div class="spin"></div>불러오는 중이에요</div></div>
     </div>
     <div class="card">
-      <div class="card-head"><span class="t">누적 내 어휘</span><span class="r" id="range-all"></span></div>
-      <div class="me-bar" id="me-all" hidden></div>
-      <div id="body-all"><div class="loading"><div class="spin"></div>불러오는 중이에요</div></div>
+      <div class="card-head"><span class="t">명예의 전당 👑<span class="d">1회차부터 이어 간 누적 만점</span></span><span class="r" id="range-hall"></span></div>
+      <div class="atabs" id="f-area"></div>
+      <div class="me-bar" id="me-hall" hidden></div>
+      <div id="body-hall"><div class="loading"><div class="spin"></div>불러오는 중이에요</div></div>
     </div>
   </div>
-  <div class="foot">· 이름은 일부를 가려서 보여 줘요.<br>· 오늘 랭킹은 매일 0부터 다시 시작하고, 누적 랭킹은 지금까지 모은 '내 어휘' 수예요.</div>
+  <div class="foot">· 이름은 일부를 가려서 보여 줘요.<br>· 오늘의 랭킹은 매일 0부터 다시 시작해요.<br>· 명예의 전당은 영역마다 1회차부터 빠짐없이 모든 어휘를 모은(만점) 회차까지의 어휘 수 순서예요. 같으면 최근에 달성한 친구가 위에 와요. (영역별 100명)</div>
 </div>
 
 <script>
@@ -91,10 +105,14 @@ h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
   if (q.get('academy')) lsSet('ws_rank_academy', q.get('academy'));
   var me = q.get('me');   // 훈련 앱에서 열었을 때 '나' 표시
 
+  var AREAS = [['biology','생물'],['society','사회'],['history','역사'],['science','과학'],['culture','문화'],['economy','경제']];
+  var qa = q.get('area'), la = lsGet('ws_rank_area');
   var st = {
     level: ['초등', '중등'].indexOf(q.get('level')) > -1 ? q.get('level') : '',
-    scope: academy && q.get('scope') !== 'all' ? 'academy' : 'all'
+    scope: academy && q.get('scope') !== 'all' ? 'academy' : 'all',
+    area: AREAS.some(function(a){ return a[0] === qa; }) ? qa : AREAS.some(function(a){ return a[0] === la; }) ? la : 'biology'
   };
+  document.getElementById('f-area').innerHTML = AREAS.map(function(a){ return '<button data-v="' + a[0] + '">' + a[1] + '</button>'; }).join('');
   if (!academy) { var ba = document.getElementById('btn-academy'); ba.disabled = true; ba.title = '훈련 화면의 랭킹 버튼으로 들어오면 볼 수 있어요'; }
 
   function bindSeg(id, key){
@@ -107,12 +125,21 @@ h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
     paint();
   }
   bindSeg('f-level', 'level'); bindSeg('f-scope', 'scope');
+  (function(){   // 명예의 전당 영역 탭 — 이 표만 다시 불러옴, 고른 영역은 이 브라우저에 기억
+    var el = document.getElementById('f-area');
+    function paint(){ el.querySelectorAll('button').forEach(function(b){ b.classList.toggle('on', b.dataset.v === st.area); }); }
+    el.addEventListener('click', function(e){
+      var b = e.target.closest('button'); if (!b) return;
+      st.area = b.dataset.v; lsSet('ws_rank_area', st.area); paint(); loadHall(++hseq);
+    });
+    paint();
+  })();
 
   function esc(t){ return String(t == null ? '' : t).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
   function fmtDay(d){ var p = String(d).split('-'); return Number(p[1]) + '월 ' + Number(p[2]) + '일'; }
   var seq = 0;
   function loadOne(period, my){
-    var sfx = period === 'day' ? 'day' : 'all';
+    var sfx = 'day';
     var body = document.getElementById('body-' + sfx);
     body.innerHTML = '<div class="loading"><div class="spin"></div>불러오는 중이에요</div>';
     return fetch(URL_ + '/rest/v1/rpc/wordsense_rank_board', {
@@ -124,17 +151,19 @@ h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
     }).then(function(r){ return r.json(); }).then(function(d){
       if (my !== seq) return;
       if (!d || !d.rows) throw new Error((d && d.message) || '불러오지 못했어요');
-      document.getElementById('range-' + sfx).textContent = period === 'day' ? fmtDay(d.to) : (st.scope === 'academy' ? (d.academy_name || '우리학원') : '전국');
+      document.getElementById('range-' + sfx).textContent = fmtDay(d.to);
       var mb = document.getElementById('me-' + sfx);
       if (me && d.me) { mb.hidden = false; mb.innerHTML = '나는 <b>' + d.me.rank + '위</b> · <b>' + d.me.count + '개</b> (참여 ' + d.total + '명)'; }
-      else if (me) { mb.hidden = false; mb.textContent = period === 'day' ? '오늘 새로 익힌 어휘가 아직 없어요. 훈련하면 순위에 올라가요!' : '아직 모은 내 어휘가 없어요.'; }
+      else if (me) { mb.hidden = false; mb.textContent = '오늘 새로 익힌 어휘가 아직 없어요. 훈련하면 순위에 올라가요!'; }
       else mb.hidden = true;
       if (!d.rows.length) { body.innerHTML = '<div class="empty">아직 기록이 없어요.<br>먼저 훈련하고 1등을 차지해 보세요! 🚀</div>'; return; }
       var medals = ['🥇', '🥈', '🥉'];
       body.innerHTML = '<ol class="list">' + d.rows.map(function(r){
         var m = r.rank <= 3;
         return '<li class="item' + (r.me ? ' me' : '') + '"><span class="rk' + (m ? ' medal' : '') + '">' + (m ? medals[r.rank - 1] : r.rank) + '</span>'
-          + '<div class="who"><div class="nm">' + esc(r.name) + (r.me ? ' (나)' : '') + '</div>' + (r.academy ? '<div class="ac">' + esc(r.academy) + '</div>' : '') + '</div>'
+          + '<div class="who"><div class="nm">' + esc(r.name) + (r.me ? ' (나)' : '') + '</div>'
+          + ((r.areas && r.areas.length) ? '<div class="areas">' + r.areas.map(function(a){ return esc(a.area) + ' <b>' + a.n + '</b>'; }).join(' · ') + '</div>' : '')
+          + (r.academy ? '<div class="ac">' + esc(r.academy) + '</div>' : '') + '</div>'
           + '<span class="cnt">' + r.count + '<small>개</small></span></li>';
       }).join('') + '</ol>';
     }).catch(function(e){
@@ -143,7 +172,40 @@ h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
       console.error('[ranking]', e);
     });
   }
-  function load(){ var my = ++seq; loadOne('day', my); loadOne('all', my); }
+  var hseq = 0;
+  function loadHall(my){
+    var body = document.getElementById('body-hall');
+    body.innerHTML = '<div class="loading"><div class="spin"></div>불러오는 중이에요</div>';
+    var areaKo = (AREAS.filter(function(a){ return a[0] === st.area; })[0] || [, ''])[1];
+    return fetch(URL_ + '/rest/v1/rpc/wordsense_rank_hall_board', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: KEY_, Authorization: 'Bearer ' + KEY_ },
+      body: JSON.stringify({ p_area: st.area, p_level: st.level || null,
+        p_academy_no: st.scope === 'academy' && academy ? Number(academy) : null,
+        p_limit: 100, p_member_no: me ? Number(me) : null })
+    }).then(function(r){ return r.json(); }).then(function(d){
+      if (my !== hseq) return;
+      if (!d || !d.rows) throw new Error((d && d.message) || '불러오지 못했어요');
+      document.getElementById('range-hall').textContent = st.scope === 'academy' ? (d.academy_name || '우리학원') : '전국';
+      var mb = document.getElementById('me-hall');
+      if (me && d.me) { mb.hidden = false; mb.innerHTML = '나는 <b>' + d.me.rank + '위</b> · ' + areaKo + ' 1~' + d.me.rounds + '회 · <b>' + d.me.count + '개</b>'; }
+      else if (me) { mb.hidden = false; mb.textContent = '1회차부터 모든 어휘를 모으면 명예의 전당에 올라요!'; }
+      else mb.hidden = true;
+      if (!d.rows.length) { body.innerHTML = '<div class="empty">아직 ' + esc(areaKo) + ' 명예의 전당에 오른 친구가 없어요.<br>첫 번째 주인공이 되어 보세요! 👑</div>'; return; }
+      body.innerHTML = '<ol class="list">' + d.rows.map(function(r){
+        var lv = st.level ? '' : r.level + ' ';
+        return '<li class="item' + (r.me ? ' me' : '') + '"><span class="rk' + (r.rank <= 3 ? ' crown' : '') + '">' + (r.rank <= 3 ? '👑' : r.rank) + '</span>'
+          + '<div class="who"><div class="nm">' + esc(r.name) + (r.me ? ' (나)' : '') + '</div>'
+          + '<div class="ac">' + [esc(r.academy || ''), r.at].filter(Boolean).join(' · ') + '</div></div>'
+          + '<div class="hall-cnt"><div class="cnt">' + r.count + '<small>개</small></div><div class="rr">' + lv + areaKo + ' 1~' + r.rounds + '회</div></div></li>';
+      }).join('') + '</ol>';
+    }).catch(function(e){
+      if (my !== hseq) return;
+      body.innerHTML = '<div class="empty">명예의 전당을 불러오지 못했어요. 잠시 후 다시 열어 주세요.</div>';
+      console.error('[ranking hall]', e);
+    });
+  }
+  function load(){ var my = ++seq; loadOne('day', my); loadHall(++hseq); }
   load();
 })();
 </script>
