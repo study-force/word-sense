@@ -147,63 +147,58 @@ window.SESSION_READY = (async function loadSession() {
       }
     }
 
-    // 1. 영역 ID 조회
-    const { data: areaRow, error: e1 } = await client
-      .from('areas')
-      .select('id, name_ko')
-      .eq('slug', TARGET_AREA_SLUG)
-      .single();
-    if (e1) throw e1;
+    // ── 데이터 불러오기 — 서로 상관없는 조회는 동시에 (2026-10-17 속도 개선: 12번 차례로 → 3묶음)
+    //   1묶음: 회차(+영역)  →  2묶음: 主字·어휘·빈칸 풀·오답 피드백·영역 회차·다음 회차(+중등 초등 어휘)
+    //   →  3묶음: 민감 어휘·보기 뜻·훈사전 훈음·다음 主字
 
-    // 2. 회차 정보
+    // 1. 회차 정보 + 영역 (영역 slug로 한 번에)
     const { data: sess, error: e2 } = await client
       .from('sessions')
-      .select('id, round_no, main_char, main_char_hangul, main_hun_short, main_eum, main_etymology, main_meanings')
-      .eq('area_id', areaRow.id)
+      .select('id, round_no, main_char, main_char_hangul, main_hun_short, main_eum, main_etymology, main_meanings, area_id, areas!inner(id, name_ko, slug)')
+      .eq('areas.slug', TARGET_AREA_SLUG)
       .eq('round_no', TARGET_ROUND_NO)
       .eq('level', TARGET_LEVEL)
       .single();
     if (e2) throw e2;
+    const areaRow = { id: sess.areas.id, name_ko: sess.areas.name_ko };
 
-    // 2b. 主字 콘텐츠 — 정규화된 main_chars에서 읽음 (SSOT: 한 곳에서 고치면 전 회차 반영)
-    const { data: mc, error: e2b } = await client
-      .from('main_chars')
-      .select('char_hangul, eum, etymology, meanings, narration_url')
-      .eq('char', sess.main_char)
-      .single();
-    if (e2b) throw e2b;
+    // 2. 회차에 딸린 것들 — 동시에
+    const isMid = TARGET_LEVEL === '중등';
+    const WORD_COLS = 'session_word_id, word_master_id, word, hanja, char1, hun1, char2, hun2, meaning, fill_sentence, choices, order_in_session, grade';
+    const [rMc, rWords, rFill, rElemSess, rElemRows, rAreaSess, rNext] = await Promise.all([
+      // 2b. 主字 콘텐츠 — 정규화된 main_chars에서 읽음 (SSOT: 한 곳에서 고치면 전 회차 반영)
+      client.from('main_chars').select('char_hangul, eum, etymology, meanings, narration_url').eq('char', sess.main_char).single(),
+      // 3. 회차 어휘 (view 활용 — 한 번에 통합 조회)
+      client.from('v_session_word_full').select(WORD_COLS).eq('session_id', sess.id).order('order_in_session'),
+      // 3e. 빈칸 오답 골디락스 풀 (fill_pools, 2026-10-15) — 없거나 오류면 기존 방식으로 출제
+      client.from('fill_pools').select('session_word_id, pool').eq('context_session_id', sess.id),
+      // 3b. 중등 = 초등 누적용 — 초등 회차 목록 + 主字가 들어간 초등 어휘
+      isMid ? client.from('sessions').select('id, main_char').eq('level', '초등') : Promise.resolve({ data: [] }),
+      isMid ? client.from('v_session_word_full').select('session_id, ' + WORD_COLS).like('hanja', '%' + sess.main_char + '%').order('session_id').order('order_in_session') : Promise.resolve({ data: [] }),
+      // 훈사전 그리드용 — 영역 전체 회차 主字
+      client.from('sessions').select('round_no, main_char').eq('area_id', areaRow.id).eq('level', TARGET_LEVEL).order('round_no'),
+      // 다음 회차 미리보기 (내일의 한자) — 같은 영역 round+1
+      client.from('sessions').select('main_char').eq('area_id', areaRow.id).eq('round_no', TARGET_ROUND_NO + 1).eq('level', TARGET_LEVEL).maybeSingle(),
+    ]);
+    if (rMc.error) throw rMc.error;
+    if (rWords.error) throw rWords.error;
+    if (rElemSess.error) throw rElemSess.error;
+    if (rElemRows.error) throw rElemRows.error;
+    const mc = rMc.data;
+    let wordRows = rWords.data || [];
+    const fillPools = {};
+    if (rFill.error) console.warn('[supabase] 빈칸 오답 풀 없음 — 기존 방식', rFill.error.message);
+    else (rFill.data || []).forEach(function(r){ fillPools[r.session_word_id] = r.pool; });
 
-    // 3. 회차 어휘 (view 활용 — 한 번에 통합 조회)
-    let { data: wordRows, error: e3 } = await client
-      .from('v_session_word_full')
-      .select('session_word_id, word_master_id, word, hanja, char1, hun1, char2, hun2, meaning, fill_sentence, choices, order_in_session, grade')
-      .eq('session_id', sess.id)
-      .order('order_in_session');
-    if (e3) throw e3;
-
-    // 3b. 중등 = 초등 누적 — 같은 主字의 초등 회차 어휘도 합침 (중등 어휘 뒤에, word+hanja 중복 제외)
-    //     DB 복사 없이 읽을 때 합치므로 초등 어휘를 고치면 중등에도 그대로 반영됨
     // 3b. 중등 = 초등 누적 — 主字가 들어간 초등 어휘를 모두 합침 (대표님 2026-10-15 확장)
     //     우선순위: 같은 主字 초등 회차 어휘 → 그 외 主字가 들어간 초등 어휘. word+hanja 중복 제외.
     //     DB 복사 없이 읽을 때 합치므로 초등 어휘를 고치면 중등에도 그대로 반영됨
     let elemIds = [];
-    if (TARGET_LEVEL === '중등') {
-      const { data: elemSess, error: e3a } = await client
-        .from('sessions')
-        .select('id, main_char')
-        .eq('level', '초등');
-      if (e3a) throw e3a;
+    if (isMid) {
       const elemSet = {}, sameChar = {};
-      (elemSess || []).forEach(function(s){ elemSet[s.id] = true; if (s.main_char === sess.main_char) sameChar[s.id] = true; });
+      (rElemSess.data || []).forEach(function(s){ elemSet[s.id] = true; if (s.main_char === sess.main_char) sameChar[s.id] = true; });
       elemIds = Object.keys(sameChar).map(Number);   // 오답 피드백은 같은 主字 회차 것만
-      const { data: elemRows, error: e3b } = await client
-        .from('v_session_word_full')
-        .select('session_id, session_word_id, word_master_id, word, hanja, char1, hun1, char2, hun2, meaning, fill_sentence, choices, order_in_session, grade')
-        .like('hanja', '%' + sess.main_char + '%')
-        .order('session_id')
-        .order('order_in_session');
-      if (e3b) throw e3b;
-      const cand = (elemRows || []).filter(function(r){ return elemSet[r.session_id]; });
+      const cand = (rElemRows.data || []).filter(function(r){ return elemSet[r.session_id]; });
       cand.sort(function(a, b){ return (sameChar[b.session_id] ? 1 : 0) - (sameChar[a.session_id] ? 1 : 0); });   // 같은 主字 회차 먼저 (안정 정렬)
       const seen = {};
       wordRows.forEach(function(r){ seen[r.word + '|' + r.hanja] = true; });
@@ -219,18 +214,36 @@ window.SESSION_READY = (async function loadSession() {
       regenChoicesGoldilocks(wordRows);
     }
 
+    // 3. 어휘에 딸린 것들 — 동시에
+    const wmIds = wordRows.map(function(r){ return r.word_master_id; });
+    const eids = {};
+    wordRows.forEach(function(r){ (r.choices || []).forEach(function(c){ if (c && c.entry_id != null) eids[c.entry_id] = true; }); });
+    const choiceIds = Object.keys(eids).map(Number);
+    const areaChars2 = rAreaSess.data || [];
+    const uniqChars = Object.keys(areaChars2.reduce(function(o, s){ if (s.main_char) o[s.main_char] = 1; return o; }, {}));
+    const nextSess = rNext.data;
+    const none = Promise.resolve({ data: [] });
+    const [rSens, rMeans, rWrongs, rMcs, rNmc] = await Promise.all([
+      wmIds.length ? client.from('word_master').select('id, sensitive').in('id', wmIds).not('sensitive', 'is', null) : none,
+      choiceIds.length ? client.from('word_master').select('id, meaning').in('id', choiceIds) : none,
+      // 4. 회차 오답 피드백 (중등이면 초등 같은 主字 회차 오답 피드백도)
+      client.from('wrong_words').select('word, feedback').in('session_id', [sess.id].concat(elemIds)),
+      uniqChars.length ? client.from('main_chars').select('char, char_hangul').in('char', uniqChars) : none,
+      nextSess ? client.from('main_chars').select('char_hangul, etymology').eq('char', nextSess.main_char).maybeSingle() : Promise.resolve({ data: null }),
+    ]);
+    if (rWrongs.error) throw rWrongs.error;
+    const wrongs = rWrongs.data;
+
     // 3c. 민감 어휘(word_master.sensitive, 대표님 2026-10-15)
     //   slur(비하어): 학습 대상 제외 / body·adult: 초등은 제외, 중등은 입력 시 '이 어휘도 알고 있군요' 피드백만(정답·점수 X)
     let bonusRows = [];
-    if (wordRows.length) {
-      const ids = wordRows.map(function(r){ return r.word_master_id; });
-      const { data: sens } = await client.from('word_master').select('id, sensitive').in('id', ids).not('sensitive', 'is', null);
+    {
       const flag = {};
-      (sens || []).forEach(function(s){ flag[s.id] = s.sensitive; });
+      (rSens.data || []).forEach(function(s){ flag[s.id] = s.sensitive; });
       wordRows = wordRows.filter(function(r){
         const f = flag[r.word_master_id];
         if (!f) return true;
-        if (f !== 'slur' && TARGET_LEVEL === '중등') bonusRows.push(r);
+        if (f !== 'slur' && isMid) bonusRows.push(r);
         return false;
       });
     }
@@ -238,37 +251,13 @@ window.SESSION_READY = (async function loadSession() {
     // 3d. 보기 문구 SSOT — 각 보기는 어휘 사전(word_master) 연결(entry_id)을 가지며,
     //     화면에는 저장된 문구 대신 '지금 어휘 사전의 뜻'을 보여준다 (뜻을 고치면 모든 보기가 자동 반영, 2026-10-15)
     {
-      const eids = {};
-      wordRows.forEach(function(r){ (r.choices || []).forEach(function(c){ if (c && c.entry_id != null) eids[c.entry_id] = true; }); });
-      const idList = Object.keys(eids).map(Number);
-      if (idList.length) {
-        const { data: ms } = await client.from('word_master').select('id, meaning').in('id', idList);
-        const M = {};
-        (ms || []).forEach(function(m){ M[m.id] = m.meaning; });
-        wordRows.forEach(function(r){
-          if (!Array.isArray(r.choices)) return;
-          r.choices = r.choices.map(function(c){ return (c && c.entry_id != null && M[c.entry_id]) ? Object.assign({}, c, { text: M[c.entry_id] }) : c; });
-        });
-      }
+      const M = {};
+      (rMeans.data || []).forEach(function(m){ M[m.id] = m.meaning; });
+      wordRows.forEach(function(r){
+        if (!Array.isArray(r.choices)) return;
+        r.choices = r.choices.map(function(c){ return (c && c.entry_id != null && M[c.entry_id]) ? Object.assign({}, c, { text: M[c.entry_id] }) : c; });
+      });
     }
-
-    // 3e. 빈칸 오답 골디락스 풀 (fill_pools, 2026-10-15) — 없거나 오류면 기존 방식으로 출제
-    const fillPools = {};
-    try {
-      const { data: fp, error: e3e } = await client
-        .from('fill_pools')
-        .select('session_word_id, pool')
-        .eq('context_session_id', sess.id);
-      if (e3e) throw e3e;
-      (fp || []).forEach(function(r){ fillPools[r.session_word_id] = r.pool; });
-    } catch (e) { console.warn('[supabase] 빈칸 오답 풀 없음 — 기존 방식', e && e.message); }
-
-    // 4. 회차 오답 피드백
-    const { data: wrongs, error: e4 } = await client
-      .from('wrong_words')
-      .select('word, feedback')
-      .in('session_id', [sess.id].concat(elemIds));   // 중등이면 초등 같은 主字 회차 오답 피드백도
-    if (e4) throw e4;
 
     // 4b. 학생의 과정별 '내 어휘'(인출·다시 인출 + 강화 통과) — 금색 칩으로 켜고 출제에서 뺌 (4단계 훈련, 2026-10-15)
     //     시험용: ?known=N 이면 앞에서 N개를 내 어휘로 가정
@@ -333,53 +322,24 @@ window.SESSION_READY = (async function loadSession() {
     };
 
     // 영역 전체 회차 main_chars — 훈사전 그리드용 (영역마다 다른 50글자)
-    // 훈음은 SSOT인 main_chars에서 읽음 (sessions.main_char_hangul 복사본 미사용 — 레슨 화면과 동일 출처)
-    try {
-      const { data: areaSessions } = await client
-        .from('sessions')
-        .select('round_no, main_char')
-        .eq('area_id', areaRow.id)
-        .eq('level', TARGET_LEVEL)
-        .order('round_no');
-      const areaChars2 = areaSessions || [];
-      const charSet = {};
-      areaChars2.forEach(function(s) { if (s.main_char) charSet[s.main_char] = 1; });
-      const uniqChars = Object.keys(charSet);
+    // 훈음은 SSOT인 main_chars에서 읽음 (sessions.main_char_hangul 복사본 미사용 — 레슨 화면과 같은 출처)
+    {
       const hunMap = {};
-      if (uniqChars.length) {
-        const { data: mcs } = await client
-          .from('main_chars')
-          .select('char, char_hangul')
-          .in('char', uniqChars);
-        (mcs || []).forEach(function(m) { hunMap[m.char] = m.char_hangul || ''; });
-      }
+      (rMcs.data || []).forEach(function(m) { hunMap[m.char] = m.char_hangul || ''; });
       window.SESSION.areaChars = areaChars2.map(function(s) {
         return { round: s.round_no, char: s.main_char, hun: hunMap[s.main_char] || '' };
       });
-    } catch (e) { window.SESSION.areaChars = []; }
+    }
 
     // 다음 회차 미리보기 (내일의 한자) — 같은 영역 round+1. 없으면 null 유지.
-    try {
-      const { data: nextSess } = await client
-        .from('sessions')
-        .select('main_char')
-        .eq('area_id', areaRow.id)
-        .eq('round_no', TARGET_ROUND_NO + 1)
-        .eq('level', TARGET_LEVEL)
-        .single();
-      if (nextSess) {
-        const { data: nmc } = await client
-          .from('main_chars')
-          .select('char_hangul, etymology')
-          .eq('char', nextSess.main_char)
-          .single();
-        window.SESSION.nextPreview = {
-          char:      nextSess.main_char,
-          hunFull:   nmc ? nmc.char_hangul : null,
-          etymology: nmc ? nmc.etymology : null
-        };
-      }
-    } catch (e) { /* 다음 회차 미존재 — nextPreview null 유지 */ }
+    if (nextSess) {
+      const nmc = rNmc.data;
+      window.SESSION.nextPreview = {
+        char:      nextSess.main_char,
+        hunFull:   nmc ? nmc.char_hangul : null,
+        etymology: nmc ? nmc.etymology : null
+      };
+    }
 
     if (knownTest > 0 && !window.__ST_SESSION) window.SESSION.words.slice(0, knownTest).forEach(function(w){ w.known = true; });
     // 훈사전 — 이 영역·과정의 회차별 누적 { round, total, known, trained } (학원 진입일 때만)
