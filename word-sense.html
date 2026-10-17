@@ -3024,7 +3024,7 @@ body.mission-mode #game .stage-nav {
 }
 .area-progress-stat em { color: var(--stage-accent, var(--green)); font-style: normal; font-weight: 700; font-size: 16px; text-shadow: 0 0 10px rgba(var(--stage-accent-rgb), 0.35); }
 
-/* ── 단원평가 — 시험지 스타일 (대표님 2026-10-17: 단정하게) ── */
+/* ── 실력 점검 — 시험지 스타일 (대표님 2026-10-17: 단정하게) ── */
 #unittest { background: #E9ECF1 !important; align-items: center; justify-content: center; }
 .ut-wrap { width: 100%; max-width: 640px; padding: 24px 16px; box-sizing: border-box; }
 .ut-paper { background: #FFFFFF; border: 1px solid #CFD5DF; border-radius: 6px; box-shadow: 0 2px 10px rgba(30,40,60,0.08); color: #1C2230; font-family: 'Noto Sans KR', sans-serif; }
@@ -3086,7 +3086,7 @@ body.pmode .ut-info, body.pmode .ut-rules { font-size: 16px; } body.pmode .ut-hi
 .area-grid .area-cell.ut-cell.done::after { content: '재응시'; display: block !important; }
 .area-grid .area-cell.ut-cell.open { border-color: #4A6FB5 !important; color: #2F4F8F !important; background: #EEF2FA !important; }   /* 이어 풀기 — 통과 초록과 겹치지 않게 파랑 */
 .area-grid {
-  flex: 1; display: grid; grid-template-columns: repeat(12, 1fr);   /* 5회차 + 평가 칸 × 2 (단원평가, 2026-10-17) */
+  flex: 1; display: grid; grid-template-columns: repeat(12, 1fr);   /* 5회차 + 평가 칸 × 2 (실력 점검, 2026-10-17) */
   grid-auto-rows: 1fr; gap: 6px; overflow: visible;   /* 호버 시 "재훈련" 라벨 잘림 방지 */
 }
 /* 훈사전 다음 회차 — 반투명 재생 버튼 */
@@ -4739,7 +4739,7 @@ body.pmode .st-today-badge { font-size: 13px; }
   </div>
 
   <!-- ══ 영역 진행 ══ -->
-  <!-- ══ 단원평가 (5회차마다, 기획 v7 2026-10-17) ══ -->
+  <!-- ══ 실력 점검 (5회차마다, 기획 v7 2026-10-17) ══ -->
   <div class="page" id="unittest">
     <div class="ut-wrap" id="ut-wrap"></div>
   </div>
@@ -4906,7 +4906,7 @@ body.pmode .st-today-badge { font-size: 13px; }
 <!-- Supabase 클라이언트 + 데이터 fetch -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="data-supabase.js"></script>
-<script src="unit-test-pick.js"></script>   <!-- 단원평가 균형 랜덤 출제 -->
+<script src="unit-test-pick.js"></script>   <!-- 실력 점검 균형 랜덤 출제 -->
 <script>
 // ── 스케일 ──────────────────────────────────
 // 태블릿 화면 키보드 대응 — 입력창(#wi) 포커스 중이면 키보드에 가려지지 않는 영역(visualViewport)에
@@ -6276,7 +6276,7 @@ function goHome(){
   var hRound = document.getElementById('h-round');
   if(hRound) hRound.textContent = (sess.id || 1) + '회';   // 예: 생물 / 19회
   showPage('home');
-  utCheckOpenOnHome();   // 끝내지 않은 단원평가가 있으면 먼저 이어 풀기
+  utCheckOpenOnHome();   // 끝내지 않은 실력 점검이 있으면 먼저 이어 풀기
 }
 
 // ══════════════════════════════════════════════
@@ -8834,7 +8834,7 @@ function goResult(){
       localStorage.setItem(window.__TEST_KNOWN_KEY, JSON.stringify(tk));
     } catch(e){}
     testMarkPerfect();
-    utSet(utKey('trained', SESSION.id), '1');   // 단원평가 응시 자격용 (테스트 접속)
+    utSet(utKey('trained', SESSION.id), '1');   // 실력 점검 응시 자격용 (테스트 접속)
     // 어드민 회차 테스트 화면에 '내 어휘 N / 전체 T' 알림 → '다시 훈련' 탭에서 못 익힌 어휘가 남은 회차를 빨강으로 (2026-10-16)
     try {
       if(window.opener && !window.opener.closed){
@@ -8908,7 +8908,7 @@ function goResult(){
   buildAreaProgress();
 
   showPage('result');
-  utAfterResult();   // 결과 화면 버튼 = 나의 훈사전 보기 (단원평가는 자동으로 띄우지 않음)
+  utAfterResult();   // 결과 화면 버튼 = 나의 훈사전 보기 (실력 점검은 자동으로 띄우지 않음)
 
   // ── 점수판 중앙 이동 + 컬렉션/랭킹/버튼 등장 시퀀스 ──
   var chip = document.getElementById('score-chip');
@@ -9344,8 +9344,8 @@ var AREA_PROGRESS = null;
 var PASS_PCT = 80;
 // 통과 = 회차 어휘의 80% 이상이 내 어휘 (대표님 2026-10-17, 예전: 10개 고정 → 60% → 80%)
 //   한 번에 못 채우면 재도전으로 이어서 채움 (모은 어휘는 쌓임). 미통과는 빨강 대신 '진행 중'(진한 회색)
-//   회차 크기(3~90개)에 맞춰 공평하게 — 단원평가 자격(5회차 모두 통과)과 같은 기준
-//   서버 통계(wordsense_student_stats cleared)·단원평가(wordsense-unittest)도 같은 계산: known*10 >= total*8
+//   회차 크기(3~90개)에 맞춰 공평하게 — 실력 점검 자격(5회차 모두 통과)과 같은 기준
+//   서버 통계(wordsense_student_stats cleared)·실력 점검(wordsense-unittest)도 같은 계산: known*10 >= total*8
 function passNeed(p){ return Math.max(1, Math.ceil((p.total || 0) * PASS_PCT / 100)); }
 function isPass(p){ return !p.locked && p.total > 0 && p.found >= passNeed(p); }
 
@@ -9400,7 +9400,7 @@ function showTomorrowSplash(){
 }
 
 // ══════════════════════════════════════════════
-// 단원평가 — 5회차마다 25문항 (기획 v7, 대표님 2026-10-17)
+// 실력 점검 — 5회차마다 25문항 (기획 v7, 대표님 2026-10-17)
 //   한글만 보고 정답 4점 · '한자 보고 풀기' 후 정답 2점 · 100점 만점 · 정답은 시험 중에 알려 주지 않음
 //   학원 진입: 서버(wordsense-unittest)에 저장 — 이어 하기·재응시·응시 자격(5회차 모두 훈련)
 //   테스트 접속(학생 없음): 이 브라우저에 저장 (같은 규칙)
@@ -9453,7 +9453,7 @@ function utPassedCount(u){
   return n;
 }
 function utEligible(u){ return utPassedCount(u) >= 5; }
-function utStarted(u){   // 단원 회차를 하나라도 훈련했는지 (안 했으면 '0/5 통과' 대신 'N단원')
+function utStarted(u){   // 그 차수의 회차를 하나라도 훈련했는지 (안 했으면 '0/5 통과' 대신 'N차')
   var from = (u - 1) * 5 + 1, to = u * 5;
   return ((UT_STATUS && UT_STATUS.trained_rounds) || []).some(function(r){ return r >= from && r <= to; })
     || (AREA_PROGRESS || buildAreaProgress()).some(function(p){ return p.round >= from && p.round <= to && !p.locked; });
@@ -9486,19 +9486,19 @@ function utBuildItems(pool){
   });
 }
 function utRender(html){ var w = document.getElementById('ut-wrap'); if(w) w.innerHTML = html; }
-function utUnitName(u){ return (SESSION.level || '') + ' ' + (SESSION.area || '') + ' ' + u + '단원 (' + ((u - 1) * 5 + 1) + '~' + (u * 5) + '회차)'; }
+function utUnitName(u){ return (SESSION.level || '') + ' ' + (SESSION.area || '') + ' ' + u + '차 (' + ((u - 1) * 5 + 1) + '~' + (u * 5) + '회차)'; }
 
 // 평가 열기 — 진행 중이면 이어 하기, 아니면 새로 출제
 async function utOpen(u){
   showPage('unittest');
-  utRender('<div class="ut-loading">단원평가를 준비하는 중이에요…</div>');
+  utRender('<div class="ut-loading">실력 점검을 준비하는 중이에요…</div>');
   UT = { unit: u, mode: utIsServer() ? 'server' : 'local' };
   try {
     if(UT.mode === 'server'){
       var info = utInfo(u), items = (info && info.open_id) ? [] : utBuildItems(await utLoadPool(u));
       var d = await utApi({ action: 'start', level: SESSION.level, area_id: SESSION.areaId, unit: u, items: items });
       if(!d.success && !items.length){ items = utBuildItems(await utLoadPool(u)); d = await utApi({ action: 'start', level: SESSION.level, area_id: SESSION.areaId, unit: u, items: items }); }
-      if(!d.success){ utRender('<div class="ut-paper"><div class="ut-body"><div class="ut-q"><span class="ask" style="font-size:17px;font-weight:600;color:#1C2230">단원평가를 열 수 없어요</span></div><div class="ut-note">' + utEsc(d.message || '') + '</div><button class="ut-btn" onclick="goArea()">나의 훈사전 보기</button></div></div>'); return; }
+      if(!d.success){ utRender('<div class="ut-paper"><div class="ut-body"><div class="ut-q"><span class="ask" style="font-size:17px;font-weight:600;color:#1C2230">실력 점검을 열 수 없어요</span></div><div class="ut-note">' + utEsc(d.message || '') + '</div><button class="ut-btn" onclick="goArea()">나의 훈사전 보기</button></div></div>'); return; }
       UT.attempt = d.attempt; UT.resumed = d.resumed;
     } else {
       var k = utKey('unitopen', u), o = utGet(k);
@@ -9511,7 +9511,7 @@ async function utOpen(u){
     }
   } catch(e){
     console.error('[unittest] 준비 실패', e);
-    utRender('<div class="ut-paper"><div class="ut-body"><div class="ut-q"><span class="ask" style="font-size:17px;font-weight:600;color:#1C2230">단원평가를 준비하지 못했어요</span></div><div class="ut-note">잠시 후 다시 해 주세요.</div><button class="ut-btn" onclick="goArea()">나의 훈사전 보기</button></div></div>');
+    utRender('<div class="ut-paper"><div class="ut-body"><div class="ut-q"><span class="ask" style="font-size:17px;font-weight:600;color:#1C2230">실력 점검을 준비하지 못했어요</span></div><div class="ut-note">잠시 후 다시 해 주세요.</div><button class="ut-btn" onclick="goArea()">나의 훈사전 보기</button></div></div>');
     return;
   }
   var items = UT.attempt.items || [];
@@ -9519,7 +9519,7 @@ async function utOpen(u){
   if(UT.idx === -1){ utFinish(); return; }
   var done = UT.idx;
   utRender('<div class="ut-paper">'
-    + '<div class="ut-head"><span class="t">단원평가</span><span class="m">' + utEsc(utUnitName(u)) + '</span></div>'
+    + '<div class="ut-head"><span class="t">실력 점검</span><span class="m">' + utEsc(utUnitName(u)) + '</span></div>'
     + '<div class="ut-body">'
     +   '<table class="ut-info">'
     +     '<tr><th>문항 수</th><td>' + items.length + '문항 (뜻 고르기)</td></tr>'
@@ -9545,7 +9545,7 @@ function utShowQ(){
   var hun = String(it.hun || '').split(' · ').map(function(h){ return '<span>' + utEsc(h) + '</span>'; }).join('');
   var marks = ['①', '②', '③', '④'];
   utRender('<div class="ut-paper">'
-    + '<div class="ut-head"><span class="t">단원평가</span><span class="m">' + utEsc(utUnitName(UT.unit)) + ' · ' + (UT.idx + 1) + ' / ' + items.length + '</span></div>'
+    + '<div class="ut-head"><span class="t">실력 점검</span><span class="m">' + utEsc(utUnitName(UT.unit)) + ' · ' + (UT.idx + 1) + ' / ' + items.length + '</span></div>'
     + '<div class="ut-bar"><i style="width:' + Math.round(UT.idx * 100 / items.length) + '%"></i></div>'
     + '<div class="ut-body">'
     +   '<div class="ut-q"><span class="n">' + (UT.idx + 1) + '.</span><span class="ask">다음 어휘의 뜻으로 알맞은 것은?</span><span class="p' + (half ? ' half' : '') + '">' + (half ? '2점' : '4점') + '</span></div>'
@@ -9610,7 +9610,7 @@ async function utFinish(){
   }
   var wrong = list.filter(function(x){ return x.result !== 'known' && x.result !== 'hanja'; });
   utRender('<div class="ut-paper">'
-    + '<div class="ut-head"><span class="t">단원평가 결과</span><span class="m">' + utEsc(utUnitName(UT.unit)) + '</span></div>'
+    + '<div class="ut-head"><span class="t">실력 점검 결과</span><span class="m">' + utEsc(utUnitName(UT.unit)) + '</span></div>'
     + '<div class="ut-body">'
     +   '<div class="ut-score"><em>' + att.score + '</em><span>/ 100점</span></div>'
     +   '<table class="ut-sheet">'
@@ -9638,9 +9638,9 @@ function utDecorateArea(){
     var el = document.createElement('div');
     var done = !open && info && info.last != null, np = utPassedCount(u);
     el.className = 'area-cell ut-cell' + (open ? ' open ok' : done ? ' done ok' : ok ? ' ok' : ' off');
-    el.innerHTML = '<div class="ut-cell-t">평가</div><div class="ut-cell-s">'
-      + (open ? '이어 풀기' : done ? info.last + '점' : ok ? '응시하기' : utStarted(u) ? np + '/5 통과' : u + '단원') + '</div>';
-    el.title = u + '단원 평가 (' + ((u - 1) * 5 + 1) + '~' + (u * 5) + '회차)'
+    el.innerHTML = '<div class="ut-cell-t">점검</div><div class="ut-cell-s">'
+      + (open ? '이어 풀기' : done ? info.last + '점' : ok ? '응시하기' : utStarted(u) ? np + '/5 통과' : u + '차') + '</div>';
+    el.title = u + '차 실력 점검 (' + ((u - 1) * 5 + 1) + '~' + (u * 5) + '회차)'
       + (open || ok ? '' : ' — 5회차를 모두 통과하면 볼 수 있어요 (회차 어휘 ' + PASS_PCT + '% 이상)');
     if(ok || open){ (function(uu){ el.addEventListener('click', function(){ utOpen(uu); }); })(u); }
     after.insertAdjacentElement('afterend', el);
@@ -9650,7 +9650,7 @@ function utDecorateArea(){
 function utAfterResult(){
   var b0 = document.getElementById('r-home-btn');
   if(b0){ b0.textContent = '나의 훈사전 보기 →'; b0.onclick = function(){ goArea(); }; }
-  // 단원평가는 자동으로 띄우지 않음 — 5회차를 모두 통과하면 훈사전 '평가' 칸에서 응시 (대표님 2026-10-17)
+  // 실력 점검은 자동으로 띄우지 않음 — 5회차를 모두 통과하면 훈사전 '평가' 칸에서 응시 (대표님 2026-10-17)
 }
 // 첫 화면 — 끝내지 않은 평가가 있으면 먼저 이어 풀기
 function utCheckOpenOnHome(){
@@ -9666,7 +9666,7 @@ function utCheckOpenOnHome(){
     var open = ((UT_STATUS && UT_STATUS.units) || []).filter(function(x){ return x.open_id; })[0];
     if(!open) return;
     var b = document.querySelector('#home .btn-start'); if(!b) return;
-    b.textContent = '단원평가 이어 풀기';
+    b.textContent = '실력 점검 이어 풀기';
     b.onclick = function(){ utOpen(open.unit); };
   });
 }
@@ -9743,7 +9743,7 @@ function goArea(){
   } else {
     master.className = 'area-master';
     icon.textContent = '';
-    msg.innerHTML = '※ 회차 가족 어휘의 ' + PASS_PCT + '% 이상을 모으면 통과 · 5회차를 모두 통과하면 단원평가가 열려요';
+    msg.innerHTML = '※ 회차 가족 어휘의 ' + PASS_PCT + '% 이상을 모으면 통과 · 5회차를 모두 통과하면 실력 점검이 열려요';
   }
   showPage('area');
   // 5회차마다 '평가' 칸 — 상태를 아직 모르면 받아 온 뒤 다시 그림

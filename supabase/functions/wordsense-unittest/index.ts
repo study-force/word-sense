@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════
-// Edge Function: wordsense-unittest — 단원평가 (기획 v7, 2026-10-17)
+// Edge Function: wordsense-unittest — 실력 점검 (기획 v7, 2026-10-17)
 //
 //   학생 확인: 학원 입장권(session_init.id)으로 회원번호를 서버에서 읽음 (브라우저가 보낸 회원번호는 믿지 않음)
 //   이어 하기: start 때 25문항을 test_answers에 미리 만들고, hint/answer 때마다 저장
@@ -152,17 +152,17 @@ Deno.serve(async (req) => {
     const attemptId = Number(b.attempt_id);
     const { data: att } = await db.from('test_attempts').select('id, status, duration_ms')
       .eq('id', attemptId).eq('member_no', member).maybeSingle();
-    if (!att) return err(404, '평가를 찾을 수 없습니다', cors);
+    if (!att) return err(404, '실력 점검을 찾을 수 없습니다', cors);
 
     if (b.action === 'hint') {
-      if (att.status !== 'in_progress') return err(409, '이미 끝난 평가입니다', cors);
+      if (att.status !== 'in_progress') return err(409, '이미 끝난 실력 점검입니다', cors);
       await db.from('test_answers').update({ hanja_used: true })
         .eq('attempt_id', attemptId).eq('ord', Number(b.ord)).is('choice_idx', null);
       return ok({}, cors);
     }
 
     if (b.action === 'answer') {
-      if (att.status !== 'in_progress') return err(409, '이미 끝난 평가입니다', cors);
+      if (att.status !== 'in_progress') return err(409, '이미 끝난 실력 점검입니다', cors);
       const ord = Number(b.ord), choice = Number(b.choice_idx);
       const { data: q } = await db.from('test_answers').select('correct_idx, hanja_used, choice_idx')
         .eq('attempt_id', attemptId).eq('ord', ord).maybeSingle();

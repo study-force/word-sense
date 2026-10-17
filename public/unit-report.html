@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>훈감각 단원평가 결과</title>
+<title>훈감각 실력 점검 결과</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@400;500;600&display=swap" rel="stylesheet">
 <!--
-  선생님용 단원평가 결과 보고서 (대표님 2026-10-17)
+  선생님용 실력 점검 결과 보고서 (대표님 2026-10-17)
   - 공용 결과 폼(teacher-result.html)과 같은 틀: 760×1085 시트, 회색 헤더·푸터, 포인트 주황
   - 데이터: ?st=입장권 → Edge wordsense-unittest {action:'report'} (회원번호는 서버가 입장권에서 읽음)
   - ?st 없으면 데모 데이터
@@ -134,10 +134,10 @@
     <div class="demo" id="demo" hidden>예시 데이터</div>
     <div class="body">
       <div class="pg on" id="pg1">
-        <div class="title">단원평가 결과</div>
+        <div class="title">실력 점검 결과</div>
         <div class="tabs" id="tabs"></div>
         <div class="kpis" id="kpis"></div>
-        <div class="sec">단원별 점수 <span class="n">5회차마다 25문항 · 100점 만점</span></div>
+        <div class="sec">차수별 점수 <span class="n">5회차마다 25문항 · 100점 만점</span></div>
         <table class="ut" id="units"></table>
         <div class="sec">결과 구성 <span class="n" id="mixN"></span></div>
         <div class="stack" id="mix"></div>
@@ -151,7 +151,7 @@
         <div class="sec">급수별 결과 <span class="n" id="gN"></span></div>
         <table class="gtab" id="gtab"></table>
         <div class="leg" id="gLeg" style="margin:4px 0 6px"></div>
-        <div class="gnote">급수: 국립국어원 한국어 기초 어휘 등급 · 응시한 모든 단원평가를 합산 (같은 단원은 최근 응시 기준)</div>
+        <div class="gnote">급수: 국립국어원 한국어 기초 어휘 등급 · 응시한 모든 실력 점검을 합산 (같은 단원은 최근 응시 기준)</div>
         <div class="sec">다시 볼 어휘 <span class="n" id="wN"></span></div>
         <div class="words" id="words"></div>
         <div class="more" id="more"></div>
@@ -241,17 +241,17 @@ function renderArea(){
   const avg = lastScores.length ? Math.round(lastScores.reduce((a, b) => a + b, 0) / lastScores.length) : null;
   const best = lists.length ? Math.max(...lists.map(l => Math.max(...l.map(a => a.score)))) : null;
   document.getElementById('kpis').innerHTML =
-    kpi('응시 단원', lists.length, ' / 10') +
+    kpi('응시한 점검', lists.length, ' / 10') +
     kpi('평균 점수', avg == null ? '–' : avg, avg == null ? '' : '점', avg == null ? '' : scoreColor(avg)) +
     kpi('최고 점수', best == null ? '–' : best, best == null ? '' : '점', best == null ? '' : scoreColor(best)) +
     kpi('응시 횟수', tries, '회');
 
-  let rows = '<tr><th style="width:62px;text-align:left;padding-left:8px">단원</th><th style="width:66px">회차</th><th>최근 점수</th><th style="width:46px"></th><th style="width:52px">첫 점수</th><th style="width:52px">최고</th><th style="width:44px">횟수</th><th style="width:72px">걸린 시간</th><th style="width:84px">응시일</th></tr>';
+  let rows = '<tr><th style="width:62px;text-align:left;padding-left:8px">차수</th><th style="width:66px">회차</th><th>최근 점수</th><th style="width:46px"></th><th style="width:52px">첫 점수</th><th style="width:52px">최고</th><th style="width:44px">횟수</th><th style="width:72px">걸린 시간</th><th style="width:84px">응시일</th></tr>';
   for(let u = 1; u <= 10; u++){
     const l = us[u], rr = ((u - 1) * 5 + 1) + '~' + (u * 5);
-    if(!l){ rows += '<tr class="none"><td class="u" style="color:#c2c8cf">' + u + '단원</td><td class="r">' + rr + '</td><td><div class="sbar"></div></td><td>–</td><td></td><td></td><td></td><td></td><td></td></tr>'; continue; }
+    if(!l){ rows += '<tr class="none"><td class="u" style="color:#c2c8cf">' + u + '차</td><td class="r">' + rr + '</td><td><div class="sbar"></div></td><td>–</td><td></td><td></td><td></td><td></td><td></td></tr>'; continue; }
     const a = lastOf(l), sc = a.score, b = Math.max(...l.map(x => x.score));
-    rows += '<tr><td class="u">' + u + '단원</td><td class="r">' + rr + '</td>'
+    rows += '<tr><td class="u">' + u + '차</td><td class="r">' + rr + '</td>'
       + '<td><div class="sbar"><i style="width:' + Math.max(sc, 2) + '%;background:' + scoreColor(sc) + '"></i></div></td>'
       + '<td class="sc" style="color:' + scoreColor(sc) + '">' + sc + '</td>'
       + '<td>' + l[0].score + '</td><td>' + b + '</td><td class="tri">' + l.length + '회</td>'
@@ -263,7 +263,7 @@ function renderArea(){
   const last = lists.map(lastOf), cnt = { known: 0, hanja: 0, hanja_wrong: 0, wrong: 0 };
   last.forEach(a => { cnt.known += a.n_known || 0; cnt.hanja += a.n_hanja || 0; cnt.hanja_wrong += a.n_hanja_wrong || 0; cnt.wrong += a.n_wrong || 0; });
   const tot = cnt.known + cnt.hanja + cnt.hanja_wrong + cnt.wrong;
-  document.getElementById('mixN').textContent = tot ? '최근 응시 ' + last.length + '개 단원 · ' + tot + '문항' : '';
+  document.getElementById('mixN').textContent = tot ? '최근 응시 ' + last.length + '회 · ' + tot + '문항' : '';
   document.getElementById('mix').innerHTML = tot ? RES.map(([k, , c]) => cnt[k] ? '<i style="width:' + (cnt[k] / tot * 100) + '%;background:' + c + '"></i>' : '').join('') : '';
   document.getElementById('mixLeg').innerHTML = RES.map(([k, ko, c]) => '<span><i class="sw" style="background:' + c + '"></i>' + ko + '<b>' + cnt[k] + '</b>' + (tot ? ' (' + Math.round(cnt[k] / tot * 100) + '%)' : '') + '</span>').join('');
 
@@ -287,14 +287,14 @@ function renderAll(){
   const items = []; R.latest.forEach(a => a.items.forEach(x => items.push({ ...x, slug: a.slug, unit: a.unit })));
   const g = {}; items.forEach(x => { if(x.grade == null) return; const o = g[x.grade] = g[x.grade] || { known: 0, hanja: 0, hanja_wrong: 0, wrong: 0, n: 0 }; o[x.result] = (o[x.result] || 0) + 1; o.n++; });
   const gs = Object.keys(g).map(Number).sort((a, b) => a - b);
-  document.getElementById('gN').textContent = items.length ? '단원평가 ' + R.latest.length + '개 · ' + items.length + '문항' : '';
+  document.getElementById('gN').textContent = items.length ? '실력 점검 ' + R.latest.length + '개 · ' + items.length + '문항' : '';
   document.getElementById('gtab').innerHTML = gs.length
     ? '<tr><th style="width:84px">급수</th><th style="width:60px">문항</th><th>결과 구성</th><th style="width:70px">정답률</th><th style="width:60px">바로 앎</th></tr>'
       + gs.map(k => { const o = g[k], ok = o.known + o.hanja;
           return '<tr><td class="g">' + k + '급<small>' + (GRADE_YR[k] || '') + '</small></td><td>' + o.n + '</td>'
             + '<td><div class="stack">' + RES.map(([r, , c]) => o[r] ? '<i style="width:' + (o[r] / o.n * 100) + '%;background:' + c + '"></i>' : '').join('') + '</div></td>'
             + '<td class="p">' + Math.round(ok / o.n * 100) + '%</td><td>' + Math.round(o.known / o.n * 100) + '%</td></tr>'; }).join('')
-    : '<tr><td class="empty">아직 응시한 단원평가가 없어요</td></tr>';
+    : '<tr><td class="empty">아직 응시한 실력 점검이 없어요</td></tr>';
 
   document.getElementById('gLeg').innerHTML = gs.length ? RES.map(([k, ko, c]) => '<span><i class="sw" style="background:' + c + '"></i>' + ko + '</span>').join('') : '';
   // 다시 볼 어휘 — 최근 응시에서 맞히지 못한 어휘 (같은 어휘는 한 번만)
@@ -305,7 +305,7 @@ function renderAll(){
   document.getElementById('words').innerHTML = wl.length
     ? wl.slice(0, MAX).map(x => '<div class="w"><b>' + esc(x.word) + '<em>' + esc(x.hanja || '') + '</em></b><span class="m">' + esc((x.choices || [])[x.correct_idx] || '') + '</span>'
         + '<span class="t"><i class="k" style="background:' + COLOR[x.slug] + '"></i>' + ko(x.slug) + ' ' + x.round_no + '회차' + (x.grade ? ' · ' + x.grade + '급' : '') + (x.result === 'hanja_wrong' ? ' · 한자 보고도 틀림' : '') + '</span></div>').join('')
-    : '<div class="empty" style="grid-column:1/-1">' + (items.length ? '모든 어휘를 맞혔어요' : '아직 응시한 단원평가가 없어요') + '</div>';
+    : '<div class="empty" style="grid-column:1/-1">' + (items.length ? '모든 어휘를 맞혔어요' : '아직 응시한 실력 점검이 없어요') + '</div>';
   document.getElementById('more').textContent = wl.length > MAX ? '외 ' + (wl.length - MAX) + '개' : '';
 }
 
