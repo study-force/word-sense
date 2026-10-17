@@ -6241,7 +6241,9 @@ function playMilestone(score){
   var pick = variants[Math.floor(Math.random() * variants.length)];
   // 10 마일스톤은 톤이 강해 70% 볼륨으로 톤다운, 그 외는 기본(0.92)
   var vol = (score === 10) ? 0.7 : undefined;
-  narrate(pick, vol);
+  // 순서: 칩 붙는 소리(laser 0.34초) → 마일스톤 효과음(띠링~) → 목소리 — 겹치지 않게 차례로 (대표님 2026-10-18)
+  setTimeout(function(){ try { sndMilestone(); } catch(e){} }, 380);
+  setTimeout(function(){ narrate(pick, vol); }, 380 + 550);
 }
 
 // 점수 변경 시 호출 — prev / current 사이 10/20/30/40 마일스톤 도달 체크
