@@ -9486,7 +9486,7 @@ function utBuildItems(pool){
   });
 }
 function utRender(html){ var w = document.getElementById('ut-wrap'); if(w) w.innerHTML = html; }
-function utUnitName(u){ return (SESSION.level || '') + ' ' + (SESSION.area || '') + ' ' + u + '차 (' + ((u - 1) * 5 + 1) + '~' + (u * 5) + '회차)'; }
+function utUnitName(u){ return (SESSION.level || '') + ' ' + (SESSION.area || '') + ' ' + ((u - 1) * 5 + 1) + '~' + (u * 5) + '회차'; }   // 구간 이름 (예: 초등 생물 6~10회차)
 
 // 평가 열기 — 진행 중이면 이어 하기, 아니면 새로 출제
 async function utOpen(u){
@@ -9639,8 +9639,8 @@ function utDecorateArea(){
     var done = !open && info && info.best != null, np = utPassedCount(u);
     el.className = 'area-cell ut-cell' + (open ? ' open ok' : done ? ' done ok' : ok ? ' ok' : ' off');
     el.innerHTML = '<div class="ut-cell-t">점검</div><div class="ut-cell-s">'
-      + (open ? '이어 풀기' : done ? info.best + '점' : ok ? '점검하기' : utStarted(u) ? np + '/5 통과' : u + '차') + '</div>';
-    el.title = u + '차 실력 점검 (' + ((u - 1) * 5 + 1) + '~' + (u * 5) + '회차)'
+      + (open ? '이어 풀기' : done ? info.best + '점' : ok ? '점검하기' : utStarted(u) ? np + '/5 통과' : ((u - 1) * 5 + 1) + '~' + (u * 5) + '회') + '</div>';
+    el.title = ((u - 1) * 5 + 1) + '~' + (u * 5) + '회차 실력 점검'
       + (open || ok ? '' : ' — 5회차를 모두 통과하면 볼 수 있어요 (회차 어휘 ' + PASS_PCT + '% 이상)');
     if(ok || open){ (function(uu){ el.addEventListener('click', function(){ utOpen(uu); }); })(u); }
     after.insertAdjacentElement('afterend', el);
