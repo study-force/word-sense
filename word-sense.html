@@ -1867,7 +1867,9 @@ body.mission-mode #game .stage-nav {
 }
 /* 점수칩이 미션 화면 중앙으로 이동(center-mission). 확인 클릭 시 클래스 제거 → 우상단 복귀 (transition으로 자연 애니메이션) */
 /* 재도전 미션 화면 — 점수판 좌상단 모서리에 45도 리본 '재도전' (대표님 2026-10-17) */
-.score-chip .sc-band { position: absolute; left: -27px; top: 9px; width: 90px; z-index: 10;   /* 반짝이는 전구보다 위, 조금 더 길게 */ pointer-events: none;
+/* 점수판 바깥으로 넘치는 리본 끝은 잘라 뒤로 넘긴 것처럼 (점수판 외곽 = 보더 포함, 둥근 모서리 20px) */
+.score-chip .sc-band-clip { position: absolute; inset: -6px; border-radius: 20px; overflow: hidden; z-index: 10; pointer-events: none; }
+.score-chip .sc-band { position: absolute; left: -21px; top: 15px; width: 90px;   /* 반짝이는 전구보다 위, 조금 더 길게 */ pointer-events: none;
   background: linear-gradient(180deg, #FFD66B, #E9B43A); color: #3A2A00; text-align: center;
   font-family: 'Noto Sans KR', sans-serif; font-size: 9px; font-weight: 600; letter-spacing: 0.06em; line-height: 13px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.35); transform: rotate(-45deg); opacity: 0; transition: opacity .3s ease; }
@@ -4826,7 +4828,7 @@ body.pmode .st-today-badge { font-size: 13px; }
      applyScale()이 #screen과 함께 transform을 동기화. ══ -->
 <div id="chip-anchor">
   <div class="score-chip" id="score-chip">
-    <div class="sc-band" aria-hidden="true">재도전</div>
+    <div class="sc-band-clip" aria-hidden="true"><div class="sc-band">재도전</div></div>
     <div class="sc-bulbs" aria-hidden="true">
       <i class="sc-bulb t1"></i><i class="sc-bulb b-mint t2"></i><i class="sc-bulb t3"></i><i class="sc-bulb b-violet t4"></i><i class="sc-bulb t5"></i>
       <i class="sc-bulb r1"></i><i class="sc-bulb b-violet r2"></i><i class="sc-bulb r3"></i><i class="sc-bulb b-mint r4"></i><i class="sc-bulb r5"></i>
