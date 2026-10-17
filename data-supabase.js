@@ -167,7 +167,7 @@ window.SESSION_READY = (async function loadSession() {
     const WORD_COLS = 'session_word_id, word_master_id, word, hanja, char1, hun1, char2, hun2, meaning, fill_sentence, choices, order_in_session, grade';
     const [rMc, rWords, rFill, rElemSess, rElemRows, rAreaSess, rNext] = await Promise.all([
       // 2b. 主字 콘텐츠 — 정규화된 main_chars에서 읽음 (SSOT: 한 곳에서 고치면 전 회차 반영)
-      client.from('main_chars').select('char_hangul, eum, etymology, meanings, narration_url').eq('char', sess.main_char).single(),
+      client.from('main_chars').select('char_hangul, eum, etymology, meanings, narration_url, letter_url').eq('char', sess.main_char).single(),
       // 3. 회차 어휘 (view 활용 — 한 번에 통합 조회)
       client.from('v_session_word_full').select(WORD_COLS).eq('session_id', sess.id).order('order_in_session'),
       // 3e. 빈칸 오답 골디락스 풀 (fill_pools, 2026-10-15) — 없거나 오류면 기존 방식으로 출제
@@ -286,6 +286,7 @@ window.SESSION_READY = (async function loadSession() {
       mainEtymology: mc.etymology,
       mainMeanings:  mc.meanings || [],
       narrationUrl:  mc.narration_url || null,   // 어원 나레이션 (Storage 공개 URL)
+      letterUrl:     mc.letter_url || null,      // 主字 음훈 소리 (예: '날 생', Storage 공개 URL, 2026-10-17)
 
       // DB choices: [{text, is_correct}, ...] → 앱 형식: [정답, 오답1, 오답2, 오답3]
       words: wordRows.map(function(r) {

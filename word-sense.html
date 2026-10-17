@@ -6187,13 +6187,12 @@ function narrateEtymology(){
   if(sess.narrationUrl){ narrate(sess.narrationUrl); }
 }
 
-// 회차별 한자 이름 나레이션 — letter001.wav 등.
+// 主字 음훈 소리(한자 이름 낭독, 예: '날 생') — main_chars.letter_url (글자 단위, 2026-10-17)
 //   재생 종료(또는 실패) 시 dismissCharIntroSplash 자동 호출 → 큰 한자 작아지면서 어원 등장.
+//   녹음 없는 글자(letter_url 없음)는 소리 없이 진행
 function narrateLetterChar(){
   var sess = (typeof SESSION !== 'undefined') ? SESSION : null;
   if(!sess || !sess.id) return;
-  var n = String(sess.id).padStart(3, '0');
-  var file = 'letter' + n + '.wav';
   var fired = false;
   function fireDismiss(delay){
     if(fired) return; fired = true;
@@ -6202,10 +6201,10 @@ function narrateLetterChar(){
     }, delay || 0);
   }
   // 사운드 꺼졌으면 1.2초 후 자동 dismiss (큰 한자 잠시 보고 진행)
-  if(!SND_ON){ fireDismiss(1200); return; }
+  if(!SND_ON || !sess.letterUrl){ fireDismiss(1200); return; }   // 소리 꺼짐·녹음 없음 → 큰 한자 잠시 보고 진행
   try {
     if(CURRENT_NARRATION){ try { CURRENT_NARRATION.pause(); } catch(e){} CURRENT_NARRATION = null; }
-    var audio = new Audio('sound/' + file);
+    var audio = new Audio(sess.letterUrl);
     audio.volume = 0.95;
     CURRENT_NARRATION = audio;
     audio.addEventListener('ended', function(){
@@ -7328,7 +7327,7 @@ function goCharIntro(){
   showPage('charintro');
   // 큰 한자 등장 — woosh (entrance feel)
   sfxPlay('woosh.mp3', 0.7);
-  // 큰 한자 등장 모션(ciSplashCharIn 1.3s) 거의 끝나는 시점에 letter001.wav 재생.
+  // 큰 한자 등장 모션(ciSplashCharIn 1.3s) 거의 끝나는 시점에 主字 음훈 소리 재생.
   //   재생 종료 시 자동으로 dismissCharIntroSplash 호출 → 큰 한자 작아지면서 어원 등장.
   setTimeout(function(){
     try { narrateLetterChar(); } catch(e){}
