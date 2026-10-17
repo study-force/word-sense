@@ -311,8 +311,8 @@ function renderTests(){
   const avg=Math.round(bests.reduce((a,t)=>a+t.score,0)/bests.length), top=Math.max(...bests.map(t=>t.score));
   const kpi=(l,v,u,c)=>'<div class="pc-kpi"><div class="l">'+l+'</div><div class="v"'+(c?' style="color:'+c+'"':'')+'>'+v+'<small>'+u+'</small></div></div>';
   let h='<div class="pc-kpis">'+kpi("점검한 구간",lists.length," / 10")+kpi("평균 점수",avg,"점",BLUE)+kpi("최고 점수",top,"점",BLUE)+'</div>';
-  h+='<div class="pc-sec">구간별 점수 <span class="n">5회차마다 25문항 · 100점 만점 · 여러 번 점검하면 최고 점수</span></div>';
-  h+='<table class="pc-ut"><tr><th style="width:78px;text-align:left;padding-left:8px">구간</th><th>최고 점수</th><th style="width:44px"></th><th style="width:52px">횟수</th><th style="width:92px">날짜</th></tr>';
+  h+='<div class="pc-sec">구간별 점수</div>';
+  h+='<table class="pc-ut"><tr><th style="width:78px;text-align:left;padding-left:8px">구간</th><th>최고 점수</th><th style="width:44px"></th><th style="width:72px">점검 횟수</th><th style="width:92px">날짜</th></tr>';
   for(let u=1;u<=10;u++){ const l=us[u], p2=n=>String(n).padStart(2,"0"), rr=p2((u-1)*5+1)+"~"+p2(u*5);   // 01~05회차
     if(!l){ h+='<tr class="none"><td class="u" style="color:#c2c8cf">'+rr+'회차</td><td><div class="pc-bar"></div></td><td>–</td><td class="m">–</td><td class="m">–</td></tr>'; continue; }
     const b=bestOf(l), sc=b.score;
