@@ -4021,13 +4021,15 @@ body[data-page="stats"] .r-topbar-meta.global-topbar-meta .r-tm-char { display: 
 .r-rank-toggles { width: 100%; max-width: 940px; display: flex; justify-content: center; gap: 10px; margin: 24px 0 -18px;
   opacity: 0; transition: opacity .55s ease 1.15s; }
 .r-rank-toggles.on { opacity: 1; }
-.r-seg { display: inline-flex; background: #1A1F30; border-radius: 100px; padding: 3px; }
+.r-seg { display: inline-flex; background: #1A1F30; border-radius: 100px; padding: 3px; width: 180px; }   /* 두 토글 같은 너비 (2026-10-18) */
+.r-seg button { flex: 1 1 0; white-space: nowrap; }
 .r-seg button { border: 0; background: transparent; color: #8A93A6; font-family: 'Noto Sans KR', sans-serif; font-size: 13px; font-weight: 500;
   padding: 6px 16px; border-radius: 100px; cursor: pointer; transition: background .2s, color .2s; }
 .r-seg button.on { background: #FFFFFF; color: #1A1F30; font-weight: 600; }
 .r-seg button:disabled { opacity: .35; cursor: default; }
 body.pmode .r-rank-toggles { margin: 8px 0 0; }
-body.pmode .r-seg button { font-size: 16px; padding: 8px 18px; }
+body.pmode .r-seg { width: 240px; }
+body.pmode .r-seg button { font-size: 16px; padding: 8px 10px; }
 .r-rank-block {
   width: 100%; max-width: 940px;
   margin: 33px 0 24px;   /* 위 43 → 33 (10px 위로) */
