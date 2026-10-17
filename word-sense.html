@@ -4305,10 +4305,12 @@ html, body {
 }
 /* 라이트 테마 — 결과/훈사전/도입(오늘의 한자) */
 body.theme-light {
-  background: #FFFFFF !important;   /* 라이트 화면 전체 흰 바탕 (대표님 2026-10-18, 예전: 옅은 회청 그라데이션) */
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 45%, #EEF1F7 0%, #E4E8F1 55%, #D7DCE8 100%) !important;
+  background-attachment: fixed !important;
 }
-html:has(body.theme-light) { background: #FFFFFF !important; }   /* 화면 가장자리까지 흰색 */
-/* 나의 훈사전 — 통과 카드는 반투명 파랑, 잠금 칸은 옅은 회색 (대표님 2026-10-18) */
+/* 나의 훈사전 — 전체 흰 바탕, 통과 카드는 반투명 파랑 (대표님 2026-10-18) */
+body.theme-light.page-area { background: #FFFFFF !important; }
 body.page-area .area-cell.locked { background: #F6F7FA; }
 /* 페이지·프레임·캔버스 모두 투명 — body 테마가 그대로 비치도록 */
 .canvas { background: transparent !important; }
