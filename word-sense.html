@@ -3083,7 +3083,7 @@ body.pmode .ut-info, body.pmode .ut-rules { font-size: 16px; } body.pmode .ut-hi
 .area-grid .area-cell.ut-cell.ok:hover { background: #FFEFC4 !important; }
 .area-grid .area-cell.ut-cell.off { background: #F3F4F6 !important; border-color: #C3C9D2 !important; color: #6B7383 !important; }
 .area-grid .area-cell.ut-cell::after { display: none !important; }
-.area-grid .area-cell.ut-cell.done::after { content: '재응시'; display: block !important; }
+.area-grid .area-cell.ut-cell.done::after { content: '다시 점검'; display: block !important; }
 .area-grid .area-cell.ut-cell.open { border-color: #4A6FB5 !important; color: #2F4F8F !important; background: #EEF2FA !important; }   /* 이어 풀기 — 통과 초록과 겹치지 않게 파랑 */
 .area-grid {
   flex: 1; display: grid; grid-template-columns: repeat(12, 1fr);   /* 5회차 + 평가 칸 × 2 (실력 점검, 2026-10-17) */
@@ -8834,7 +8834,7 @@ function goResult(){
       localStorage.setItem(window.__TEST_KNOWN_KEY, JSON.stringify(tk));
     } catch(e){}
     testMarkPerfect();
-    utSet(utKey('trained', SESSION.id), '1');   // 실력 점검 응시 자격용 (테스트 접속)
+    utSet(utKey('trained', SESSION.id), '1');   // 실력 점검 자격용 (테스트 접속)
     // 어드민 회차 테스트 화면에 '내 어휘 N / 전체 T' 알림 → '다시 훈련' 탭에서 못 익힌 어휘가 남은 회차를 빨강으로 (2026-10-16)
     try {
       if(window.opener && !window.opener.closed){
@@ -9636,10 +9636,10 @@ function utDecorateArea(){
     var after = cells[Math.min(u * 5, cells.length) - 1]; if(!after) continue;
     var info = utInfo(u), ok = utEligible(u), open = info && info.open_id;
     var el = document.createElement('div');
-    var done = !open && info && info.last != null, np = utPassedCount(u);
+    var done = !open && info && info.best != null, np = utPassedCount(u);
     el.className = 'area-cell ut-cell' + (open ? ' open ok' : done ? ' done ok' : ok ? ' ok' : ' off');
     el.innerHTML = '<div class="ut-cell-t">점검</div><div class="ut-cell-s">'
-      + (open ? '이어 풀기' : done ? info.last + '점' : ok ? '응시하기' : utStarted(u) ? np + '/5 통과' : u + '차') + '</div>';
+      + (open ? '이어 풀기' : done ? info.best + '점' : ok ? '점검하기' : utStarted(u) ? np + '/5 통과' : u + '차') + '</div>';
     el.title = u + '차 실력 점검 (' + ((u - 1) * 5 + 1) + '~' + (u * 5) + '회차)'
       + (open || ok ? '' : ' — 5회차를 모두 통과하면 볼 수 있어요 (회차 어휘 ' + PASS_PCT + '% 이상)');
     if(ok || open){ (function(uu){ el.addEventListener('click', function(){ utOpen(uu); }); })(u); }

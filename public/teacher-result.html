@@ -102,6 +102,38 @@
   .gc-legend .gl-cap{flex-basis:100%;text-align:center;font-size:12.5px;color:#aeb4bc;font-weight:600;margin-bottom:3px;letter-spacing:.02em}
   .gc-legend .gl-item{font-size:13px;color:#9099a3;letter-spacing:.01em}
   .gc-legend .gl-item b{font-weight:600;color:#5a616b;margin-right:3px}
+  /* page3 실력 점검 결과 — 5회차마다 25문항, 대표 점수 = 최고 점수 (2026-10-18) */
+  .pc-tabs{display:flex;gap:6px;justify-content:center;margin:2px 0 18px}
+  .pc-tabs .tab{padding:5px 13px;font-size:13px}
+  .pc-tabs .tab.off{opacity:.45}
+  .pc-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 8px 20px}
+  .pc-kpi{background:#f3f5f7;border-radius:9px;padding:11px 8px 10px;text-align:center}
+  .pc-kpi .l{font-size:12.5px;color:var(--mut);font-weight:600}
+  .pc-kpi .v{font-size:27px;font-weight:600;color:#3b414a;line-height:1.15;margin-top:3px;font-variant-numeric:tabular-nums}
+  .pc-kpi .v small{font-size:13px;color:var(--mut);font-weight:500;margin-left:2px}
+  .pc-sec{font-size:15.5px;font-weight:600;color:#3b414a;margin:0 8px 8px;display:flex;align-items:baseline;gap:8px}
+  .pc-sec .n{font-size:12px;color:#9aa0a8;font-weight:500}
+  table.pc-ut{width:calc(100% - 16px);margin:0 8px 20px;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+  table.pc-ut th{font-size:11.5px;color:var(--mut);font-weight:600;padding:0 4px 5px;border-bottom:2px solid #d9dde2;text-align:center}
+  table.pc-ut td{padding:5px 4px;border-bottom:1px solid #eef0f2;text-align:center;color:#4a515b;height:30px}
+  table.pc-ut td.u{font-weight:600;color:#3b414a;text-align:left;padding-left:8px}
+  table.pc-ut td.r,table.pc-ut td.m{color:#9aa0a8;font-size:12px}
+  table.pc-ut tr.none td{color:#c2c8cf}
+  .pc-bar{height:11px;background:#eef0f2;border-radius:6px;overflow:hidden}
+  .pc-bar i{display:block;height:100%;border-radius:6px}
+  .pc-sc{font-weight:600;font-size:15px}
+  .pc-stack{display:flex;height:22px;border-radius:5px;overflow:hidden;background:#eef0f2;margin:0 8px}
+  .pc-stack i{display:block;height:100%}
+  .pc-leg{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12.5px;color:#6b727b;margin:8px 8px 20px}
+  .pc-leg b{font-weight:600;color:#3b414a;margin-left:3px;font-variant-numeric:tabular-nums}
+  .pc-leg .sw{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+  .pc-rchart{display:grid;grid-template-columns:repeat(50,1fr);gap:2px;align-items:end;height:110px;border-bottom:1.5px solid #d9dde2;margin:0 8px}
+  .pc-rchart .c{height:100%;display:flex;align-items:flex-end}
+  .pc-rchart .c i{display:block;width:100%;border-radius:2px 2px 0 0}
+  .pc-rchart .c.no i{background:#eef0f2;height:4px}
+  .pc-rax{display:grid;grid-template-columns:repeat(50,1fr);gap:2px;font-size:10px;color:#aeb4bc;margin:3px 8px 0}
+  .pc-rax span{text-align:center}
+  .pc-empty{color:#aeb4bc;font-size:14px;text-align:center;padding:60px 0}
   /* foot + nav */
   .footbar{display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 24px 16px;flex:0 0 auto}
   .footbar .btn{background:#5a616b;color:#fff;border:none;border-radius:4px;padding:7px 18px;font-size:13.5px;font-weight:600;cursor:pointer}
@@ -116,7 +148,7 @@
     .stage{position:static!important;transform:none!important;width:auto!important;height:auto!important;display:block}
     /* ↓↓↓ 인쇄 크기 조절: zoom 숫자를 바꾸면 전체가 커지고/작아짐 (1=100%, 0.96=96%). 낮추면 작아져 아래 여백↑ ↓↓↓ */
     .sheet{position:static!important;transform:none!important;box-shadow:none;width:100%;height:auto;zoom:1;margin:0;display:flex;flex-direction:column;overflow:hidden;page-break-after:always;break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .print-sheet2{page-break-after:auto}
+    .print-last{page-break-after:auto}
     .noprint,.footbar{display:none!important}
     /* ↓ 푸터 위치: 숫자↑ = 푸터 아래로 내려감(내용~푸터 사이 여백↑), 음수 = 위로 올림. 38px≈10mm ↓ */
     .foot{margin-top:38px}
@@ -161,6 +193,11 @@
         <div class="st-donut" id="st-donut"></div>
         <div class="src">출처: 국립국어원 한국어 기초 어휘 · 표준국어대사전</div>
       </div>
+      <div class="pg" id="pg3">
+        <div class="title">실력 점검 결과</div>
+        <div class="pc-tabs" id="pcTabs"></div>
+        <div id="pcBody"></div>
+      </div>
     </div>
     <div class="footbar noprint">
       <button class="btn print" onclick="window.print()">선택 출력</button>
@@ -191,7 +228,7 @@ const DEMO={ student:{name:"김건희",school:"초등학교",grade:6,academy:"�
 let D=DEMO, curArea="biology", page=1;
 function renderArea(){
   const [ko,slug]=AREAS.find(a=>a[1]===curArea); const col=COLOR[slug];
-  const rounds=genRounds(ko,(D.areas[slug]||{}).cleared||0);
+  const rounds=(D.rounds&&D.rounds[slug])||genRounds(ko,(D.areas[slug]||{}).cleared||0);
   const tabs=document.getElementById("tabs"); tabs.innerHTML="";
   AREAS.forEach(([k,s])=>tabs.insertAdjacentHTML("beforeend",'<div class="tab'+(s===curArea?' on':'')+'" onclick="curArea=\''+s+'\';renderArea()" style="'+(s===curArea?'background:'+COLOR[s]:'')+'"><span class="dt" style="background:'+(s===curArea?'#fff':COLOR[s])+'"></span>'+k+'</div>'));
   document.getElementById("atName").textContent=ko+" 영역";
@@ -249,10 +286,70 @@ function renderStats(){
       +'<div class="gc-legend"><div class="gl-cap">급수별 습득 시기</div>'+legend+'</div>';
   }
 }
-function paint(){ document.getElementById("pg1").classList.toggle("on",page===1); document.getElementById("pg2").classList.toggle("on",page===2);
-  navL.style.borderRightColor=page>1?"#666666":"#cccccc"; navR.style.borderLeftColor=page<2?"#cd5a29":"#cccccc"; }
-function setPage(p){ page=Math.min(2,Math.max(1,p)); paint(); } function go(d){ setPage(page+d); }
-function render(){ const s=D.student; course.textContent=s.course||((s.school||"").includes("중")?"중등과정":"초등과정"); sch.textContent=s.school+" "+s.grade+"학년"; nm.textContent=s.name; academy.textContent=s.academy; renderArea(); renderStats(); paint(); }
+const PAGES=3;
+function paint(){ for(let i=1;i<=PAGES;i++) document.getElementById("pg"+i).classList.toggle("on",page===i);
+  navL.style.borderRightColor=page>1?"#666666":"#cccccc"; navR.style.borderLeftColor=page<PAGES?"#cd5a29":"#cccccc"; }
+function setPage(p){ page=Math.min(PAGES,Math.max(1,p)); paint(); } function go(d){ setPage(page+d); }
+
+// ── 3쪽 실력 점검 결과 — 차수(5회차)마다 대표 점수 = 최고 점수, 구성·회차별 정답률도 최고 점수 점검 기준 ──
+const RES=[["n_known","바로 앎","#2f9e73"],["n_hanja","한자로 풂","#e3b341"],["n_hanja_wrong","한자 보고도 틀림","#efb4a4"],["n_wrong","틀림","#d87878"]];
+const scoreColor=v=>v>=100?"#246ce3":v>=90?"#009900":v>=80?"#e46600":"#cc0000";   // 공용 폼 범례
+const mmss=ms=>{ const t=Math.round((ms||0)/1000); return Math.floor(t/60)+"분 "+String(t%60).padStart(2,"0")+"초"; };
+function testsByUnit(slug){ const u={}; (D.tests||[]).filter(t=>t.area===slug).forEach(t=>(u[t.unit]=u[t.unit]||[]).push(t)); return u; }
+function bestOf(l){ return l.reduce((b,t)=>(t.score>b.score||(t.score===b.score&&String(t.at)>String(b.at)))?t:b, l[0]); }
+function renderTests(){
+  const slug=curArea, col=COLOR[slug], us=testsByUnit(slug);
+  document.getElementById("pcTabs").innerHTML=AREAS.map(([k,s])=>{ const on=s===slug, has=(D.tests||[]).some(t=>t.area===s);
+    return '<div class="tab'+(on?' on':'')+(has?'':' off')+'" onclick="curArea=\''+s+'\';renderArea();renderTests()" style="'+(on?'background:'+COLOR[s]:'')+'"><span class="dt" style="background:'+(on?'#fff':COLOR[s])+'"></span>'+k+'</div>'; }).join("");
+  const body=document.getElementById("pcBody"), lists=Object.values(us);
+  if(!lists.length){ body.innerHTML='<div class="pc-empty">아직 이 영역의 실력 점검 기록이 없어요<br><span style="font-size:12.5px">5회차를 모두 통과(어휘 80% 이상)하면 점검할 수 있어요</span></div>'; return; }
+  const bests=lists.map(bestOf);
+  const avg=Math.round(bests.reduce((a,t)=>a+t.score,0)/bests.length), top=Math.max(...bests.map(t=>t.score));
+  const kpi=(l,v,u,c)=>'<div class="pc-kpi"><div class="l">'+l+'</div><div class="v"'+(c?' style="color:'+c+'"':'')+'>'+v+'<small>'+u+'</small></div></div>';
+  let h='<div class="pc-kpis">'+kpi("점검한 차수",lists.length," / 10")+kpi("평균 점수",avg,"점",scoreColor(avg))+kpi("최고 점수",top,"점",scoreColor(top))+'</div>';
+  h+='<div class="pc-sec">차수별 점수 <span class="n">5회차마다 25문항 · 100점 만점 · 여러 번 점검하면 최고 점수</span></div>';
+  h+='<table class="pc-ut"><tr><th style="width:60px;text-align:left;padding-left:8px">차수</th><th style="width:62px">회차</th><th>최고 점수</th><th style="width:44px"></th><th style="width:52px">첫 점수</th><th style="width:48px">횟수</th><th style="width:76px">걸린 시간</th><th style="width:86px">점검일</th></tr>';
+  for(let u=1;u<=10;u++){ const l=us[u], rr=((u-1)*5+1)+"~"+(u*5);
+    if(!l){ h+='<tr class="none"><td class="u" style="color:#c2c8cf">'+u+'차</td><td class="r">'+rr+'</td><td><div class="pc-bar"></div></td><td>–</td><td></td><td></td><td></td><td></td></tr>'; continue; }
+    const b=bestOf(l), sc=b.score;
+    h+='<tr><td class="u">'+u+'차</td><td class="r">'+rr+'</td><td><div class="pc-bar"><i style="width:'+Math.max(sc,2)+'%;background:'+scoreColor(sc)+'"></i></div></td>'
+      +'<td class="pc-sc" style="color:'+scoreColor(sc)+'">'+sc+'</td><td>'+l[0].score+'</td><td class="m">'+l.length+'회</td><td class="m">'+mmss(b.duration_ms)+'</td><td class="m">'+(b.at||"")+'</td></tr>'; }
+  h+='</table>';
+  const cnt={n_known:0,n_hanja:0,n_hanja_wrong:0,n_wrong:0}; bests.forEach(t=>RES.forEach(([k])=>cnt[k]+=t[k]||0));
+  const tot=RES.reduce((a,[k])=>a+cnt[k],0);
+  h+='<div class="pc-sec">결과 구성 <span class="n">차수마다 최고 점수 점검 기준 · '+tot+'문항</span></div>';
+  h+='<div class="pc-stack">'+RES.map(([k,,c])=>cnt[k]?'<i style="width:'+(cnt[k]/tot*100)+'%;background:'+c+'"></i>':'').join("")+'</div>';
+  h+='<div class="pc-leg">'+RES.map(([k,ko,c])=>'<span><i class="sw" style="background:'+c+'"></i>'+ko+'<b>'+cnt[k]+'</b> ('+Math.round(cnt[k]/tot*100)+'%)</span>').join("")+'</div>';
+  const per={}; bests.forEach(t=>(t.rounds||[]).forEach(x=>{ const p=per[x.r]=per[x.r]||{n:0,ok:0}; p.n+=x.n; p.ok+=x.ok; }));
+  let bars="", ax="";
+  for(let r=1;r<=50;r++){ const p=per[r];
+    if(p&&p.n){ const pct=Math.round(p.ok/p.n*100); bars+='<div class="c" title="'+r+'회차 '+p.ok+'/'+p.n+' ('+pct+'%)"><i style="height:'+Math.max(pct,3)+'%;background:'+col+';opacity:'+(0.45+pct/180)+'"></i></div>'; }
+    else bars+='<div class="c no"><i></i></div>';
+    ax+='<span>'+(r===1||r%5===0?r:"")+'</span>'; }
+  h+='<div class="pc-sec">회차별 정답률 <span class="n">회차마다 5문항 · 바로 앎 + 한자로 풂</span></div><div class="pc-rchart">'+bars+'</div><div class="pc-rax">'+ax+'</div>';
+  body.innerHTML=h;
+}
+
+// ── 실제 기록 → 화면 데이터 (Edge wordsense-unittest 'teacher' / 어드민센터가 보내 주는 묶음) ──
+function fromReport(d){
+  const lv=d.level||"초등", st=d.stats||{}, statOf=s=>(st.areas||[]).find(a=>a.slug===s)||{};
+  const areas={}, rounds={};
+  (d.areas||[]).forEach(a=>{
+    const rs=(a.rounds||[]).map(x=>{ const total=x.total||0, found=x.known||0;
+      const stt=!x.trained?"lock":(total>0&&found*10>=total*8)?"pass":"fail";
+      return {r:x.r,c:x.c,h:x.h||"",total,found,st:stt,retry:x.retry||0}; });
+    rounds[a.slug]=rs;
+    const sa=statOf(a.slug);
+    areas[a.slug]={cleared:rs.filter(r=>r.st==="pass").length, acq:Number(sa.acquired)||0, tot:Number(sa.total)||0,
+      perfect:rs.filter(r=>r.st==="pass"&&r.total>0&&r.found>=r.total).length, retries:rs.reduce((n,r)=>n+(r.retry||0),0),
+      first:a.first||"", last:a.last||""};
+  });
+  const p=d.profile||{};
+  return { student:{name:p.name||("회원 "+d.member_no), school:lv==="중등"?"중학교":"초등학교", grade:p.grade||"", academy:p.academy||"", course:lv+"과정"},
+    areas, rounds, totalAcq:Number(st.acquired_distinct)||0, totalTot:Number(st.total_distinct)||0,
+    grades:(st.grades||[]).map(g=>({g:Number(g.g),acq:Number(g.acquired)||0,prov:Number(g.provided)||0})), tests:d.tests||[] };
+}
+function render(){ const s=D.student; course.textContent=s.course||((s.school||"").includes("중")?"중등과정":"초등과정"); sch.textContent=s.grade?(s.school+" "+s.grade+"학년"):""; nm.textContent=s.name; academy.textContent=s.academy; renderArea(); renderStats(); renderTests(); paint(); }
 // 창 크기에 맞춰 가로세로 비율(760:1085) 유지하며 전체 스케일
 const SHEET_W=760, SHEET_H=1085, FIT_PAD=16;
 function fit(){ const sh=document.getElementById("sheet"),st=document.getElementById("stage"); if(!sh||!st)return;
@@ -260,21 +357,41 @@ function fit(){ const sh=document.getElementById("sheet"),st=document.getElement
   sh.style.transform="scale("+s+")"; st.style.width=(SHEET_W*s)+"px"; st.style.height=(SHEET_H*s)+"px"; }
 window.addEventListener("resize",fit);
 // 인쇄: 팝업 시트 그대로 — 페이지마다 완전한 시트 1장씩(aspect-ratio로 팝업과 동일 비율)
-let printClone=null;
+let printClones=[];
 function setupPrint(){ teardownPrint(); const sheet=document.getElementById("sheet"); if(!sheet)return;
-  const pgs=sheet.querySelectorAll(".pg"); pgs.forEach((p,i)=>p.classList.toggle("on",i===0)); // 원본=1페이지
-  printClone=sheet.cloneNode(true); printClone.removeAttribute("id"); printClone.classList.add("print-sheet2");
-  printClone.querySelectorAll("[id]").forEach(e=>e.removeAttribute("id"));
-  const cpgs=printClone.querySelectorAll(".pg"); cpgs.forEach((p,i)=>p.classList.toggle("on",i===1)); // 클론=2페이지
-  printClone.style.transform="none"; sheet.parentNode.appendChild(printClone); }
-function teardownPrint(){ if(printClone){ printClone.remove(); printClone=null; } paint(); }
+  sheet.querySelectorAll(".pg").forEach((p,i)=>p.classList.toggle("on",i===0)); // 원본=1쪽
+  for(let k=1;k<PAGES;k++){ const c=sheet.cloneNode(true); c.removeAttribute("id"); if(k===PAGES-1) c.classList.add("print-last");
+    c.querySelectorAll("[id]").forEach(e=>e.removeAttribute("id"));
+    c.querySelectorAll(".pg").forEach((p,i)=>p.classList.toggle("on",i===k)); // 복제=k+1쪽
+    c.style.transform="none"; sheet.parentNode.appendChild(c); printClones.push(c); } }
+function teardownPrint(){ printClones.forEach(c=>c.remove()); printClones=[]; paint(); }
 window.addEventListener("beforeprint",setupPrint);
 window.addEventListener("afterprint",teardownPrint);
-(async function(){ const q=new URLSearchParams(location.search),m=q.get("member_no");
-  if(m){ try{ const r=await fetch("/api/teacher-result?member_no="+encodeURIComponent(m)); if(r.ok){ D=await r.json(); } }catch(e){} }
+// 테섭(word.sfos.kr·localhost)은 테스트 DB, 그 밖은 운영 DB (훈련 앱과 같은 규칙)
+const _TEST=["word.sfos.kr","localhost","127.0.0.1"].includes(location.hostname);
+const API=_TEST?{url:"https://xzxgsqpvtckxgvipchsy.supabase.co",key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh6eGdzcXB2dGNreGd2aXBjaHN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5OTU0NjIsImV4cCI6MjA5NDU3MTQ2Mn0.J0OIH7pk11wwuyyJEO--RF54jf-AfxqJ19ECwAnsmSQ"}:{url:"https://fokuojmzhttxfkmiutmf.supabase.co",key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZva3Vvam16aHR0eGZrbWl1dG1mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MDYwOTksImV4cCI6MjA5MzM4MjA5OX0.FuYv59ufKteXKusvAhJktBNWntMnWmxctQoHquaPKVA"};
+const EMBED_PARENTS=["https://admincenter.sfcenter.co.kr","http://localhost:3100"];
+function show(){
   // 가장 진척 높은 영역을 기본 탭으로
   let best="biology",bc=-1; AREAS.forEach(([k,s])=>{ const c=(D.areas[s]||{}).cleared||0; if(c>bc){bc=c;best=s;} }); curArea=best;
-  render(); fit(); })();
+  render(); fit(); }
+function demoTests(){ const t=[], mk=(area,unit,score,at)=>{ const n_known=Math.round(score/4*0.9), n_hanja=Math.max(0,Math.round((score-n_known*4)/2));
+    const rest=25-n_known-n_hanja; t.push({area,unit,score,at,duration_ms:200000+unit*9000,n_known,n_hanja,n_hanja_wrong:Math.floor(rest/2),n_wrong:rest-Math.floor(rest/2),
+      rounds:[1,2,3,4,5].map(i=>({r:(unit-1)*5+i,n:5,ok:Math.max(1,Math.min(5,Math.round(score/20)+(i%2?0:-1)))}))}); };
+  mk("biology",1,72,"2026-08-30"); mk("biology",1,88,"2026-09-03"); mk("biology",2,92,"2026-09-10"); mk("biology",2,84,"2026-09-12"); mk("society",1,76,"2026-09-20"); return t; }
+(async function(){ const q=new URLSearchParams(location.search), st=q.get("st");
+  if(q.get("embed")==="1"){
+    addEventListener("message",e=>{ if(!EMBED_PARENTS.includes(e.origin)||!e.data||e.data.type!=="teacher-report") return; page=1; D=fromReport(e.data.data); show(); });
+    if(parent!==window) EMBED_PARENTS.forEach(o=>{ try{ parent.postMessage({type:"teacher-report-ready"},o); }catch(e){} });
+    return;
+  }
+  if(st){
+    try{ const r=await fetch(API.url+"/functions/v1/wordsense-unittest",{method:"POST",headers:{"Content-Type":"application/json",apikey:API.key},body:JSON.stringify({action:"teacher",ticket:st})});
+      const d=await r.json(); if(d&&d.success){ D=fromReport(d.report); show(); return; }
+      document.body.innerHTML='<div style="font-size:15px;color:#5a616b;padding:40px;text-align:center">결과를 불러오지 못했어요. '+((d&&d.message)||"")+'</div>'; return;
+    }catch(e){ document.body.innerHTML='<div style="font-size:15px;color:#5a616b;padding:40px;text-align:center">연결이 불안정해요. 잠시 후 다시 열어 주세요.</div>'; return; }
+  }
+  D.tests=demoTests(); show(); })();
 </script>
 </body>
 </html>

@@ -11,7 +11,8 @@
 //   hint    { attempt_id, ord }                        → '한자 보고 풀기' 누름 저장
 //   answer  { attempt_id, ord, choice_idx, ms }        → 결과는 서버가 판정
 //   finish  { attempt_id }                             → 25문항 다 답했으면 점수 계산·완료
-//   report  {}                                         → 선생님 결과 보고서용 — 끝난 평가 전부 + 문항 결과
+//   report  {}                                         → (옛) 실력 점검 보고서용 — 끝난 점검 전부 + 문항 결과
+//   teacher { level? }                                 → 선생님용 훈련결과 1~3쪽 묶음 (wordsense_teacher_report)
 // ════════════════════════════════════════════════════════════════
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -126,6 +127,13 @@ Deno.serve(async (req) => {
       const { error: e2 } = await db.from('test_answers').insert(rows);
       if (e2) { await db.from('test_attempts').delete().eq('id', a.id); throw e2; }
       return ok({ resumed: false, attempt: await loadAttempt(a.id) }, cors);
+    }
+
+    // 선생님용 훈련결과 (teacher-result.html?st=입장권) — 1쪽 훈사전·2쪽 영역별 현황·3쪽 실력 점검 한 묶음 (2026-10-18)
+    if (b.action === 'teacher') {
+      const { data: report, error } = await db.rpc('wordsense_teacher_report', { p_member_no: member, p_level: b.level || null });
+      if (error) throw error;
+      return ok({ report }, cors);
     }
 
     // 선생님 결과 보고서 (unit-report.html?st=입장권) — 이 학생의 끝난 평가 전부 + 문항 결과 (대표님 2026-10-17)
