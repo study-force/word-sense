@@ -232,7 +232,8 @@ const DEMO={ student:{name:"김건희",school:"초등학교",grade:6,academy:"�
 let D=DEMO, curArea="biology", page=1;
 // 영역에 훈련 기록이 있는지 — 없으면 탭을 누를 수 없게
 function hasTrain(s){ return D.rounds ? (D.rounds[s]||[]).some(r=>r.st!=="lock") : (((D.areas[s]||{}).cleared||0)>0 || ((D.areas[s]||{}).acq||0)>0); }
-function tabHtml(k,s,on,click){ const off=!on&&!hasTrain(s); return '<div class="tab'+(on?' on':'')+(off?' off':'')+'"'+(off?'':' onclick="'+click+'"')+' style="'+(on?'background:'+COLOR[s]:'')+'"><span class="dt" style="background:'+(on?'#fff':COLOR[s])+'"></span>'+k+'</div>'; }
+// has: 쪽마다 기록 기준 (1쪽 = 훈련 기록, 3쪽 = 실력 점검 기록)
+function tabHtml(k,s,on,click,has){ const off=!on&&!(has?has(s):hasTrain(s)); return '<div class="tab'+(on?' on':'')+(off?' off':'')+'"'+(off?'':' onclick="'+click+'"')+' style="'+(on?'background:'+COLOR[s]:'')+'"><span class="dt" style="background:'+(on?'#fff':COLOR[s])+'"></span>'+k+'</div>'; }
 function renderArea(){
   const [ko,slug]=AREAS.find(a=>a[1]===curArea); const col=COLOR[slug];
   const rounds=(D.rounds&&D.rounds[slug])||genRounds(ko,(D.areas[slug]||{}).cleared||0);
@@ -305,7 +306,7 @@ function testsByUnit(slug){ const u={}; (D.tests||[]).filter(t=>t.area===slug).f
 function bestOf(l){ return l.reduce((b,t)=>(t.score>b.score||(t.score===b.score&&String(t.at)>String(b.at)))?t:b, l[0]); }
 function renderTests(){
   const slug=curArea, us=testsByUnit(slug);
-  document.getElementById("pcTabs").innerHTML=AREAS.map(([k,s])=>tabHtml(k,s,s===slug,"curArea='"+s+"';renderArea();renderTests()")).join("");
+  document.getElementById("pcTabs").innerHTML=AREAS.map(([k,s])=>tabHtml(k,s,s===slug,"curArea='"+s+"';renderArea();renderTests()",x=>(D.tests||[]).some(t=>t.area===x))).join("");
   const body=document.getElementById("pcBody"), lists=Object.values(us);
   if(!lists.length){ body.innerHTML='<div class="pc-empty">아직 이 영역의 실력 점검 기록이 없어요<br><span style="font-size:12.5px">5회차를 모두 통과(어휘 80% 이상)하면 점검할 수 있어요</span></div>'; return; }
   const bests=lists.map(bestOf);
