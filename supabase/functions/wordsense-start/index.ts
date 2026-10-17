@@ -7,7 +7,8 @@
 //   { user_name(또는 name), user_no, user_section, user_school_grade,
 //     academy_name, academy_no, payment_fn, training_round, training_area, study_token,
 //     training_level?(elementary/middle 또는 초등/중등, 없으면 초등),
-//     training_mode?("retry" = 재훈련 — study_token 불필요, 학원 완료 API 미호출), is_payment? }
+//     training_mode?("retry" = 재훈련 — study_token 불필요, 학원 완료 API 미호출
+//                    "report" = 선생님 결과지 보기 — user_no만 필요, 응답 주소 = teacher-result.html?st=, 훈련엔 못 씀), is_payment? }
 //
 // 처리:
 //   1) 입력 검증 (필수 필드)
@@ -79,14 +80,19 @@ Deno.serve(async (req) => {
   const lv = String(body.training_level ?? '').trim().toLowerCase();
   const level = (lv === 'middle' || lv === '중등') ? '중등' : '초등';
   const studyToken = String(body.study_token ?? '').trim();
-  // 훈련 방식 — retry(재훈련: 학원 완료 API 미호출, study_token 불필요) / 그 외 normal
-  const mode = String(body.training_mode ?? '').trim().toLowerCase() === 'retry' ? 'retry' : 'normal';
+  // 훈련 방식 — retry(재훈련: 학원 완료 API 미호출, study_token 불필요) / report(선생님 결과지 보기) / 그 외 normal
+  const mRaw = String(body.training_mode ?? '').trim().toLowerCase();
+  const mode = mRaw === 'retry' ? 'retry' : mRaw === 'report' ? 'report' : 'normal';
+  const isReport = mode === 'report';
   const AREAS = ['biology', 'society', 'history', 'science', 'culture', 'economy'];
-  if (!userName) return jsonErr(400, '필수 필드 누락: user_name', cors);
   if (!Number.isFinite(userNo)) return jsonErr(400, '필수 필드 누락/형식 오류: user_no', cors);
-  if (!body.payment_fn) return jsonErr(400, '필수 필드 누락: payment_fn', cors);
-  if (!Number.isInteger(round) || round < 1) return jsonErr(400, '필수 필드 누락/형식 오류: training_round', cors);
-  if (!AREAS.includes(area)) return jsonErr(400, 'training_area는 ' + AREAS.join('/') + ' 중 하나여야 합니다', cors);
+  // 결과지 보기(report)는 회원번호만 있으면 됨 — 이름·결제·회차·영역은 선택
+  if (!isReport) {
+    if (!userName) return jsonErr(400, '필수 필드 누락: user_name', cors);
+    if (!body.payment_fn) return jsonErr(400, '필수 필드 누락: payment_fn', cors);
+    if (!Number.isInteger(round) || round < 1) return jsonErr(400, '필수 필드 누락/형식 오류: training_round', cors);
+    if (!AREAS.includes(area)) return jsonErr(400, 'training_area는 ' + AREAS.join('/') + ' 중 하나여야 합니다', cors);
+  }
   if (mode === 'normal' && !studyToken) return jsonErr(400, '필수 필드 누락: study_token', cors);
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
@@ -117,8 +123,8 @@ Deno.serve(async (req) => {
                 { onConflict: 'academy_no' });
     }
 
-    // ── 학생 upsert ──
-    await supabase.from('students')
+    // ── 학생 upsert ── (결과지 보기에서 이름이 없으면 기존 이름을 지우지 않게 건너뜀)
+    if (userName) await supabase.from('students')
       .upsert({
         user_no: userNo,
         name: userName,
@@ -133,9 +139,9 @@ Deno.serve(async (req) => {
       .from('session_init')
       .insert({
         user_no: userNo,
-        payment_fn: String(body.payment_fn),
-        training_round: round,
-        training_area: area,
+        payment_fn: String(body.payment_fn || (isReport ? 'report' : '')),
+        training_round: Number.isInteger(round) && round >= 1 ? round : 1,
+        training_area: AREAS.includes(area) ? area : null,
         training_level: level,
         study_token: studyToken || null,
         training_mode: mode,
@@ -151,7 +157,9 @@ Deno.serve(async (req) => {
     }
 
     // ── 302 redirect URL 생성 ──
-    const redirectUrl = `${REDIRECT_BASE}?st=${session.id}`;
+    //   결과지 보기(report)는 같은 폴더의 teacher-result.html로
+    const base = isReport ? REDIRECT_BASE.replace(/[^/]*$/, 'teacher-result.html') : REDIRECT_BASE;
+    const redirectUrl = `${base}?st=${session.id}`;
 
     return new Response(JSON.stringify({
       success: true,

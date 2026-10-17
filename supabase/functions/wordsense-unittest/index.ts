@@ -46,11 +46,13 @@ Deno.serve(async (req) => {
   try {
     // ── 학생 확인 (입장권) ──
     if (!b.ticket) return err(400, '입장권이 필요합니다', cors);
-    const { data: t } = await db.from('session_init').select('id, user_no, used_at, created_at').eq('id', b.ticket).maybeSingle();
+    const { data: t } = await db.from('session_init').select('id, user_no, used_at, created_at, training_mode').eq('id', b.ticket).maybeSingle();
     if (!t || !t.user_no) return err(403, '입장권을 확인할 수 없습니다', cors);
     const opened = new Date(t.used_at || t.created_at).getTime();
     if (Date.now() - opened > TICKET_MS) return err(403, '입장권 시간이 지났습니다', cors);
     const member = Number(t.user_no);
+    // 선생님 결과지용 입장권(report)은 결과 보기만 — 점검 풀기는 못 함
+    if (t.training_mode === 'report' && !['teacher', 'report', 'status'].includes(b.action)) return err(403, '결과 보기 전용 입장권입니다', cors);
 
     // 학생이 훈련을 마친 회차 번호 (이 영역·과정)
     const trainedRounds = async (level: string, areaId: number) => {

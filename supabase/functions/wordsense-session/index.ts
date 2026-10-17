@@ -75,6 +75,10 @@ Deno.serve(async (req) => {
   if (session.completed_at) {
     return jsonErr(410, '이미 완료된 훈련입니다', cors, 'completed');
   }
+  // 선생님 결과지용 입장권(report)으로는 훈련을 열 수 없음
+  if (session.training_mode === 'report') {
+    return jsonErr(403, '훈련 입장권이 아닙니다', cors, 'not_training');
+  }
   const now = Date.now();
   if (!session.used_at) {
     if (new Date(session.expires_at).getTime() < now) {
