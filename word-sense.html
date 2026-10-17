@@ -3077,28 +3077,26 @@ body.mission-mode #game .stage-nav {
 body.pmode .ut-word { font-size: 40px; } body.pmode .ut-opt { font-size: 18px; padding: 12px 14px; }
 body.pmode .ut-info, body.pmode .ut-rules { font-size: 16px; } body.pmode .ut-hint { font-size: 16px; }
 /* 훈사전 평가 칸 (5회차마다) */
-.area-grid .area-cell.ut-cell { background: #FFF8E6 !important; border: 1.5px dashed #E0B04A !important; color: #9A6B00 !important; cursor: default; opacity: 1; }
-.area-cell.ut-cell .ut-cell-t { font-size: 15px; font-weight: 600; }
+/* 실력 점검 칸 — 노랑 대신 차분한 무채색 + 남색 (대표님 2026-10-18 '세련되게') */
+.area-grid .area-cell.ut-cell { background: #F6F7FA !important; border: 1px solid #DDE2EA !important; color: #8A93A6 !important; cursor: default; opacity: 1; }
+.area-cell.ut-cell .ut-cell-t { font-size: 14px; font-weight: 600; letter-spacing: 0.04em; }
 .area-cell.ut-cell .ut-cell-s { font-size: 12px; margin-top: 3px; font-variant-numeric: tabular-nums; }
-.area-grid .area-cell.ut-cell.ok { cursor: pointer; border-style: solid !important; }
-.area-grid .area-cell.ut-cell.ok:hover { background: #FFEFC4 !important; }
-.area-grid .area-cell.ut-cell.off { background: #F3F4F6 !important; border-color: #C3C9D2 !important; color: #6B7383 !important; }
+.area-grid .area-cell.ut-cell.ok { cursor: pointer; }
+/* 점검하기 — 남색 버튼 ('다음' 버튼과 같은 톤) */
+.area-grid .area-cell.ut-cell.ok:not(.done):not(.open) { background: #1A1F30 !important; border-color: #1A1F30 !important; color: #FFFFFF !important; box-shadow: 0 2px 8px rgba(26,31,48,0.25); }
+.area-grid .area-cell.ut-cell.ok:not(.done):not(.open):hover { background: #2E3548 !important; }
+/* 점검 끝(점수) — 흰 바탕 + 남색 */
+.area-grid .area-cell.ut-cell.done { background: #FFFFFF !important; border: 1.5px solid #1A1F30 !important; color: #1A1F30 !important; }
+.area-grid .area-cell.ut-cell.done .ut-cell-s { font-size: 15px; font-weight: 700; }
+.area-grid .area-cell.ut-cell.done:hover { background: #F2F4F8 !important; }
+.area-grid .area-cell.ut-cell.off { background: #F6F7FA !important; border-color: #E3E7EE !important; color: #9AA1AE !important; }
 .area-grid .area-cell.ut-cell::after { display: none !important; }
 .area-grid .area-cell.ut-cell.done::after { content: '다시 점검'; display: block !important; }
-.area-grid .area-cell.ut-cell.open { border-color: #4A6FB5 !important; color: #2F4F8F !important; background: #EEF2FA !important; }   /* 이어 풀기 — 통과 초록과 겹치지 않게 파랑 */
+.area-grid .area-cell.ut-cell.open { border: 1.5px solid #4FA3F0 !important; color: #2E7DC4 !important; background: #EEF5FD !important; }   /* 이어 풀기 — 훈사전 파랑 */
 .area-grid {
   flex: 1; display: grid; grid-template-columns: repeat(12, 1fr);   /* 5회차 + 평가 칸 × 2 (실력 점검, 2026-10-17) */
   grid-auto-rows: 1fr; gap: 6px; overflow: visible;   /* 호버 시 "재훈련" 라벨 잘림 방지 */
 }
-/* 훈사전 다음 회차 — 반투명 재생 버튼 */
-.area-cell .cell-play { position: absolute; inset: 0; margin: auto; width: 40px; height: 40px; border-radius: 50%; z-index: 2;
-  display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer;
-  border: 1.5px solid rgba(255,255,255,0.85); background: rgba(47,165,114,0.68); color: #fff;
-  box-shadow: 0 3px 10px rgba(20,25,40,0.25); backdrop-filter: blur(2px); transition: transform .15s, background .15s; }
-.area-cell .cell-play svg { width: 26px; height: 26px; margin-left: 2px; }
-.area-cell .cell-play:hover { transform: scale(1.08); background: rgba(47,165,114,0.75); }
-.area-cell.has-play { opacity: 1 !important; }
-body.pmode .area-cell .cell-play { width: 46px; height: 46px; }
 .area-cell {
   position: relative;
   border-radius: 8px;
@@ -9704,20 +9702,7 @@ function goArea(){
       f.textContent = p.found + '/' + p.total; cell.appendChild(f);
       if(b.isPerfect){ var st = document.createElement('span'); st.className = 'cell-star'; st.textContent = '★'; st.setAttribute('aria-label', '전부 모음'); cell.appendChild(st); }   // 다 모은 회차 = 왼쪽 위 별 (대표님 2026-10-18)
     }
-    // 다음 회차 바로 시작 — 반투명 재생 버튼 (대표님 2026-10-16). 학원 진입은 학원 사이트가 회차를 정하므로 제외
-    if(p.round === ((SESSION && SESSION.id) || 0) + 1 && !document.body.classList.contains('academy-entry')){
-      var pb = document.createElement('button');
-      pb.type = 'button'; pb.className = 'cell-play'; pb.setAttribute('aria-label', p.round + '회차 바로 시작');
-      pb.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7.5v9l7.5-4.5z" fill="currentColor"/></svg>';
-      pb.addEventListener('click', function(ev){
-        ev.stopPropagation();
-        var nq = new URLSearchParams(location.search);
-        nq.set('round', p.round); nq.delete('retry');
-        location.href = location.pathname + '?' + nq.toString();
-      });
-      cell.classList.add('has-play');
-      cell.appendChild(pb);
-    }
+    // (다음 회차 재생 버튼은 없앰 — 대표님 2026-10-18: 오늘 훈련을 마치면 이전 회차 복습만, 다음 회차는 끝내고 다시 들어와서)
     // 잠금 외 모든 셀(오늘 + 과거 통과·미통과) 재훈련 가능 — 클릭 시 홈으로 돌아가 새로 시작
     // 학원 진입이면 칸 클릭 재훈련 없음 — 재훈련은 학원 사이트에서 회차별 '다시 하기'로 들어옴
     if(!p.locked && !document.body.classList.contains('academy-entry')){
