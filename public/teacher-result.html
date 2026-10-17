@@ -178,7 +178,7 @@
             <div class="sum" id="sum"></div>
             <div class="leg1">
               <span><span class="sw" style="border-color:#4FA3F0;background:#fff"></span>통과 (어휘 80% 이상 수집)</span>
-              <span><span class="sw" style="border-color:rgba(90,97,107,.55);background:rgba(90,97,107,.10)"></span>진행 중 (80% 미만)</span>
+              <span><span class="sw" style="border-color:rgba(90,97,107,.55);background:rgba(90,97,107,.10)"></span>미통과 (80% 미만)</span>
               <span><span class="sw" style="border:1px dashed rgba(20,25,40,.25);background:#fff"></span>미훈련(잠금)</span>
               <span><span class="sw" style="border-color:#4FA3F0;background:color-mix(in srgb,#4FA3F0 16%,#fff)"></span><span style="color:#F2B01E;margin-right:2px">★</span>PERFECT (전 어휘 수집)</span>
               <span><b style="color:#8b929c">×</b> 숫자 = 회차별 재시도 횟수</span>
@@ -259,7 +259,7 @@ function renderArea(){
   document.getElementById("sum").innerHTML=
     '<div class="brk">'+
       '<div class="b" style="background:color-mix(in srgb,'+PASS+' 14%,#fff);border:1.5px solid '+PASS+';color:'+PASS+'">통과<span class="n">'+pass+'</span></div>'+
-      '<div class="b" style="background:rgba(90,97,107,.10);border:1.5px solid rgba(90,97,107,.55);color:#5A616B">진행 중<span class="n">'+fail+'</span></div>'+
+      '<div class="b" style="background:rgba(90,97,107,.10);border:1.5px solid rgba(90,97,107,.55);color:#5A616B">미통과<span class="n">'+fail+'</span></div>'+
       '<div class="b" style="background:rgba(0,0,0,.02);border:1px dashed rgba(20,25,40,.18);color:#8b929c">미훈련<span class="n">'+lock+'</span></div>'+
     '</div>'+
     '<div class="sitem"><span>PERFECT <span style="color:#F2B01E">★</span></span><span class="v">'+pf+'<span class="u"> 회</span></span></div>'+
