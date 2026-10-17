@@ -2970,8 +2970,8 @@ body.mission-mode #game .stage-nav {
 .area-page-title {
   position: relative;
   display: flex; align-items: center; justify-content: center; gap: 16px;
-  margin: 2px 4px 12px;
-  padding: 0 0 6px 0;   /* 아래 줄 없앰 (대표님 2026-10-18) */
+  margin: 7px 4px 13px;   /* 위아래 여백 같게 — 여백 가운데 (대표님 2026-10-18) */
+  padding: 0;            /* 아래 줄 없앰 */
 }
 .area-page-title::after {
   display: none;
@@ -3322,19 +3322,18 @@ body.retry-mode .retry-tag { display: inline-block; }
   background: rgba(var(--stage-accent-rgb), 0.05);
 }
 /* 우하단 플로팅 — skip-link와 동일한 동선 */
-.area-back-btn-floating {
+.area-back-btn-floating {   /* 검정 버튼 (대표님 2026-10-18) */
   position: absolute;
   right: 28px; bottom: 18px;
   z-index: 4;
-  border-color: rgba(20,25,40,0.18);
-  color: #5A6178;
-  background: rgba(255,255,255,0.65);
-  backdrop-filter: blur(6px);
+  border-color: #1A1F30;
+  color: #FFFFFF;
+  background: #1A1F30;
 }
 .area-back-btn-floating:hover {
-  border-color: var(--stage-accent, var(--green));
-  color: var(--stage-accent, var(--green));
-  background: rgba(var(--stage-accent-rgb), 0.10);
+  border-color: #2E3548;
+  color: #FFFFFF;
+  background: #2E3548;
 }
 
 /* "다음으로 →" — 확인 버튼과 동일한 글로시 슬롯-덮개 디자인 */
