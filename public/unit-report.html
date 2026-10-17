@@ -343,6 +343,18 @@ function teardownPrint(){ if(printClone){ printClone.remove(); printClone = null
 addEventListener('beforeprint', setupPrint);
 addEventListener('afterprint', teardownPrint);
 
+// 어드민센터 안에서 보기 (?embed=1) — 데이터는 어드민 창이 보내 줌 (어드민 로그인으로 확인된 요청만)
+const EMBED_PARENTS = ['https://admincenter.sfcenter.co.kr', 'http://localhost:3100'];
+if(new URLSearchParams(location.search).get('embed') === '1'){
+  addEventListener('message', e => {
+    if(EMBED_PARENTS.indexOf(e.origin) === -1 || !e.data || e.data.type !== 'unit-report') return;
+    page = 1; R = prepare(e.data.data); render(); fit();
+  });
+  document.getElementById('sheet').style.visibility = 'hidden';
+  const show = () => { document.getElementById('sheet').style.visibility = ''; };
+  addEventListener('message', e => { if(EMBED_PARENTS.indexOf(e.origin) !== -1) show(); });
+  if(parent !== window) EMBED_PARENTS.forEach(o => { try { parent.postMessage({ type: 'unit-report-ready' }, o); } catch(e){} });
+} else
 (async function(){
   const st = new URLSearchParams(location.search).get('st');
   let d = null;
