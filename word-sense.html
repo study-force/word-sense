@@ -3137,8 +3137,52 @@ body.dark-canvas .score-chip,
 }
 .area-progress-stat em { color: var(--stage-accent, var(--green)); font-style: normal; font-weight: 700; font-size: 16px; text-shadow: 0 0 10px rgba(var(--stage-accent-rgb), 0.35); }
 
+/* ── 단원평가 ── */
+#unittest { background: radial-gradient(ellipse at 50% 20%, #1B2536 0%, #0E131D 70%); align-items: center; justify-content: center; }
+.ut-wrap { width: 100%; max-width: 620px; padding: 24px 16px; box-sizing: border-box; }
+.ut-card { background: #FFFFFF; border-radius: 18px; padding: 26px 28px 24px; box-shadow: 0 12px 40px rgba(0,0,0,0.35); display: flex; flex-direction: column; gap: 12px; color: #1A1F30; font-family: 'Noto Sans KR', sans-serif; }
+.ut-eyebrow { font-size: 13px; color: #6B7488; text-align: center; }
+.ut-title { font-size: 26px; font-weight: 600; text-align: center; }
+.ut-sub { font-size: 15px; color: #5E6782; text-align: center; line-height: 1.6; }
+.ut-rule { background: #E9F6EF; color: #1F7A50; border-radius: 12px; padding: 12px 14px; font-size: 15px; line-height: 1.7; text-align: center; }
+.ut-note { font-size: 13px; color: #6B7488; text-align: center; line-height: 1.6; }
+.ut-btn { align-self: center; margin-top: 6px; padding: 12px 40px; border-radius: 100px; border: none; cursor: pointer; font-family: inherit; font-size: 16px; font-weight: 600; color: #fff; background: linear-gradient(135deg, #45C28A, #2FA572); }
+.ut-top { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #6B7488; font-variant-numeric: tabular-nums; }
+.ut-pts { font-weight: 600; color: #2FA572; }
+.ut-pts.half { color: #C98A10; }
+.ut-bar { height: 5px; background: #ECEFF4; border-radius: 5px; overflow: hidden; }
+.ut-bar i { display: block; height: 100%; background: #45C28A; transition: width .3s; }
+.ut-word { font-size: 40px; font-weight: 600; text-align: center; letter-spacing: 0.06em; margin: 10px 0 0; }
+.ut-hun { text-align: center; font-size: 18px; color: #C98A10; font-weight: 500; min-height: 4px; }
+.ut-hun span + span { margin-left: 14px; }
+.ut-opts { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.ut-opt { text-align: left; padding: 12px 16px; border-radius: 12px; border: 1.5px solid #DDE2EC; background: #fff; cursor: pointer; font-family: inherit; font-size: 16px; color: #1A1F30; line-height: 1.5; display: flex; gap: 10px; }
+.ut-opt b { flex: none; color: #8A93A6; font-weight: 600; }
+.ut-opt:hover:not(:disabled) { border-color: #45C28A; background: #F3FBF7; }
+.ut-opt.sel { border-color: #45C28A; background: #E9F6EF; }
+.ut-opt:disabled { cursor: default; }
+.ut-hint { align-self: center; margin-top: 4px; padding: 9px 18px; border-radius: 100px; border: 1.5px dashed #E0B04A; background: #FFF8E6; color: #9A6B00; font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer; }
+.ut-score { text-align: center; } .ut-score em { font-style: normal; font-size: 56px; font-weight: 600; color: #2FA572; } .ut-score span { font-size: 18px; color: #6B7488; }
+.ut-res { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.ut-res div { border-radius: 10px; padding: 10px 6px; text-align: center; font-size: 13px; line-height: 1.4; }
+.ut-res b { display: block; font-size: 20px; font-weight: 600; }
+.ut-r1 { background: #E9F6EF; color: #1F7A50; } .ut-r2 { background: #FFF5DD; color: #9A6B00; } .ut-r3 { background: #F1F3F7; color: #5E6782; } .ut-r4 { background: #FDECEA; color: #B4412E; }
+.ut-wrong { border-top: 1px solid #ECEFF4; padding-top: 10px; display: flex; flex-direction: column; gap: 6px; max-height: 210px; overflow-y: auto; }
+.ut-wrong-h { font-size: 13px; color: #6B7488; }
+.ut-wrong div { font-size: 14px; line-height: 1.5; } .ut-wrong div b { font-weight: 600; margin-right: 6px; } .ut-wrong div i { font-style: normal; color: #9AA0B2; margin-right: 6px; }
+.ut-loading { color: #DCE3F0; text-align: center; font-family: 'Noto Sans KR', sans-serif; font-size: 16px; }
+body.pmode .ut-word { font-size: 46px; } body.pmode .ut-opt { font-size: 19px; padding: 14px 16px; } body.pmode .ut-title { font-size: 30px; }
+body.pmode .ut-rule, body.pmode .ut-sub { font-size: 17px; } body.pmode .ut-hint { font-size: 17px; } body.pmode .ut-res div { font-size: 14px; }
+/* 훈사전 평가 칸 (5회차마다) */
+.area-grid .area-cell.ut-cell { background: #FFF8E6 !important; border: 1.5px dashed #E0B04A !important; color: #9A6B00 !important; cursor: default; opacity: 1; }
+.area-cell.ut-cell .ut-cell-t { font-size: 15px; font-weight: 600; }
+.area-cell.ut-cell .ut-cell-s { font-size: 12px; margin-top: 3px; font-variant-numeric: tabular-nums; }
+.area-grid .area-cell.ut-cell.ok { cursor: pointer; border-style: solid !important; }
+.area-grid .area-cell.ut-cell.ok:hover { background: #FFEFC4 !important; }
+.area-grid .area-cell.ut-cell.off { opacity: .45; }
+.area-grid .area-cell.ut-cell.open { border-color: #2FA572 !important; color: #1F7A50 !important; background: #E9F6EF !important; }
 .area-grid {
-  flex: 1; display: grid; grid-template-columns: repeat(10, 1fr);
+  flex: 1; display: grid; grid-template-columns: repeat(12, 1fr);   /* 5회차 + 평가 칸 × 2 (단원평가, 2026-10-17) */
   grid-auto-rows: 1fr; gap: 6px; overflow: visible;   /* 호버 시 "재훈련" 라벨 잘림 방지 */
 }
 /* 훈사전 다음 회차 — 반투명 재생 버튼 */
@@ -4794,7 +4838,7 @@ body.pmode .r-rank-card { min-height: 0; overflow: hidden; }
 body.pmode .r-home-btn { flex: 0 0 auto; width: auto; font-size: 15px; padding: 13px 34px; }
 body.pmode .score-chip.center-result { transform: translate(var(--pm-dx, -172px), 120px) scale(1.9); }
 /* 나의 훈사전: 10열 → 5열(10줄) */
-body.pmode .area-grid { grid-template-columns: repeat(5, 1fr); grid-auto-rows: minmax(0, 1fr); min-height: 0; gap: 5px; }
+body.pmode .area-grid { grid-template-columns: repeat(6, 1fr); grid-auto-rows: minmax(0, 1fr); min-height: 0; gap: 5px; }
 body.pmode .area-cell .cell-char { font-size: 32px; }
 /* 통계: 좌우 2단 → 위(급수 막대)·아래(영역 목록) 세로 쌓기 */
 body.pmode .st-body { padding: 16px 16px 90px; }
@@ -5000,6 +5044,11 @@ body.pmode .st-today-badge { font-size: 13px; }
   </div>
 
   <!-- ══ 영역 진행 ══ -->
+  <!-- ══ 단원평가 (5회차마다, 기획 v7 2026-10-17) ══ -->
+  <div class="page" id="unittest">
+    <div class="ut-wrap" id="ut-wrap"></div>
+  </div>
+
   <div class="page" id="area">
     <div class="topbar">
     </div>
@@ -5163,6 +5212,7 @@ body.pmode .st-today-badge { font-size: 13px; }
 <!-- Supabase 클라이언트 + 데이터 fetch -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="data-supabase.js"></script>
+<script src="unit-test-pick.js"></script>   <!-- 단원평가 균형 랜덤 출제 -->
 <script>
 // ── 스케일 ──────────────────────────────────
 // 태블릿 화면 키보드 대응 — 입력창(#wi) 포커스 중이면 키보드에 가려지지 않는 영역(visualViewport)에
@@ -5479,7 +5529,7 @@ function updateScoreVisibility(pageId){
   var chip = document.getElementById('score-chip');
   if(!chip) return;
   // 홈/도입/영역/통계에서는 숨김. 게임/탐구/inferq/강화/결과에서는 표시
-  var hide = (pageId === 'home' || pageId === 'area' || pageId === 'charintro' || pageId === 'stats');
+  var hide = (pageId === 'home' || pageId === 'area' || pageId === 'charintro' || pageId === 'stats' || pageId === 'unittest');
   chip.classList.toggle('show', !hide);
   chip.style.display = '';   // CSS의 .show 클래스에 위임
   // 다크 캔버스 페이지(게임/탐구/결과/영역)에서는 글래스 톤
@@ -6551,6 +6601,7 @@ function goHome(){
   var hRound = document.getElementById('h-round');
   if(hRound) hRound.textContent = (sess.id || 1) + '회';   // 예: 생물 / 19회
   showPage('home');
+  utCheckOpenOnHome();   // 끝내지 않은 단원평가가 있으면 먼저 이어 풀기
 }
 
 // ══════════════════════════════════════════════
@@ -9124,6 +9175,7 @@ function goResult(){
       localStorage.setItem(window.__TEST_KNOWN_KEY, JSON.stringify(tk));
     } catch(e){}
     testMarkPerfect();
+    utSet(utKey('trained', SESSION.id), '1');   // 단원평가 응시 자격용 (테스트 접속)
     // 어드민 회차 테스트 화면에 '내 어휘 N / 전체 T' 알림 → '다시 훈련' 탭에서 못 익힌 어휘가 남은 회차를 빨강으로 (2026-10-16)
     try {
       if(window.opener && !window.opener.closed){
@@ -9197,6 +9249,7 @@ function goResult(){
   buildAreaProgress();
 
   showPage('result');
+  utAfterResult();   // 단원 5번째 회차 + 5회차 모두 훈련 → '단원평가 시작' (미루기 없음)
 
   // ── 점수판 중앙 이동 + 컬렉션/랭킹/버튼 등장 시퀀스 ──
   var chip = document.getElementById('score-chip');
@@ -9715,6 +9768,256 @@ function showTomorrowSplash(){
   if(overlay) overlay.classList.add('on');
 }
 
+// ══════════════════════════════════════════════
+// 단원평가 — 5회차마다 25문항 (기획 v7, 대표님 2026-10-17)
+//   한글만 보고 정답 4점 · '한자 보고 풀기' 후 정답 2점 · 100점 만점 · 정답은 시험 중에 알려 주지 않음
+//   학원 진입: 서버(wordsense-unittest)에 저장 — 이어 하기·재응시·응시 자격(5회차 모두 훈련)
+//   테스트 접속(학생 없음): 이 브라우저에 저장 (같은 규칙)
+// ══════════════════════════════════════════════
+var UT = null;          // 지금 보는 평가 { unit, mode, attempt:{ id, items[] }, idx, t0 }
+var UT_STATUS = null;   // { trained_rounds:[...], units:[{ unit, tries, first, last, best, open_id }] }
+var UT_N = 25;
+function utUnitOf(round){ return Math.floor((round - 1) / 5) + 1; }
+function utIsServer(){ return !!(typeof TRAINING_INFO !== 'undefined' && TRAINING_INFO && TRAINING_INFO.id && typeof STUDENT_INFO !== 'undefined' && STUDENT_INFO && STUDENT_INFO.user_no); }
+function utKey(kind, x){   // 테스트 접속용 브라우저 저장 열쇠 (과정·영역별)
+  var b = window.__TEST_KNOWN_KEY; if(!b) return null;
+  return 'ws_test_' + kind + '_' + b.replace(/^ws_test_known_/, '').replace(/_\d+$/, '') + '_' + x;
+}
+function utGet(k){ try { return k ? localStorage.getItem(k) : null; } catch(e){ return null; } }
+function utSet(k, v){ try { if(k) localStorage.setItem(k, v); } catch(e){} }
+function utDel(k){ try { if(k) localStorage.removeItem(k); } catch(e){} }
+function utEsc(t){ return String(t == null ? '' : t).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+async function utApi(body){
+  body.ticket = TRAINING_INFO.id;
+  try {
+    var r = await fetch(EDGE_FN_BASE + '/wordsense-unittest', { method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY || '' }, body: JSON.stringify(body) });
+    return await r.json();
+  } catch(e){ return { success: false, message: '연결이 불안정해요. 잠시 후 다시 해 주세요.' }; }
+}
+async function utFetchStatus(){
+  if(utIsServer()){
+    var d = await utApi({ action: 'status', level: SESSION.level, area_id: SESSION.areaId });
+    UT_STATUS = d.success ? d : null;
+  } else if(window.__TEST_KNOWN_KEY){
+    var tr = [], units = [];
+    for(var r = 1; r <= 50; r++) if(utGet(utKey('trained', r))) tr.push(r);
+    for(var u = 1; u <= 10; u++){
+      var res = utGet(utKey('unitres', u)), open = utGet(utKey('unitopen', u));
+      if(res || open){ var j = res ? JSON.parse(res) : {}; units.push({ unit: u, tries: j.tries || 0, first: j.first, last: j.last, best: j.best, open_id: open ? 'local' : null }); }
+    }
+    UT_STATUS = { trained_rounds: tr, units: units };
+  }
+  return UT_STATUS;
+}
+function utInfo(u){ return ((UT_STATUS && UT_STATUS.units) || []).filter(function(x){ return x.unit === u; })[0] || null; }
+function utEligible(u){
+  var tr = (UT_STATUS && UT_STATUS.trained_rounds) || [];
+  for(var r = (u - 1) * 5 + 1; r <= u * 5; r++) if(tr.indexOf(r) === -1) return false;
+  return true;
+}
+// 단원 5회차의 출제 후보 — 보기 문구는 어휘 사전(word_master) 뜻으로 (훈련 화면과 같은 SSOT)
+async function utLoadPool(u){
+  var c = window.SUPABASE_CLIENT, from = (u - 1) * 5 + 1, to = u * 5;
+  var ss = (await c.from('sessions').select('id, round_no').eq('area_id', SESSION.areaId).eq('level', SESSION.level).gte('round_no', from).lte('round_no', to)).data || [];
+  var rof = {}; ss.forEach(function(x){ rof[x.id] = x.round_no; });
+  var rows = (await c.from('v_session_word_full').select('session_id, session_word_id, word_master_id, word, hanja, char1, hun1, char2, hun2, choices, grade')
+    .in('session_id', ss.map(function(x){ return x.id; }))).data || [];
+  var eids = {}; rows.forEach(function(r){ (r.choices || []).forEach(function(ch){ if(ch && ch.entry_id != null) eids[ch.entry_id] = 1; }); });
+  var ids = Object.keys(eids).map(Number), M = {};
+  for(var i = 0; i < ids.length; i += 300){
+    ((await c.from('word_master').select('id, meaning').in('id', ids.slice(i, i + 300))).data || []).forEach(function(w){ M[w.id] = w.meaning; });
+  }
+  var pool = [];
+  rows.forEach(function(r){
+    var ch = (r.choices || []).slice(0, 4).map(function(x){ return { text: (x.entry_id != null && M[x.entry_id]) || x.text, ok: (x.is_correct === true || x.is_correct === 'true') }; });
+    if(ch.length === 4 && ch.some(function(x){ return x.ok; })) pool.push({ id: r.session_word_id, round: rof[r.session_id], grade: r.grade, r: r, ch: ch });
+  });
+  return pool;
+}
+function utBuildItems(pool){
+  return UnitTestPick.pick(pool, UT_N).map(function(p){
+    var ch = UnitTestPick.shuffle(p.ch, Math.random);
+    return { session_word_id: p.id, word_master_id: p.r.word_master_id, round_no: p.round, grade: p.grade,
+      word: p.r.word, hanja: p.r.hanja, hun: (p.r.char1 || '') + ' ' + (p.r.hun1 || '') + ' · ' + (p.r.char2 || '') + ' ' + (p.r.hun2 || ''),
+      choices: ch.map(function(x){ return x.text; }), correct_idx: ch.findIndex(function(x){ return x.ok; }) };
+  });
+}
+function utRender(html){ var w = document.getElementById('ut-wrap'); if(w) w.innerHTML = html; }
+function utUnitName(u){ return (SESSION.level || '') + ' ' + (SESSION.area || '') + ' ' + u + '단원 (' + ((u - 1) * 5 + 1) + '~' + (u * 5) + '회차)'; }
+
+// 평가 열기 — 진행 중이면 이어 하기, 아니면 새로 출제
+async function utOpen(u){
+  showPage('unittest');
+  utRender('<div class="ut-loading">단원평가를 준비하는 중이에요…</div>');
+  UT = { unit: u, mode: utIsServer() ? 'server' : 'local' };
+  try {
+    if(UT.mode === 'server'){
+      var info = utInfo(u), items = (info && info.open_id) ? [] : utBuildItems(await utLoadPool(u));
+      var d = await utApi({ action: 'start', level: SESSION.level, area_id: SESSION.areaId, unit: u, items: items });
+      if(!d.success && !items.length){ items = utBuildItems(await utLoadPool(u)); d = await utApi({ action: 'start', level: SESSION.level, area_id: SESSION.areaId, unit: u, items: items }); }
+      if(!d.success){ utRender('<div class="ut-card"><div class="ut-title">단원평가를 열 수 없어요</div><div class="ut-sub">' + utEsc(d.message || '') + '</div><button class="ut-btn" onclick="goArea()">나의 훈사전 보기</button></div>'); return; }
+      UT.attempt = d.attempt; UT.resumed = d.resumed;
+    } else {
+      var k = utKey('unitopen', u), o = utGet(k);
+      if(o){ UT.attempt = JSON.parse(o); UT.resumed = true; }
+      else {
+        var its = utBuildItems(await utLoadPool(u));
+        UT.attempt = { id: 'local', duration_ms: 0, items: its.map(function(it, i){ return Object.assign({ ord: i + 1, hanja_used: false, choice_idx: null, result: null }, it); }) };
+        utSet(k, JSON.stringify(UT.attempt)); UT.resumed = false;
+      }
+    }
+  } catch(e){
+    console.error('[unittest] 준비 실패', e);
+    utRender('<div class="ut-card"><div class="ut-title">단원평가를 준비하지 못했어요</div><div class="ut-sub">잠시 후 다시 해 주세요.</div><button class="ut-btn" onclick="goArea()">나의 훈사전 보기</button></div>');
+    return;
+  }
+  var items = UT.attempt.items || [];
+  UT.idx = items.findIndex(function(x){ return x.choice_idx == null; });
+  if(UT.idx === -1){ utFinish(); return; }
+  var done = UT.idx;
+  utRender('<div class="ut-card">'
+    + '<div class="ut-eyebrow">' + utEsc(utUnitName(u)) + '</div>'
+    + '<div class="ut-title">단원평가</div>'
+    + '<div class="ut-sub">' + items.length + '문항 · 약 5분 · 100점 만점</div>'
+    + '<div class="ut-rule">한글만 보고 맞히면 <b>4점</b><br>한자 보고 풀어 맞히면 <b>2점</b></div>'
+    + '<div class="ut-note">뜻을 모르면 찍지 말고 \'한자 보고 풀기\'를 눌러 한자로 뜻을 찾아보세요.<br>정답은 다 풀고 나서 알려 줘요.</div>'
+    + (done > 0 ? '<div class="ut-note" style="color:#1F7A50">' + done + '문항까지 풀었어요. 이어서 풀어요.</div>' : '')
+    + '<button class="ut-btn" onclick="utShowQ()">' + (done > 0 ? '이어서 풀기' : '시작') + '</button>'
+    + '</div>');
+  try { sfxPlay('balloon.mp3', 0.7); } catch(e){}
+}
+
+function utShowQ(){
+  var items = UT.attempt.items, it = items[UT.idx];
+  if(!it){ utFinish(); return; }
+  UT.t0 = Date.now();
+  var half = !!it.hanja_used;
+  var hun = String(it.hun || '').split(' · ').map(function(h){ return '<span>' + utEsc(h) + '</span>'; }).join('');
+  utRender('<div class="ut-card">'
+    + '<div class="ut-top"><span>' + (UT.idx + 1) + ' / ' + items.length + '</span><span class="ut-pts' + (half ? ' half' : '') + '">' + (half ? '2점 문제' : '4점 문제') + '</span></div>'
+    + '<div class="ut-bar"><i style="width:' + Math.round(UT.idx * 100 / items.length) + '%"></i></div>'
+    + '<div class="ut-word">' + utEsc(it.word) + '</div>'
+    + '<div class="ut-hun">' + (half ? hun : '') + '</div>'
+    + '<div class="ut-opts">' + it.choices.map(function(c, i){ return '<button class="ut-opt" data-i="' + i + '"><b>' + (i + 1) + '</b><span>' + utEsc(c) + '</span></button>'; }).join('') + '</div>'
+    + (half ? '' : '<button class="ut-hint" id="ut-hint">🔍 한자 보고 풀기 · 2점</button>')
+    + '</div>');
+  document.querySelectorAll('#ut-wrap .ut-opt').forEach(function(b){ b.onclick = function(){ utAnswer(Number(b.dataset.i), b); }; });
+  var hb = document.getElementById('ut-hint');
+  if(hb) hb.onclick = utHint;
+}
+
+async function utHint(){
+  var it = UT.attempt.items[UT.idx];
+  if(it.hanja_used) return;
+  it.hanja_used = true;   // 누르는 순간 저장 — 나갔다 와도 이 문제는 2점 문제
+  if(UT.mode === 'server') utApi({ action: 'hint', attempt_id: UT.attempt.id, ord: it.ord });
+  else utSet(utKey('unitopen', UT.unit), JSON.stringify(UT.attempt));
+  var keep = UT.t0; utShowQ(); UT.t0 = keep;   // 시간은 이어서
+}
+
+async function utAnswer(i, btn){
+  var it = UT.attempt.items[UT.idx];
+  if(it.choice_idx != null) return;
+  document.querySelectorAll('#ut-wrap .ut-opt, #ut-hint').forEach(function(b){ b.disabled = true; });
+  if(btn) btn.classList.add('sel');
+  var ms = Math.min(Date.now() - (UT.t0 || Date.now()), 10 * 60 * 1000);
+  it.choice_idx = i;
+  if(UT.mode === 'server'){
+    var d = await utApi({ action: 'answer', attempt_id: UT.attempt.id, ord: it.ord, choice_idx: i, ms: ms });
+    if(!d.success){ it.choice_idx = null; alertUt(d.message); return; }
+  } else {
+    var right = (i === it.correct_idx);
+    it.result = it.hanja_used ? (right ? 'hanja' : 'hanja_wrong') : (right ? 'known' : 'wrong');
+    UT.attempt.duration_ms = (UT.attempt.duration_ms || 0) + ms;
+    utSet(utKey('unitopen', UT.unit), JSON.stringify(UT.attempt));
+  }
+  setTimeout(function(){ UT.idx++; if(UT.idx >= UT.attempt.items.length) utFinish(); else utShowQ(); }, 300);
+}
+function alertUt(msg){
+  document.querySelectorAll('#ut-wrap .ut-opt, #ut-hint').forEach(function(b){ b.disabled = false; b.classList.remove('sel'); });
+  var card = document.querySelector('#ut-wrap .ut-card');
+  if(card){ var n = card.querySelector('.ut-err') || card.appendChild(Object.assign(document.createElement('div'), { className: 'ut-note ut-err' })); n.style.color = '#B4412E'; n.textContent = msg || '저장하지 못했어요. 다시 골라 주세요.'; }
+}
+
+async function utFinish(){
+  utRender('<div class="ut-loading">점수를 계산하는 중이에요…</div>');
+  var att, list;
+  if(UT.mode === 'server'){
+    var d = await utApi({ action: 'finish', attempt_id: UT.attempt.id });
+    if(!d.success){ utRender('<div class="ut-card"><div class="ut-title">점수를 계산하지 못했어요</div><div class="ut-sub">' + utEsc(d.message || '') + '</div><button class="ut-btn" onclick="utOpen(' + UT.unit + ')">다시 시도</button></div>'); return; }
+    att = d.attempt; list = d.answers || [];
+  } else {
+    list = UT.attempt.items;
+    var c = function(r){ return list.filter(function(x){ return x.result === r; }).length; };
+    att = { n_known: c('known'), n_hanja: c('hanja'), n_hanja_wrong: c('hanja_wrong'), n_wrong: c('wrong') };
+    att.score = Math.round((att.n_known * 4 + att.n_hanja * 2) * 100 / (list.length * 4));
+    var rk = utKey('unitres', UT.unit), prev = JSON.parse(utGet(rk) || '{}');
+    utSet(rk, JSON.stringify({ tries: (prev.tries || 0) + 1, first: prev.first != null ? prev.first : att.score, last: att.score, best: Math.max(prev.best || 0, att.score) }));
+    utDel(utKey('unitopen', UT.unit));
+  }
+  var wrong = list.filter(function(x){ return x.result !== 'known' && x.result !== 'hanja'; });
+  utRender('<div class="ut-card">'
+    + '<div class="ut-eyebrow">' + utEsc(utUnitName(UT.unit)) + ' · 단원평가</div>'
+    + '<div class="ut-score"><em>' + att.score + '</em><span> / 100점</span></div>'
+    + '<div class="ut-res">'
+    +   '<div class="ut-r1"><b>' + att.n_known + '</b>바로 앎</div>'
+    +   '<div class="ut-r2"><b>' + att.n_hanja + '</b>한자로 풂</div>'
+    +   '<div class="ut-r3"><b>' + att.n_hanja_wrong + '</b>한자 보고도 틀림</div>'
+    +   '<div class="ut-r4"><b>' + att.n_wrong + '</b>틀림</div>'
+    + '</div>'
+    + (wrong.length ? '<div class="ut-wrong"><div class="ut-wrong-h">다시 보면 좋은 어휘</div>' + wrong.map(function(x){
+        return '<div><b>' + utEsc(x.word) + '</b><i>' + utEsc(x.hanja || '') + '</i>' + utEsc(x.choices[x.correct_idx]) + '</div>'; }).join('') + '</div>'
+      : '<div class="ut-note" style="color:#1F7A50">모든 어휘를 한자 없이 맞혔어요! 🎉</div>')
+    + '<button class="ut-btn" onclick="utToArea()">나의 훈사전 보기</button>'
+    + '</div>');
+  try { sfxPlay(att.score >= 80 ? 'Applause.mp3' : 'balloon.mp3', 0.7); } catch(e){}
+}
+function utToArea(){ utFetchStatus().then(function(){ goArea(); }); }
+
+// 훈사전 — 5회차마다 '평가' 칸 (점수 / 응시 가능 / 이어 풀기 / 잠김)
+function utDecorateArea(){
+  var grid = document.getElementById('area-grid'); if(!grid) return;
+  grid.querySelectorAll('.ut-cell').forEach(function(x){ x.remove(); });
+  var cells = grid.querySelectorAll('.area-cell');
+  for(var u = 1; u <= Math.ceil(cells.length / 5); u++){
+    var after = cells[Math.min(u * 5, cells.length) - 1]; if(!after) continue;
+    var info = utInfo(u), ok = utEligible(u), open = info && info.open_id;
+    var el = document.createElement('div');
+    el.className = 'area-cell ut-cell' + (open ? ' open ok' : ok ? ' ok' : ' off');
+    el.innerHTML = '<div class="ut-cell-t">평가</div><div class="ut-cell-s">'
+      + (open ? '이어 풀기' : (info && info.last != null) ? info.last + '점' : ok ? '응시하기' : u + '단원') + '</div>';
+    el.title = u + '단원 평가 (' + ((u - 1) * 5 + 1) + '~' + (u * 5) + '회차)' + (ok ? '' : ' — 5회차를 모두 훈련하면 볼 수 있어요');
+    if(ok || open){ (function(uu){ el.addEventListener('click', function(){ utOpen(uu); }); })(u); }
+    after.insertAdjacentElement('afterend', el);
+  }
+}
+// 결과 화면 — 단원의 5번째 회차를 마쳤고 5회차 모두 훈련했으면 '단원평가 시작' (미루기 없음)
+function utAfterResult(){
+  var b0 = document.getElementById('r-home-btn');
+  if(b0){ b0.textContent = '나의 훈사전 보기 →'; b0.onclick = function(){ goArea(); }; }
+  if(!SESSION || !SESSION.id || SESSION.id % 5 !== 0) return;
+  var u = utUnitOf(SESSION.id);
+  Promise.resolve(window.__COMPLETE_P).catch(function(){}).then(utFetchStatus).then(function(){
+    if(!utEligible(u)) return;
+    var b = document.getElementById('r-home-btn'); if(!b) return;
+    b.textContent = '단원평가 시작 →';
+    b.onclick = function(){ utOpen(u); };
+  });
+}
+// 첫 화면 — 끝내지 않은 평가가 있으면 먼저 이어 풀기
+function utCheckOpenOnHome(){
+  var b0 = document.querySelector('#home .btn-start');
+  if(b0){ b0.textContent = '시작하기'; b0.onclick = function(){ goCharIntro(); }; }
+  utFetchStatus().then(function(){
+    var open = ((UT_STATUS && UT_STATUS.units) || []).filter(function(x){ return x.open_id; })[0];
+    if(!open) return;
+    var b = document.querySelector('#home .btn-start'); if(!b) return;
+    b.textContent = '단원평가 이어 풀기';
+    b.onclick = function(){ utOpen(open.unit); };
+  });
+}
+
 function goArea(){
   // 한자어 사전(area) — 진입 효과음 제거, dict BGM(playDictBgm)만 (showPage 자동 호출)
   // area 페이지 진입 시 내일의 한자 splash는 닫혀있어야 — 재진입 시 잔존 방지
@@ -9790,6 +10093,9 @@ function goArea(){
     msg.innerHTML = '※ 회차당 가족 어휘 ' + PASS_MIN + '개 이상 수집 시 패스 (' + PASS_MIN + '개 미만 회차는 모두 찾으면 패스)';
   }
   showPage('area');
+  // 5회차마다 '평가' 칸 — 상태를 아직 모르면 받아 온 뒤 다시 그림
+  utDecorateArea();
+  if(!UT_STATUS) utFetchStatus().then(utDecorateArea);
 }
 
 // ── Enter 키 ────────────────────────────────
