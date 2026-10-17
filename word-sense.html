@@ -3197,7 +3197,7 @@ body.pmode .ut-info, body.pmode .ut-rules { font-size: 16px; } body.pmode .ut-hi
 .area-grid .area-cell.ut-cell.off { background: #F3F4F6 !important; border-color: #C3C9D2 !important; color: #6B7383 !important; }
 .area-grid .area-cell.ut-cell::after { display: none !important; }
 .area-grid .area-cell.ut-cell.done::after { content: '재응시'; display: block !important; }
-.area-grid .area-cell.ut-cell.open { border-color: #2FA572 !important; color: #1F7A50 !important; background: #E9F6EF !important; }
+.area-grid .area-cell.ut-cell.open { border-color: #4A6FB5 !important; color: #2F4F8F !important; background: #EEF2FA !important; }   /* 이어 풀기 — 통과 초록과 겹치지 않게 파랑 */
 .area-grid {
   flex: 1; display: grid; grid-template-columns: repeat(12, 1fr);   /* 5회차 + 평가 칸 × 2 (단원평가, 2026-10-17) */
   grid-auto-rows: 1fr; gap: 6px; overflow: visible;   /* 호버 시 "재훈련" 라벨 잘림 방지 */
@@ -3244,45 +3244,47 @@ body.pmode .area-cell .cell-play { width: 46px; height: 46px; }
 }
 .area-cell.locked .cell-char { color: rgba(20,25,40,0.26); }
 
-/* ── 과거 통과 — 컨셉 컬러(area=파랑) 보더 + 부드러운 글로우 ──── */
+/* 통과 = 초록 · 진행 중(80% 미만) = 진한 회색 — 빨강은 좌절감을 줘서 뺌 (대표님 2026-10-17) */
+:root { --pass-c: #2FA572; --pass-rgb: 47,165,114; --prog-c: #5A616B; --prog-rgb: 90,97,107; }
+/* ── 과거 통과 — 초록 보더 + 부드러운 글로우 ──── */
 .area-cell.pass:not(.current) {
   background: #FFFFFF;
-  border: 1px solid rgba(var(--stage-accent-rgb), 0.55);
+  border: 1px solid rgba(var(--pass-rgb), 0.6);
   box-shadow:
-    0 0 0 1px rgba(var(--stage-accent-rgb), 0.12),
+    0 0 0 1px rgba(var(--pass-rgb), 0.14),
     0 1px 2px rgba(20,25,40,0.04);
 }
 .area-cell.pass:not(.current) .cell-char { color: rgba(20,25,40,0.92); }
 .area-cell.pass:not(.current) .cell-hun  { color: rgba(20,25,40,0.72); opacity: 1; }
-.area-cell.pass:not(.current) .cell-frac { color: rgba(var(--stage-accent-rgb), 0.85); }
+.area-cell.pass:not(.current) .cell-frac { color: var(--pass-c); }
 
-/* ── 과거 미통과 — 빨강 보더 + 부드러운 글로우 ────────────── */
+/* ── 과거 진행 중 — 진한 회색 ────────────── */
 .area-cell:not(.locked):not(.pass) {
-  background: rgba(216,120,120,0.10);
-  border: 1px solid rgba(216,120,120,0.75);
+  background: rgba(var(--prog-rgb), 0.10);
+  border: 1px solid rgba(var(--prog-rgb), 0.55);
   box-shadow:
-    0 0 0 1px rgba(216,120,120,0.20),
+    0 0 0 1px rgba(var(--prog-rgb), 0.12),
     0 1px 2px rgba(20,25,40,0.04);
 }
 .area-cell:not(.locked):not(.pass) .cell-char { color: rgba(20,25,40,0.92); }
 .area-cell:not(.locked):not(.pass) .cell-hun  { color: rgba(20,25,40,0.72); opacity: 1; }
-.area-cell:not(.locked):not(.pass) .cell-frac { color: rgba(216,120,120,0.85); }
+.area-cell:not(.locked):not(.pass) .cell-frac { color: var(--prog-c); }
 
-/* ── 오늘 통과 (불투명 컨셉 컬러) ───────────────────────── */
+/* ── 오늘 통과 (불투명 초록) ───────────────────────── */
 .area-cell.current.pass {
-  background: var(--stage-accent, var(--green));
+  background: var(--pass-c);
   border-color: transparent;
-  box-shadow: 0 0 18px rgba(var(--stage-accent-rgb), 0.55);
+  box-shadow: 0 0 18px rgba(var(--pass-rgb), 0.55);
 }
 .area-cell.current.pass .cell-char { color: #FFFFFF; }
 .area-cell.current.pass .cell-hun  { color: rgba(255,255,255,0.95); opacity: 1; }
 .area-cell.current.pass .cell-frac { color: rgba(255,255,255,0.85); }
 
-/* ── 오늘 미통과 (불투명 빨강) ──────────────────────────── */
+/* ── 오늘 진행 중 (불투명 진한 회색) ──────────────────────────── */
 .area-cell.current:not(.pass) {
-  background: var(--rose);
+  background: var(--prog-c);
   border-color: transparent;
-  box-shadow: 0 0 16px rgba(216,120,120,0.55);
+  box-shadow: 0 0 14px rgba(var(--prog-rgb), 0.45);
 }
 .area-cell.current:not(.pass) .cell-char { color: #FFFFFF; }
 .area-cell.current:not(.pass) .cell-hun  { color: rgba(255,255,255,0.95); opacity: 1; }
@@ -3363,15 +3365,15 @@ body.retry-mode .retry-tag { display: inline-block; }
     inset 0 1px 0 rgba(255,255,255,0.55);
   line-height: 1;
 }
-/* 통과(과거+오늘) hover — 컨셉 컬러 글로우 */
+/* 통과(과거+오늘) hover — 초록 글로우 */
 .area-cell.pass:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 0 1px var(--stage-accent, var(--green)), 0 0 18px rgba(var(--stage-accent-rgb), 0.45), 0 4px 12px rgba(0,0,0,0.35);
+  box-shadow: 0 0 0 1px var(--pass-c), 0 0 18px rgba(var(--pass-rgb), 0.45), 0 4px 12px rgba(0,0,0,0.35);
 }
-/* 과거 미통과 hover — 빨강 글로우 */
+/* 진행 중 hover — 회색 글로우 */
 .area-cell:not(.locked):not(.pass):hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 0 1px var(--rose), 0 0 18px rgba(216,120,120,0.45), 0 4px 12px rgba(0,0,0,0.35);
+  box-shadow: 0 0 0 1px var(--prog-c), 0 0 16px rgba(var(--prog-rgb), 0.4), 0 4px 12px rgba(0,0,0,0.3);
 }
 .area-cell:not(.locked):hover::after {
   opacity: 1;
@@ -3382,7 +3384,7 @@ body.retry-mode .retry-tag { display: inline-block; }
   font-size: 10px; color: var(--green); font-weight: 900;
   font-family: 'Noto Sans KR', sans-serif;
 }
-.area-cell.pass:not(.current) .cell-mark { color: var(--stage-accent, var(--green)); }   /* 과거 통과의 ✓ — 컨셉 컬러 */
+.area-cell.pass:not(.current) .cell-mark { color: var(--pass-c); }   /* 과거 통과의 ✓ — 초록 */
 .area-cell .cell-frac {   /* 수집 개수/총수 — 훈 아래 잘 보이게 (예전 별 자리, 2026-10-16) */
   margin-top: 3px; line-height: 1;
   font-size: 12px; color: var(--mid);
@@ -3405,22 +3407,22 @@ body.retry-mode .retry-tag { display: inline-block; }
   border: 1px solid rgba(20,25,40,0.10);
 }
 .al-swatch.al-today-pass {
-  background: var(--stage-accent, var(--green));
+  background: var(--pass-c);
   border-color: transparent;
-  box-shadow: 0 0 8px rgba(var(--stage-accent-rgb), 0.6);
+  box-shadow: 0 0 8px rgba(var(--pass-rgb), 0.6);
 }
 .al-swatch.al-today-fail {
-  background: var(--rose);
+  background: var(--prog-c);
   border-color: transparent;
-  box-shadow: 0 0 8px rgba(216,120,120,0.55);
+  box-shadow: 0 0 8px rgba(var(--prog-rgb), 0.45);
 }
 .al-swatch.al-past-pass {
   background: #FFFFFF;
-  border: 1px solid rgba(var(--stage-accent-rgb), 0.55);
+  border: 1px solid rgba(var(--pass-rgb), 0.6);
 }
 .al-swatch.al-past-fail {
-  background: #FFFFFF;
-  border: 1px solid rgba(216,120,120,0.5);
+  background: rgba(var(--prog-rgb), 0.10);
+  border: 1px solid rgba(var(--prog-rgb), 0.55);
 }
 .al-swatch.al-locked {
   background: #FFFFFF;
@@ -4271,7 +4273,7 @@ body[data-page="stats"] .r-topbar-meta.global-topbar-meta .r-tm-char { display: 
    .r-rank-block: 단지 4개 카드 가로 배치용 flex wrapper. 어두운 박스 X.
                   기존 id="r-rank-block"의 등장 애니메이션(.on)은 그대로 유지. */
 /* 랭킹 토글 [전체|초등|중등] × [전체|우리학원] — 두 랭킹을 함께 바꿈 (대표님 2026-10-16) */
-.r-rank-toggles { width: 100%; max-width: 940px; display: flex; justify-content: center; gap: 10px; margin: 24px 0 -18px;
+.r-rank-toggles { width: 100%; max-width: 940px; display: flex; justify-content: center; gap: 10px; margin: 38px 0 -18px;   /* 점수판 아래 '통과까지 N개 · 바로 재도전' 줄 자리 (2026-10-17) */
   opacity: 0; transition: opacity .55s ease 1.15s; }
 .r-rank-toggles.on { opacity: 1; }
 .r-seg { display: inline-flex; background: #1A1F30; border-radius: 100px; padding: 3px; }
@@ -4392,7 +4394,12 @@ body.gold-classic .g-node.lit.is-known { background: linear-gradient(180deg, #FF
 .rtb-new { margin-left: 6px; font-size: 0.8em; font-weight: 600; color: #2E9E6B; }
 /* 강화에서 틀려 '내 어휘'가 안 된 칩 — 회색 점선 */
 .r-collect-word.not-known { background: #F1F3F7 !important; color: #A0A7B8 !important; border: 1px dashed #C5CAD6 !important; text-decoration: line-through; }
-.r-known-line { position: absolute; left: 50%; bottom: -30px; transform: translateX(-50%); white-space: nowrap; font-size: 14px; color: #5A6178; letter-spacing: 0.02em; opacity: 0; transition: opacity .5s ease 1.2s; }
+.r-known-line { position: absolute; left: 50%; bottom: -30px; transform: translateX(-50%); white-space: nowrap; font-size: 14px; color: #5A6178; letter-spacing: 0.02em; opacity: 0; transition: opacity .5s ease 1.2s; display: flex; align-items: center; gap: 10px; z-index: 3; }
+.r-known-line .rk-left b { color: #2A3050; font-weight: 600; }
+.r-known-line .rk-pass { color: #2FA572; font-weight: 600; }
+.r-retry-btn { font-family: inherit; font-size: 14px; font-weight: 600; color: #fff; background: #2FA572; border: none; border-radius: 100px; padding: 6px 15px; cursor: pointer; box-shadow: 0 2px 8px rgba(47,165,114,.35); }
+.r-retry-btn:hover { background: #28935F; }
+.r-more-btn { font-family: inherit; font-size: 13px; color: #5A6178; background: none; border: none; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 2px 4px; }
 .r-known-line b { font-weight: 600; color: #2A3050; }
 .r-known-line .rk-new { font-weight: 600; color: #2E9E6B; }
 .r-trio-row.on .r-known-line { opacity: 1; }
@@ -5081,9 +5088,9 @@ body.pmode .st-today-badge { font-size: 13px; }
       <div class="area-grid" id="area-grid"></div>
       <div class="area-legend">
         <span class="al-item"><span class="al-swatch al-today-pass"></span>오늘 통과</span>
-        <span class="al-item"><span class="al-swatch al-today-fail"></span>오늘 미통과</span>
+        <span class="al-item"><span class="al-swatch al-today-fail"></span>오늘 진행 중</span>
         <span class="al-item"><span class="al-swatch al-past-pass"></span>과거 통과</span>
-        <span class="al-item"><span class="al-swatch al-past-fail"></span>과거 미통과</span>
+        <span class="al-item"><span class="al-swatch al-past-fail"></span>과거 진행 중</span>
         <span class="al-item"><span class="al-swatch al-locked"></span>잠금</span>
       </div>
       <div class="area-master" id="area-master">
@@ -6589,6 +6596,8 @@ function finishTraining(){
   }catch(e){}
   goHome();
 }
+// 결과 화면 '바로 재도전' / '더 모으기' — 같은 회차를 이어서 다시 훈련
+function retryNow(){ try { sfxPlay('balloon.mp3', 0.5); } catch(e){} goHome(); }
 function goHome(){
   var sess = SESSION;
   // 같은 화면에서 다시 훈련(훈사전 '다시하기' 등) — 방금 '내 어휘'가 된 어휘(강화 첫 시도 정답)를 금색 칩으로 이어감 (2026-10-16)
@@ -9355,7 +9364,15 @@ function renderTierBadge(correct, total){
   var nk = (typeof newKnownCount === 'function') ? newKnownCount() : 0;
   // 점수판 아래 — 누적 내 어휘 / 회차 전체 · 오늘 새로 내 어휘가 된 수 (4단계 훈련)
   var kl = document.getElementById('r-known-line');
-  if(kl) kl.innerHTML = '';   // '획득 N / T'는 점수판 안으로 옮김 (오늘 +k는 점수판 숫자와 같아 뺌)
+  // 점수판 아래 — 통과(80%)까지 남은 개수 + 바로 재도전 / 통과! + 더 모으기 (대표님 2026-10-17)
+  //   재도전 = 같은 화면에서 다시 훈련(goHome) — 모은 어휘는 금색 칩으로 이어지고, 남은 어휘만 인출부터
+  if(kl){
+    var pTot = (typeof WORD_LIST !== 'undefined') ? WORD_LIST.length : 0, pGot = knownAllCount(), pNeed = passNeed({ total: pTot });
+    kl.innerHTML = !pTot || pGot >= pTot ? ''
+      : pGot < pNeed
+        ? '<span class="rk-left">통과까지 <b>' + (pNeed - pGot) + '개</b> 남았어요</span><button type="button" class="r-retry-btn" onclick="retryNow()">바로 재도전 →</button>'
+        : '<span class="rk-pass">통과!</span><button type="button" class="r-more-btn" onclick="retryNow()">더 모으기 (' + pGot + '/' + pTot + ')</button>';
+  }
   var sg = document.getElementById('sc-got');
   if(sg) sg.innerHTML = '획득 <b>' + b.correct + '</b> / ' + b.total;
   scoreEl.innerHTML = '<em>' + b.correct + '</em> / ' + b.total + (nk > 0 ? ' <span class="rtb-new">오늘 +' + nk + '</span>' : '');
@@ -9729,10 +9746,11 @@ var AREA_HUN = {
 };
 var AREA_PROGRESS = null;
 
-var PASS_PCT = 60;
-// 통과 = 회차 어휘의 60% 이상이 내 어휘 (대표님 2026-10-17, 예전: 10개 고정)
+var PASS_PCT = 80;
+// 통과 = 회차 어휘의 80% 이상이 내 어휘 (대표님 2026-10-17, 예전: 10개 고정 → 60% → 80%)
+//   한 번에 못 채우면 재도전으로 이어서 채움 (모은 어휘는 쌓임). 미통과는 빨강 대신 '진행 중'(진한 회색)
 //   회차 크기(3~90개)에 맞춰 공평하게 — 단원평가 자격(5회차 모두 통과)과 같은 기준
-//   서버 통계(wordsense_student_stats cleared)·단원평가(wordsense-unittest)도 같은 계산: known*10 >= total*6
+//   서버 통계(wordsense_student_stats cleared)·단원평가(wordsense-unittest)도 같은 계산: known*10 >= total*8
 function passNeed(p){ return Math.max(1, Math.ceil((p.total || 0) * PASS_PCT / 100)); }
 function isPass(p){ return !p.locked && p.total > 0 && p.found >= passNeed(p); }
 

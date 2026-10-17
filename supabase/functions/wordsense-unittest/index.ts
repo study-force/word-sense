@@ -59,10 +59,10 @@ Deno.serve(async (req) => {
         .in('session_id', [...roundOf.keys()]).not('finished_at', 'is', null);
       return [...new Set((at || []).map((a: any) => roundOf.get(a.session_id)).filter(Boolean))].sort((x: any, y: any) => x - y);
     };
-    // 학생이 통과한 회차 번호 — 훈련한 회차 중 어휘의 60% 이상이 내 어휘 (훈사전과 같은 기준, 2026-10-17)
+    // 학생이 통과한 회차 번호 — 훈련한 회차 중 어휘의 80% 이상이 내 어휘 (훈사전과 같은 기준, 2026-10-17)
     const passedRounds = async (level: string, areaId: number) => {
       const { data } = await db.rpc('wordsense_area_progress', { p_member_no: member, p_area_id: areaId, p_level: level });
-      return ((data || []) as any[]).filter(p => p.trained && p.total > 0 && p.known * 10 >= p.total * 6).map(p => p.round);
+      return ((data || []) as any[]).filter(p => p.trained && p.total > 0 && p.known * 10 >= p.total * 8).map(p => p.round);
     };
     const loadAttempt = async (id: number) => {
       const { data: a } = await db.from('test_attempts').select('*').eq('id', id).eq('member_no', member).maybeSingle();
@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
       const { data: open } = await db.from('test_attempts').select('id').eq('member_no', member)
         .eq('level', level).eq('area_id', areaId).eq('unit', unit).eq('status', 'in_progress').maybeSingle();
       if (open) return ok({ resumed: true, attempt: await loadAttempt(open.id) }, cors);
-      // 응시 자격: 단원 5회차 모두 통과 (어휘 60% 이상, 2026-10-17)
+      // 응시 자격: 단원 5회차 모두 통과 (어휘 80% 이상, 2026-10-17)
       const rounds = await passedRounds(level, areaId);
       const missing = [];
       for (let r = from; r <= to; r++) if (!rounds.includes(r)) missing.push(r);
