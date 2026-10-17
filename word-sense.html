@@ -8995,14 +8995,14 @@ function renderTierBadge(correct, total){
   // 점수판 아래 — 누적 내 어휘 / 회차 전체 · 오늘 새로 내 어휘가 된 수 (4단계 훈련)
   var kl = document.getElementById('r-known-line');
   // 재도전 버튼 — '나의 훈사전 보기' 왼쪽 (대표님 2026-10-18, 점수판 아래에 두니 겹쳐서 옮김)
-  //   통과 전: '남은 N개 재도전'(통과 80%까지) · 통과 후 전부 못 모았으면: '남은 N개 더 모으기' · 다 모았으면 숨김
+  //   통과 전: '← 남은 N개 재도전' · 통과 후 전부 못 모았으면: '← 남은 N개 더 모으기' · 다 모았으면 숨김 (N = 전체 − 모은 것)
   //   재도전 = 같은 화면에서 다시 훈련(goHome) — 모은 어휘는 금색 칩으로 이어지고, 남은 어휘만 인출부터
   if(kl) kl.innerHTML = '';
   var rb2 = document.getElementById('r-retry2');
   if(rb2){
     var pTot = (typeof WORD_LIST !== 'undefined') ? WORD_LIST.length : 0, pGot = knownAllCount(), pNeed = passNeed({ total: pTot });
     rb2.hidden = !pTot || pGot >= pTot;
-    rb2.textContent = pGot < pNeed ? '← 남은 ' + (pNeed - pGot) + '개 재도전' : '← 남은 ' + (pTot - pGot) + '개 더 모으기';   // 화살표 왼쪽 (대표님 2026-10-18)
+    rb2.textContent = pGot < pNeed ? '← 남은 ' + (pTot - pGot) + '개 재도전' : '← 남은 ' + (pTot - pGot) + '개 더 모으기';   // 남은 개수 = 전체 − 모은 것 (80% 기준 아님), 화살표 왼쪽 (대표님 2026-10-18)
   }
   var sg = document.getElementById('sc-got');
   if(sg) sg.innerHTML = '총 획득 <b>' + b.correct + '</b> / ' + b.total;   // 이전 훈련에서 모은 것 포함 (대표님 2026-10-18)
