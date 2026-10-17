@@ -3137,42 +3137,57 @@ body.dark-canvas .score-chip,
 }
 .area-progress-stat em { color: var(--stage-accent, var(--green)); font-style: normal; font-weight: 700; font-size: 16px; text-shadow: 0 0 10px rgba(var(--stage-accent-rgb), 0.35); }
 
-/* ── 단원평가 ── */
-#unittest { background: radial-gradient(ellipse at 50% 20%, #1B2536 0%, #0E131D 70%); align-items: center; justify-content: center; }
-.ut-wrap { width: 100%; max-width: 620px; padding: 24px 16px; box-sizing: border-box; }
-.ut-card { background: #FFFFFF; border-radius: 18px; padding: 26px 28px 24px; box-shadow: 0 12px 40px rgba(0,0,0,0.35); display: flex; flex-direction: column; gap: 12px; color: #1A1F30; font-family: 'Noto Sans KR', sans-serif; }
-.ut-eyebrow { font-size: 13px; color: #6B7488; text-align: center; }
-.ut-title { font-size: 26px; font-weight: 600; text-align: center; }
-.ut-sub { font-size: 15px; color: #5E6782; text-align: center; line-height: 1.6; }
-.ut-rule { background: #E9F6EF; color: #1F7A50; border-radius: 12px; padding: 12px 14px; font-size: 15px; line-height: 1.7; text-align: center; }
-.ut-note { font-size: 13px; color: #6B7488; text-align: center; line-height: 1.6; }
-.ut-btn { align-self: center; margin-top: 6px; padding: 12px 40px; border-radius: 100px; border: none; cursor: pointer; font-family: inherit; font-size: 16px; font-weight: 600; color: #fff; background: linear-gradient(135deg, #45C28A, #2FA572); }
-.ut-top { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #6B7488; font-variant-numeric: tabular-nums; }
-.ut-pts { font-weight: 600; color: #2FA572; }
-.ut-pts.half { color: #C98A10; }
-.ut-bar { height: 5px; background: #ECEFF4; border-radius: 5px; overflow: hidden; }
-.ut-bar i { display: block; height: 100%; background: #45C28A; transition: width .3s; }
-.ut-word { font-size: 40px; font-weight: 600; text-align: center; letter-spacing: 0.06em; margin: 10px 0 0; }
-.ut-hun { text-align: center; font-size: 18px; color: #C98A10; font-weight: 500; min-height: 4px; }
-.ut-hun span + span { margin-left: 14px; }
-.ut-opts { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
-.ut-opt { text-align: left; padding: 12px 16px; border-radius: 12px; border: 1.5px solid #DDE2EC; background: #fff; cursor: pointer; font-family: inherit; font-size: 16px; color: #1A1F30; line-height: 1.5; display: flex; gap: 10px; }
-.ut-opt b { flex: none; color: #8A93A6; font-weight: 600; }
-.ut-opt:hover:not(:disabled) { border-color: #45C28A; background: #F3FBF7; }
-.ut-opt.sel { border-color: #45C28A; background: #E9F6EF; }
+/* ── 단원평가 — 시험지 스타일 (대표님 2026-10-17: 단정하게) ── */
+#unittest { background: #E9ECF1 !important; align-items: center; justify-content: center; }
+.ut-wrap { width: 100%; max-width: 640px; padding: 24px 16px; box-sizing: border-box; }
+.ut-paper { background: #FFFFFF; border: 1px solid #CFD5DF; border-radius: 6px; box-shadow: 0 2px 10px rgba(30,40,60,0.08); color: #1C2230; font-family: 'Noto Sans KR', sans-serif; }
+.ut-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 14px 24px 12px; border-bottom: 2px solid #1C2230; }
+.ut-head .t { font-family: var(--font-han); font-size: 18px; font-weight: 700; letter-spacing: 0.04em; }
+.ut-head .m { font-size: 13px; color: #5B6475; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ut-body { padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 14px; }
+.ut-info { width: 100%; border-collapse: collapse; font-size: 15px; }
+.ut-info th, .ut-info td { border: 1px solid #D9DEE7; padding: 9px 12px; text-align: left; }
+.ut-info th { width: 30%; background: #F4F6F9; font-weight: 500; color: #3A4252; }
+.ut-rules { margin: 0; padding-left: 18px; font-size: 14px; color: #3A4252; line-height: 1.8; }
+.ut-rules b { font-weight: 600; color: #1C2230; }
+.ut-resume { font-size: 14px; color: #1F6B4A; background: #EEF7F2; border: 1px solid #CFE8DA; border-radius: 4px; padding: 8px 12px; }
+.ut-btn { align-self: center; margin-top: 4px; padding: 11px 44px; border-radius: 4px; border: 1px solid #1C2230; cursor: pointer; font-family: inherit; font-size: 16px; font-weight: 500; color: #FFFFFF; background: #1C2230; letter-spacing: 0.06em; }
+.ut-btn:hover { background: #333B4D; }
+.ut-bar { height: 3px; background: #E4E8EE; }
+.ut-bar i { display: block; height: 100%; background: #1C2230; transition: width .3s; }
+.ut-q { display: flex; align-items: baseline; gap: 10px; }
+.ut-q .n { font-family: var(--font-han); font-size: 20px; font-weight: 700; color: #1C2230; }
+.ut-q .p { margin-left: auto; font-size: 12px; font-weight: 500; color: #3A4252; border: 1px solid #9AA3B2; border-radius: 3px; padding: 1px 7px; white-space: nowrap; }
+.ut-q .p.half { color: #8A5A00; border-color: #D9B25C; background: #FFF9EA; }
+.ut-q .ask { font-size: 15px; color: #3A4252; }
+.ut-word { font-family: var(--font-han); font-size: 34px; font-weight: 700; text-align: center; letter-spacing: 0.12em; padding: 14px 0 6px; border: 1px solid #D9DEE7; border-radius: 4px; background: #FAFBFC; }
+.ut-hun { text-align: center; font-family: var(--font-han); font-size: 17px; color: #8A5A00; margin-top: -6px; }
+.ut-hun:empty { display: none; }
+.ut-hun span + span { margin-left: 16px; }
+.ut-opts { display: flex; flex-direction: column; gap: 6px; }
+.ut-opt { text-align: left; padding: 10px 14px; border-radius: 4px; border: 1px solid #D9DEE7; background: #fff; cursor: pointer; font-family: inherit; font-size: 16px; color: #1C2230; line-height: 1.55; display: flex; gap: 10px; align-items: baseline; }
+.ut-opt b { flex: none; font-weight: 500; color: #5B6475; }
+.ut-opt:hover:not(:disabled) { border-color: #1C2230; background: #F4F6F9; }
+.ut-opt.sel { border-color: #1C2230; background: #EBEEF3; }
 .ut-opt:disabled { cursor: default; }
-.ut-hint { align-self: center; margin-top: 4px; padding: 9px 18px; border-radius: 100px; border: 1.5px dashed #E0B04A; background: #FFF8E6; color: #9A6B00; font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer; }
-.ut-score { text-align: center; } .ut-score em { font-style: normal; font-size: 56px; font-weight: 600; color: #2FA572; } .ut-score span { font-size: 18px; color: #6B7488; }
-.ut-res { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-.ut-res div { border-radius: 10px; padding: 10px 6px; text-align: center; font-size: 13px; line-height: 1.4; }
-.ut-res b { display: block; font-size: 20px; font-weight: 600; }
-.ut-r1 { background: #E9F6EF; color: #1F7A50; } .ut-r2 { background: #FFF5DD; color: #9A6B00; } .ut-r3 { background: #F1F3F7; color: #5E6782; } .ut-r4 { background: #FDECEA; color: #B4412E; }
-.ut-wrong { border-top: 1px solid #ECEFF4; padding-top: 10px; display: flex; flex-direction: column; gap: 6px; max-height: 210px; overflow-y: auto; }
-.ut-wrong-h { font-size: 13px; color: #6B7488; }
-.ut-wrong div { font-size: 14px; line-height: 1.5; } .ut-wrong div b { font-weight: 600; margin-right: 6px; } .ut-wrong div i { font-style: normal; color: #9AA0B2; margin-right: 6px; }
-.ut-loading { color: #DCE3F0; text-align: center; font-family: 'Noto Sans KR', sans-serif; font-size: 16px; }
-body.pmode .ut-word { font-size: 46px; } body.pmode .ut-opt { font-size: 19px; padding: 14px 16px; } body.pmode .ut-title { font-size: 30px; }
-body.pmode .ut-rule, body.pmode .ut-sub { font-size: 17px; } body.pmode .ut-hint { font-size: 17px; } body.pmode .ut-res div { font-size: 14px; }
+.ut-hint { align-self: flex-end; padding: 6px 12px; border-radius: 4px; border: 1px solid #D9B25C; background: #FFF9EA; color: #8A5A00; font-family: inherit; font-size: 14px; cursor: pointer; }
+.ut-hint:hover { background: #FFF1CC; }
+.ut-score { display: flex; justify-content: center; align-items: baseline; gap: 6px; padding: 6px 0 2px; }
+.ut-score em { font-style: normal; font-family: var(--font-han); font-size: 52px; font-weight: 700; color: #1C2230; }
+.ut-score span { font-size: 17px; color: #5B6475; }
+.ut-sheet { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 14px; text-align: center; font-variant-numeric: tabular-nums; }
+.ut-sheet th, .ut-sheet td { border: 1px solid #D9DEE7; padding: 8px 6px; }
+.ut-sheet th { background: #F4F6F9; font-weight: 500; color: #3A4252; }
+.ut-sheet td { font-size: 17px; font-weight: 500; }
+.ut-wrong { display: flex; flex-direction: column; max-height: 220px; overflow-y: auto; border: 1px solid #D9DEE7; border-radius: 4px; }
+.ut-wrong-h { font-size: 14px; font-weight: 500; color: #3A4252; }
+.ut-wrong div { font-size: 14px; line-height: 1.55; padding: 7px 12px; border-bottom: 1px solid #ECEFF4; }
+.ut-wrong div:last-child { border-bottom: none; }
+.ut-wrong div b { font-weight: 600; margin-right: 6px; } .ut-wrong div i { font-style: normal; font-family: var(--font-han); color: #8A93A6; margin-right: 8px; }
+.ut-note { font-size: 14px; color: #5B6475; text-align: center; line-height: 1.6; }
+.ut-loading { color: #3A4252; text-align: center; font-family: 'Noto Sans KR', sans-serif; font-size: 16px; }
+body.pmode .ut-word { font-size: 40px; } body.pmode .ut-opt { font-size: 18px; padding: 12px 14px; }
+body.pmode .ut-info, body.pmode .ut-rules { font-size: 16px; } body.pmode .ut-hint { font-size: 16px; }
 /* 훈사전 평가 칸 (5회차마다) */
 .area-grid .area-cell.ut-cell { background: #FFF8E6 !important; border: 1.5px dashed #E0B04A !important; color: #9A6B00 !important; cursor: default; opacity: 1; }
 .area-cell.ut-cell .ut-cell-t { font-size: 15px; font-weight: 600; }
@@ -5391,7 +5406,7 @@ function showPage(id){
   document.body.dataset.page = id;
   // 페이지별 body 테마 — 라이트(흰 캔버스): charintro/result/area, 그 외는 다크 (stats는 다크)
   // body 그라디언트가 viewport 전체를 채우므로 캔버스 가장자리 봉합 자국 없음
-  var isLightPage = (id === 'charintro' || id === 'result' || id === 'area');
+  var isLightPage = (id === 'charintro' || id === 'result' || id === 'area' || id === 'unittest');
   document.body.classList.toggle('theme-light', isLightPage);
   // BGM 시스템 — tap-to-start 게이트 통과 후에만 작동 (페이지 첫 로드 부담 X)
   //   게이트 전: 큰 mp3 다운로드 안 함. 게이트 dismiss 후 BGM 시작.
@@ -9856,7 +9871,7 @@ async function utOpen(u){
       var info = utInfo(u), items = (info && info.open_id) ? [] : utBuildItems(await utLoadPool(u));
       var d = await utApi({ action: 'start', level: SESSION.level, area_id: SESSION.areaId, unit: u, items: items });
       if(!d.success && !items.length){ items = utBuildItems(await utLoadPool(u)); d = await utApi({ action: 'start', level: SESSION.level, area_id: SESSION.areaId, unit: u, items: items }); }
-      if(!d.success){ utRender('<div class="ut-card"><div class="ut-title">단원평가를 열 수 없어요</div><div class="ut-sub">' + utEsc(d.message || '') + '</div><button class="ut-btn" onclick="goArea()">나의 훈사전 보기</button></div>'); return; }
+      if(!d.success){ utRender('<div class="ut-paper"><div class="ut-body"><div class="ut-q"><span class="ask" style="font-size:17px;font-weight:600;color:#1C2230">단원평가를 열 수 없어요</span></div><div class="ut-note">' + utEsc(d.message || '') + '</div><button class="ut-btn" onclick="goArea()">나의 훈사전 보기</button></div></div>'); return; }
       UT.attempt = d.attempt; UT.resumed = d.resumed;
     } else {
       var k = utKey('unitopen', u), o = utGet(k);
@@ -9869,22 +9884,29 @@ async function utOpen(u){
     }
   } catch(e){
     console.error('[unittest] 준비 실패', e);
-    utRender('<div class="ut-card"><div class="ut-title">단원평가를 준비하지 못했어요</div><div class="ut-sub">잠시 후 다시 해 주세요.</div><button class="ut-btn" onclick="goArea()">나의 훈사전 보기</button></div>');
+    utRender('<div class="ut-paper"><div class="ut-body"><div class="ut-q"><span class="ask" style="font-size:17px;font-weight:600;color:#1C2230">단원평가를 준비하지 못했어요</span></div><div class="ut-note">잠시 후 다시 해 주세요.</div><button class="ut-btn" onclick="goArea()">나의 훈사전 보기</button></div></div>');
     return;
   }
   var items = UT.attempt.items || [];
   UT.idx = items.findIndex(function(x){ return x.choice_idx == null; });
   if(UT.idx === -1){ utFinish(); return; }
   var done = UT.idx;
-  utRender('<div class="ut-card">'
-    + '<div class="ut-eyebrow">' + utEsc(utUnitName(u)) + '</div>'
-    + '<div class="ut-title">단원평가</div>'
-    + '<div class="ut-sub">' + items.length + '문항 · 약 5분 · 100점 만점</div>'
-    + '<div class="ut-rule">한글만 보고 맞히면 <b>4점</b><br>한자 보고 풀어 맞히면 <b>2점</b></div>'
-    + '<div class="ut-note">뜻을 모르면 찍지 말고 \'한자 보고 풀기\'를 눌러 한자로 뜻을 찾아보세요.<br>정답은 다 풀고 나서 알려 줘요.</div>'
-    + (done > 0 ? '<div class="ut-note" style="color:#1F7A50">' + done + '문항까지 풀었어요. 이어서 풀어요.</div>' : '')
-    + '<button class="ut-btn" onclick="utShowQ()">' + (done > 0 ? '이어서 풀기' : '시작') + '</button>'
-    + '</div>');
+  utRender('<div class="ut-paper">'
+    + '<div class="ut-head"><span class="t">단원평가</span><span class="m">' + utEsc(utUnitName(u)) + '</span></div>'
+    + '<div class="ut-body">'
+    +   '<table class="ut-info">'
+    +     '<tr><th>문항 수</th><td>' + items.length + '문항 (뜻 고르기)</td></tr>'
+    +     '<tr><th>예상 시간</th><td>약 5분</td></tr>'
+    +     '<tr><th>배점</th><td>100점 만점<br>한글만 보고 정답 4점 · 한자 보고 풀어 정답 2점</td></tr>'
+    +   '</table>'
+    +   '<ul class="ut-rules">'
+    +     '<li>어휘를 보고 알맞은 뜻을 고르세요.</li>'
+    +     '<li>뜻을 모르면 찍지 말고 <b>\'한자 보고 풀기\'</b>를 눌러 한자로 뜻을 찾아보세요.</li>'
+    +     '<li>정답은 모두 푼 뒤에 알려 줍니다.</li>'
+    +   '</ul>'
+    +   (done > 0 ? '<div class="ut-resume">' + done + '번까지 풀었습니다. 이어서 풉니다.</div>' : '')
+    +   '<button class="ut-btn" onclick="utShowQ()">' + (done > 0 ? '이어서 풀기' : '시작') + '</button>'
+    + '</div></div>');
   try { sfxPlay('balloon.mp3', 0.7); } catch(e){}
 }
 
@@ -9894,14 +9916,17 @@ function utShowQ(){
   UT.t0 = Date.now();
   var half = !!it.hanja_used;
   var hun = String(it.hun || '').split(' · ').map(function(h){ return '<span>' + utEsc(h) + '</span>'; }).join('');
-  utRender('<div class="ut-card">'
-    + '<div class="ut-top"><span>' + (UT.idx + 1) + ' / ' + items.length + '</span><span class="ut-pts' + (half ? ' half' : '') + '">' + (half ? '2점 문제' : '4점 문제') + '</span></div>'
+  var marks = ['①', '②', '③', '④'];
+  utRender('<div class="ut-paper">'
+    + '<div class="ut-head"><span class="t">단원평가</span><span class="m">' + utEsc(utUnitName(UT.unit)) + ' · ' + (UT.idx + 1) + ' / ' + items.length + '</span></div>'
     + '<div class="ut-bar"><i style="width:' + Math.round(UT.idx * 100 / items.length) + '%"></i></div>'
-    + '<div class="ut-word">' + utEsc(it.word) + '</div>'
-    + '<div class="ut-hun">' + (half ? hun : '') + '</div>'
-    + '<div class="ut-opts">' + it.choices.map(function(c, i){ return '<button class="ut-opt" data-i="' + i + '"><b>' + (i + 1) + '</b><span>' + utEsc(c) + '</span></button>'; }).join('') + '</div>'
-    + (half ? '' : '<button class="ut-hint" id="ut-hint">🔍 한자 보고 풀기 · 2점</button>')
-    + '</div>');
+    + '<div class="ut-body">'
+    +   '<div class="ut-q"><span class="n">' + (UT.idx + 1) + '.</span><span class="ask">다음 어휘의 뜻으로 알맞은 것은?</span><span class="p' + (half ? ' half' : '') + '">' + (half ? '2점' : '4점') + '</span></div>'
+    +   '<div class="ut-word">' + utEsc(it.word) + '</div>'
+    +   '<div class="ut-hun">' + (half ? hun : '') + '</div>'
+    +   '<div class="ut-opts">' + it.choices.map(function(c, i){ return '<button class="ut-opt" data-i="' + i + '"><b>' + marks[i] + '</b><span>' + utEsc(c) + '</span></button>'; }).join('') + '</div>'
+    +   (half ? '' : '<button class="ut-hint" id="ut-hint">한자 보고 풀기 (2점)</button>')
+    + '</div></div>');
   document.querySelectorAll('#ut-wrap .ut-opt').forEach(function(b){ b.onclick = function(){ utAnswer(Number(b.dataset.i), b); }; });
   var hb = document.getElementById('ut-hint');
   if(hb) hb.onclick = utHint;
@@ -9936,7 +9961,7 @@ async function utAnswer(i, btn){
 }
 function alertUt(msg){
   document.querySelectorAll('#ut-wrap .ut-opt, #ut-hint').forEach(function(b){ b.disabled = false; b.classList.remove('sel'); });
-  var card = document.querySelector('#ut-wrap .ut-card');
+  var card = document.querySelector('#ut-wrap .ut-body');
   if(card){ var n = card.querySelector('.ut-err') || card.appendChild(Object.assign(document.createElement('div'), { className: 'ut-note ut-err' })); n.style.color = '#B4412E'; n.textContent = msg || '저장하지 못했어요. 다시 골라 주세요.'; }
 }
 
@@ -9945,7 +9970,7 @@ async function utFinish(){
   var att, list;
   if(UT.mode === 'server'){
     var d = await utApi({ action: 'finish', attempt_id: UT.attempt.id });
-    if(!d.success){ utRender('<div class="ut-card"><div class="ut-title">점수를 계산하지 못했어요</div><div class="ut-sub">' + utEsc(d.message || '') + '</div><button class="ut-btn" onclick="utOpen(' + UT.unit + ')">다시 시도</button></div>'); return; }
+    if(!d.success){ utRender('<div class="ut-paper"><div class="ut-body"><div class="ut-q"><span class="ask" style="font-size:17px;font-weight:600;color:#1C2230">점수를 계산하지 못했어요</span></div><div class="ut-note">' + utEsc(d.message || '') + '</div><button class="ut-btn" onclick="utOpen(' + UT.unit + ')">다시 시도</button></div></div>'); return; }
     att = d.attempt; list = d.answers || [];
   } else {
     list = UT.attempt.items;
@@ -9957,20 +9982,20 @@ async function utFinish(){
     utDel(utKey('unitopen', UT.unit));
   }
   var wrong = list.filter(function(x){ return x.result !== 'known' && x.result !== 'hanja'; });
-  utRender('<div class="ut-card">'
-    + '<div class="ut-eyebrow">' + utEsc(utUnitName(UT.unit)) + ' · 단원평가</div>'
-    + '<div class="ut-score"><em>' + att.score + '</em><span> / 100점</span></div>'
-    + '<div class="ut-res">'
-    +   '<div class="ut-r1"><b>' + att.n_known + '</b>바로 앎</div>'
-    +   '<div class="ut-r2"><b>' + att.n_hanja + '</b>한자로 풂</div>'
-    +   '<div class="ut-r3"><b>' + att.n_hanja_wrong + '</b>한자 보고도 틀림</div>'
-    +   '<div class="ut-r4"><b>' + att.n_wrong + '</b>틀림</div>'
-    + '</div>'
-    + (wrong.length ? '<div class="ut-wrong"><div class="ut-wrong-h">다시 보면 좋은 어휘</div>' + wrong.map(function(x){
-        return '<div><b>' + utEsc(x.word) + '</b><i>' + utEsc(x.hanja || '') + '</i>' + utEsc(x.choices[x.correct_idx]) + '</div>'; }).join('') + '</div>'
-      : '<div class="ut-note" style="color:#1F7A50">모든 어휘를 한자 없이 맞혔어요! 🎉</div>')
-    + '<button class="ut-btn" onclick="utToArea()">나의 훈사전 보기</button>'
-    + '</div>');
+  utRender('<div class="ut-paper">'
+    + '<div class="ut-head"><span class="t">단원평가 결과</span><span class="m">' + utEsc(utUnitName(UT.unit)) + '</span></div>'
+    + '<div class="ut-body">'
+    +   '<div class="ut-score"><em>' + att.score + '</em><span>/ 100점</span></div>'
+    +   '<table class="ut-sheet">'
+    +     '<tr><th>바로 앎 (4점)</th><th>한자로 풂 (2점)</th><th>한자 보고도 틀림</th><th>틀림</th></tr>'
+    +     '<tr><td>' + att.n_known + '</td><td>' + att.n_hanja + '</td><td>' + att.n_hanja_wrong + '</td><td>' + att.n_wrong + '</td></tr>'
+    +   '</table>'
+    +   (wrong.length
+          ? '<div class="ut-wrong-h">다시 보면 좋은 어휘 (' + wrong.length + ')</div><div class="ut-wrong">' + wrong.map(function(x){
+              return '<div><b>' + utEsc(x.word) + '</b><i>' + utEsc(x.hanja || '') + '</i>' + utEsc(x.choices[x.correct_idx]) + '</div>'; }).join('') + '</div>'
+          : '<div class="ut-note">모든 어휘를 한자 없이 맞혔습니다.</div>')
+    +   '<button class="ut-btn" onclick="utToArea()">나의 훈사전 보기</button>'
+    + '</div></div>');
   try { sfxPlay(att.score >= 80 ? 'Applause.mp3' : 'balloon.mp3', 0.7); } catch(e){}
 }
 function utToArea(){ utFetchStatus().then(function(){ goArea(); }); }
