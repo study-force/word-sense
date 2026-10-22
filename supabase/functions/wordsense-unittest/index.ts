@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
   try {
     // ── 학생 확인 (입장권) ──
     if (!b.ticket) return err(400, '입장권이 필요합니다', cors);
-    const { data: t } = await db.from('session_init').select('id, user_no, used_at, created_at, training_mode').eq('id', b.ticket).maybeSingle();
+    const { data: t } = await db.from('session_init').select('id, user_no, used_at, created_at, training_mode, training_level, training_area').eq('id', b.ticket).maybeSingle();
     if (!t || !t.user_no) return err(403, '입장권을 확인할 수 없습니다', cors);
     const opened = new Date(t.used_at || t.created_at).getTime();
     if (Date.now() - opened > TICKET_MS) return err(403, '입장권 시간이 지났습니다', cors);
@@ -133,9 +133,10 @@ Deno.serve(async (req) => {
 
     // 선생님용 훈련결과 (teacher-result.html?st=입장권) — 1쪽 훈사전·2쪽 영역별 현황·3쪽 실력 점검 한 묶음 (2026-10-18)
     if (b.action === 'teacher') {
-      const { data: report, error } = await db.rpc('wordsense_teacher_report', { p_member_no: member, p_level: b.level || null });
+      //   학원 화면은 훈련(과정·영역)마다 결과 버튼이 있음 → 입장권에 적힌 과정으로 만들고, 그 영역 탭으로 열게 알려 줌 (2026-10-22)
+      const { data: report, error } = await db.rpc('wordsense_teacher_report', { p_member_no: member, p_level: b.level || t.training_level || null });
       if (error) throw error;
-      return ok({ report }, cors);
+      return ok({ report, focus_area: t.training_area || null }, cors);
     }
 
     // 선생님 결과 보고서 (unit-report.html?st=입장권) — 이 학생의 끝난 평가 전부 + 문항 결과 (대표님 2026-10-17)

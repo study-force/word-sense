@@ -142,7 +142,8 @@ Deno.serve(async (req) => {
         payment_fn: String(body.payment_fn || (isReport ? 'report' : '')),
         training_round: Number.isInteger(round) && round >= 1 ? round : 1,
         training_area: AREAS.includes(area) ? area : null,
-        training_level: level,
+        // 결과지 보기는 과정을 안 보내면 비워 둠 → 결과지가 가장 최근 훈련 과정으로 (보내면 그 과정·영역으로 열림, 2026-10-22 개발팀 요청)
+        training_level: isReport && !lv ? null : level,
         study_token: studyToken || null,
         training_mode: mode,
         is_payment: body.is_payment || 'N',

@@ -16,6 +16,8 @@
   html,body{height:100%}
   body{margin:0;background:#dfe2e6;font-family:'Noto Sans CJK KR','Noto Sans KR','Malgun Gothic',sans-serif;color:var(--ink);display:flex;align-items:center;justify-content:center;overflow:auto}
   .stage{position:relative;flex:0 0 auto}
+  /* 창 크기에 맞춘 뒤에 보여 줌 — 처음 열 때 원래 크기로 잠깐 보였다 줄어드는 것 막기 (2026-10-22 개발팀 문의) */
+  .stage:not(.ready){visibility:hidden}
   .sheet{position:absolute;top:0;left:0;width:760px;height:1085px;background:#fff;box-shadow:0 6px 30px rgba(0,0,0,.18);display:flex;flex-direction:column;transform-origin:top left}
   .hd{position:relative;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,var(--gray-h),var(--gray-h2));color:#fff;height:74px;padding:0 24px;flex:0 0 auto}
   .hd .htitle{font-size:22px;font-weight:600;letter-spacing:.01em;white-space:nowrap;line-height:1}
@@ -338,6 +340,10 @@ function renderTests(){
   body.innerHTML=h;
 }
 
+// 학생 실제 학제 → 학교 이름 (훈련 과정과는 별개 — 초4가 중등과정을 해도 '초등학교 4학년', 2026-10-22)
+//   학원 코드 1 초등·2 중등·3 고등, 글자(초등/중등/고등/초등(고))도 인식 — 그 밖(N수생·일반·모름)은 학교 이름 없이
+function schoolOf(sec){ const v=String(sec==null?"":sec).trim();
+  if(v==="1"||v.indexOf("초")===0) return "초등학교"; if(v==="2"||v==="중등") return "중학교"; if(v==="3"||v==="고등") return "고등학교"; return ""; }
 // ── 실제 기록 → 화면 데이터 (Edge wordsense-unittest 'teacher' / 어드민센터가 보내 주는 묶음) ──
 function fromReport(d){
   const lv=d.level||"초등", st=d.stats||{}, statOf=s=>(st.areas||[]).find(a=>a.slug===s)||{};
@@ -353,16 +359,16 @@ function fromReport(d){
       first:a.first||"", last:a.last||""};
   });
   const p=d.profile||{};
-  return { student:{name:p.name||("회원 "+d.member_no), school:lv==="중등"?"중학교":"초등학교", grade:p.grade||"", academy:p.academy||"", course:lv+"과정"},
+  return { student:{name:p.name||("회원 "+d.member_no), school:schoolOf(p.section), grade:p.grade||"", academy:p.academy||"", course:lv+"과정"},
     areas, rounds, totalAcq:Number(st.acquired_distinct)||0, totalTot:Number(st.total_distinct)||0,
     grades:(st.grades||[]).map(g=>({g:Number(g.g),acq:Number(g.acquired)||0,prov:Number(g.provided)||0})), tests:d.tests||[] };
 }
-function render(){ const s=D.student; course.textContent=s.course||((s.school||"").includes("중")?"중등과정":"초등과정"); sch.textContent=s.grade?(s.school+" "+s.grade+"학년"):""; nm.textContent=s.name; academy.textContent=s.academy; renderArea(); renderStats(); renderTests(); paint(); }
+function render(){ const s=D.student; course.textContent=s.course||((s.school||"").includes("중")?"중등과정":"초등과정"); sch.textContent=s.grade?((s.school?s.school+" ":"")+s.grade+"학년"):""; nm.textContent=s.name; academy.textContent=s.academy; renderArea(); renderStats(); renderTests(); paint(); }
 // 창 크기에 맞춰 가로세로 비율(760:1085) 유지하며 전체 스케일
 const SHEET_W=760, SHEET_H=1085, FIT_PAD=16;
 function fit(){ const sh=document.getElementById("sheet"),st=document.getElementById("stage"); if(!sh||!st)return;
   const s=Math.max(.2,Math.min((window.innerWidth-FIT_PAD*2)/SHEET_W,(window.innerHeight-FIT_PAD*2)/SHEET_H));
-  sh.style.transform="scale("+s+")"; st.style.width=(SHEET_W*s)+"px"; st.style.height=(SHEET_H*s)+"px"; }
+  sh.style.transform="scale("+s+")"; st.style.width=(SHEET_W*s)+"px"; st.style.height=(SHEET_H*s)+"px"; st.classList.add("ready"); }
 window.addEventListener("resize",fit);
 // 인쇄: 팝업 시트 그대로 — 페이지마다 완전한 시트 1장씩(aspect-ratio로 팝업과 동일 비율)
 let printClones=[];
@@ -379,9 +385,10 @@ window.addEventListener("afterprint",teardownPrint);
 const _TEST=["word.sfos.kr","localhost","127.0.0.1"].includes(location.hostname);
 const API=_TEST?{url:"https://xzxgsqpvtckxgvipchsy.supabase.co",key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh6eGdzcXB2dGNreGd2aXBjaHN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5OTU0NjIsImV4cCI6MjA5NDU3MTQ2Mn0.J0OIH7pk11wwuyyJEO--RF54jf-AfxqJ19ECwAnsmSQ"}:{url:"https://fokuojmzhttxfkmiutmf.supabase.co",key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZva3Vvam16aHR0eGZrbWl1dG1mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MDYwOTksImV4cCI6MjA5MzM4MjA5OX0.FuYv59ufKteXKusvAhJktBNWntMnWmxctQoHquaPKVA"};
 const EMBED_PARENTS=["https://admincenter.sfcenter.co.kr","http://localhost:3100"];
-function show(){
-  // 가장 진척 높은 영역을 기본 탭으로
-  let best="biology",bc=-1; AREAS.forEach(([k,s])=>{ const c=(D.areas[s]||{}).cleared||0; if(c>bc){bc=c;best=s;} }); curArea=best;
+function show(focus){
+  // 학원 화면에서 누른 훈련의 영역을 기본 탭으로 (2026-10-22) — 없으면 가장 진척 높은 영역
+  let best="biology",bc=-1; AREAS.forEach(([k,s])=>{ const c=(D.areas[s]||{}).cleared||0; if(c>bc){bc=c;best=s;} });
+  curArea=AREAS.some(a=>a[1]===focus)?focus:best;
   render(); fit(); }
 function demoTests(){ const t=[], mk=(area,unit,score,at)=>{ const n_known=Math.round(score/4*0.9), n_hanja=Math.max(0,Math.round((score-n_known*4)/2));
     const rest=25-n_known-n_hanja; t.push({area,unit,score,at,duration_ms:200000+unit*9000,n_known,n_hanja,n_hanja_wrong:Math.floor(rest/2),n_wrong:rest-Math.floor(rest/2),
@@ -395,7 +402,7 @@ function demoTests(){ const t=[], mk=(area,unit,score,at)=>{ const n_known=Math.
   }
   if(st){
     try{ const r=await fetch(API.url+"/functions/v1/wordsense-unittest",{method:"POST",headers:{"Content-Type":"application/json",apikey:API.key},body:JSON.stringify({action:"teacher",ticket:st})});
-      const d=await r.json(); if(d&&d.success){ D=fromReport(d.report); show(); return; }
+      const d=await r.json(); if(d&&d.success){ D=fromReport(d.report); show(d.focus_area); return; }
       document.body.innerHTML='<div style="font-size:15px;color:#5a616b;padding:40px;text-align:center">결과를 불러오지 못했어요. '+((d&&d.message)||"")+'</div>'; return;
     }catch(e){ document.body.innerHTML='<div style="font-size:15px;color:#5a616b;padding:40px;text-align:center">연결이 불안정해요. 잠시 후 다시 열어 주세요.</div>'; return; }
   }
