@@ -1626,6 +1626,12 @@ input, textarea { caret-color: auto; -webkit-user-select: text; user-select: tex
 }
 /* 첫 인출 = '어휘 확장하기'(다음 화면 제목과 같게, 대표님 2026-10-17) · 다시 인출 = '완료' */
 .btn-done .bd-l2 { display: none; }
+/* 무료체험 '인출만'은 완료 버튼이 바로 결과로 (2026-10-22) */
+body.trial-retrieve .btn-done .bd-l1 { display: none; }
+body.trial-retrieve .btn-done .bd-l2 { display: inline; }
+/* 개발용 통계 버튼 — 무료체험·학원 진입에선 숨김 */
+body:not(.trial-expand) .learn-skip .ls-trial, body.trial-expand .learn-skip .ls-next { display: none; }
+body.trial-mode .home-stats-link, body.academy-entry .home-stats-link { display: none; }
 body.recall2-mode .btn-done .bd-l1 { display: none; }
 body.recall2-mode .btn-done .bd-l2 { display: inline; }
 .btn-done .bd-label { white-space: nowrap; font-size: 17px; font-weight: 700; letter-spacing: 0.04em; line-height: 1; transform: translate(3px, -2px); }
@@ -4692,7 +4698,7 @@ body.pmode .st-today-badge { font-size: 13px; }
       </div>
 
     </div>
-    <button class="learn-skip" onclick="goRecap()">학습 끝내고 다시 인출 →</button>
+    <button class="learn-skip" onclick="goRecap()">학습 끝내고 <span class="ls-next">다시 인출</span><span class="ls-trial">결과 보기</span> →</button>
   </div>
 
   <!-- ══ 게임 ══ -->
@@ -6380,6 +6386,7 @@ function rebalanceNodesToCap(){
 //   학습에서 배운 어휘가 자동으로 붙지 않음 — 학생이 스스로 떠올려 입력해야 보라 칩으로 붙고 점수 +1.
 //   다 못 떠올려도 '완료'로 강화로 넘어감. 강화에는 1 인출 + 3 다시 인출에서 떠올린 어휘만 나옴.
 function goRecap(){
+  if(window.TRIAL_STAGE === 'expand'){ goResult(); return; }   // 무료체험 '확장만' — 확장 끝나면 결과
   var learned = ((LEARN && LEARN.collected) ? LEARN.collected.length : 0) + ((LEARN && LEARN.silentCollected) ? LEARN.silentCollected.length : 0);
   if(!learned){ goFillQ(); return; }   // 배운 어휘가 없으면 바로 강화
   showPage('game');
@@ -6475,6 +6482,7 @@ function goLearn(){
   // 한 훈련에 한 번만 — '모두 찾음' 자동 진행(3.4초 뒤)과 완료 버튼이 겹치면 확장 인트로·음성이 두 번 재생되던 문제 (2026-10-16)
   if(S.learnEntered) return;
   S.learnEntered = true;
+  if(window.TRIAL_STAGE === 'retrieve'){ goResult(); return; }   // 무료체험 '인출만' — 인출 끝나면 결과
   // 사운드 — 인출 → 확장 단계 전환 (옥타브 상승)
   try { sndStageNext(); } catch(e){}
   // 인출(게임)에서 이미 다룬 단어(first-try 정답 + 오답후정답 silent)는 모두 제외하고 탐구 대상으로
@@ -6495,6 +6503,8 @@ function goLearn(){
       //   — 예전엔 제외해서, 못 찾은 어휘가 전부 힌트 어휘면 확장이 통째로 건너뛰어졌음
       return true;
     });
+  } else if(window.TRIAL_STAGE === 'expand'){
+    pool = WORD_LIST.filter(function(entry){ return !isKnownEntry(entry); });   // 무료체험 '확장만' — 인출 없이 바로 확장
   } else {
     pool = [];
   }
@@ -7059,6 +7069,14 @@ function dismissCharIntroSplash(){
 
 function goGame(){
   var sess = SESSION;
+  // 무료체험 단계별 진입 — 확장만: 바로 확장 / 강화부터: 예시 어휘로 바로 강화 (2026-10-22)
+  if(window.TRIAL_STAGE === 'expand' || window.TRIAL_STAGE === 'reinforce'){
+    if(!TRAIN_STARTED_AT) TRAIN_STARTED_AT = Date.now();
+    fadeOutNarration(500);
+    resetScore();
+    if(window.TRIAL_STAGE === 'expand') goLearn(); else goFillQ();
+    return;
+  }
   if(!TRAIN_STARTED_AT) TRAIN_STARTED_AT = Date.now();   // 훈련 시작 시각 (결과 저장 duration용)
   // 재생 중인 어원 나레이션 부드럽게 fade out — "훈 감각 깨우러 가기" 클릭 시
   fadeOutNarration(500);
@@ -8427,6 +8445,10 @@ function goFillQ(){
     seen[key] = true;
     return entry.fillSentence && !isKnownEntry(entry);
   });
+  // 무료체험 '강화부터' — 앞 단계가 없으니 빈칸 문장이 있는 회차 어휘 10개로
+  if(all.length === 0 && window.TRIAL_STAGE === 'reinforce'){
+    all = shuffle(WORD_LIST.filter(function(entry){ return entry.fillSentence && !isKnownEntry(entry); })).slice(0, 10);
+  }
   if(all.length === 0){ goResult(); return; }
   all = shuffle(all);
   FQ = { words:all, idx:0, correct:0, total:all.length };
