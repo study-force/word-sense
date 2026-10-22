@@ -47,14 +47,15 @@ let TARGET_AREA_SLUG = _params.get('area') || 'biology';
 let TARGET_ROUND_NO  = parseInt(_params.get('round'), 10) || 1;
 let TARGET_LEVEL     = _params.get('level') || '초등';   // 학제: 초등 | 중등
 // 무료체험(?trial=1) — 학원 홈페이지·[전체훈련 체험]용 (대표님 2026-10-22)
-//   회차는 생물 1회차 고정(주소로 다른 회차 못 엶), 과정만 level=elementary|middle(초등|중등)로 고름, 기록은 저장 안 함(입장권 없음)
+//   회차 고정(주소로 다른 회차 못 엶): 초등 = 생물 1회차(生 날 생) · 중등 = 생물 16회차(新 새로울 신) (대표님 2026-10-22)
+//   과정은 level=elementary|middle(초등|중등)로 고름, 기록은 저장 안 함(입장권 없음)
 //   stage=retrieve(인출만) | expand(확장만) | reinforce(강화부터 끝까지) — 없으면 처음부터 끝까지
 const TRIAL = !_params.get('st') && _params.get('trial') === '1';
 window.TRIAL_STAGE = null;
 if (TRIAL) {
   TARGET_AREA_SLUG = 'biology';
-  TARGET_ROUND_NO = 1;
   TARGET_LEVEL = ['middle', '중등'].indexOf(_params.get('level')) > -1 ? '중등' : '초등';
+  TARGET_ROUND_NO = TARGET_LEVEL === '중등' ? 16 : 1;
   const stg = _params.get('stage');
   window.TRIAL_STAGE = ['retrieve', 'expand', 'reinforce'].indexOf(stg) > -1 ? stg : 'all';
   const markTrial = function(){ document.body.classList.add('trial-mode', 'trial-' + window.TRIAL_STAGE); };
