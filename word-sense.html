@@ -3085,7 +3085,7 @@ body.pmode .ut-info, body.pmode .ut-rules { font-size: 16px; } body.pmode .ut-hi
 /* 훈사전 평가 칸 (5회차마다) */
 /* 실력 점검 칸 — 노랑 대신 차분한 무채색 + 남색 (대표님 2026-10-18 '세련되게') */
 .area-grid .area-cell.ut-cell { background: #F6F7FA !important; border: 1px solid #DDE2EA !important; color: #8A93A6 !important; cursor: default; opacity: 1; }
-.area-cell.ut-cell .ut-cell-t { font-size: 14px; font-weight: 600; letter-spacing: 0.04em; }
+.area-cell.ut-cell .ut-cell-t { font-size: 14px; font-weight: 600; letter-spacing: 0.04em; line-height: 1.2; }
 .area-cell.ut-cell .ut-cell-s { font-size: 12px; margin-top: 3px; font-variant-numeric: tabular-nums; }
 .area-grid .area-cell.ut-cell.ok { cursor: pointer; }
 /* 점검하기 — 초록 버튼 (대표님 2026-10-18, 검정 대신) */
@@ -4768,8 +4768,8 @@ body.pmode .st-today-badge { font-size: 13px; }
       <div class="area-legend">
         <span class="al-item"><span class="al-swatch al-today-pass"></span>오늘 통과</span>
         <span class="al-item"><span class="al-swatch al-today-fail"></span>오늘 미통과</span>
-        <span class="al-item"><span class="al-swatch al-past-pass"></span>과거 통과</span>
-        <span class="al-item"><span class="al-swatch al-past-fail"></span>과거 미통과</span>
+        <span class="al-item"><span class="al-swatch al-past-pass"></span>통과</span>
+        <span class="al-item"><span class="al-swatch al-past-fail"></span>미통과</span>
         <span class="al-item"><span class="al-swatch al-locked"></span>잠금</span>
       </div>
       <div class="area-master" id="area-master">
@@ -9655,7 +9655,7 @@ function utDecorateArea(){
     var el = document.createElement('div');
     var done = !open && info && info.best != null, np = utPassedCount(u);
     el.className = 'area-cell ut-cell' + (open ? ' open ok' : done ? ' done ok' : ok ? ' ok' : ' off');
-    el.innerHTML = '<div class="ut-cell-t">점검</div><div class="ut-cell-s">'
+    el.innerHTML = '<div class="ut-cell-t">실력<br>점검</div><div class="ut-cell-s">'   // 두 줄 '실력 점검' (대표님 2026-10-22)
       + (open ? '이어 풀기' : done ? info.best + '점' : ok ? '점검하기' : utStarted(u) ? np + '/5 통과' : ((u - 1) * 5 + 1) + '~' + (u * 5) + '회') + '</div>';
     el.title = ((u - 1) * 5 + 1) + '~' + (u * 5) + '회차 실력 점검'
       + (open || ok ? '' : ' — 5회차를 모두 통과하면 볼 수 있어요 (회차 어휘 ' + PASS_PCT + '% 이상)');
