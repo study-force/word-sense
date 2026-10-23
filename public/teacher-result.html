@@ -368,7 +368,7 @@ function render(){ const s=D.student; course.textContent=s.course||((s.school||"
 const SHEET_W=760, SHEET_H=1085, FIT_PAD=16;
 function fit(){ const sh=document.getElementById("sheet"),st=document.getElementById("stage"); if(!sh||!st)return;
   const s=Math.max(.2,Math.min((window.innerWidth-FIT_PAD*2)/SHEET_W,(window.innerHeight-FIT_PAD*2)/SHEET_H));
-  sh.style.transform="scale("+s+")"; st.style.width=(SHEET_W*s)+"px"; st.style.height=(SHEET_H*s)+"px"; st.classList.add("ready"); }
+  sh.style.transform="scale("+s+")"; st.style.width=(SHEET_W*s)+"px"; st.style.height=(SHEET_H*s)+"px"; if(window.__shown) st.classList.add("ready"); }   // 데이터를 그린 뒤에만 보이기 (빈 틀 깜빡임 방지)
 window.addEventListener("resize",fit);
 // 인쇄: 팝업 시트 그대로 — 페이지마다 완전한 시트 1장씩(aspect-ratio로 팝업과 동일 비율)
 let printClones=[];
@@ -389,7 +389,7 @@ function show(focus){
   // 학원 화면에서 누른 훈련의 영역을 기본 탭으로 (2026-10-22) — 없으면 가장 진척 높은 영역
   let best="biology",bc=-1; AREAS.forEach(([k,s])=>{ const c=(D.areas[s]||{}).cleared||0; if(c>bc){bc=c;best=s;} });
   curArea=AREAS.some(a=>a[1]===focus)?focus:best;
-  render(); fit(); }
+  render(); window.__shown=1; fit(); }
 function demoTests(){ const t=[], mk=(area,unit,score,at)=>{ const n_known=Math.round(score/4*0.9), n_hanja=Math.max(0,Math.round((score-n_known*4)/2));
     const rest=25-n_known-n_hanja; t.push({area,unit,score,at,duration_ms:200000+unit*9000,n_known,n_hanja,n_hanja_wrong:Math.floor(rest/2),n_wrong:rest-Math.floor(rest/2),
       rounds:[1,2,3,4,5].map(i=>({r:(unit-1)*5+i,n:5,ok:Math.max(1,Math.min(5,Math.round(score/20)+(i%2?0:-1)))}))}); };
