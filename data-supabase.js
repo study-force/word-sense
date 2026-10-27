@@ -240,7 +240,8 @@ window.SESSION_READY = (async function loadSession() {
     const none = Promise.resolve({ data: [] });
     const [rSens, rMeans, rWrongs, rMcs, rNmc] = await Promise.all([
       wmIds.length ? client.from('word_master').select('id, sensitive').in('id', wmIds).not('sensitive', 'is', null) : none,
-      choiceIds.length ? client.from('word_master').select('id, meaning').in('id', choiceIds) : none,
+      // 보기 사전 어휘 — 뜻(확장 보기 문구) + 낱말·한자·훈(강화 빈칸 보기, 2026-10-27)
+      choiceIds.length ? client.from('word_master').select('id, word, hanja, char1, hun1, char2, hun2, meaning').in('id', choiceIds) : none,
       // 4. 회차 오답 피드백 (중등이면 초등 같은 主字 회차 오답 피드백도)
       client.from('wrong_words').select('word, feedback').in('session_id', [sess.id].concat(elemIds)),
       uniqChars.length ? client.from('main_chars').select('char, char_hangul').in('char', uniqChars) : none,
@@ -268,6 +269,14 @@ window.SESSION_READY = (async function loadSession() {
     {
       const M = {};
       (rMeans.data || []).forEach(function(m){ M[m.id] = m.meaning; });
+      // 강화 빈칸 보기 = 어드민에서 사전으로 고른 오답 3개 그대로 (대표님 2026-10-27 — 어드민 선지와 훈련 화면을 하나로)
+      //   보기가 사전과 연결 안 됐거나 3개가 안 되면 null → 기존 방식(빈칸 오답 후보 fill_pools)
+      const W = {}; (rMeans.data || []).forEach(function(m){ W[m.id] = m; });
+      wordRows.forEach(function(r){
+        const o = (r.choices || []).filter(function(c){ return c && !c.is_correct && c.entry_id != null && W[c.entry_id] && W[c.entry_id].word !== r.word; })
+          .map(function(c){ const m = W[c.entry_id]; return { wmId: m.id, word: m.word, hanja: m.hanja, char1: m.char1, hun1: m.hun1, char2: m.char2, hun2: m.hun2, meaning: m.meaning }; });
+        r._fillOthers = o.length >= 3 ? o.slice(0, 3) : null;
+      });
       wordRows.forEach(function(r){
         if (!Array.isArray(r.choices)) return;
         r.choices = r.choices.map(function(c){ return (c && c.entry_id != null && M[c.entry_id]) ? Object.assign({}, c, { text: M[c.entry_id] }) : c; });
@@ -318,7 +327,8 @@ window.SESSION_READY = (async function loadSession() {
           meaning: r.meaning,
           choices: [correct ? correct.text : ''].concat(wrongChoices.map(function(c){ return c.text; })),
           fillSentence: r.fill_sentence,
-          fillPool: fillPools[r.session_word_id] || null,   // { 후보 wmId: 적합도 } — pickFillOthers 참고
+          fillPool: fillPools[r.session_word_id] || null,   // { 후보 wmId: 적합도 } — pickFillOthers 참고 (fillOthers 없을 때만)
+          fillOthers: r._fillOthers || null,                // 강화 빈칸 오답 = 어드민 선지(사전) 3개
           known: knownSet.has(Number(r.word_master_id)),    // 이미 내 어휘 → 금색 칩, 출제 제외
           // sentenceText/Choices는 현재 스키마에 없음 (필요 시 컬럼 추가)
           sentenceText: null,

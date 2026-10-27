@@ -8475,7 +8475,9 @@ function renderFQCard(entry){
   //   ① 이 어휘의 뜻 퀴즈 오답(의미 점검을 거친 = 정답과 뜻이 확실히 다른 어휘)을 우선 사용
   //   ② 모자라면 강화 대상 중에서 — 같은 글자(동음이의어)·같은 뜻은 제외 (같은 텍스트 버튼 두 개 방지)
   //   ⓪ 골디락스 풀(fill_pools)이 있으면 그것만 사용 — 매번 무작위 (data-supabase.js pickFillOthers)
-  var others = (window.pickFillOthers && window.pickFillOthers(entry, typeof WORD_LIST !== 'undefined' ? WORD_LIST : [])) || [];
+  //   ⓪' 어드민에서 사전으로 고른 선지(오답 3개)가 있으면 그것을 그대로 — 어드민 화면과 훈련 화면을 같게 (대표님 2026-10-27)
+  var others = (entry.fillOthers && entry.fillOthers.length >= 3) ? shuffle(entry.fillOthers.slice())
+    : (window.pickFillOthers && window.pickFillOthers(entry, typeof WORD_LIST !== 'undefined' ? WORD_LIST : [])) || [];
   var used = {}; used[entry.word] = true;
   others.forEach(function(e){ used[e.word] = true; });
   var vetted = entry.fillPool ? [] : (entry.choices || []).slice(1);   // [정답, 오답1, 오답2, 오답3] — 오답 뜻
