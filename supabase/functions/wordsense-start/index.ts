@@ -8,7 +8,8 @@
 //     academy_name, academy_no, payment_fn, training_round, training_area, study_token,
 //     training_level?(elementary/middle 또는 초등/중등, 없으면 초등),
 //     training_mode?("retry" = 재훈련 — study_token 불필요, 학원 완료 API 미호출
-//                    "report" = 선생님 결과지 보기 — user_no만 필요, 응답 주소 = teacher-result.html?st=, 훈련엔 못 씀), is_payment? }
+//                    "report" = 선생님 결과지 보기 — user_no만 필요, 응답 주소 = teacher-result.html?st=, 훈련엔 못 씀), is_payment?,
+//     resume?(true = 학원 달력 [이어하기] — 응답 주소에 &resume=1, 앱이 저장된 지점부터 바로 이어 줌) }
 //
 // 처리:
 //   1) 입력 검증 (필수 필드)
@@ -160,7 +161,9 @@ Deno.serve(async (req) => {
     // ── 302 redirect URL 생성 ──
     //   결과지 보기(report)는 같은 폴더의 teacher-result.html로
     const base = isReport ? REDIRECT_BASE.replace(/[^/]*$/, 'teacher-result.html') : REDIRECT_BASE;
-    const redirectUrl = `${base}?st=${session.id}`;
+    //   resume: true = 학원 달력 목록의 [이어하기]로 들어옴 → 앱이 '이어서 할까요?' 없이 바로 이어 줌 (2026-10-29)
+    const resume = !isReport && (body.resume === true || body.resume === 'true' || body.resume === 1 || body.resume === '1');
+    const redirectUrl = `${base}?st=${session.id}${resume ? '&resume=1' : ''}`;
 
     return new Response(JSON.stringify({
       success: true,

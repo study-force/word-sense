@@ -10136,7 +10136,14 @@ function resumeTraining(st){
 
 // 기존 흐름에 저장·이어하기 연결 (원래 함수는 그대로 두고 감쌈)
 var _goCharIntroOrig = goCharIntro;
-goCharIntro = function(){ if(PROGRESS){ showResumeDialog(); return; } return _goCharIntroOrig.apply(this, arguments); };
+var RESUME_DIRECT = new URLSearchParams(location.search).get('resume') === '1';   // 학원 달력 [이어하기]로 들어옴 → 묻지 않고 바로 이어서
+goCharIntro = function(){
+  if(PROGRESS){
+    if(RESUME_DIRECT){ RESUME_DIRECT = false; var st = PROGRESS; PROGRESS = null; resumeTraining(st); return; }
+    showResumeDialog(); return;
+  }
+  return _goCharIntroOrig.apply(this, arguments);
+};
 ['finishWord', 'useHint', 'goLearn', 'renderLearnCard', 'goRecap', 'finishRecall2', 'goFillQ', 'fqAdvance'].forEach(function(name){
   var f = window[name]; if(typeof f !== 'function') return;
   window[name] = function(){ var r = f.apply(this, arguments); progressSave(); return r; };
