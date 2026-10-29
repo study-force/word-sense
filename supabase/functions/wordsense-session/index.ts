@@ -7,7 +7,7 @@
 //   ?id={sessionId}
 //
 // 처리:
-//   1) session_init 조회 — 완료됨(completed_at)=410 completed / 첫 열기는 expires_at(10분) 안, 이후 used_at+3시간까지 새로고침 허용
+//   1) session_init 조회 — 완료됨(completed_at)=410 completed (단, 재도전 중 닫은 것은 3시간 안 다시 열림) / 첫 열기는 expires_at(10분) 안, 이후 used_at+3시간까지 새로고침 허용
 //   2) students JOIN → 학생 정보
 //   3) 첫 열기 때 used_at = NOW() 기록
 //   4) 응답: { student{…}, session{ id, payment_fn, training_round, training_area, training_level, is_payment } }
@@ -72,8 +72,21 @@ Deno.serve(async (req) => {
   if (sErr || !session) {
     return jsonErr(404, '입장 정보를 찾을 수 없습니다', cors, 'not_found');
   }
+  // 완료된 입장권 — 결과 화면의 '남은 어휘 재도전'을 하다 닫은 경우만 다시 열어 줌 (이어하기, 대표님 2026-10-29)
+  //   조건: 처음 연 뒤 3시간 안 + 완료 뒤에 저장된 진행 상황(training_progress)이 있음 → 재훈련(retry)으로 열림
+  let reopenRetry = false;
   if (session.completed_at) {
-    return jsonErr(410, '이미 완료된 훈련입니다', cors, 'completed');
+    const inWindow = session.used_at && Date.now() - new Date(session.used_at).getTime() <= REOPEN_MS;
+    if (inWindow && session.training_area && session.training_round) {
+      const { data: ar } = await supabase.from('areas').select('id').eq('slug', session.training_area).maybeSingle();
+      if (ar) {
+        const { data: pg } = await supabase.from('training_progress').select('updated_at')
+          .eq('member_no', Number(session.user_no)).eq('level', session.training_level || '초등')
+          .eq('area_id', ar.id).eq('round_no', Number(session.training_round)).maybeSingle();
+        reopenRetry = !!pg && new Date(pg.updated_at).getTime() > new Date(session.completed_at).getTime();
+      }
+    }
+    if (!reopenRetry) return jsonErr(410, '이미 완료된 훈련입니다', cors, 'completed');
   }
   // 선생님 결과지용 입장권(report)으로는 훈련을 열 수 없음
   if (session.training_mode === 'report') {
@@ -129,7 +142,7 @@ Deno.serve(async (req) => {
       training_round: session.training_round,
       training_area: session.training_area || null,     // 앱이 이 영역·회차로 콘텐츠를 불러옴
       training_level: session.training_level || '초등',
-      training_mode: session.training_mode || 'normal',  // retry = 재훈련 (내일의 한자 없이 종료)
+      training_mode: reopenRetry ? 'retry' : (session.training_mode || 'normal'),  // retry = 재훈련 (내일의 한자 없이 종료)
       is_payment: session.is_payment,
       // study_token은 브라우저로 보내지 않음 — 완료 시 서버(wordsense-complete)가 session_init에서 직접 읽음
     },
