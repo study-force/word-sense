@@ -6267,7 +6267,14 @@ function finishTraining(){
   }, 300);
 }
 // 결과 화면 '바로 재도전' / '더 모으기' — 같은 회차를 이어서 다시 훈련
-function retryNow(){ try { sfxPlay('balloon.mp3', 0.5); } catch(e){} goHome(); }
+//   첫 화면·오늘의 한자는 방금 봤으니 건너뛰고, 오늘 찾을 가족 어휘 수(목표) 화면부터 (대표님 2026-10-29)
+function retryNow(){
+  try { sfxPlay('balloon.mp3', 0.5); } catch(e){}
+  goHome();                       // 상태 정리 + 방금 '내 어휘'가 된 것은 금색 칩으로
+  SEEN_MILESTONES = {};           // 오늘의 한자(goCharIntro)에서 하던 마일스톤 초기화
+  TRAIN_STARTED_AT = null;        // 새 훈련 — 걸린 시간 다시 셈
+  goGame();
+}
 function goHome(){
   var sess = SESSION;
   // 같은 화면에서 다시 훈련(훈사전 '다시하기' 등) — 방금 '내 어휘'가 된 어휘(강화 첫 시도 정답)를 금색 칩으로 이어감 (2026-10-16)

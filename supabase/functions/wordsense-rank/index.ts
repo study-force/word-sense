@@ -14,9 +14,9 @@
 //
 // 응답:
 //   { success,
-//     known: { today: [{ user_no, name, count, areas:[{area,count}] }] },   // 본인 제외
+//     known: { today: [{ name, count, areas:[{area,count}] }] },   // 본인 제외, 이름은 가운데 가림(김*연)
 //     me_known: { today_past, today_areas },                                   // 본인 오늘 앞선 훈련분
-//     hall: [{ user_no, name, at, me }], me_hall_prev }                       // 명예의 전당 / 본인 1~N-1회차 모두 만점 여부
+//     hall: [{ name, at, me }], me_hall_prev }                                 // 명예의 전당 / 본인 1~N-1회차 모두 만점 여부
 // ════════════════════════════════════════════════════════════════
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -101,11 +101,18 @@ Deno.serve(async (req) => {
     }
     const nameOf = new Map(studs.map((s: any) => [String(s.user_no), s.name]));
     const acadOf = new Map(studs.map((s: any) => [String(s.user_no), s.academy_no != null ? Number(s.academy_no) : null]));
-    const label = (k: string) => nameOf.get(k) || ('회원' + k);
+    // 다른 학생 이름은 가운데를 가림 — 홈페이지 랭킹판(wordsense_mask_name)과 같은 규칙 (2026-10-29 개발팀 문의)
+    //   김태연 → 김*연, 이서 → 이*, 본인은 앱이 자기 이름으로 따로 표시
+    const mask = (n: string | null | undefined) => {
+      const t = String(n || '').trim(); const c = [...t];
+      if (!c.length) return '회원'; if (c.length === 1) return t; if (c.length === 2) return c[0] + '*';
+      return c[0] + '*'.repeat(c.length - 2) + c[c.length - 1];
+    };
+    const label = (k: string) => mask(nameOf.get(k));
 
     // ① 오늘의 랭킹
     const today = (kn?.today || []).map((x: any) => ({
-      user_no: Number(x.member_no), name: label(String(x.member_no)), count: x.count, areas: x.areas || null,
+      name: label(String(x.member_no)), count: x.count, areas: x.areas || null,
     }));
     const meKnown = { today_past: kn?.me_today_past || 0, today_areas: kn?.me_today_areas || [] };
 
@@ -119,7 +126,7 @@ Deno.serve(async (req) => {
         if (userNo && k === userNo) meHallPrev = before.every((id: number) => m.has(id));
         if (m.size !== hallSrc.sids.length) continue;
         if (academyNo != null && acadOf.get(k) !== academyNo) continue;
-        hall.push({ user_no: Number(k), name: label(k), at: [...m.values()].sort().pop()!, me: !!(userNo && k === userNo) });
+        hall.push({ name: label(k), at: [...m.values()].sort().pop()!, me: !!(userNo && k === userNo) });
       }
       if (userNo && !per.has(userNo)) meHallPrev = before.length === 0;   // 1회차면 이전 회차 없음
       hall.sort((x, y) => (x.at < y.at ? 1 : -1));
