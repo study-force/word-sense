@@ -6234,27 +6234,26 @@ function eumToPills(text){
 
 // 끝내기 — 어드민 '회차 테스트'에서 열린 경우 그 창에 완료 신호를 보내 자동 체크되게 함
 function finishTraining(){
-  // 학원에서 들어온 훈련(입장권 ?st): 처음 화면으로 돌아가 다시 시작하지 않고 끝냄 — 창 닫기, 안 닫히면 마침 화면
-  if(window.__ST_SESSION){
-    try { window.close(); } catch(e){}
-    setTimeout(function(){
-      if(document.getElementById('finish-block')) return;
-      var el = document.createElement('div');
-      el.id = 'finish-block';
-      el.style.cssText = 'position:fixed;inset:0;z-index:100000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#0E121B;color:#F2F4FA;font-family:"Noto Sans KR",sans-serif;text-align:center;padding:24px;';
-      el.innerHTML = '<div style="font-size:24px;font-weight:600">오늘 훈련을 마쳤어요!</div>'
-                   + '<div style="font-size:16px;color:rgba(242,244,250,.7)">이 창을 닫아 주세요.</div>';
-      document.body.appendChild(el);
-    }, 300);
-    return;
-  }
+  // 끝내기 = 창 닫기 (대표님 2026-10-29 — 전엔 학원 입장권이 없으면 첫 화면으로 돌아갔음)
+  //   어드민 회차 테스트 창이면 먼저 끝났다고 알려 줌 → 창 닫기 → 브라우저가 막으면(직접 연 탭 등) 마침 화면
   try{
-    if(window.opener && !window.opener.closed){
+    if(!window.__ST_SESSION && window.opener && !window.opener.closed){
       var q = new URLSearchParams(location.search);
       window.opener.postMessage({ type:'wordsense-test-finished', area:q.get('area')||'biology', round:parseInt(q.get('round'),10)||1, level:q.get('level')||'초등' }, '*');
     }
   }catch(e){}
-  goHome();
+  try { fadeOutNarration(300); } catch(e){}
+  try { if(typeof INTRO_BGM !== 'undefined' && INTRO_BGM) INTRO_BGM.pause(); } catch(e){}
+  try { window.close(); } catch(e){}
+  setTimeout(function(){
+    if(document.getElementById('finish-block')) return;
+    var el = document.createElement('div');
+    el.id = 'finish-block';
+    el.style.cssText = 'position:fixed;inset:0;z-index:100000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#0E121B;color:#F2F4FA;font-family:"Noto Sans KR",sans-serif;text-align:center;padding:24px;';
+    el.innerHTML = '<div style="font-size:24px;font-weight:600">오늘 훈련을 마쳤어요!</div>'
+                 + '<div style="font-size:16px;color:rgba(242,244,250,.7)">이 창을 닫아 주세요.</div>';
+    document.body.appendChild(el);
+  }, 300);
 }
 // 결과 화면 '바로 재도전' / '더 모으기' — 같은 회차를 이어서 다시 훈련
 function retryNow(){ try { sfxPlay('balloon.mp3', 0.5); } catch(e){} goHome(); }
