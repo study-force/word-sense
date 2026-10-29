@@ -50,14 +50,18 @@ let TARGET_LEVEL     = _params.get('level') || '초등';   // 학제: 초등 | �
 //   회차 고정(주소로 다른 회차 못 엶): 초등 = 생물 1회차(生 날 생) · 중등 = 생물 16회차(新 새로울 신) (대표님 2026-10-22)
 //   과정은 level=elementary|middle(초등|중등)로 고름, 기록은 저장 안 함(입장권 없음)
 //   stage=retrieve(인출만) | expand(확장만) | reinforce(강화부터 끝까지) — 없으면 처음부터 끝까지
-const TRIAL = !_params.get('st') && _params.get('trial') === '1';
+//   단계 값은 넓게 받음 (개발팀 연동 2026-10-29): stage=1|2|3 · stage1 · 인출|확장|강화 · retrieve|expand|reinforce (대소문자·공백 무시)
+const TRIAL = !_params.get('st') && ['1', 'true', 'y', 'yes'].indexOf(String(_params.get('trial') || '').trim().toLowerCase()) > -1;
 window.TRIAL_STAGE = null;
 if (TRIAL) {
   TARGET_AREA_SLUG = 'biology';
-  TARGET_LEVEL = ['middle', '중등'].indexOf(_params.get('level')) > -1 ? '중등' : '초등';
+  TARGET_LEVEL = ['middle', '중등'].indexOf(String(_params.get('level') || '').trim().toLowerCase()) > -1 ? '중등' : '초등';
   TARGET_ROUND_NO = TARGET_LEVEL === '중등' ? 16 : 1;
-  const stg = _params.get('stage');
-  window.TRIAL_STAGE = ['retrieve', 'expand', 'reinforce'].indexOf(stg) > -1 ? stg : 'all';
+  const stg = String(_params.get('stage') || _params.get('step') || '').trim().toLowerCase().replace(/^stage\s*/, '');
+  const STAGE_OF = { '1': 'retrieve', retrieve: 'retrieve', '인출': 'retrieve', '인출하기': 'retrieve',
+                     '2': 'expand', expand: 'expand', '확장': 'expand', '확장하기': 'expand',
+                     '3': 'reinforce', reinforce: 'reinforce', '강화': 'reinforce', '강화하기': 'reinforce' };
+  window.TRIAL_STAGE = STAGE_OF[stg] || 'all';
   const markTrial = function(){ document.body.classList.add('trial-mode', 'trial-' + window.TRIAL_STAGE); };
   if (document.body) markTrial(); else document.addEventListener('DOMContentLoaded', markTrial);
 }
