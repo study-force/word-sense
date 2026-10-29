@@ -2327,6 +2327,17 @@ body.mission-mode #game .stage-nav {
   font-family: 'Noto Sans KR', sans-serif; font-size: 15px; font-weight: 600;
 }
 .miss-next:hover { filter: brightness(1.05); }
+/* 이어하기 안내 (2026-10-29) */
+.resume-ov { position: fixed; inset: 0; z-index: 9500; display: none; align-items: center; justify-content: center; background: rgba(10,14,24,0.55); backdrop-filter: blur(4px); }
+.resume-ov.on { display: flex; }
+.resume-card { background: #fff; border-radius: 22px; padding: 30px 34px 26px; text-align: center; min-width: 340px; max-width: 90vw; box-shadow: 0 20px 60px rgba(0,0,0,0.3); font-family: 'Noto Sans KR', sans-serif; }
+.resume-title { font-size: 21px; font-weight: 600; color: #1A1F30; }
+.resume-sub { font-size: 15px; color: #5A6178; margin: 10px 0 22px; }
+.resume-btns { display: flex; gap: 10px; justify-content: center; }
+.resume-btns button { padding: 12px 24px; border-radius: 100px; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+.resume-new { background: #fff; color: #5A6178; border: 1px solid #D5D9E3; }
+.resume-go { background: linear-gradient(135deg, #45C28A, #2FA572); color: #fff; border: none; }
+.resume-go:hover, .resume-new:hover { filter: brightness(1.04); }
 .next-btn:hover { background: rgba(var(--stage-accent-rgb), 0.14); }
 
 .skip-link {
@@ -7110,6 +7121,21 @@ function showGameIntro(){
   var intro = document.getElementById('game-intro');
   var msg   = document.getElementById('gi-msg');
   if(!intro || !msg) return;
+  // 이어하기 (2026-10-29) — 가족 어휘 수·Go! 미션 대신 '이어서 인출하기' 말풍선만 / 'silent'면 안내 없이 (확장·다시 인출로 바로 갈 때)
+  if(RESUME_INTRO){
+    var rq = RESUME_INTRO; RESUME_INTRO = null;
+    document.body.classList.remove('mission-mode');
+    if(rq === 'silent') return;
+    sfxPlay('balloon.mp3', 0.8);
+    msg.classList.remove('gi-mission'); msg.classList.add('gi-card');
+    msg.dataset.stage = '1';
+    msg.innerHTML = buildIntroHTML(1).replace('인출하기', '이어서 인출하기').replace(STAGE_META[1].quote, rq);
+    intro.classList.remove('fade-out'); intro.classList.add('on');
+    GAME_INTRO_CARD_AT = Date.now();
+    if(GAME_INTRO_TIMER) clearTimeout(GAME_INTRO_TIMER);
+    GAME_INTRO_TIMER = setTimeout(hideGameIntro, 2600);
+    return;
+  }
   // mission 화면 등장 효과음 (balloon만 — title01은 가족 어휘 수 화면 다음 gi-card에서)
   sfxPlay('balloon.mp3', 0.8);
   if(typeof INTRO_BGM !== 'undefined' && INTRO_BGM) setIntroBgmVolume(0);
@@ -7894,7 +7920,7 @@ function lightUpNode(entry, fromLearn, silent, known){
   node.silent = !!silent;   // true → 오답 후 정답: 검정 노드 (점수/강화 후보 X, 시각 표시만)
   node.known = !!known;
   // 노드 라인 그어질 때 laser 효과음 (silent 케이스는 점수 X라 사운드도 절제). 50% 볼륨.
-  if(!silent && !known) sfxPlay('laser.mp3', 0.3);
+  if(!silent && !known && !RESTORE_QUIET) sfxPlay('laser.mp3', 0.3);   // 이어하기 복원 중엔 소리 없이
   // 캡슐 색 + 길이 변주 클래스를 미리 계산해 node에 저장 — 라인이 도착하면 한 번에 chip으로 변환
   var mainCap = document.querySelector('.g-center .game-cap');
   var capCls = 'c-green';
@@ -7907,7 +7933,7 @@ function lightUpNode(entry, fromLearn, silent, known){
   node.capCls = capCls;
   node.lenCls = lenCls[idx % lenCls.length] || 'len-m';
   node.chipShown = false;
-  if(node.known){ node.lineT = 1; showNodeChip(node); }   // 내 어휘는 바로 금색 칩
+  if(node.known || RESTORE_QUIET){ node.lineT = 1; showNodeChip(node); }   // 내 어휘·이어하기 복원은 바로 칩
   // 노드 DOM은 아직 unlit 상태(작은 발광 점) 그대로 유지 — drawGameStage에서 lineT===1 도달 시 chip 등장
 
   // ── 마지막 미점등이 채워졌고, 아직 찾을 단어가 남아있다면 새 빈 노드를 1개 서서히 추가 ──
@@ -9916,11 +9942,210 @@ async function notifyStudyComplete(){
   }
 }
 
+// ══════════════════════════════════════════════
+// 이어하기 (대표님 2026-10-29) — 어느 단계에서 그만둬도 하던 지점부터, 브라우저·기기를 바꿔도
+//   저장: 학원 입장(?st) = 서버(Edge wordsense-progress, 회원+과정+영역+회차) / 입장권 없는 테스트 = 이 브라우저
+//   무료체험은 저장 안 함. 회차를 끝까지 마치면(결과 화면) 지움
+//   다시 열면 [시작하기] → '지난번에 하던 훈련이 있어요' → 이어서 하기 / 처음부터
+// ══════════════════════════════════════════════
+var PROGRESS = null;          // 불러온 진행 상황 (없으면 null)
+var RESTORE_QUIET = false;    // 복원 중 — 칩을 효과음·선 애니메이션 없이 바로 켬
+var RESUME_INTRO = null;      // goGame의 첫 안내를 바꿈: 문구 = 이어하기 말풍선 / 'silent' = 안내 없이
+var _progTimer = null;
+function progressOn(){ return !window.TRIAL_STAGE && !!(window.SESSION && SESSION.dbId); }
+function progressLocalKey(){ return 'ws_progress_' + (SESSION.level || '초등') + '_' + (SESSION.areaId || '') + '_' + (SESSION.id || ''); }
+function progressTicket(){ return (window.__ST_SESSION && TRAINING_INFO && TRAINING_INFO.id) ? TRAINING_INFO.id : null; }
+function progressCall(action, state){
+  return fetch(EDGE_FN_BASE + '/wordsense-progress', {
+    method: 'POST', keepalive: action !== 'load',
+    headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY || '' },
+    body: JSON.stringify({ action: action, ticket: progressTicket(), state: state || undefined }),
+  }).then(function(r){ return r.json(); });
+}
+// 지금 상태 → 저장할 모양 (어휘는 '낱말|한자' 열쇠로)
+function progressSnapshot(){
+  var keyOf = function(e){ return entryKeyOf(e); };
+  var started = S.fillEntered || S.learnEntered || S.found.length || (S.attempted || []).length || S.hints < 5;
+  if(!started) return null;
+  return {
+    v: 1, at: Date.now(), words: WORD_LIST.length,
+    phase: S.fillEntered ? 'fill' : (isRecall2() || S.recall2Finished) ? 'recall2' : S.learnEntered ? 'learn' : 'retrieve',
+    startedAt: TRAIN_STARTED_AT || Date.now(),
+    S: { found: S.found, attempted: S.attempted || [], attemptedFb: S.attemptedFb || {}, hints: S.hints, okCount: S.okCount,
+         hintTargets: S.hintTargets, hintFound: S.hintFound, hintLog: S.hintLog, recall2: S.recall2 || [], recall2Silent: S.recall2Silent || [],
+         recall2Finished: !!S.recall2Finished, learnEntered: !!S.learnEntered, fillEntered: !!S.fillEntered },
+    counting: COUNTING, score: SCORE, milestones: SEEN_MILESTONES, confetti: !!CONFETTI_FIRED,
+    learn: S.learnEntered ? { words: LEARN.words.map(keyOf), idx: LEARN.idx, collected: LEARN.collected.map(keyOf),
+                              silent: LEARN.silentCollected.map(keyOf), correct: LEARN.correct, flipped: LEARN.flipped || 0 } : null,
+    fq: S.fillEntered ? { words: FQ.words.map(keyOf), idx: FQ.idx, correct: FQ.correct, total: FQ.total, okKeys: FQ.okKeys || [] } : null,
+  };
+}
+// 저장 — 잦은 호출은 0.8초 모아서 한 번 (어휘 하나 찾을 때마다 불려도 서버 부담 적게)
+var PROGRESS_DONE = false;   // 결과 화면에 닿음 — 이 훈련은 더 저장하지 않음 (다시 훈련하면 goHome에서 풀림)
+function progressSave(now){
+  if(!progressOn() || PROGRESS_DONE) return;
+  if(_progTimer){ clearTimeout(_progTimer); _progTimer = null; }
+  var go = function(){
+    _progTimer = null;
+    var st = progressSnapshot(); if(!st) return;
+    if(progressTicket()) progressCall('save', st).catch(function(e){ console.warn('[progress] 저장 실패', e); });
+    else { try { localStorage.setItem(progressLocalKey(), JSON.stringify(st)); } catch(e){} }
+  };
+  if(now) go(); else _progTimer = setTimeout(go, 800);
+}
+function progressClear(){
+  PROGRESS = null;
+  if(_progTimer){ clearTimeout(_progTimer); _progTimer = null; }
+  if(!progressOn()) return;
+  if(progressTicket()) progressCall('clear').catch(function(){});
+  else { try { localStorage.removeItem(progressLocalKey()); } catch(e){} }
+}
+async function progressLoad(){
+  PROGRESS = null;
+  if(!progressOn()) return;
+  try {
+    var st = null;
+    if(progressTicket()){
+      var d = await Promise.race([progressCall('load'), new Promise(function(r){ setTimeout(function(){ r(null); }, 4000); })]);
+      st = d && d.success ? d.state : null;
+    } else {
+      st = JSON.parse(localStorage.getItem(progressLocalKey()) || 'null');
+      if(st && Date.now() - (st.at || 0) > 30 * 24 * 3600 * 1000) st = null;
+    }
+    if(st && st.v === 1 && st.S) PROGRESS = st;
+  } catch(e){ console.warn('[progress] 불러오기 실패', e); }
+}
+// 창을 닫거나 다른 데로 갈 때 — 모아 둔 저장이 있으면 바로 보냄
+window.addEventListener('pagehide', function(){ if(_progTimer) progressSave(true); });
+document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'hidden' && _progTimer) progressSave(true); });
+
+// '지난번에 하던 훈련' 안내
+function progressSummary(st){
+  var n = (st.S.found || []).length + (st.S.recall2 || []).length;
+  if(st.phase === 'fill' && st.fq) return '강화하기 ' + Math.min(st.fq.idx + 1, st.fq.total) + ' / ' + st.fq.total + '번째 문제부터';
+  if(st.phase === 'recall2') return '다시 인출하기 중 · 떠올린 어휘 ' + n + '개';
+  if(st.phase === 'learn' && st.learn) return '확장하기 ' + Math.min(st.learn.idx + 1, st.learn.words.length) + ' / ' + st.learn.words.length + '번째 카드부터';
+  return '인출하기 중 · 찾은 어휘 ' + n + '개';
+}
+function showResumeDialog(){
+  var ov = document.getElementById('resume-ov');
+  if(!ov){
+    ov = document.createElement('div'); ov.id = 'resume-ov'; ov.className = 'resume-ov';
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML = '<div class="resume-card"><div class="resume-title">지난번에 하던 훈련이 있어요</div>'
+    + '<div class="resume-sub">' + progressSummary(PROGRESS) + '</div>'
+    + '<div class="resume-btns"><button type="button" class="resume-new" id="resume-new">처음부터</button>'
+    + '<button type="button" class="resume-go" id="resume-go">이어서 하기 →</button></div></div>';
+  ov.classList.add('on');
+  document.getElementById('resume-go').onclick = function(){ ov.classList.remove('on'); var st = PROGRESS; PROGRESS = null; resumeTraining(st); };
+  document.getElementById('resume-new').onclick = function(){ ov.classList.remove('on'); progressClear(); _goCharIntroOrig(); };
+}
+
+// 열쇠 → 이번 회차 어휘 (내용이 바뀌어 없는 어휘·이미 내 어휘는 건너뜀)
+function progressEntries(keys){ return (keys || []).map(function(k){ return WORD_KEY_MAP[k]; }).filter(function(e){ return e && !isKnownEntry(e); }); }
+function progressKeys(keys){ return progressEntries(keys).map(entryKeyOf); }
+function progressRestoreS(st){
+  var s = st.S;
+  S.found = progressKeys(s.found);
+  S.attempted = (s.attempted || []).filter(function(k){ return !WORD_KEY_MAP[k] || progressKeys([k]).length; });
+  S.attemptedFb = s.attemptedFb || {};
+  S.hints = typeof s.hints === 'number' ? s.hints : 5;
+  S.okCount = s.okCount || 0;
+  S.hintTargets = s.hintTargets || []; S.hintFound = s.hintFound || []; S.hintLog = s.hintLog || [];
+  S.recall2 = progressKeys(s.recall2); S.recall2Silent = progressKeys(s.recall2Silent);
+  S.recall2Finished = !!s.recall2Finished; S.learnEntered = !!s.learnEntered; S.fillEntered = !!s.fillEntered;
+  S.chipTipShown = true;
+  TRAIN_STARTED_AT = st.startedAt || Date.now();
+  SEEN_MILESTONES = st.milestones || {};
+  if(st.learn){
+    LEARN.words = progressEntries(st.learn.words); LEARN.idx = Math.min(st.learn.idx || 0, Math.max(0, LEARN.words.length - 1));
+    LEARN.collected = progressEntries(st.learn.collected); LEARN.silentCollected = progressEntries(st.learn.silent);
+    LEARN.correct = st.learn.correct || 0; LEARN.flipped = st.learn.flipped || 0;
+  }
+}
+// 인출 그물망 다시 그리기 — 찾은 어휘(초록)·틀렸다 맞힌 어휘(검정)·다시 인출(보라)을 효과음 없이 바로 켬
+function progressRelight(withRecall2){
+  RESTORE_QUIET = true;
+  try {
+    progressEntries(S.found).forEach(function(e){ lightUpNode(e); });
+    (S.attempted || []).forEach(function(k){ var e = WORD_KEY_MAP[k]; if(e && !isKnownEntry(e)) lightUpNode(e, false, true); });
+    if(withRecall2){
+      var nodeOf = function(k){ var n = null; GNODES.forEach(function(g){ if(g.lit && g.entry && entryKeyOf(g.entry) === k) n = g; }); return n; };
+      S.recall2.forEach(function(k){ var n = nodeOf(k); if(n) upgradeNodeToLearn(n); else lightUpNode(WORD_KEY_MAP[k], true); });
+      S.recall2Silent.forEach(function(k){ if(!nodeOf(k)) lightUpNode(WORD_KEY_MAP[k], false, true); });
+    }
+  } finally { RESTORE_QUIET = false; }
+  renderHintLog(); updateHints(); updateGameCounter();
+  var dbtn = document.getElementById('dbtn'); if(dbtn && S.okCount >= 1) dbtn.className = 'btn-done on';
+}
+// 그물망 화면 준비 (goGame과 같게, 첫 안내만 바꿈) + 이전 상태 복원
+function progressBuildGame(st, intro){
+  RESUME_INTRO = intro;
+  goGame();   // 점수·상태를 처음으로 되돌리므로 그 뒤에 다시 넣음
+  progressRestoreS(st);
+  COUNTING = st.counting || 0; SCORE = st.score || SCORE; CONFETTI_FIRED = !!st.confetti;
+  refreshScoreUI(false);
+}
+function resumeTraining(st){
+  try { sfxPlay('balloon.mp3', 0.5); } catch(e){}
+  try { fadeOutNarration(300); } catch(e){}
+  var ph = st.phase;
+  if(ph === 'fill' && st.fq){
+    progressRestoreS(st);
+    COUNTING = st.counting || 0; SCORE = st.score || SCORE; CONFETTI_FIRED = !!st.confetti;
+    FQ = { words: progressEntries(st.fq.words), idx: st.fq.idx || 0, correct: st.fq.correct || 0, total: 0, okKeys: progressKeys(st.fq.okKeys) };
+    FQ.total = FQ.words.length;
+    if(FQ.idx >= FQ.total){ goResult(); return; }
+    transitionToScoreMode();
+    showPage('fillq');
+    var fqCard = document.getElementById('fq-card'); if(fqCard) fqCard.innerHTML = '';
+    renderFQDots();
+    showFillIntro();
+    return;
+  }
+  if(ph === 'learn' && st.learn){
+    progressBuildGame(st, 'silent');
+    progressRelight(false);
+    if(!LEARN.words.length){ goRecap(); return; }
+    showPage('learn');
+    var lcBody = document.getElementById('lc-body'); if(lcBody) lcBody.innerHTML = '';
+    var lcCard = document.getElementById('lc-card'); if(lcCard) lcCard.classList.add('is-pending');
+    updateLearnCounters();
+    showLearnIntro();
+    return;
+  }
+  if(ph === 'recall2'){
+    progressBuildGame(st, 'silent');
+    progressRelight(true);
+    if(S.recall2Finished){ document.body.classList.remove('recall2-mode'); showMissedWords(goFillQ); return; }
+    goRecap();
+    return;
+  }
+  // 인출 — 찾은 어휘가 붙은 그물망에서 이어서
+  progressBuildGame(st, '지난번에 찾은 어휘에 이어서 찾아보세요!');
+  progressRelight(false);
+}
+
+// 기존 흐름에 저장·이어하기 연결 (원래 함수는 그대로 두고 감쌈)
+var _goCharIntroOrig = goCharIntro;
+goCharIntro = function(){ if(PROGRESS){ showResumeDialog(); return; } return _goCharIntroOrig.apply(this, arguments); };
+['finishWord', 'useHint', 'goLearn', 'renderLearnCard', 'goRecap', 'finishRecall2', 'goFillQ', 'fqAdvance'].forEach(function(name){
+  var f = window[name]; if(typeof f !== 'function') return;
+  window[name] = function(){ var r = f.apply(this, arguments); progressSave(); return r; };
+});
+var _goResultOrig = goResult;
+goResult = function(){ PROGRESS_DONE = true; progressClear(); return _goResultOrig.apply(this, arguments); };   // 회차를 끝까지 마침 → 지움
+
+var _goHomeOrig = goHome;
+goHome = function(){ PROGRESS_DONE = false; return _goHomeOrig.apply(this, arguments); };
+
 // ── 시작 ────────────────────────────────────
 // SESSION 로드 완료 후 초기 화면 진입 (Supabase fetch 비동기)
 // 외부 진입(?st)이면 학생 정보 먼저 가져오고 home 진입
 window.SESSION_READY.then(async function(){
   await loadStudentFromSession();   // ?st 있으면 STUDENT_INFO/TRAINING_INFO 채움
+  await progressLoad();             // 하던 훈련이 있으면 [시작하기] 때 이어하기를 물어봄 (2026-10-29)
   goHome();
 });
 </script>
