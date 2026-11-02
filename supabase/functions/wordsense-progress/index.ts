@@ -86,9 +86,14 @@ Deno.serve(async (req) => {
 //               아니면 결과 화면 전에 멈춘 회차 → 평소처럼(normal) 입장
 const AREA_SLUGS: Record<number, string> = {};
 const STAGE_LABEL: Record<string, string> = { retrieve: '인출하기', learn: '확장하기', recall2: '다시 인출하기', fill: '강화하기' };
-// 이어하기는 단계 처음부터 (2026-11-02) — 단계 시작 때만 저장하므로 진행 문구도 단계 단위
+// 진행 문구 (2026-11-02) — 단계 시작 저장은 '○○ 처음부터', [저장하고 끝내기]로 저장한 자리는 몇 번째까지
 function progressText(st: any): string {
-  return (STAGE_LABEL[st?.phase] || '인출하기') + ' 처음부터';
+  if (!st?.exact) return (STAGE_LABEL[st?.phase] || '인출하기') + ' 처음부터';
+  // [저장하고 끝내기]로 저장한 자리
+  if (st.phase === 'fill' && st.fq) { const t = (st.fq.words || []).length; return '강화하기 ' + Math.min((st.fq.idx || 0) + 1, t) + ' / ' + t; }
+  if (st.phase === 'learn' && st.learn) { const t = (st.learn.words || []).length; return '확장하기 ' + Math.min((st.learn.idx || 0) + 1, t) + ' / ' + t; }
+  if (st.phase === 'recall2') return '다시 인출하기 · 떠올린 어휘 ' + (st.S?.recall2 || []).length + '개';
+  return '인출하기 · 찾은 어휘 ' + (st.S?.found || []).length + '개';
 }
 async function list(db: any, b: any, cors: Record<string, string>) {
   const userNo = Number(b.user_no);
