@@ -8,6 +8,7 @@
 //     academy_name, academy_no, payment_fn, training_round, training_area, study_token,
 //     training_level?(elementary/middle 또는 초등/중등, 없으면 초등),
 //     training_mode?("retry" = 재훈련 — study_token 불필요, 학원 완료 API 미호출
+//                    "review" = 복습 — 학원 완료 받은 회차만, 획득 어휘 확장 카드, 기록·완료 없음 (2026-11-02)
 //                    "report" = 선생님 결과지 보기 — user_no만 필요, 응답 주소 = teacher-result.html?st=, 훈련엔 못 씀), is_payment?,
 //     resume?(true = 학원 달력 [이어하기] — 응답 주소에 &resume=1, 앱이 저장된 지점부터 바로 이어 줌) }
 //
@@ -83,7 +84,8 @@ Deno.serve(async (req) => {
   const studyToken = String(body.study_token ?? '').trim();
   // 훈련 방식 — retry(재훈련: 학원 완료 API 미호출, study_token 불필요) / report(선생님 결과지 보기) / 그 외 normal
   const mRaw = String(body.training_mode ?? '').trim().toLowerCase();
-  const mode = mRaw === 'retry' ? 'retry' : mRaw === 'report' ? 'report' : 'normal';
+  // review = [복습] — 획득 어휘만 확장 카드로 다시 (대표님 2026-11-02), study_token 불필요·학원 완료 API 미호출
+  const mode = mRaw === 'retry' ? 'retry' : mRaw === 'report' ? 'report' : mRaw === 'review' ? 'review' : 'normal';
   const isReport = mode === 'report';
   const AREAS = ['biology', 'society', 'history', 'science', 'culture', 'economy'];
   if (!Number.isFinite(userNo)) return jsonErr(400, '필수 필드 누락/형식 오류: user_no', cors);
@@ -101,6 +103,14 @@ Deno.serve(async (req) => {
   });
 
   try {
+    // ── 복습: 학원 완료(엔드데이트)를 받은 회차만 — 훈련하지 않은 회차 콘텐츠를 복습으로 여는 것 방지 ──
+    if (mode === 'review') {
+      const { data: fin } = await supabase.from('session_init').select('id')
+        .eq('user_no', userNo).eq('training_area', area).eq('training_round', round).eq('training_level', level)
+        .neq('training_mode', 'report').not('completed_at', 'is', null).limit(1);
+      if (!fin || !fin.length) return jsonErr(403, '훈련을 마친 회차만 복습할 수 있습니다', cors, 'not_completed');
+    }
+
     // ── 재훈련 제한: 이 회차를 PERFECT(모든 어휘 습득)로 끝낸 적이 있으면 결제 기간 내라도 재훈련 불가 (대표님 결정) ──
     //   PERFECT = 회차 어휘 전부가 누적 '내 어휘'(attempts.is_perfect, 4단계 훈련) — 옛 기록은 강화 정답 수 ≥ 어휘 수
     if (mode === 'retry') {

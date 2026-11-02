@@ -149,6 +149,8 @@ window.SESSION_READY = (async function loadSession() {
           // 학원 진입 표시 — 훈사전 칸 '재훈련' 숨김 / 재훈련(retry)이면 '내일의 한자' 없이 종료
           document.body.classList.add('academy-entry');
           if (sd.session.training_mode === 'retry') document.body.classList.add('retry-mode');
+          // 복습(review) — 획득 어휘만 확장 카드로 다시, 기록·학원 완료 없음 (2026-11-02)
+          if (sd.session.training_mode === 'review') { window.REVIEW_MODE = true; document.body.classList.add('review-mode'); }
           if (sd.session.training_area) TARGET_AREA_SLUG = sd.session.training_area;
           if (sd.session.training_round) TARGET_ROUND_NO = Number(sd.session.training_round);
           if (sd.session.training_level) TARGET_LEVEL = sd.session.training_level;

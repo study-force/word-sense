@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
       .select('user_no, used_at, created_at, training_mode, training_level, training_area, training_round')
       .eq('id', b.ticket).maybeSingle();
     if (!t || !t.user_no) return err(403, '입장권을 확인할 수 없습니다', cors);
-    if (t.training_mode === 'report') return err(403, '훈련 입장권이 아닙니다', cors);
+    if (t.training_mode === 'report' || t.training_mode === 'review') return err(403, '훈련 입장권이 아닙니다', cors);   // 복습은 이어하기 저장 없음
     if (Date.now() - new Date(t.used_at || t.created_at).getTime() > TICKET_MS) return err(403, '입장권 시간이 지났습니다', cors);
     if (!t.training_area || !t.training_round) return err(400, '입장권에 영역·회차가 없습니다', cors);
     const { data: area } = await db.from('areas').select('id').eq('slug', t.training_area).maybeSingle();
@@ -184,6 +184,11 @@ async function rounds(db: any, b: any, cors: Record<string, string>) {
     const hunOf = (c: string) => (mcs || []).find((m: any) => m.char === c)?.char_hangul || null;
     const progOf = new Map((pr || []).filter((r: any) => r.state?.S).map((r: any) => [r.round_no, r]));
     const done = await academyDoneKeys(db, userNo);
+    // 복습 횟수 = 복습 입장권을 실제로 연 횟수
+    const { data: rv } = await db.from('session_init').select('training_round').eq('user_no', userNo).eq('training_mode', 'review')
+      .eq('training_level', level).eq('training_area', b.training_area).not('used_at', 'is', null);
+    const reviews = new Map<number, number>();
+    (rv || []).forEach((x: any) => reviews.set(Number(x.training_round), (reviews.get(Number(x.training_round)) || 0) + 1));
     const items = (prog || []).filter((p: any) => p.trained || progOf.has(p.round)).map((p: any) => {
       const se: any = byRound.get(p.round) || {};
       const pg: any = progOf.get(p.round);
@@ -204,6 +209,7 @@ async function rounds(db: any, b: any, cors: Record<string, string>) {
         can_retry: fin && got < total,                   // [재도전] 가능 — 끝난 회차만, 모든 어휘를 획득하면 불가
         can_review: fin && got > 0,                      // [복습] 가능 — 끝난 회차에 획득 어휘가 있으면 (2026-11-02)
         review_words: fin ? got : 0,                     // 복습할 어휘 수 = 획득 어휘 (확장 카드로 다시 떠올리기)
+        review_count: reviews.get(p.round) || 0,         // 복습 횟수
         resume: pg ? {                                   // [이어하기] 정보 (없으면 null)
           training_mode: fin ? 'retry' : 'normal',
           stage_label: STAGE_LABEL[pg.state.phase] || '인출하기',

@@ -3200,6 +3200,9 @@ body.academy-entry .area-cell:not(.locked) { cursor: default; }
 /* 재훈련 표시 — 홈 영역/회차 옆 */
 .retry-tag { display: none; font-size: 15px; font-weight: 600; color: #FFD66B; border: 1px solid rgba(255,214,107,0.5); border-radius: 100px; padding: 3px 12px; margin-left: 6px; }
 body.retry-mode .retry-tag { display: inline-block; }
+.review-tag { display: none; font-size: 15px; font-weight: 600; color: #B9A6FF; border: 1px solid rgba(185,166,255,0.5); border-radius: 100px; padding: 3px 12px; margin-left: 6px; }
+body.review-mode .review-tag { display: inline-block; }
+body.review-mode .retry-tag { display: none; }
 /* 과거 회차(통과·미통과 모두)는 재훈련 가능 — 호버 시 "재훈련" 중앙 표시 */
 .area-cell:not(.locked) { cursor: pointer; }
 .area-cell:not(.locked):hover { z-index: 5; }   /* 호버 셀이 인접 셀 위로 떠오르도록 */
@@ -4669,6 +4672,7 @@ body.pmode .st-today-badge { font-size: 13px; }
       <span class="sep">/</span>
       <span class="round-num" id="h-round">1회</span>
       <span class="retry-tag">재도전</span>
+      <span class="review-tag">복습</span>
     </div>
     <button class="btn-start" onclick="goCharIntro()">시작하기</button>
   </div>
@@ -9999,7 +10003,7 @@ var PROGRESS = null;          // 불러온 진행 상황 (없으면 null)
 var RESTORE_QUIET = false;    // 복원 중 — 칩을 효과음·선 애니메이션 없이 바로 켬
 var RESUME_INTRO = null;      // goGame의 첫 안내를 바꿈: 문구 = 이어하기 말풍선 / 'silent' = 안내 없이
 var _progTimer = null;
-function progressOn(){ return !window.TRIAL_STAGE && !!(window.SESSION && SESSION.dbId); }
+function progressOn(){ return !window.TRIAL_STAGE && !window.REVIEW_MODE && !!(window.SESSION && SESSION.dbId); }   // 복습은 저장 없음
 function progressLocalKey(){ return 'ws_progress_' + (SESSION.level || '초등') + '_' + (SESSION.areaId || '') + '_' + (SESSION.id || ''); }
 function progressTicket(){ return (window.__ST_SESSION && TRAINING_INFO && TRAINING_INFO.id) ? TRAINING_INFO.id : null; }
 function progressCall(action, state){
@@ -10226,6 +10230,49 @@ goResult = function(){ PROGRESS_DONE = true; progressClear(); return _goResultOr
 
 var _goHomeOrig = goHome;
 goHome = function(){ PROGRESS_DONE = false; return _goHomeOrig.apply(this, arguments); };
+
+// ══════════════════════════════════════════════
+// [복습] (대표님 2026-11-02) — 학원 [복습]으로 들어오면(training_mode=review)
+//   오늘의 한자 → 획득 어휘만 확장 카드로 다시 떠올리기 → 복습 완료 → 끝내기
+//   인출·다시 인출·강화 없음 / 획득 수·랭킹·학원 완료·이어하기 저장 모두 영향 없음
+// ══════════════════════════════════════════════
+function goReview(){
+  goHome();   // 상태 정리
+  var words = WORD_LIST.filter(function(e){ return isKnownEntry(e); });
+  if(!words.length){ reviewDone(true); return; }
+  try { sndStageNext(); } catch(e){}
+  S.learnEntered = true;
+  LEARN.words = shuffle(words.slice());
+  LEARN.idx = 0; LEARN.collected = []; LEARN.silentCollected = []; LEARN.correct = 0; LEARN.flipped = 0;
+  showPage('learn');
+  var lcBody = document.getElementById('lc-body'); if(lcBody) lcBody.innerHTML = '';
+  var lcCard = document.getElementById('lc-card'); if(lcCard) lcCard.classList.add('is-pending');
+  var skip = document.querySelector('#learn .learn-skip'); if(skip) skip.innerHTML = '복습 끝내기 →';
+  showLearnIntro();
+  var msg = document.getElementById('li-msg');
+  if(msg){   // 단계 안내를 복습용으로
+    var t = msg.querySelector('.gi-title'); if(t) t.textContent = '복습하기';
+    var q = msg.querySelector('.gi-quote'); if(q) q.textContent = '획득한 어휘 ' + words.length + '개의 뜻을 다시 떠올려 보세요!';
+  }
+}
+function reviewDone(empty){
+  try { fadeOutNarration(300); } catch(e){}
+  var n = LEARN.words.length, done = LEARN.flipped || 0, ok = LEARN.collected.length;   // done = 넘긴 카드, ok = 첫 시도에 바로 떠올림
+  var ov = document.getElementById('review-done');
+  if(!ov){ ov = document.createElement('div'); ov.id = 'review-done'; ov.className = 'resume-ov'; document.body.appendChild(ov); }
+  ov.innerHTML = '<div class="resume-card"><div class="resume-title">' + (empty ? '복습할 어휘가 없어요' : '복습을 마쳤어요!') + '</div>'
+    + '<div class="resume-sub">' + (empty ? '이 회차에서 획득한 어휘가 아직 없어요.' : '획득 어휘 ' + n + '개 중 ' + done + '개를 복습했어요.' + (done ? '<br>바로 떠올린 어휘 ' + ok + '개' : '')) + '</div>'
+    + '<div class="resume-btns"><button type="button" class="resume-go" id="review-end">끝내기</button></div></div>';
+  ov.classList.add('on');
+  try { sfxPlay('balloon.mp3', 0.6); } catch(e){}
+  document.getElementById('review-end').onclick = function(){ ov.classList.remove('on'); finishTraining(); };
+}
+{   // 복습 입장이면 인출·다시 인출 대신 복습 흐름으로 (원래 함수는 그대로 두고 감쌈)
+  var _goGameOrig = goGame, _goRecapOrig = goRecap, _checkCelebrateOrig = (typeof checkCelebrate === 'function') ? checkCelebrate : null;
+  goGame = function(){ if(window.REVIEW_MODE){ goReview(); return; } return _goGameOrig.apply(this, arguments); };
+  goRecap = function(){ if(window.REVIEW_MODE){ reviewDone(false); return; } return _goRecapOrig.apply(this, arguments); };
+  if(_checkCelebrateOrig) checkCelebrate = function(){ if(window.REVIEW_MODE) return; return _checkCelebrateOrig.apply(this, arguments); };   // 복습은 축하·마일스톤 없음
+}
 
 // ── 시작 ────────────────────────────────────
 // SESSION 로드 완료 후 초기 화면 진입 (Supabase fetch 비동기)

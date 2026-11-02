@@ -69,6 +69,8 @@ Deno.serve(async (req) => {
   //   결과 화면: { result, defer_academy:true } → 훈련 기록만 저장, 학원 완료 API·입장권 완료 표시는 안 함
   //   나의 훈사전 진입: { sessionId, finalize:true } → 기록 저장 없이 학원 완료 API(엔드데이트) + 입장권 완료 표시
   //   (구버전 화면은 두 값 없이 보냄 → 예전처럼 한 번에 처리)
+  // 복습 입장권은 기록·학원 완료 모두 없음 (2026-11-02)
+  if (sess && sess.training_mode === 'review') return ok({ success: true, saved: false, service_back: { skipped: 'review' } }, cors);
   const finalizeOnly = body.finalize === true;
   const deferAcademy = body.defer_academy === true && !finalizeOnly;
   if (finalizeOnly && !sess) return jsonErr(400, 'finalize에는 sessionId가 필요합니다', cors);
