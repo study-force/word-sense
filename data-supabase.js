@@ -300,6 +300,11 @@ window.SESSION_READY = (async function loadSession() {
         document.body.classList.add('retry-mode');
         try { JSON.parse(localStorage.getItem(window.__TEST_KNOWN_KEY) || '[]').forEach(function(id){ knownSet.add(Number(id)); }); } catch (e) {}
       }
+      // 관리자센터 회차 테스트 [복습] — ?review=1 (2026-11-02): 이 브라우저에서 획득한 어휘로 복습, 없으면 회차 전체로 미리보기
+      if (_params.get('review') === '1') {
+        window.REVIEW_MODE = true; document.body.classList.add('review-mode');
+        try { JSON.parse(localStorage.getItem(window.__TEST_KNOWN_KEY) || '[]').forEach(function(id){ knownSet.add(Number(id)); }); } catch (e) {}
+      }
     }
     const knownTest = parseInt(_params.get('known'), 10) || 0;
 
