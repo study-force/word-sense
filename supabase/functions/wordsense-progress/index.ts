@@ -38,9 +38,10 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return err(405, 'Method not allowed', cors);
   let b: any;
   try { b = await req.json(); } catch { return err(400, '입력 JSON 파싱 실패', cors); }
-  if (!['load', 'save', 'clear', 'list'].includes(b.action)) return err(400, 'action은 load/save/clear/list 중 하나', cors);
+  if (!['load', 'save', 'clear', 'list', 'rounds'].includes(b.action)) return err(400, 'action은 load/save/clear/list/rounds 중 하나', cors);
   const db = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
   if (b.action === 'list') return list(db, b, cors);
+  if (b.action === 'rounds') return rounds(db, b, cors);
   if (!b.ticket) return err(400, '입장권이 필요합니다', cors);
 
   try {
@@ -143,6 +144,65 @@ async function list(db: any, b: any, cors: Record<string, string>) {
     return ok({ items }, cors);
   } catch (e) {
     console.error('[wordsense-progress list]', e);
+    return err(500, '서버 오류: ' + (e as Error).message, cors);
+  }
+}
+
+// ── rounds: 학원 마이룸 달력 아래 목록용 '회차별 현황' (대표님 2026-11-02) ──
+//   입력 { action:'rounds', user_no, training_level(elementary/middle 또는 초등/중등), training_area(biology…) }
+//   훈련한 회차 + 하다 만 회차마다: 한자·훈음, 전체/획득/미획득 어휘 수, 재도전 횟수, 상태, 이어하기 정보
+//   획득 = 학생 화면의 '획득'과 같은 기준(인출·다시 인출 + 강화 통과, 과정 누적) — 훈사전·결과지와 같은 집계
+async function rounds(db: any, b: any, cors: Record<string, string>) {
+  const userNo = Number(b.user_no);
+  if (!Number.isFinite(userNo)) return err(400, 'user_no가 필요합니다', cors);
+  const lvRaw = String(b.training_level ?? '').trim().toLowerCase();
+  const level = lvRaw === 'middle' || lvRaw === '중등' ? '중등' : '초등';
+  try {
+    const { data: area } = await db.from('areas').select('id').eq('slug', String(b.training_area || '')).maybeSingle();
+    if (!area) return err(400, 'training_area는 biology/society/history/science/culture/economy 중 하나', cors);
+    const [{ data: prog }, { data: sess }, { data: pr }] = await Promise.all([
+      db.rpc('wordsense_area_progress', { p_member_no: userNo, p_area_id: area.id, p_level: level }),
+      db.from('sessions').select('id, round_no, main_char').eq('area_id', area.id).eq('level', level),
+      db.from('training_progress').select('round_no, state, updated_at').eq('member_no', userNo).eq('level', level).eq('area_id', area.id)
+        .gte('updated_at', new Date(Date.now() - KEEP_MS).toISOString()),
+    ]);
+    const byRound = new Map((sess || []).map((x: any) => [x.round_no, x]));
+    const ids = (sess || []).map((x: any) => x.id);
+    const chars = [...new Set((sess || []).map((x: any) => x.main_char).filter(Boolean))];
+    const [{ data: att }, { data: mcs }] = await Promise.all([
+      ids.length ? db.from('attempts').select('session_id').eq('member_no', userNo).in('session_id', ids) : Promise.resolve({ data: [] }),
+      chars.length ? db.from('main_chars').select('char, char_hangul').in('char', chars) : Promise.resolve({ data: [] }),
+    ]);
+    const tries = new Map<number, number>();
+    (att || []).forEach((a: any) => tries.set(a.session_id, (tries.get(a.session_id) || 0) + 1));
+    const hunOf = (c: string) => (mcs || []).find((m: any) => m.char === c)?.char_hangul || null;
+    const progOf = new Map((pr || []).filter((r: any) => r.state?.S).map((r: any) => [r.round_no, r]));
+    const items = (prog || []).filter((p: any) => p.trained || progOf.has(p.round)).map((p: any) => {
+      const se: any = byRound.get(p.round) || {};
+      const pg: any = progOf.get(p.round);
+      const total = Number(p.total) || 0, got = Math.min(Number(p.known) || 0, total);
+      return {
+        training_round: p.round,
+        main_char: se.main_char || null,                 // 회차 한자 (예: 氣)
+        main_hun: hunOf(se.main_char),                   // 훈음 (예: 기운 기)
+        total_words: total,                              // 회차 전체 어휘
+        acquired: got,                                   // 획득 어휘
+        not_acquired: total - got,                       // 미획득 어휘
+        completed: !!p.trained,                          // 훈련완료 (결과 화면까지 간 적 있음)
+        retry_count: Math.max((tries.get(se.id) || 0) - 1, 0),   // 재도전 횟수 (첫 완료 뒤 다시 끝까지 한 횟수)
+        status: pg ? (p.trained ? 'retry_paused' : 'in_progress') : 'completed',
+        can_retry: !!p.trained && got < total,           // [재도전] 가능 — 모든 어휘를 획득하면 불가
+        resume: pg ? {                                   // [이어하기] 정보 (없으면 null)
+          training_mode: p.trained ? 'retry' : 'normal',
+          stage_label: STAGE_LABEL[pg.state.phase] || '인출하기',
+          progress_text: progressText(pg.state),
+          updated_at: pg.updated_at,
+        } : null,
+      };
+    });
+    return ok({ training_level: level === '중등' ? 'middle' : 'elementary', training_area: b.training_area, items }, cors);
+  } catch (e) {
+    console.error('[wordsense-progress rounds]', e);
     return err(500, '서버 오류: ' + (e as Error).message, cors);
   }
 }
