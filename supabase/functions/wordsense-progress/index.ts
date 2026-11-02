@@ -202,6 +202,8 @@ async function rounds(db: any, b: any, cors: Record<string, string>) {
         // retry_paused = 끝난 회차를 학원 [재도전]으로 하다 멈춤
         status: !fin ? 'in_progress' : pg ? 'retry_paused' : 'completed',
         can_retry: fin && got < total,                   // [재도전] 가능 — 끝난 회차만, 모든 어휘를 획득하면 불가
+        can_review: fin && got > 0,                      // [복습] 가능 — 끝난 회차에 획득 어휘가 있으면 (2026-11-02)
+        review_words: fin ? got : 0,                     // 복습할 어휘 수 = 획득 어휘 (확장 카드로 다시 떠올리기)
         resume: pg ? {                                   // [이어하기] 정보 (없으면 null)
           training_mode: fin ? 'retry' : 'normal',
           stage_label: STAGE_LABEL[pg.state.phase] || '인출하기',
