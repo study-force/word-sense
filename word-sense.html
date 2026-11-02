@@ -9742,6 +9742,8 @@ function utCheckOpenOnHome(){
 }
 
 function goArea(){
+  // 결과 화면에서 훈사전으로 들어옴 = 이 회차를 마침 → 학원에 완료(엔드데이트) 알림 (2026-11-02)
+  if(document.body.dataset.page === 'result'){ try { notifyAcademyDone(); } catch(e){} }
   // 한자어 사전(area) — 진입 효과음 제거, dict BGM(playDictBgm)만 (showPage 자동 호출)
   // area 페이지 진입 시 내일의 한자 splash는 닫혀있어야 — 재진입 시 잔존 방지
   var tom = document.getElementById('tomorrow-splash');
@@ -9898,6 +9900,24 @@ async function loadStudentFromSession(){
   }
 }
 
+// ── 학원 완료(엔드데이트) 알림 — 결과 화면에서 '나의 훈사전'으로 들어갈 때 (대표님 2026-11-02) ──
+//   결과 화면에서 '남은 어휘 재도전'을 누르거나 그대로 닫으면 아직 안 끝난 회차 → 달력 ▶로 같은 회차가 다시 열림
+//   훈련 기록(attempts)은 결과 화면에서 이미 저장(notifyStudyComplete, defer_academy)
+async function notifyAcademyDone(){
+  if(!TRAINING_INFO || !TRAINING_INFO.id || !window.__ST_SESSION) return;
+  try {
+    if(window.__COMPLETE_P) await window.__COMPLETE_P;   // 기록 저장이 먼저 끝나야 함
+    var res = await fetch(EDGE_FN_BASE + '/wordsense-complete', {
+      method: 'POST', keepalive: true,
+      headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY || '' },
+      body: JSON.stringify({ sessionId: TRAINING_INFO.id, finalize: true }),
+    });
+    var data = await res.json().catch(function(){ return {}; });
+    if(res.ok && data.success) console.log('[complete] 학원 완료 알림 성공', data.service_back || '');
+    else console.error('[complete] 학원 완료 알림 실패:', data);
+  } catch(err){ console.error('[complete] 학원 완료 알림 오류:', err); }
+}
+
 // ── 학습 완료 콜백 — 구서버 sf_study_hanja 업데이트 ──
 //   강화 단계 통과 시 (goResult 진입 시점) 호출 권장.
 async function notifyStudyComplete(){
@@ -9955,6 +9975,7 @@ async function notifyStudyComplete(){
         payment_fn:     TRAINING_INFO.payment_fn,      // (구버전 호환용)
         training_round: TRAINING_INFO.training_round,
         result:         result,   // ← Edge Function이 attempts에 INSERT
+        defer_academy:  true,     // 학원 완료(엔드데이트)는 '나의 훈사전' 들어갈 때 따로 (notifyAcademyDone, 2026-11-02)
       }),
     });
     var data = await res.json();
@@ -10189,10 +10210,9 @@ function saveAndExit(){
 var _goCharIntroOrig = goCharIntro;
 var RESUME_DIRECT = new URLSearchParams(location.search).get('resume') === '1';   // 학원 달력 [이어하기]로 들어옴 → 묻지 않고 바로 이어서
 goCharIntro = function(){
-  if(PROGRESS){
-    if(RESUME_DIRECT){ RESUME_DIRECT = false; var st = PROGRESS; PROGRESS = null; resumeTraining(st); return; }
-    showResumeDialog(); return;
-  }
+  // 하던 훈련이 있으면 묻지 않고 바로 이어서 (대표님 2026-11-02 — 처음부터 하고 싶은 아이는 거의 없음)
+  //   전엔 '이어서 하기 / 처음부터'를 물어봤음 (showResumeDialog는 남겨 둠)
+  if(PROGRESS){ RESUME_DIRECT = false; var st = PROGRESS; PROGRESS = null; resumeTraining(st); return; }
   return _goCharIntroOrig.apply(this, arguments);
 };
 // 저장은 단계가 시작될 때만 — 확장·다시 인출·강화 (훈련 한 번에 3번, 전엔 어휘·카드·문제마다 100~200번)

@@ -65,9 +65,17 @@ Deno.serve(async (req) => {
     return jsonErr(400, '필수 정보 누락: payment_fn, training_round', cors);
   }
 
+  // ── 학원 완료 시점 분리 (대표님 2026-11-02) ──
+  //   결과 화면: { result, defer_academy:true } → 훈련 기록만 저장, 학원 완료 API·입장권 완료 표시는 안 함
+  //   나의 훈사전 진입: { sessionId, finalize:true } → 기록 저장 없이 학원 완료 API(엔드데이트) + 입장권 완료 표시
+  //   (구버전 화면은 두 값 없이 보냄 → 예전처럼 한 번에 처리)
+  const finalizeOnly = body.finalize === true;
+  const deferAcademy = body.defer_academy === true && !finalizeOnly;
+  if (finalizeOnly && !sess) return jsonErr(400, 'finalize에는 sessionId가 필요합니다', cors);
+
   // ── 1) 훈련 상세 저장 (실패해도 학원 완료 처리는 계속) ──
   let attemptId: number | null = null;
-  const r = body.result;
+  const r = finalizeOnly ? null : body.result;
   if (r && r.user_no && r.session_id) {
     try {
       const { count } = await supabase.from('attempts')
@@ -115,6 +123,11 @@ Deno.serve(async (req) => {
     }
   }
 
+  // ── 결과 화면 단계 — 기록만 저장하고 학원 완료는 훈사전 진입 때 ──
+  if (deferAcademy) {
+    return ok({ success: true, saved: !!attemptId, service_back: { skipped: 'deferred' } }, cors);
+  }
+
   // ── 재훈련은 학원 기록을 바꾸지 않음 — 입장권만 완료 처리하고 끝 ──
   if (isRetry) {
     if (sess && !sess.completed_at) await supabase.from('session_init').update({ completed_at: new Date().toISOString() }).eq('id', sess.id);
@@ -145,6 +158,12 @@ Deno.serve(async (req) => {
 
   const trainingEndSuccess = typeof sbBody.training_end_success === 'boolean' ? sbBody.training_end_success : null;
   // 학원 응답을 원장에 남김 (training_end_success=false → 학원 쪽 수기 처리 필요)
+  // finalize(훈사전 진입)면 이 입장권으로 저장된 가장 최근 기록에 남김
+  if (!attemptId && finalizeOnly && sess) {
+    const { data: last } = await supabase.from('attempts').select('id').eq('session_init_id', sess.id)
+      .order('id', { ascending: false }).limit(1).maybeSingle();
+    if (last) attemptId = last.id;
+  }
   if (attemptId) {
     await supabase.from('attempts').update({
       service_back_status: status, service_back_message: sbBody.message ?? null, training_end_success: trainingEndSuccess,

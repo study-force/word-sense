@@ -96,6 +96,15 @@ function progressText(st: any): string {
   if (st.phase === 'recall2') return '다시 인출하기 · 떠올린 어휘 ' + (st.S?.recall2 || []).length + '개';
   return '인출하기 · 찾은 어휘 ' + (st.S?.found || []).length + '개';
 }
+// 학원에 완료(엔드데이트)를 보낸 회차 = 그 회차 평소 입장권이 완료 처리됨 (2026-11-02)
+//   완료는 학생이 결과 화면에서 '나의 훈사전'으로 들어갈 때 보냄 → 결과만 보고 닫았거나 '남은 어휘 재도전' 중 멈춘 회차는 아직 미완료
+//   열쇠: '과정|영역|회차' (과정=초등/중등, 영역=slug)
+async function academyDoneKeys(db: any, userNo: number): Promise<Set<string>> {
+  const { data } = await db.from('session_init').select('training_level, training_area, training_round')
+    .eq('user_no', userNo).neq('training_mode', 'report').not('completed_at', 'is', null);
+  return new Set((data || []).map((x: any) => (x.training_level || '초등') + '|' + x.training_area + '|' + Number(x.training_round)));
+}
+
 async function list(db: any, b: any, cors: Record<string, string>) {
   const userNo = Number(b.user_no);
   if (!Number.isFinite(userNo)) return err(400, 'user_no가 필요합니다', cors);
@@ -113,7 +122,6 @@ async function list(db: any, b: any, cors: Record<string, string>) {
       const { data: areas } = await db.from('areas').select('id, slug');
       (areas || []).forEach((a: any) => { AREA_SLUGS[a.id] = a.slug; });
     }
-    // 학원에 완료 보고된 회차인지 = 그 회차 훈련 기록(attempts)이 있는지
     const { data: sess } = await db.from('sessions').select('id, level, area_id, round_no, main_char')
       .in('area_id', [...new Set(rows.map((r: any) => r.area_id))]).in('round_no', [...new Set(rows.map((r: any) => r.round_no))]);
     const sessOf = (r: any) => (sess || []).find((s: any) => s.level === r.level && s.area_id === r.area_id && s.round_no === r.round_no);
@@ -122,18 +130,16 @@ async function list(db: any, b: any, cors: Record<string, string>) {
     const chars = [...new Set((sess || []).map((x: any) => x.main_char).filter(Boolean))];
     const { data: mcs } = chars.length ? await db.from('main_chars').select('char, char_hangul').in('char', chars) : { data: [] };
     const hunOf = (c: string) => (mcs || []).find((m: any) => m.char === c)?.char_hangul || null;
-    const ids = rows.map(sid).filter(Boolean);
-    const { data: att } = ids.length ? await db.from('attempts').select('session_id').eq('member_no', userNo).in('session_id', ids) : { data: [] };
-    const done = new Set((att || []).map((a: any) => a.session_id));
+    const done = await academyDoneKeys(db, userNo);
     const items = rows.filter((r: any) => AREA_SLUGS[r.area_id] && r.state?.S).map((r: any) => {
-      const completed = done.has(sid(r));
+      const completed = done.has(r.level + '|' + AREA_SLUGS[r.area_id] + '|' + r.round_no);
       return {
         training_level: r.level === '중등' ? 'middle' : 'elementary',
         training_area: AREA_SLUGS[r.area_id],
         training_round: r.round_no,
         main_char: sessOf(r)?.main_char || null,         // 회차 한자 (예: 氣) — 학원이 따로 알 필요 없게 함께 보냄
         main_hun: hunOf(sessOf(r)?.main_char),           // 훈음 (예: 기운 기)
-        completed,                                     // true = 결과 화면 뒤 '남은 어휘 재도전' 중 멈춤
+        completed,                                     // true = 학원 완료(엔드데이트) 뒤 학원 [재도전]으로 하다 멈춤
         training_mode: completed ? 'retry' : 'normal', // [이어하기] 누를 때 wordsense-start에 보낼 값
         stage: r.state.phase || 'retrieve',
         stage_label: STAGE_LABEL[r.state.phase] || '인출하기',
@@ -177,9 +183,11 @@ async function rounds(db: any, b: any, cors: Record<string, string>) {
     (att || []).forEach((a: any) => tries.set(a.session_id, (tries.get(a.session_id) || 0) + 1));
     const hunOf = (c: string) => (mcs || []).find((m: any) => m.char === c)?.char_hangul || null;
     const progOf = new Map((pr || []).filter((r: any) => r.state?.S).map((r: any) => [r.round_no, r]));
+    const done = await academyDoneKeys(db, userNo);
     const items = (prog || []).filter((p: any) => p.trained || progOf.has(p.round)).map((p: any) => {
       const se: any = byRound.get(p.round) || {};
       const pg: any = progOf.get(p.round);
+      const fin = done.has(level + '|' + b.training_area + '|' + p.round);   // 학원 완료(엔드데이트) 보냄
       const total = Number(p.total) || 0, got = Math.min(Number(p.known) || 0, total);
       return {
         training_round: p.round,
@@ -188,12 +196,14 @@ async function rounds(db: any, b: any, cors: Record<string, string>) {
         total_words: total,                              // 회차 전체 어휘
         acquired: got,                                   // 획득 어휘
         not_acquired: total - got,                       // 미획득 어휘
-        completed: !!p.trained,                          // 훈련완료 (결과 화면까지 간 적 있음)
+        completed: fin,                                  // 훈련완료 = 학원에 엔드데이트 보냄 (학생이 '나의 훈사전'까지 들어감)
         retry_count: Math.max((tries.get(se.id) || 0) - 1, 0),   // 재도전 횟수 (첫 완료 뒤 다시 끝까지 한 횟수)
-        status: pg ? (p.trained ? 'retry_paused' : 'in_progress') : 'completed',
-        can_retry: !!p.trained && got < total,           // [재도전] 가능 — 모든 어휘를 획득하면 불가
+        // completed = 끝남 / in_progress = 학원 미완료(훈련 중 멈춤·남은 어휘 재도전 중 멈춤·결과만 보고 닫음 → 달력 ▶로 같은 회차)
+        // retry_paused = 끝난 회차를 학원 [재도전]으로 하다 멈춤
+        status: !fin ? 'in_progress' : pg ? 'retry_paused' : 'completed',
+        can_retry: fin && got < total,                   // [재도전] 가능 — 끝난 회차만, 모든 어휘를 획득하면 불가
         resume: pg ? {                                   // [이어하기] 정보 (없으면 null)
-          training_mode: p.trained ? 'retry' : 'normal',
+          training_mode: fin ? 'retry' : 'normal',
           stage_label: STAGE_LABEL[pg.state.phase] || '인출하기',
           progress_text: progressText(pg.state),
           updated_at: pg.updated_at,
