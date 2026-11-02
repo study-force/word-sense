@@ -10027,12 +10027,13 @@ window.addEventListener('pagehide', function(){ if(_progTimer) progressSave(true
 document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'hidden' && _progTimer) progressSave(true); });
 
 // '지난번에 하던 훈련' 안내
+// 이어하기는 단계 처음부터 (대표님 2026-11-02 — 단계 시작 때만 저장해 통신량 최소화)
 function progressSummary(st){
-  var n = (st.S.found || []).length + (st.S.recall2 || []).length;
-  if(st.phase === 'fill' && st.fq) return '강화하기 ' + Math.min(st.fq.idx + 1, st.fq.total) + ' / ' + st.fq.total + '번째 문제부터';
-  if(st.phase === 'recall2') return '다시 인출하기 중 · 떠올린 어휘 ' + n + '개';
-  if(st.phase === 'learn' && st.learn) return '확장하기 ' + Math.min(st.learn.idx + 1, st.learn.words.length) + ' / ' + st.learn.words.length + '번째 카드부터';
-  return '인출하기 중 · 찾은 어휘 ' + n + '개';
+  var n = (st.S.found || []).length;
+  if(st.phase === 'fill') return '강화하기 처음부터 · 인출한 어휘 ' + n + '개';
+  if(st.phase === 'recall2') return '다시 인출하기 처음부터 · 인출한 어휘 ' + n + '개';
+  if(st.phase === 'learn') return '확장하기 처음부터 · 인출한 어휘 ' + n + '개';
+  return '인출하기 처음부터';
 }
 function showResumeDialog(){
   var ov = document.getElementById('resume-ov');
@@ -10101,7 +10102,7 @@ function resumeTraining(st){
   if(ph === 'fill' && st.fq){
     progressRestoreS(st);
     COUNTING = st.counting || 0; SCORE = st.score || SCORE; CONFETTI_FIRED = !!st.confetti;
-    FQ = { words: progressEntries(st.fq.words), idx: st.fq.idx || 0, correct: st.fq.correct || 0, total: 0, okKeys: progressKeys(st.fq.okKeys) };
+    FQ = { words: progressEntries(st.fq.words), idx: 0, correct: 0, total: 0, okKeys: [] };   // 강화 처음부터
     FQ.total = FQ.words.length;
     if(FQ.idx >= FQ.total){ goResult(); return; }
     transitionToScoreMode();
@@ -10113,6 +10114,7 @@ function resumeTraining(st){
   }
   if(ph === 'learn' && st.learn){
     progressBuildGame(st, 'silent');
+    LEARN.idx = 0; LEARN.collected = []; LEARN.silentCollected = []; LEARN.correct = 0; LEARN.flipped = 0;   // 확장 처음부터
     progressRelight(false);
     if(!LEARN.words.length){ goRecap(); return; }
     showPage('learn');
@@ -10124,8 +10126,8 @@ function resumeTraining(st){
   }
   if(ph === 'recall2'){
     progressBuildGame(st, 'silent');
+    S.recall2 = []; S.recall2Silent = []; S.recall2Finished = false;   // 다시 인출 처음부터
     progressRelight(true);
-    if(S.recall2Finished){ document.body.classList.remove('recall2-mode'); showMissedWords(goFillQ); return; }
     goRecap();
     return;
   }
@@ -10144,9 +10146,11 @@ goCharIntro = function(){
   }
   return _goCharIntroOrig.apply(this, arguments);
 };
-['finishWord', 'useHint', 'goLearn', 'renderLearnCard', 'goRecap', 'finishRecall2', 'goFillQ', 'fqAdvance'].forEach(function(name){
+// 저장은 단계가 시작될 때만 — 확장·다시 인출·강화 (훈련 한 번에 3번, 전엔 어휘·카드·문제마다 100~200번)
+//   그 단계 안에서 그만두면 다음엔 그 단계 처음부터. 인출은 저장 안 함 → [완료]를 누르면 확장으로 넘어가며 저장
+['goLearn', 'goRecap', 'goFillQ'].forEach(function(name){
   var f = window[name]; if(typeof f !== 'function') return;
-  window[name] = function(){ var r = f.apply(this, arguments); progressSave(); return r; };
+  window[name] = function(){ var r = f.apply(this, arguments); progressSave(true); return r; };
 });
 var _goResultOrig = goResult;
 goResult = function(){ PROGRESS_DONE = true; progressClear(); return _goResultOrig.apply(this, arguments); };   // 회차를 끝까지 마침 → 지움

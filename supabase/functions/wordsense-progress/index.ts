@@ -86,12 +86,9 @@ Deno.serve(async (req) => {
 //               아니면 결과 화면 전에 멈춘 회차 → 평소처럼(normal) 입장
 const AREA_SLUGS: Record<number, string> = {};
 const STAGE_LABEL: Record<string, string> = { retrieve: '인출하기', learn: '확장하기', recall2: '다시 인출하기', fill: '강화하기' };
+// 이어하기는 단계 처음부터 (2026-11-02) — 단계 시작 때만 저장하므로 진행 문구도 단계 단위
 function progressText(st: any): string {
-  const n = (st?.S?.found || []).length + (st?.S?.recall2 || []).length;
-  if (st.phase === 'fill' && st.fq) { const t = (st.fq.words || []).length; return '강화하기 ' + Math.min((st.fq.idx || 0) + 1, t) + ' / ' + t; }
-  if (st.phase === 'learn' && st.learn) { const t = (st.learn.words || []).length; return '확장하기 ' + Math.min((st.learn.idx || 0) + 1, t) + ' / ' + t; }
-  if (st.phase === 'recall2') return '다시 인출하기 · 떠올린 어휘 ' + n + '개';
-  return '인출하기 · 찾은 어휘 ' + n + '개';
+  return (STAGE_LABEL[st?.phase] || '인출하기') + ' 처음부터';
 }
 async function list(db: any, b: any, cors: Record<string, string>) {
   const userNo = Number(b.user_no);
@@ -111,9 +108,14 @@ async function list(db: any, b: any, cors: Record<string, string>) {
       (areas || []).forEach((a: any) => { AREA_SLUGS[a.id] = a.slug; });
     }
     // 학원에 완료 보고된 회차인지 = 그 회차 훈련 기록(attempts)이 있는지
-    const { data: sess } = await db.from('sessions').select('id, level, area_id, round_no')
+    const { data: sess } = await db.from('sessions').select('id, level, area_id, round_no, main_char')
       .in('area_id', [...new Set(rows.map((r: any) => r.area_id))]).in('round_no', [...new Set(rows.map((r: any) => r.round_no))]);
-    const sid = (r: any) => (sess || []).find((s: any) => s.level === r.level && s.area_id === r.area_id && s.round_no === r.round_no)?.id;
+    const sessOf = (r: any) => (sess || []).find((s: any) => s.level === r.level && s.area_id === r.area_id && s.round_no === r.round_no);
+    const sid = (r: any) => sessOf(r)?.id;
+    // 회차 한자 훈음 — 앱과 같은 main_chars(한 곳에서 관리)에서
+    const chars = [...new Set((sess || []).map((x: any) => x.main_char).filter(Boolean))];
+    const { data: mcs } = chars.length ? await db.from('main_chars').select('char, char_hangul').in('char', chars) : { data: [] };
+    const hunOf = (c: string) => (mcs || []).find((m: any) => m.char === c)?.char_hangul || null;
     const ids = rows.map(sid).filter(Boolean);
     const { data: att } = ids.length ? await db.from('attempts').select('session_id').eq('member_no', userNo).in('session_id', ids) : { data: [] };
     const done = new Set((att || []).map((a: any) => a.session_id));
@@ -123,6 +125,8 @@ async function list(db: any, b: any, cors: Record<string, string>) {
         training_level: r.level === '중등' ? 'middle' : 'elementary',
         training_area: AREA_SLUGS[r.area_id],
         training_round: r.round_no,
+        main_char: sessOf(r)?.main_char || null,         // 회차 한자 (예: 氣) — 학원이 따로 알 필요 없게 함께 보냄
+        main_hun: hunOf(sessOf(r)?.main_char),           // 훈음 (예: 기운 기)
         completed,                                     // true = 결과 화면 뒤 '남은 어휘 재도전' 중 멈춤
         training_mode: completed ? 'retry' : 'normal', // [이어하기] 누를 때 wordsense-start에 보낼 값
         stage: r.state.phase || 'retrieve',
