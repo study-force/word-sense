@@ -109,18 +109,34 @@ Deno.serve(async (req) => {
     .eq('user_no', session.user_no)
     .single();
 
-  // ── 과정별 '내 어휘'(인출·다시 인출 + 강화 통과) — 앱이 금색 칩으로 켜고 출제에서 뺌 ──
+  // ── 이 영역(훈사전·회차 主字 찾기용) ──
+  const level = session.training_level || '초등';
+  let areaRow: any = null;
+  try {
+    const { data: ar } = await supabase.from('areas').select('id').eq('slug', session.training_area).maybeSingle();
+    areaRow = ar;
+  } catch (e) { console.warn('[wordsense-session] 영역 조회 실패(무시):', e); }
+
+  // ── '내 어휘'(인출·다시 인출 + 강화 통과) — 앱이 금색 칩으로 켜고 출제에서 뺌 ──
+  //   主字별로 따로 (대표님 2026-11-06): 面 회차에서 익힌 '외면'도 外 회차에서는 처음 → 학습 어휘
   let knownIds: number[] = [];
   try {
-    const { data: kw } = await supabase.rpc('wordsense_known_words', { p_member_no: session.user_no, p_level: session.training_level || '초등' });
+    let mainChar: string | null = null;
+    if (areaRow && session.training_round) {
+      const { data: sr } = await supabase.from('sessions').select('main_char')
+        .eq('area_id', areaRow.id).eq('level', level).eq('round_no', Number(session.training_round)).maybeSingle();
+      mainChar = sr?.main_char || null;
+    }
+    const { data: kw } = mainChar
+      ? await supabase.rpc('wordsense_known_words_char', { p_member_no: session.user_no, p_level: level, p_main_char: mainChar })
+      : await supabase.rpc('wordsense_known_words', { p_member_no: session.user_no, p_level: level });   // 회차를 모르면 예전 방식
     knownIds = (kw || []).map((x: any) => Number(x));
   } catch (e) { console.warn('[wordsense-session] 내 어휘 조회 실패(무시):', e); }
   // ── 훈사전: 이 영역·과정의 회차별 { round, total, known, trained } — 과거 회차까지 실제 누적 표시 ──
   let areaProgress: any[] = [];
   try {
-    const { data: ar } = await supabase.from('areas').select('id').eq('slug', session.training_area).maybeSingle();
-    if (ar) {
-      const { data: ap } = await supabase.rpc('wordsense_area_progress', { p_member_no: session.user_no, p_area_id: ar.id, p_level: session.training_level || '초등' });
+    if (areaRow) {
+      const { data: ap } = await supabase.rpc('wordsense_area_progress', { p_member_no: session.user_no, p_area_id: areaRow.id, p_level: level });
       areaProgress = ap || [];
     }
   } catch (e) { console.warn('[wordsense-session] 훈사전 집계 실패(무시):', e); }
