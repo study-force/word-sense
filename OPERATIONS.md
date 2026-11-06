@@ -170,6 +170,15 @@ psql "postgresql://postgres.<ref>@aws-1-ap-northeast-2.pooler.supabase.com:5432/
   -f db/migrations/2026-MM-DD_xxx.sql
 ```
 
+**방법 C — 클라우드 세션 (claude.ai/code, 2026-11-06~):**
+클라우드 환경 '한자어포스'에 Supabase 액세스 토큰(운영·개발 두 조직, DB·Edge Functions 쓰기)이 저장돼 있음.
+값은 세션에 보이지 않고 프록시가 `api.supabase.com` 요청에 넣어 줌 → 어느 기기에서 연 클라우드 세션이든 그대로 사용.
+```bash
+curl -sS -X POST "https://api.supabase.com/v1/projects/<project-ref>/database/query" \
+  -H 'Content-Type: application/json' \
+  -d "$(python3 -c 'import json,sys;print(json.dumps({"query":open(sys.argv[1]).read()}))' db/migrations/2026-MM-DD_xxx.sql)"
+```
+
 ---
 
 ## 5. Edge Functions (외부 연동)
@@ -225,6 +234,13 @@ supabase functions deploy wordsense-complete --no-verify-jwt
 ```
 
 `--no-verify-jwt` 필수 — 외부 호출용이라 Supabase JWT 검증 우회.
+
+**클라우드 세션에서 배포** (토큰은 프록시가 넣으므로 환경변수에는 형식만 맞춘 가짜 값):
+```bash
+SUPABASE_ACCESS_TOKEN="sbp_$(printf '0%.0s' {1..40})" \
+  npx -y supabase@latest functions deploy wordsense-session --remote=<project-ref> --no-verify-jwt --use-api --yes
+```
+- 참고: 개발 조직 이름도 Supabase 화면에서 `thegreatedu`로 보임 (예전 이름 enature0405-5319). 프로젝트 이름(word-master / word-master-dev)으로 구분.
 
 ---
 
