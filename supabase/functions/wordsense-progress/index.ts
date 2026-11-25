@@ -10,6 +10,8 @@
 //   save  { state } → 덮어쓰기
 //   clear → 지움 (회차를 끝까지 마쳤거나 '처음부터'를 골랐을 때)
 //   list  { user_no, training_level? } → { items[] } 학원 달력 [이어하기]용 — 입장권 없이 (아래 list 참고)
+//   rounds { user_no, training_level, training_area } → { items[], unit_tests[] } 마이룸 회차별 현황 — 입장권 없이
+//          { user_nos[] 또는 targets[] } → { students{} } 여러 학생 한 번에 (2026-11-25, 아래 rounds 참고)
 // ════════════════════════════════════════════════════════════════
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -19,6 +21,10 @@ const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const TICKET_MS = 12 * 3600 * 1000;        // 입장권을 연 뒤 12시간까지 저장 가능 (긴 훈련 대비)
 const KEEP_MS = 30 * 24 * 3600 * 1000;     // 30일 지난 진행 상황은 이어하지 않음
 const MAX_BYTES = 200 * 1024;              // 한 번에 저장할 수 있는 크기 (보통 수 KB)
+const BATCH_MAX = 60;                      // rounds 여러 학생 조회 — 한 번에 받을 수 있는 (학생·과정·영역) 묶음 수
+// (선택) 여러 학생 조회 전용 열쇠 — 이 값을 Supabase secrets에 넣으면, 여러 학생 조회는 x-center-key 헤더가 같을 때만 답함.
+//   넣지 않으면 지금처럼 열쇠 없이 답함. 학생 한 명 조회(마이룸)는 이 값과 상관없이 지금과 같음.
+const CENTER_BATCH_KEY = Deno.env.get('CENTER_BATCH_KEY') || '';
 
 function safeHost(url: string) { try { return new URL(url).hostname; } catch { return ''; } }
 function corsHeaders(origin: string | null): Record<string, string> {
@@ -27,7 +33,7 @@ function corsHeaders(origin: string | null): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': ok ? origin! : '',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, apikey, authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, apikey, authorization, x-center-key',
     'Vary': 'Origin',
   };
 }
@@ -41,7 +47,7 @@ Deno.serve(async (req) => {
   if (!['load', 'save', 'clear', 'list', 'rounds'].includes(b.action)) return err(400, 'action은 load/save/clear/list/rounds 중 하나', cors);
   const db = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
   if (b.action === 'list') return list(db, b, cors);
-  if (b.action === 'rounds') return rounds(db, b, cors);
+  if (b.action === 'rounds') return rounds(db, b, cors, req);
   if (!b.ticket) return err(400, '입장권이 필요합니다', cors);
 
   try {
@@ -158,7 +164,173 @@ async function list(db: any, b: any, cors: Record<string, string>) {
 //   입력 { action:'rounds', user_no, training_level(elementary/middle 또는 초등/중등), training_area(biology…) }
 //   훈련한 회차 + 하다 만 회차마다: 한자·훈음, 전체/획득/미획득 어휘 수, 재도전 횟수, 상태, 이어하기 정보
 //   획득 = 학생 화면의 '획득'과 같은 기준(인출·다시 인출 + 강화 통과, 과정 누적) — 훈사전·결과지와 같은 집계
-async function rounds(db: any, b: any, cors: Record<string, string>) {
+//
+// ── 2026-11-25 (성효민 대리 요청) ──
+//   ① 툴팁 숫자 추가 — 회차마다 첫 훈련의 인출·확장·강화(획득/전체), 시작·종료 시각 + 실력 점검(unit_tests) 점수
+//      예전 칸은 이름·뜻 그대로, 새 칸만 덧붙임. 실력 점검은 items에 섞지 않고 unit_tests에 따로 담음
+//      (items를 '회차'로 보고 그리는 기존 화면이 실력 점검 줄을 회차로 잘못 그리지 않게)
+//   ② 여러 학생 한 번에 — { user_nos:[…], training_level, training_area } 또는 { targets:[{ user_no, training_level, training_area }, …] }
+//      → { students: { "회원번호": [ { training_level, training_area, items, unit_tests } ] } }  (한 번에 BATCH_MAX 묶음까지)
+//   계산은 DB 함수 wordsense_rounds_batch 한 번으로 끝냄(학생 수와 상관없이 조회 2번).
+//   그 함수가 아직 없는 DB에서는 학생 한 명 조회만 예전 방식(roundsLegacy)으로 답함 — 새 칸·unit_tests 없이 2026-11-02 응답 그대로.
+const AREA_IDS: Record<string, number> = {};
+async function areaIdOf(db: any, slug: string): Promise<number | null> {
+  if (!Object.keys(AREA_IDS).length) {
+    const { data: areas } = await db.from('areas').select('id, slug');
+    (areas || []).forEach((a: any) => { AREA_IDS[a.slug] = a.id; });
+  }
+  return AREA_IDS[slug] ?? null;
+}
+const levelOf = (v: any) => { const s = String(v ?? '').trim().toLowerCase(); return s === 'middle' || s === '중등' ? '중등' : '초등'; };
+const levelCode = (level: string) => level === '중등' ? 'middle' : 'elementary';
+const AREA_ERR = 'training_area는 biology/society/history/science/culture/economy 중 하나';
+
+// 이어하기 문구 — progressText와 같은 규칙. DB 함수가 진행 상황에서 필요한 값만 꺼내 준 것으로 만듦
+function progressTextLite(p: any): string {
+  if (!p?.exact) return (STAGE_LABEL[p?.phase] || '인출하기') + ' 처음부터';
+  if (p.phase === 'fill' && p.has_fq) { const t = Number(p.fq_n) || 0; return '강화하기 ' + Math.min((Number(p.fq_idx) || 0) + 1, t) + ' / ' + t; }
+  if (p.phase === 'learn' && p.has_learn) { const t = Number(p.learn_n) || 0; return '확장하기 ' + Math.min((Number(p.learn_idx) || 0) + 1, t) + ' / ' + t; }
+  if (p.phase === 'recall2') return '다시 인출하기 · 떠올린 어휘 ' + (Number(p.recall2_n) || 0) + '개';
+  return '인출하기 · 찾은 어휘 ' + (Number(p.found_n) || 0) + '개';
+}
+const pairOf = (a: any, t: any) => (a == null || t == null) ? null : { acquired: Number(a), total: Number(t) };
+
+// 회차 한 줄 — 앞쪽은 2026-11-02 칸 그대로, 뒤쪽이 2026-11-25에 덧붙인 칸
+function roundItem(r: any) {
+  const pg: any = r.prog || null, ft: any = r.first_try || null;
+  const fin = !!r.done;                                // 학원 완료(엔드데이트) 보냄
+  const total = Number(r.total) || 0, got = Math.min(Number(r.known) || 0, total);
+  const tries = Number(r.tries) || 0;
+  return {
+    training_round: r.round,
+    main_char: r.main_char || null,
+    main_hun: r.main_hun || null,
+    total_words: total,
+    acquired: got,
+    not_acquired: total - got,
+    completed: fin,
+    retry_count: Math.max(tries - 1, 0),
+    status: !fin ? 'in_progress' : pg ? 'retry_paused' : 'completed',
+    can_retry: fin && got < total,
+    can_review: fin && got > 0,
+    review_words: fin ? got : 0,
+    review_count: Number(r.reviews) || 0,
+    resume: pg ? {
+      training_mode: fin ? 'retry' : 'normal',
+      stage_label: STAGE_LABEL[pg.phase] || '인출하기',
+      progress_text: progressTextLite(pg),
+      updated_at: pg.updated_at,
+    } : null,
+    // ── 2026-11-25 추가 ──
+    is_perfect: total > 0 && got >= total,             // 모든 어휘 획득 (화면의 'perfect')
+    passed: tries > 0 && total > 0 && got * 10 >= total * 8,   // 통과 = 회차 어휘의 80% 이상 획득 (실력 점검 자격과 같은 기준)
+    // 아래 인출·확장·강화·시각은 이 회차 '첫 훈련' 기준 (재도전은 남은 어휘만 하므로 숫자가 섞이지 않게). 기록이 없으면 null
+    retrieve: ft ? pairOf(ft.retr, ft.retr_total) : null,      // 인출: 스스로 떠올린 어휘 / 그날 훈련한 어휘
+    expand: ft ? pairOf(ft.exp, ft.exp_total) : null,          // 확장: 확장 뒤 다시 떠올린 어휘 / 인출에서 못 떠올린 어휘
+    reinforce: ft ? pairOf(ft.rf, ft.rf_total) : null,         // 강화: 한 번에 맞힌 어휘 / 강화에 나온 어휘 (= 그날 획득)
+    stage_source: ft ? ft.src : null,                  // words = 어휘별 기록으로 계산 / summary = 요약 숫자(옛 기록, 강화는 null)
+    started_at: ft?.started_at ?? null,                // 첫 훈련 시작 시각
+    ended_at: ft?.finished_at ?? null,                 // 첫 훈련 종료 시각 (결과 화면에 닿은 때)
+    duration_sec: ft?.duration_sec ?? null,
+    last_trained_at: r.last_finished ?? null,          // 가장 최근에 끝까지 한 훈련(재도전 포함)의 종료 시각
+    completed_at: r.first_done ?? null,                // 학원 완료(엔드데이트)를 보낸 시각 — 안 보냈으면 null
+  };
+}
+// 실력 점검 한 줄 — 5회차 묶음(1~5회차 = 1차, 6~10회차 = 2차 …)마다. 점수는 가장 높았던 응시 기준
+function unitItem(u: any) {
+  const unit = Number(u.unit), tries = Number(u.tries) || 0, eligible = (Number(u.passed) || 0) >= 5;
+  const nq = Number(u.nq) > 0 ? Number(u.nq) : null;
+  const score = u.best ?? null;
+  const mastered = nq && u.n_known != null ? Math.round(Number(u.n_known) * 100 / nq) : null;   // 완전 습득 점수 (4점씩)
+  return {
+    unit,
+    round_from: (unit - 1) * 5 + 1,
+    round_to: unit * 5,
+    after_round: unit * 5,                             // 이 회차 줄 바로 아래에 「실력점검」 줄을 그리면 됨
+    trained_rounds: Number(u.trained) || 0,            // 묶음 5회차 중 훈련한 회차 수
+    passed_rounds: Number(u.passed) || 0,              // 그중 통과(80% 이상 획득)한 회차 수
+    eligible,                                          // 응시 가능 = 5회차 모두 통과
+    // done = 본 적 있음 / in_progress = 풀다가 멈춤 / ready = 볼 수 있는데 아직 안 봄 / locked = 아직 못 봄
+    status: u.open ? 'in_progress' : tries > 0 ? 'done' : eligible ? 'ready' : 'locked',
+    question_count: nq,                                // 문항 수 (본 적 없으면 null — 보통 25문항)
+    try_count: tries,                                  // 끝까지 본 횟수
+    retry_count: Math.max(tries - 1, 0),               // 반복 횟수 (처음 본 뒤 다시 본 횟수)
+    score,                                             // 총 점수 /100 (가장 높았던 응시)
+    max_score: 100,
+    mastered_count: tries > 0 ? (u.n_known ?? null) : null,     // 완전 습득 = 한글만 보고 맞힘 (문항 수)
+    mastered_score: mastered,                                   // 완전 습득 점수
+    inferred_count: tries > 0 ? (u.n_hanja ?? null) : null,     // 추론 = 한자를 보고 맞힘 (문항 수)
+    inferred_score: score != null && mastered != null ? Math.max(score - mastered, 0) : null,   // 추론 점수 (2점씩)
+    wrong_count: tries > 0 ? (Number(u.n_hanja_wrong) || 0) + (Number(u.n_wrong) || 0) : null,
+    first_score: u.first ?? null,
+    last_score: u.last ?? null,
+    started_at: u.started_at ?? null,                  // score를 받은 응시의 시작·종료 시각
+    ended_at: u.finished_at ?? null,
+  };
+}
+
+async function rounds(db: any, b: any, cors: Record<string, string>, req: Request) {
+  const batch = Array.isArray(b.targets) || Array.isArray(b.user_nos);
+  try {
+    // ── 학생 한 명 (마이룸) — 2026-11-02 응답 그대로 + 새 칸 ──
+    if (!batch) {
+      const userNo = Number(b.user_no);
+      if (!Number.isFinite(userNo)) return err(400, 'user_no가 필요합니다', cors);
+      const level = levelOf(b.training_level), slug = String(b.training_area || '');
+      const areaId = await areaIdOf(db, slug);
+      if (!areaId) return err(400, AREA_ERR, cors);
+      const { data, error } = await db.rpc('wordsense_rounds_batch', { p_targets: [{ m: userNo, level, area_id: areaId }] });
+      if (error) {   // DB 함수가 아직 없는 DB 등 — 예전 방식으로 (새 칸 없이)
+        console.warn('[wordsense-progress rounds] 일괄 함수 사용 불가 → 예전 방식', error.message);
+        return roundsLegacy(db, b, cors);
+      }
+      const row = (data || [])[0] || { rounds: [], units: [] };
+      return ok({ training_level: levelCode(level), training_area: slug,
+        items: (row.rounds || []).map(roundItem), unit_tests: (row.units || []).map(unitItem) }, cors);
+    }
+
+    // ── 여러 학생 한 번에 (전체훈련현황) ──
+    if (CENTER_BATCH_KEY && req.headers.get('x-center-key') !== CENTER_BATCH_KEY) return err(401, '여러 학생 조회 열쇠(x-center-key)가 맞지 않습니다', cors, 'bad_key');
+    const raw: any[] = Array.isArray(b.targets) ? b.targets
+      : b.user_nos.map((n: any) => ({ user_no: n, training_level: b.training_level, training_area: b.training_area }));
+    const seen = new Set<string>();
+    const targets: { m: number; level: string; area_id: number; slug: string }[] = [];
+    for (const t of raw) {
+      const m = Number(t?.user_no);
+      if (!Number.isSafeInteger(m) || m <= 0) return err(400, 'user_no가 숫자가 아닌 항목이 있습니다', cors);
+      const level = levelOf(t.training_level ?? b.training_level), slug = String((t.training_area ?? b.training_area) || '');
+      const areaId = await areaIdOf(db, slug);
+      if (!areaId) return err(400, AREA_ERR, cors);
+      const k = m + '|' + level + '|' + areaId;
+      if (seen.has(k)) continue;                       // 같은 묶음은 한 번만
+      seen.add(k);
+      targets.push({ m, level, area_id: areaId, slug });
+    }
+    if (!targets.length) return ok({ students: {}, count: 0 }, cors);
+    if (targets.length > BATCH_MAX) return err(400, `한 번에 ${BATCH_MAX}개까지 조회할 수 있습니다 (받은 수 ${targets.length}) — 나누어 불러 주세요`, cors, 'too_many');
+    const { data, error } = await db.rpc('wordsense_rounds_batch', { p_targets: targets.map(({ m, level, area_id }) => ({ m, level, area_id })) });
+    if (error) {
+      console.error('[wordsense-progress rounds batch]', error);
+      return err(503, '여러 학생 조회를 지금 쓸 수 없습니다 — 학생 한 명씩 불러 주세요', cors, 'batch_unavailable');
+    }
+    const rowOf = new Map<string, any>((data || []).map((r: any) => [r.m + '|' + r.level + '|' + r.area_id, r]));
+    const students: Record<string, any[]> = {};
+    for (const t of targets) {   // 기록이 없는 학생도 빈 목록으로 넣음 (요청한 학생이 모두 응답에 있게)
+      const row = rowOf.get(t.m + '|' + t.level + '|' + t.area_id) || { rounds: [], units: [] };
+      (students[String(t.m)] = students[String(t.m)] || []).push({
+        training_level: levelCode(t.level), training_area: t.slug,
+        items: (row.rounds || []).map(roundItem), unit_tests: (row.units || []).map(unitItem),
+      });
+    }
+    return ok({ students, count: targets.length }, cors);
+  } catch (e) {
+    console.error('[wordsense-progress rounds]', e);
+    return err(500, '서버 오류: ' + (e as Error).message, cors);
+  }
+}
+
+// ── 예전 방식 (2026-11-02 그대로) — DB 함수 wordsense_rounds_batch 가 없을 때만 씀. 학생 한 명마다 조회 7번 ──
+async function roundsLegacy(db: any, b: any, cors: Record<string, string>) {
   const userNo = Number(b.user_no);
   if (!Number.isFinite(userNo)) return err(400, 'user_no가 필요합니다', cors);
   const lvRaw = String(b.training_level ?? '').trim().toLowerCase();
