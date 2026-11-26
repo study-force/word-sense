@@ -7,7 +7,10 @@
 --   kind
 --     complete_failed       센터에 완료가 남지 않음 → 다시 보내기 대상
 --     training_end_failed   회차는 저장됐으나 구 센터의 무료·추가 회차 처리가 실패 → 센터에서 손으로 처리(다시 보내도 「이미 처리된」만 온다)
---     training_end_unknown  답을 못 받은 시도가 실제로는 저장돼 있었음 → 무료·추가 회차 처리 결과를 모름(확인만)
+--     training_end_unknown  답을 못 받은 시도가 실제로는 저장돼 있었음 → 무료·추가 회차 처리 결과를 모름(보통 등급 알림, 확인 뒤 풀림 표시)
+--
+--   알림이 못 간 줄(alerted_at 이 비고 5분 넘음)은 함수가 요청을 받을 때마다 훑어서 알린다 — 예약 작업(pg_cron)은 쓰지 않는다
+--   (이 프로젝트는 pg_cron·pg_net 이 꺼져 있다. 이유는 문서 2번).
 --
 --   개인정보는 넣지 않는다(회원 번호·학원 번호·회차·게이트 응답뿐). study_token 은 복사하지 않고 다시 보낼 때 session_init 에서 읽는다.
 --   함수는 이 표가 없어도 돈다(기록·다시 보내기만 빠진다) → 함수보다 먼저 올리든 나중에 올리든 훈련 저장에는 영향 없음.
@@ -19,7 +22,7 @@ CREATE TABLE IF NOT EXISTS complete_failures (
   id               BIGSERIAL    PRIMARY KEY,
   kind             TEXT         NOT NULL DEFAULT 'complete_failed'
                    CHECK (kind IN ('complete_failed', 'training_end_failed', 'training_end_unknown')),
-  session_init_id  UUID,                       -- 입장권(session_init.id). 구버전 화면 호출이면 NULL
+  session_init_id  UUID,                       -- 입장권(session_init.id). 입장권 없는 구버전 호출은 기록하지 않는다
   attempt_id       BIGINT,                     -- attempts.id (있으면)
   member_no        BIGINT,                     -- 회원 번호
   academy_no       BIGINT,                     -- 학원 번호
@@ -41,6 +44,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_complete_failures_open
   ON complete_failures (session_init_id, kind) WHERE resolved_at IS NULL AND session_init_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_complete_failures_open
   ON complete_failures (kind, id) WHERE resolved_at IS NULL;
+-- 훑기(알림이 못 간 줄 찾기)용 — 평소에는 거의 빈 색인
+CREATE INDEX IF NOT EXISTS idx_complete_failures_unalerted
+  ON complete_failures (last_tried_at) WHERE resolved_at IS NULL AND alerted_at IS NULL;
 
 -- 권한: Edge Function(service_role)만. 익명·로그인 사용자는 접근 불가(정책 없음)
 ALTER TABLE complete_failures ENABLE ROW LEVEL SECURITY;

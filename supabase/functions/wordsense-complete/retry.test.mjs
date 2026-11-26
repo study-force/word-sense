@@ -4,7 +4,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   classifyComplete, failureReason, runCompleteWithRetry, buildAlert, scrub,
-  RETRY_WAITS_MS, ATTEMPT_TIMEOUT_MS, TOTAL_BUDGET_MS,
+  RETRY_WAITS_MS, FIRST_TIMEOUT_MS, RETRY_TIMEOUT_MS, TOKEN_TIMEOUT_MS, TOTAL_BUDGET_MS, TOKEN_RECHECK_MS,
+  alertRetryDelayMs, numOrNull,
 } from './retry.mjs';
 
 // 정해 둔 응답을 차례로 돌려주는 가짜 게이트
@@ -70,23 +71,35 @@ test('끝까지 실패 — 처음 1번 + 재시도 3번', async () => {
   assert.deepEqual(c.slept, RETRY_WAITS_MS);
 });
 
-test('가장 나쁜 경우에도 시간 한도 안에 끝난다', () => {
-  const worst = (1 + RETRY_WAITS_MS.length) * ATTEMPT_TIMEOUT_MS * 2   // 시도마다 토큰 재발급까지 걸렸다고 쳐도
-    + RETRY_WAITS_MS.reduce((a, b) => a + b, 0);
-  assert.ok(worst <= TOTAL_BUDGET_MS + ATTEMPT_TIMEOUT_MS, String(worst));
-  assert.ok(TOTAL_BUDGET_MS < 150_000);
+test('가장 나쁜 경우의 시간 — 뒤에서 도는 재시도는 한도 안, 첫 시도까지 합쳐도 150초 안', () => {
+  const bgWorst = RETRY_WAITS_MS.reduce((a, b) => a + b, 0) + RETRY_WAITS_MS.length * RETRY_TIMEOUT_MS;
+  assert.ok(bgWorst <= TOTAL_BUDGET_MS, String(bgWorst));
+  assert.ok(FIRST_TIMEOUT_MS + TOKEN_TIMEOUT_MS + bgWorst < 150_000);
+  assert.equal(FIRST_TIMEOUT_MS, 25_000);
 });
 
 test('시간 한도를 넘기게 되면 그만둔다', async () => {
   const g = fakeGate([E500]); const c = fakeClock();
-  const r = await runCompleteWithRetry(g.call, { ...c, budgetMs: 20_000 });
+  const r = await runCompleteWithRetry(g.call, { ...c, budgetMs: 20_000, timeoutMs: 10_000 });
   assert.equal(r.outcome, 'exhausted'); assert.equal(r.tries, 2);   // 3초 뒤 한 번 더, 그다음 12초는 한도 밖
 });
 
 test('4xx 거절은 재시도하지 않는다', async () => {
-  const g = fakeGate([BAD_TOKEN, OK]); const c = fakeClock();
+  const NO_STUDY = { status: 400, body: { status: 400, message: '훈련 정보가 없습니다.' } };
+  const g = fakeGate([NO_STUDY, OK]); const c = fakeClock();
   const r = await runCompleteWithRetry(g.call, c);
-  assert.equal(r.outcome, 'fail'); assert.equal(r.tries, 1); assert.equal(g.calls.length, 1);
+  assert.equal(r.outcome, 'fail'); assert.equal(r.tries, 1); assert.equal(g.calls.length, 1); assert.deepEqual(c.slept, []);
+});
+
+test('「토큰 불일치」는 잠깐 뒤 한 번만 더 — 「이미 처리된」으로 바뀌면 성공(겹친 요청의 늦은 쪽)', async () => {
+  const g = fakeGate([BAD_TOKEN, ALREADY]); const c = fakeClock();
+  const r = await runCompleteWithRetry(g.call, { ...c, waits: [] });
+  assert.equal(r.outcome, 'already'); assert.equal(r.uncertainAlready, false); assert.equal(r.tries, 2);
+  assert.deepEqual(c.slept, [TOKEN_RECHECK_MS]);
+
+  const g2 = fakeGate([BAD_TOKEN, BAD_TOKEN, ALREADY]); const c2 = fakeClock();   // 그대로면 실패, 더 부르지 않는다
+  const r2 = await runCompleteWithRetry(g2.call, c2);
+  assert.equal(r2.outcome, 'fail'); assert.equal(g2.calls.length, 2); assert.match(r2.body.message, /토큰 불일치/);
 });
 
 test('「이미 처리된」은 성공으로 취급', async () => {
@@ -101,10 +114,29 @@ test('시간 초과 뒤 「이미 처리된」 — 앞선 시도가 저장된 �
   assert.equal(r.outcome, 'already'); assert.equal(r.uncertainAlready, true); assert.equal(r.tries, 2);
 });
 
-test('5xx 뒤 「이미 처리된」은 불확실로 보지 않는다(5xx 는 저장이 취소된 것)', async () => {
+test('500 뒤 「이미 처리된」은 불확실로 보지 않는다(게이트가 직접 낸 500 은 저장이 취소된 것)', async () => {
   const g = fakeGate([E500, ALREADY]); const c = fakeClock();
   const r = await runCompleteWithRetry(g.call, c);
   assert.equal(r.uncertainAlready, false);
+});
+
+test('502·503·504 뒤 「이미 처리된」은 불확실(앞단이 대신 답했을 수 있다)', async () => {
+  for (const s of [502, 503, 504]) {
+    const g = fakeGate([{ status: s, body: {} }, ALREADY]);
+    const r = await runCompleteWithRetry(g.call, fakeClock());
+    assert.equal(r.outcome, 'already'); assert.equal(r.uncertainAlready, true, String(s));
+  }
+  const first = await runCompleteWithRetry(fakeGate([{ status: 503, body: {} }]).call, { ...fakeClock(), waits: [] });
+  assert.equal(first.outcome, 'exhausted'); assert.equal(first.uncertain, true);
+});
+
+test('토큰 발급 실패(완료 API 를 부르지 못함)는 불확실로 치지 않는다', async () => {
+  const NOT_SENT = { status: 0, body: { message: '토큰 발급 실패 503' }, sent: false };
+  const g = fakeGate([NOT_SENT, ALREADY]);
+  const r = await runCompleteWithRetry(g.call, fakeClock());
+  assert.equal(r.outcome, 'already'); assert.equal(r.uncertainAlready, false);
+  const first = await runCompleteWithRetry(fakeGate([NOT_SENT]).call, { ...fakeClock(), waits: [] });
+  assert.equal(first.outcome, 'exhausted'); assert.equal(first.uncertain, false);
 });
 
 test('401 — 토큰을 새로 받아 바로 한 번 더, 두 번째 401 은 실패', async () => {
@@ -147,9 +179,15 @@ test('알림 본문 — 번호·회차·시각만, 중복 방지 키', () => {
 
   assert.equal(buildAlert({ ...base, kind: 'complete_failed', status: 401 }).dedupe_key, 'wordsense:complete_failed:auth');
   const t = buildAlert({ ...base, kind: 'training_end_failed', pendingCount: 3 });
-  assert.equal(t.dedupe_key, 'wordsense:training_end_failed'); assert.match(t.body, /3건/);
+  assert.equal(t.dedupe_key, 'wordsense:training_end_failed:abc-1'); assert.match(t.body, /3건/);   // 건마다 손으로 처리 → 따로
+  assert.equal(buildAlert({ ...base, sessionInitId: null, kind: 'training_end_failed' }).dedupe_key, 'wordsense:training_end_failed:1234-7');
+  assert.equal(t.severity, 'urgent');
 
-  for (const x of [a, b, t]) { assert.ok(x.title.length <= 120); assert.ok(x.body.length <= 1000); }
+  const u = buildAlert({ ...base, kind: 'training_end_unknown' });
+  assert.equal(u.kind, 'training_end_unknown'); assert.equal(u.severity, 'normal');
+  assert.equal(u.dedupe_key, 'wordsense:training_end_unknown:abc-1');
+
+  for (const x of [a, b, t, u]) { assert.ok(x.title.length <= 120); assert.ok(x.body.length <= 1000); }
 });
 
 test('알림에 연락처·전자우편 꼴이 실리지 않는다', () => {
@@ -157,4 +195,17 @@ test('알림에 연락처·전자우편 꼴이 실리지 않는다', () => {
   const a = buildAlert({ kind: 'complete_failed', status: 400, message: '담당 01012345678 에게', memberNo: 1, round: 1 });
   assert.doesNotMatch(a.body, /0101234/);
   assert.equal(scrub('x'.repeat(500)).length, 120);
+});
+
+test('알림 창구가 429 면 알려 준 시간 뒤 한 번 — 길어도 60초', () => {
+  assert.equal(alertRetryDelayMs(429, { retry_after_sec: 20 }), 20_000);
+  assert.equal(alertRetryDelayMs(429, { retry_after_sec: 600 }), 60_000);
+  assert.equal(alertRetryDelayMs(429, {}), 60_000);
+  assert.equal(alertRetryDelayMs(429, { retry_after_sec: 0 }), 1_000);
+  for (const s of [200, 400, 401, 500, 503]) assert.equal(alertRetryDelayMs(s, { retry_after_sec: 5 }), null);
+});
+
+test('번호 칸은 유한한 수만', () => {
+  assert.equal(numOrNull(1234), 1234); assert.equal(numOrNull('56'), 56); assert.equal(numOrNull(0), 0);
+  for (const v of [null, undefined, '', 'abc', '1; drop', {}, NaN, Infinity, '<b>x</b>']) assert.equal(numOrNull(v), null);
 });

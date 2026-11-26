@@ -25,16 +25,23 @@
 // 토큰: 1회 발급 후 service_back_token 테이블에 영구 캐시 (401이면 재발급)
 //
 // 재시도·실패 알림 (2026-11-26, docs/완료통보_재시도_알림_20261126.md):
-//   · 첫 시도는 응답 전에 한다(시간 제한 10초). 통신 오류·시간 초과·5xx 면 학생 쪽에는 바로 답하고,
-//     남은 재시도(3초·12초·30초 뒤)는 EdgeRuntime.waitUntil 로 뒤에서 끝까지 돈다(창을 닫아도 계속).
-//   · 400 「이미 처리된」은 성공으로 취급. 그 밖의 4xx 는 재시도하지 않는다.
-//   · 끝내 실패하면 complete_failures 표에 남기고 더큰웍스 운영 알림 창구를 부른다.
+//   · 첫 시도는 응답 전에 한다(시간 제한 25초). 통신 오류·시간 초과·5xx 면 학생 쪽에는 바로 답하고,
+//     남은 재시도(3초·12초·30초 뒤, 한 번에 15초)는 EdgeRuntime.waitUntil 로 뒤에서 돈다(창을 닫아도 계속).
+//   · 400 「이미 처리된」은 성공으로 취급. 「토큰 불일치」는 잠깐 뒤 한 번 더. 그 밖의 4xx 는 재시도하지 않는다.
+//   · 실패하면 complete_failures 표에 남기고(첫 실패 때 바로), 끝내 실패하면 더큰웍스 운영 알림 창구를 부른다.
+//   · 뒤에서 돌던 재시도가 작업자 종료로 끊겨 알림이 못 간 줄은, 다음 요청 때 훑어서 알린다(sweepStale).
+//   · 입장권 없는 구버전 호출(sessionId 없음)은 전처럼 한 번만 부르고 로그만 남긴다 — 기록·알림·재시도 없음
+//     (로그인 없이 부를 수 있는 길이라, 알림·기록을 일으키게 두지 않는다).
 //   · 관리용: { action:'resend_failed', limit?, dry_run? } + 헤더 x-admin-key → 풀리지 않은 실패분을 다시 보낸다.
 //   판정·재시도·알림 본문은 retry.mjs (단위 시험 retry.test.mjs)
+//   ⚠ 배포할 때 index.ts 와 retry.mjs 를 **함께** 올린다. retry.mjs 가 빠지면 함수가 부팅에 실패해 완료 통보 전체가 멈춘다.
 // ════════════════════════════════════════════════════════════════
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { runCompleteWithRetry, buildAlert, ATTEMPT_TIMEOUT_MS } from './retry.mjs';
+import {
+  runCompleteWithRetry, buildAlert, alertRetryDelayMs, numOrNull,
+  FIRST_TIMEOUT_MS, RETRY_TIMEOUT_MS, TOKEN_TIMEOUT_MS,
+} from './retry.mjs';
 
 declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void } | undefined;
 
@@ -46,6 +53,7 @@ const SERVICE_BACK_BASE_URL = Deno.env.get('SERVICE_BACK_BASE_URL')
 const OPS_ALERT_URL = Deno.env.get('OPS_ALERT_URL') || '';
 const OPS_ALERT_SECRET = Deno.env.get('OPS_ALERT_SECRET') || '';
 const COMPLETE_ADMIN_KEY = Deno.env.get('COMPLETE_ADMIN_KEY') || '';
+const ADMIN_KEY_MIN = 32;   // 이보다 짧은 열쇠는 설정되지 않은 것으로 본다
 
 // 응답을 보낸 뒤에도 끝까지 돌 일(재시도·알림) — 화면이 keepalive 로 한 번만 부르고 창을 닫아도 계속된다
 function bg(p: Promise<unknown>) {
@@ -76,6 +84,9 @@ Deno.serve(async (req) => {
 
   // ── 관리용: 실패분 다시 보내기 (열쇠가 맞을 때만) ──
   if (body && body.action === 'resend_failed') return await resendFailed(req, body, supabase, cors);
+
+  // 알림이 못 간 오래된 실패 기록 훑기 — 응답을 늦추지 않게 뒤에서(조회 한 번, 많아야 3건)
+  bg(sweepStale(supabase));
 
   // ── 진입 세션에서 학원 정보 읽기 (있으면 브라우저 값보다 우선) ──
   let sess: any = null;
@@ -168,11 +179,13 @@ Deno.serve(async (req) => {
     return ok({ success: true, saved: !!attemptId, service_back: { skipped: 'already_completed' } }, cors);
   }
 
-  // 첫 시도 — 응답 전에 한 번(401 이면 토큰을 새로 받아 한 번 더). 통신 오류·시간 초과·5xx 면 남은 재시도는 뒤에서
-  const call = ({ refreshToken }: { refreshToken: boolean }) => gateCall(supabase, payment_fn, training_round, study_token, refreshToken);
-  const first = await runCompleteWithRetry(call, { waits: [] });
+  // 첫 시도 — 응답 전에 한 번(401 이면 토큰을 새로 받아 한 번 더, 「토큰 불일치」면 잠깐 뒤 한 번 더).
+  //   통신 오류·시간 초과·5xx 면 남은 재시도는 뒤에서
+  const callWith = (timeoutMs: number) => ({ refreshToken }: { refreshToken: boolean }) =>
+    gateCall(supabase, payment_fn, training_round, study_token, refreshToken, timeoutMs);
+  const first = await runCompleteWithRetry(callWith(FIRST_TIMEOUT_MS), { waits: [] });
   const status: number = first.status, sbBody: any = first.body || {};
-  const willRetry = first.outcome === 'exhausted';
+  const willRetry = !!sess && first.outcome === 'exhausted';   // 입장권 없는 구버전 호출은 전처럼 한 번만
   if (first.outcome !== 'ok' && first.outcome !== 'already') console.error('[wordsense-complete] service-back 호출 실패:', status, sbBody.message || '');
 
   const trainingEndSuccess = typeof sbBody.training_end_success === 'boolean' ? sbBody.training_end_success : null;
@@ -189,11 +202,11 @@ Deno.serve(async (req) => {
   //   실패면 complete_failures 에 남김. 알림 호출은 응답을 늦추지 않게 뒤에서.
   const ctx: Ctx = {
     supabase, sess, attemptId, payment_fn, training_round, baseTries: null,
-    memberNo: sess ? sess.user_no : (body.result?.user_no ?? null),
-    academyNo: sess ? (sess.academy_no ?? null) : (body.result?.academy_no ?? null),
+    memberNo: numOrNull(sess ? sess.user_no : body.result?.user_no),
+    academyNo: numOrNull(sess ? sess.academy_no : body.result?.academy_no),
   };
   await applyResult(ctx, first, !willRetry, false);
-  if (willRetry) bg(retryInBackground(ctx, call, first));
+  if (willRetry) bg(retryInBackground(ctx, callWith(RETRY_TIMEOUT_MS), first));
 
   if (status !== 200) {
     console.error('[wordsense-complete] service-back 응답:', status, sbBody);
@@ -210,13 +223,19 @@ type Ctx = {
 };
 
 // 게이트 완료 API 한 번 — 토큰은 캐시에서(refreshToken 이면 새로 받아). 통신 오류는 던진다(→ status 0 으로 판정)
-async function gateCall(supabase: any, payment_fn: string, training_round: number, study_token: string | null, refreshToken: boolean) {
-  let token = refreshToken ? null : await getCachedToken(supabase);
-  if (!token) {
-    if (refreshToken) console.warn('[wordsense-complete] 토큰 401 — 재발급 후 재시도');
-    token = await issueNewToken(); await cacheToken(supabase, token);
+//   토큰을 못 받아 완료 API 를 부르지도 못했으면 sent:false (「답을 못 받은 시도」로 치지 않는다)
+async function gateCall(supabase: any, payment_fn: string, training_round: number, study_token: string | null, refreshToken: boolean, timeoutMs: number) {
+  let token: string | null = null;
+  try {
+    token = refreshToken ? null : await getCachedToken(supabase);
+    if (!token) {
+      if (refreshToken) console.warn('[wordsense-complete] 토큰 401 — 재발급 후 재시도');
+      token = await issueNewToken(); await cacheToken(supabase, token);
+    }
+  } catch (e) {
+    return { status: 0, body: { message: String((e as Error).message || e) }, sent: false };
   }
-  const res = await callComplete(token, payment_fn, training_round, study_token);
+  const res = await callComplete(token!, payment_fn, training_round, study_token, timeoutMs);
   return { status: res.status, body: await res.json().catch(() => ({})) };
 }
 
@@ -224,7 +243,7 @@ async function gateCall(supabase: any, payment_fn: string, training_round: numbe
 async function retryInBackground(ctx: Ctx, call: (o: { refreshToken: boolean }) => Promise<any>, first: any) {
   const r = await runCompleteWithRetry(call, {
     priorTries: 1, priorUncertain: first.uncertain, authRefreshed: first.authRefreshed,
-    priorStatus: first.status, priorBody: first.body,
+    priorStatus: first.status, priorBody: first.body, timeoutMs: RETRY_TIMEOUT_MS,
   });
   r.tries = first.tries + r.tries - 1;
   console.log('[wordsense-complete] 재시도 끝:', r.outcome, r.status, `${r.tries}번 시도`);
@@ -243,13 +262,18 @@ async function applyResult(ctx: Ctx, r: any, final: boolean, inBackground: boole
       const message = r.uncertainAlready
         ? `${body.message ?? ''} (앞선 시도가 답 없이 저장됨 — 무료·추가 회차 처리 결과 확인 필요)`
         : (body.message ?? null);
-      await supabase.from('attempts').update({
+      let q = supabase.from('attempts').update({
         service_back_status: r.status, service_back_message: message, training_end_success: tes,
       }).eq('id', ctx.attemptId);
+      // 「이미 처리된」은 겹친 요청의 늦은 쪽일 수 있다 — 먼저 끝난 쪽이 남긴 200 기록(무료·추가 회차 결과 포함)을 덮지 않는다
+      if (r.outcome === 'already') q = q.or('service_back_status.is.null,service_back_status.neq.200');
+      await q;
     }
     if (sess && done) {
       await supabase.from('session_init').update({ completed_at: new Date().toISOString() }).eq('id', sess.id);
     }
+    // 입장권 없는 구버전 호출은 여기까지 — 로그인 없이 부를 수 있는 길이라 실패 기록·알림을 만들지 않는다(전처럼 로그만)
+    if (!sess) return;
     if (done) {
       await resolveFailure(ctx, 'complete_failed', r.outcome === 'ok' ? 'sent' : 'already');
       // 회차는 저장됐지만 구 센터의 무료·추가 회차 처리가 실패(또는 결과를 모름) — 다시 보내도 「이미 처리된」만 오므로 기록·알림만
@@ -257,7 +281,8 @@ async function applyResult(ctx: Ctx, r: any, final: boolean, inBackground: boole
         const row = await saveFailure(ctx, 'training_end_failed', r);
         await run(alertFailure(ctx, 'training_end_failed', r, row));
       } else if (r.uncertainAlready) {
-        await saveFailure(ctx, 'training_end_unknown', r);
+        const row = await saveFailure(ctx, 'training_end_unknown', r);
+        await run(alertFailure(ctx, 'training_end_unknown', r, row));   // 보통 등급
       }
       return;
     }
@@ -270,14 +295,14 @@ async function applyResult(ctx: Ctx, r: any, final: boolean, inBackground: boole
 
 function failureQuery(ctx: Ctx, kind: string) {
   let q = ctx.supabase.from('complete_failures').select('id, tries, alerted_at').eq('kind', kind).is('resolved_at', null);
-  q = ctx.sess ? q.eq('session_init_id', ctx.sess.id)
-    : q.is('session_init_id', null).eq('payment_fn', ctx.payment_fn).eq('training_round', ctx.training_round);
+  q = q.eq('session_init_id', ctx.sess.id);   // 입장권이 있을 때만 부른다
   return q.order('id', { ascending: false }).limit(1).maybeSingle();
 }
 
 // 실패 기록을 남긴다(같은 회차의 풀리지 않은 줄이 있으면 고친다). 표가 아직 없으면 로그만 남기고 넘어간다
 async function saveFailure(ctx: Ctx, kind: string, r: any): Promise<{ id: number; alerted_at: string | null } | null> {
   const { supabase } = ctx;
+  if (!ctx.sess) return null;
   const { data: existing, error: selErr } = await failureQuery(ctx, kind);
   if (selErr) { console.error('[wordsense-complete] complete_failures 조회 오류(표를 아직 안 만들었을 수 있음):', selErr.message); return null; }
   if (ctx.baseTries === null) ctx.baseTries = existing ? Number(existing.tries) || 0 : 0;
@@ -300,6 +325,7 @@ async function saveFailure(ctx: Ctx, kind: string, r: any): Promise<{ id: number
 }
 
 async function resolveFailure(ctx: Ctx, kind: string, how: string) {
+  if (!ctx.sess) return;
   const { data: existing, error } = await failureQuery(ctx, kind);
   if (error || !existing) return;
   await ctx.supabase.from('complete_failures').update({ resolved_at: new Date().toISOString(), resolved_how: how }).eq('id', existing.id);
@@ -307,6 +333,7 @@ async function resolveFailure(ctx: Ctx, kind: string, how: string) {
 
 // 더큰웍스 운영 알림 창구 호출. 주소·비밀이 없거나 호출이 실패해도 훈련 저장·완료 처리에는 영향 없음
 async function alertFailure(ctx: Ctx, kind: string, r: any, row: { id: number } | null) {
+  if (!ctx.sess) return;
   let pendingCount: number | undefined;
   try {
     const { count } = await ctx.supabase.from('complete_failures').select('id', { count: 'exact', head: true })
@@ -323,16 +350,48 @@ async function alertFailure(ctx: Ctx, kind: string, r: any, row: { id: number } 
     return;
   }
   try {
-    const res = await fetch(OPS_ALERT_URL, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-ops-alert-secret': OPS_ALERT_SECRET },
-      body: JSON.stringify(alert), signal: AbortSignal.timeout(8000),
-    });
-    const out = await res.json().catch(() => ({}));
+    let { res, out } = await postAlert(alert);
+    const waitMs = alertRetryDelayMs(res.status, out);   // 창구가 429(분당 상한)면 알려 준 시간 뒤 한 번만 다시
+    if (waitMs !== null) {
+      console.warn('[wordsense-complete] 운영 알림 429 —', Math.round(waitMs / 1000), '초 뒤 한 번 다시');
+      await new Promise((ok) => setTimeout(ok, waitMs));
+      ({ res, out } = await postAlert(alert));
+    }
     if (!res.ok) { console.error('[wordsense-complete] 운영 알림 실패:', res.status, out?.error || ''); return; }
     console.log('[wordsense-complete] 운영 알림:', out?.status || 'ok', alert.dedupe_key);
     if (row) await ctx.supabase.from('complete_failures').update({ alerted_at: new Date().toISOString() }).eq('id', row.id);
   } catch (e) {
     console.error('[wordsense-complete] 운영 알림 호출 오류:', (e as Error).message || e);
+  }
+}
+
+async function postAlert(alert: unknown) {
+  const res = await fetch(OPS_ALERT_URL, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-ops-alert-secret': OPS_ALERT_SECRET },
+    body: JSON.stringify(alert), signal: AbortSignal.timeout(8000),
+  });
+  return { res, out: await res.json().catch(() => ({})) as any };
+}
+
+// 알림이 못 간 오래된 실패 기록 훑기 — 뒤에서 돌던 재시도가 작업자 종료로 끊기면 기록만 남고 알림이 안 간다.
+//   요청을 받을 때마다(성공 경로 포함) 뒤에서 한 번: 풀리지 않았고 알림이 안 갔고 마지막 시도가 5분 넘은 줄을 3건까지 알린다.
+//   겹쳐서 두 번 보내도 창구가 같은 키를 한 번으로 묶는다.
+const SWEEP_AFTER_MS = 5 * 60_000, SWEEP_MAX = 3;
+async function sweepStale(supabase: any) {
+  if (!OPS_ALERT_URL || !OPS_ALERT_SECRET) return;
+  const { data: rows, error } = await supabase.from('complete_failures')
+    .select('id, kind, session_init_id, member_no, academy_no, payment_fn, training_round, last_status, last_message, tries')
+    .is('resolved_at', null).is('alerted_at', null).not('session_init_id', 'is', null)
+    .lt('last_tried_at', new Date(Date.now() - SWEEP_AFTER_MS).toISOString())
+    .order('id', { ascending: true }).limit(SWEEP_MAX);
+  if (error || !rows || rows.length === 0) return;   // 표가 아직 없으면 조용히 넘어간다
+  for (const row of rows) {
+    const ctx: Ctx = {
+      supabase, sess: { id: row.session_init_id }, attemptId: null, payment_fn: row.payment_fn, training_round: row.training_round,
+      memberNo: row.member_no, academyNo: row.academy_no, baseTries: 0,
+    };
+    console.warn('[wordsense-complete] 알림이 못 간 실패 기록 훑기:', row.id, row.kind);
+    await alertFailure(ctx, row.kind, { status: row.last_status, body: { message: row.last_message }, tries: row.tries }, row);
   }
 }
 
@@ -346,7 +405,7 @@ function sameKey(a: string, b: string) {
 // 관리용 — 풀리지 않은 완료 통보 실패분을 다시 보낸다(한 건에 한 번씩, 게이트가 답하지 않으면 거기서 멈춤)
 //   { action:'resend_failed', limit?: 1~50(기본 20), dry_run?: true }  헤더 x-admin-key
 async function resendFailed(req: Request, body: any, supabase: any, cors: Record<string, string>) {
-  if (!COMPLETE_ADMIN_KEY) return jsonErr(503, '관리용 열쇠(COMPLETE_ADMIN_KEY)가 설정되지 않았습니다', cors);
+  if (COMPLETE_ADMIN_KEY.length < ADMIN_KEY_MIN) return jsonErr(503, `관리용 열쇠(COMPLETE_ADMIN_KEY)가 설정되지 않았거나 ${ADMIN_KEY_MIN}자보다 짧습니다`, cors);
   if (!sameKey(req.headers.get('x-admin-key') || '', COMPLETE_ADMIN_KEY)) return jsonErr(401, '관리용 열쇠(x-admin-key)가 맞지 않습니다', cors);
   const limit = Math.min(50, Math.max(1, Number(body.limit) || 20));
   const { data: rows, error } = await supabase.from('complete_failures')
@@ -361,23 +420,20 @@ async function resendFailed(req: Request, body: any, supabase: any, cors: Record
   const results: any[] = [];
   let stopped: string | null = null;
   for (const row of rows) {
-    if (Date.now() - started > 90_000) { stopped = 'time_limit'; break; }
-    let sess: any = null;
-    if (row.session_init_id) {
-      const { data } = await supabase.from('session_init').select('*').eq('id', row.session_init_id).maybeSingle();
-      sess = data;
-      if (!sess) { results.push({ id: row.id, result: 'no_session' }); continue; }   // 입장권이 지워짐 — 손으로 확인
-    }
+    if (Date.now() - started > 70_000) { stopped = 'time_limit'; break; }
+    if (!row.session_init_id) { results.push({ id: row.id, result: 'no_session' }); continue; }
+    const { data: sess } = await supabase.from('session_init').select('*').eq('id', row.session_init_id).maybeSingle();
+    if (!sess) { results.push({ id: row.id, result: 'no_session' }); continue; }   // 입장권이 지워짐 — 손으로 확인
     const ctx: Ctx = {
       supabase, sess, attemptId: row.attempt_id, payment_fn: row.payment_fn, training_round: row.training_round,
       memberNo: row.member_no, academyNo: row.academy_no, baseTries: Number(row.tries) || 0,
     };
-    if (sess && sess.completed_at) {   // 그사이 학생이 다시 들어와 완료됨
+    if (sess.completed_at) {   // 그사이 학생이 다시 들어와 완료됨
       await resolveFailure(ctx, 'complete_failed', 'already_completed');
       results.push({ id: row.id, result: 'already_completed' }); continue;
     }
     const r = await runCompleteWithRetry(
-      ({ refreshToken }: { refreshToken: boolean }) => gateCall(supabase, row.payment_fn, row.training_round, sess ? (sess.study_token || null) : null, refreshToken),
+      ({ refreshToken }: { refreshToken: boolean }) => gateCall(supabase, row.payment_fn, row.training_round, sess.study_token || null, refreshToken, FIRST_TIMEOUT_MS),
       { waits: [] });
     await applyResult(ctx, r, true, true);
     results.push({ id: row.id, result: r.outcome, status: r.status });
@@ -389,7 +445,7 @@ async function resendFailed(req: Request, body: any, supabase: any, cors: Record
 
 async function issueNewToken(): Promise<string> {
   const res = await fetch(`${SERVICE_BACK_BASE_URL}/api/public/external/token`, {
-    method: 'POST', headers: { 'X-External-Secret': EXTERNAL_JWT_SECRET }, signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
+    method: 'POST', headers: { 'X-External-Secret': EXTERNAL_JWT_SECRET }, signal: AbortSignal.timeout(TOKEN_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`토큰 발급 실패 ${res.status}: ${await res.text()}`);
   const data = await res.json();
@@ -397,14 +453,14 @@ async function issueNewToken(): Promise<string> {
   return data.token;
 }
 
-async function callComplete(token: string, payment_fn: string, training_round: number, study_token: string | null) {
+async function callComplete(token: string, payment_fn: string, training_round: number, study_token: string | null, timeoutMs: number) {
   const payload: Record<string, unknown> = { payment_fn, training_round };
   if (study_token) payload.study_token = study_token;   // API v4 필수
   return await fetch(`${SERVICE_BACK_BASE_URL}/api/public/hanja/study/complete`, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
+    signal: AbortSignal.timeout(timeoutMs),
   });
 }
 
