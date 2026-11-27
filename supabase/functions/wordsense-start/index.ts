@@ -8,6 +8,7 @@
 //     academy_name, academy_no, payment_fn, training_round, training_area, study_token,
 //     training_level?(elementary/middle 또는 초등/중등, 없으면 초등),
 //     training_mode?("retry" = 재훈련 — study_token 불필요, 학원 완료 API 미호출
+//                    "unittest" = 실력 점검 바로 열기 — study_token 불필요, 훈련·학원 완료 없음 (2026-11-05)
 //                    "review" = 복습 — 학원 완료 받은 회차만, 획득 어휘 확장 카드, 기록·완료 없음 (2026-11-02)
 //                    "report" = 선생님 결과지 보기 — user_no만 필요, 응답 주소 = teacher-result.html?st=, 훈련엔 못 씀), is_payment?,
 //     resume?(true = 학원 달력 [이어하기] — 응답 주소에 &resume=1, 앱이 저장된 지점부터 바로 이어 줌) }
@@ -85,7 +86,8 @@ Deno.serve(async (req) => {
   // 훈련 방식 — retry(재훈련: 학원 완료 API 미호출, study_token 불필요) / report(선생님 결과지 보기) / 그 외 normal
   const mRaw = String(body.training_mode ?? '').trim().toLowerCase();
   // review = [복습] — 획득 어휘만 확장 카드로 다시 (대표님 2026-11-02), study_token 불필요·학원 완료 API 미호출
-  const mode = mRaw === 'retry' ? 'retry' : mRaw === 'report' ? 'report' : mRaw === 'review' ? 'review' : 'normal';
+  const mode = mRaw === 'retry' ? 'retry' : mRaw === 'report' ? 'report' : mRaw === 'review' ? 'review' : mRaw === 'unittest' ? 'unittest' : 'normal';
+  // unittest = 학원 [실력점검]·실력 점검 [이어하기] — training_round는 그 구간의 아무 회차(예: 5), 응시 자격은 앱·wordsense-unittest가 확인 (2026-11-05)
   const isReport = mode === 'report';
   const AREAS = ['biology', 'society', 'history', 'science', 'culture', 'economy'];
   if (!Number.isFinite(userNo)) return jsonErr(400, '필수 필드 누락/형식 오류: user_no', cors);
