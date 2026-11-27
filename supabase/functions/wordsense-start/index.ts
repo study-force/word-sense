@@ -114,6 +114,12 @@ Deno.serve(async (req) => {
     // ── 재훈련 제한: 이 회차를 PERFECT(모든 어휘 습득)로 끝낸 적이 있으면 결제 기간 내라도 재훈련 불가 (대표님 결정) ──
     //   PERFECT = 회차 어휘 전부가 누적 '내 어휘'(attempts.is_perfect, 4단계 훈련) — 옛 기록은 강화 정답 수 ≥ 어휘 수
     if (mode === 'retry') {
+      // 재훈련도 복습과 같이 「학원 완료(엔드데이트)를 받은 회차」만 — 회차 번호를 바꿔 보내 아직 하지 않은 회차를 재훈련으로 여는 것 방지
+      //   (2026-11-27 센터 개발 담당 요청: 훈련 기록 원장인 이쪽에서 막는다)
+      const { data: fin } = await supabase.from('session_init').select('id')
+        .eq('user_no', userNo).eq('training_area', area).eq('training_round', round).eq('training_level', level)
+        .neq('training_mode', 'report').not('completed_at', 'is', null).limit(1);
+      if (!fin || !fin.length) return jsonErr(403, '훈련을 마친 회차만 재훈련할 수 있습니다', cors, 'not_completed');
       const { data: areaRow } = await supabase.from('areas').select('id').eq('slug', area).maybeSingle();
       const { data: sessRow } = areaRow
         ? await supabase.from('sessions').select('id').eq('area_id', areaRow.id).eq('round_no', round).eq('level', level).maybeSingle()
